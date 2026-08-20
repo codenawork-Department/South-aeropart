@@ -1,19 +1,24 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// Clerk middleware — enable when Clerk keys are configured.
-// Protects account, checkout, and wishlist routes; product browsing is public.
-//
-// import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-// const isProtectedRoute = createRouteMatcher(["/account(.*)", "/checkout(.*)", "/wishlist(.*)"]);
-//
-// export default clerkMiddleware((auth, req) => {
-//   if (isProtectedRoute(req)) auth().protect();
-// });
+/**
+ * Clerk middleware for the storefront.
+ *
+ * Protected routes require sign-in: account, checkout, wishlist.
+ * Everything else (products, sign-in, sign-up, webhooks) is public.
+ */
+const isProtectedRoute = createRouteMatcher([
+  "/account(.*)",
+  "/checkout(.*)",
+  "/wishlist(.*)",
+  "/profile(.*)",
+  "/orders(.*)",
+]);
 
-export function middleware(_request: NextRequest) {
-  return NextResponse.next();
-}
+export default clerkMiddleware((auth, req) => {
+  if (isProtectedRoute(req)) {
+    auth().protect();
+  }
+});
 
 export const config = {
   matcher: ["/((?!_next|.*\\..*).*)", "/(api|trpc)(.*)"],
