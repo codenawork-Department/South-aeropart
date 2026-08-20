@@ -11,7 +11,7 @@ import { jwtVerify } from "jose";
  * inside server components / server actions.
  */
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/setup"];
 
 function getSessionSecret(): Uint8Array {
   const secret = process.env.ADMIN_SESSION_SECRET;
