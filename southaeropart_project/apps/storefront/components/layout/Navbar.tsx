@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Menu, Search, User, ShoppingCart, X } from "lucide-react";
+import { useUser, useClerk } from "@clerk/nextjs";
+import { Menu, Search, ShoppingCart, X, LogOut, User as UserIcon, Package, ChevronDown } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
 import { CartSidebar } from "./CartSidebar";
 import { MobileMenu } from "./MobileMenu";
@@ -17,7 +18,24 @@ const NAV_LINKS = [
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { itemCount, toggleCart } = useCart();
+  const { user, isSignedIn, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    if (userMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [userMenuOpen]);
 
   return (
     <>
@@ -62,14 +80,102 @@ export function Navbar() {
             </button>
 
             {/* User Account */}
-            <Link
-              href="/account"
-              id="account-link"
-              className="p-2 text-[var(--text-primary)] hover:text-[var(--accent-red)] transition-colors hidden sm:block"
-              aria-label="Account"
-            >
-              <User size={20} />
-            </Link>
+            {isLoaded && (
+              <>
+                {isSignedIn ? (
+                  /* ── Signed-in: Avatar + Dropdown ── */
+                  <div className="relative hidden sm:block" ref={userMenuRef}>
+                    <button
+                      id="user-menu-toggle"
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      className="flex items-center gap-1.5 p-1 rounded-sm hover:bg-white/5 transition-colors"
+                      aria-label="User menu"
+                      aria-expanded={userMenuOpen}
+                    >
+                      {user?.imageUrl ? (
+                        <img
+                          src={user.imageUrl}
+                          alt={user.fullName ?? "User avatar"}
+                          width={28}
+                          height={28}
+                          className="w-7 h-7 rounded-full object-cover border border-[var(--border-color)]"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-[var(--accent-red)] flex items-center justify-center text-white text-xs font-bold">
+                          {user?.firstName?.[0]?.toUpperCase() ?? "U"}
+                        </div>
+                      )}
+                      <ChevronDown
+                        size={14}
+                        className={`text-[var(--text-muted)] transition-transform duration-200 ${
+                          userMenuOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {userMenuOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-sm shadow-xl shadow-black/30 animate-fade-in overflow-hidden">
+                        {/* User info */}
+                        <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
+                          <p className="text-sm font-medium text-[var(--text-primary)] truncate">
+                            {user?.fullName ?? "User"}
+                          </p>
+                          <p className="text-xs text-[var(--text-muted)] truncate mt-0.5">
+                            {user?.primaryEmailAddress?.emailAddress}
+                          </p>
+                        </div>
+
+                        {/* Menu items */}
+                        <div className="py-1">
+                          <Link
+                            href="/profile"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors"
+                          >
+                            <UserIcon size={16} />
+                            My Profile
+                          </Link>
+                          <Link
+                            href="/orders"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors"
+                          >
+                            <Package size={16} />
+                            My Orders
+                          </Link>
+                        </div>
+
+                        {/* Sign out */}
+                        <div className="border-t border-[var(--border-subtle)] py-1">
+                          <button
+                            id="sign-out-button"
+                            onClick={() => {
+                              setUserMenuOpen(false);
+                              signOut({ redirectUrl: "/" });
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[var(--accent-red)] hover:bg-[var(--accent-red)]/10 transition-colors"
+                          >
+                            <LogOut size={16} />
+                            Sign Out
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* ── Not signed-in: Sign In link ── */
+                  <Link
+                    href="/sign-in"
+                    id="sign-in-link"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--accent-red)] hover:text-[var(--accent-red)] transition-all rounded-sm"
+                  >
+                    <UserIcon size={14} />
+                    Sign In
+                  </Link>
+                )}
+              </>
+            )}
 
             {/* Cart */}
             <button

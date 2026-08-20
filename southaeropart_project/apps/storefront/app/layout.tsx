@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Oswald } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { CartProvider } from "@/components/providers/CartProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,14 +37,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${oswald.variable}`}>
-      <body className="min-h-screen flex flex-col">
-        <CartProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </CartProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${inter.variable} ${oswald.variable}`}>
+        <body className="min-h-screen flex flex-col">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
