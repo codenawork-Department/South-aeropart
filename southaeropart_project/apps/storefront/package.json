@@ -19,6 +19,7 @@
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.5.0",
     "class-variance-authority": "^0.7.0",
+    "svix": "^1.24.0",
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/lib": "workspace:*"
