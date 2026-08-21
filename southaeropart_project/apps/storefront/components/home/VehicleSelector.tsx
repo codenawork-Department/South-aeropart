@@ -1,95 +1,92 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Search, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, ArrowRight } from "lucide-react";
 import { VEHICLE_MAKES, VEHICLE_MODELS } from "@/lib/mock-data";
 
 export function VehicleSelector() {
+  const router = useRouter();
   const [selectedMake, setSelectedMake] = useState("honda");
   const [selectedModel, setSelectedModel] = useState("accord-g9");
 
   const models = VEHICLE_MODELS[selectedMake] || [];
-  const selectedMakeData = VEHICLE_MAKES.find((m) => m.value === selectedMake);
+
+  const handleSearch = () => {
+    router.push(`/products?make=${selectedMake}&model=${selectedModel}`);
+  };
 
   return (
-    <section className="bg-[var(--bg-elevated)] border-b border-[var(--border-color)]">
+    <section className="bg-[#111111] border-b border-[#222222]">
       <div className="container-main py-4 md:py-5">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
-          {/* Label */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 md:gap-6">
+          {/* Header Title */}
           <div className="flex-shrink-0">
-            <h2 className="font-heading text-sm md:text-base font-bold tracking-wider uppercase">
+            <h2 className="font-heading text-sm md:text-base font-extrabold tracking-wider uppercase text-white flex items-center gap-2">
               SELECT YOUR VEHICLE
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)]" />
             </h2>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              Explore our builds and product inspiration.
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              Find parts that fit your ride &amp; explore curated builds.
             </p>
           </div>
 
-          {/* Dropdowns */}
-          <div className="flex flex-1 items-center gap-3 w-full md:w-auto">
-            {/* Make */}
-            <div className="flex-1 md:flex-initial md:w-48">
-              <label className="text-[0.65rem] text-[var(--text-muted)] uppercase tracking-widest mb-1 block font-heading">
-                Make
-              </label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center bg-white/10 rounded text-xs font-bold">
-                  {selectedMakeData?.logo}
-                </div>
-                <select
-                  id="vehicle-make"
-                  value={selectedMake}
-                  onChange={(e) => {
-                    setSelectedMake(e.target.value);
-                    const firstModel = VEHICLE_MODELS[e.target.value]?.[0];
-                    if (firstModel) setSelectedModel(firstModel.value);
-                  }}
-                  className="select-dark pl-10"
-                >
-                  {VEHICLE_MAKES.map((make) => (
-                    <option key={make.value} value={make.value}>
-                      {make.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Model */}
-            <div className="flex-1 md:flex-initial md:w-48">
-              <label className="text-[0.65rem] text-[var(--text-muted)] uppercase tracking-widest mb-1 block font-heading">
-                Model
+          {/* Selectors Form */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full lg:w-auto">
+            {/* Make Dropdown */}
+            <div className="w-full sm:w-48">
+              <label className="text-[0.65rem] text-[var(--text-muted)] uppercase tracking-widest mb-1 block font-heading font-semibold">
+                MAKE
               </label>
               <select
-                id="vehicle-model"
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="select-dark"
+                id="vehicle-make"
+                value={selectedMake}
+                onChange={(e) => {
+                  const newMake = e.target.value;
+                  setSelectedMake(newMake);
+                  const firstModel = VEHICLE_MODELS[newMake]?.[0];
+                  if (firstModel) setSelectedModel(firstModel.value);
+                }}
+                className="select-dark bg-[#181818] border-[#2A2A2A] text-xs font-semibold py-2.5"
               >
-                {models.map((model) => (
-                  <option key={model.value} value={model.value}>
-                    {model.label}
+                {VEHICLE_MAKES.map((make) => (
+                  <option key={make.value} value={make.value}>
+                    {make.label}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* View Products Button */}
-            <div className="hidden md:block flex-shrink-0 self-end">
-              <button className="btn-outline gap-2 whitespace-nowrap" id="view-products-btn">
-                <Search size={14} />
-                VIEW ALL PRODUCTS
-                <ArrowRight size={14} />
-              </button>
+            {/* Model Dropdown */}
+            <div className="w-full sm:w-52">
+              <label className="text-[0.65rem] text-[var(--text-muted)] uppercase tracking-widest mb-1 block font-heading font-semibold">
+                MODEL
+              </label>
+              <select
+                id="vehicle-model"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="select-dark bg-[#181818] border-[#2A2A2A] text-xs font-semibold py-2.5"
+              >
+                {models.map((model) => (
+                  <option key={model.value} value={model.value}>
+                    {model.label} ({model.yearRange})
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
 
-          {/* Mobile View Products */}
-          <button className="btn-outline w-full gap-2 md:hidden" id="view-products-mobile">
-            <Search size={14} />
-            VIEW ALL PRODUCTS
-            <ArrowRight size={14} />
-          </button>
+            {/* Action Button */}
+            <button
+              onClick={handleSearch}
+              className="btn-primary py-2.5 px-5 text-xs whitespace-nowrap gap-2 self-stretch sm:self-end"
+              id="view-products-btn"
+            >
+              <Search size={14} />
+              VIEW PRODUCTS
+              <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
       </div>
     </section>

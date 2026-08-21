@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,96 +15,134 @@ import {
   Settings,
   Gauge,
   Headphones,
-  ArrowUpRight,
   Wind,
   Shield,
   Layers,
   Zap,
+  Check,
+  X,
 } from "lucide-react";
-import { MOCK_PRODUCTS } from "@/lib/mock-data";
+import { MOCK_PRODUCTS, MockProduct } from "@/lib/mock-data";
 import { useCart } from "@/components/providers/CartProvider";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 
 function ProductDetailClient({ slug }: { slug: string }) {
-  const product = MOCK_PRODUCTS.find((p) => p.slug === slug) || MOCK_PRODUCTS[0];
+  const product: MockProduct =
+    MOCK_PRODUCTS.find((p) => p.slug === slug) || MOCK_PRODUCTS[0];
+
   const [currentImage, setCurrentImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [selectedFinish, setSelectedFinish] = useState(product.finish);
-  const { addItem } = useCart();
+  const [selectedFinish, setSelectedFinish] = useState(
+    product.finishOptions?.[0] || product.finish
+  );
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [addedAnimation, setAddedAnimation] = useState(false);
 
-  const nextImage = () =>
-    setCurrentImage((prev) => (prev + 1) % product.imageCount);
+  const { addItem, openCart } = useCart();
+
+  const totalImages = product.images.length;
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % totalImages);
   const prevImage = () =>
-    setCurrentImage((prev) => (prev - 1 + product.imageCount) % product.imageCount);
+    setCurrentImage((prev) => (prev - 1 + totalImages) % totalImages);
 
   const compatibility = product.compatibility[0];
-
   const FEATURE_ICONS = [Wind, Shield, Zap, Layers];
 
+  const handleAddToCart = () => {
+    for (let i = 0; i < quantity; i++) {
+      addItem(product, selectedFinish);
+    }
+    setAddedAnimation(true);
+    openCart();
+    setTimeout(() => setAddedAnimation(false), 1500);
+  };
+
   return (
-    <div>
-      {/* Breadcrumb */}
-      <nav className="container-main py-3 border-b border-[var(--border-color)]" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2 text-xs">
+    <div className="bg-[#0A0A0A] min-h-screen">
+      {/* 1. Breadcrumb Navigation */}
+      <nav
+        className="container-main py-3.5 border-b border-[#1E1E1E]"
+        aria-label="Breadcrumb"
+      >
+        <ol className="flex items-center gap-2 text-xs font-heading font-semibold tracking-wider">
           <li>
-            <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors uppercase tracking-wider">
-              Home
+            <Link
+              href="/"
+              className="text-[var(--text-muted)] hover:text-white transition-colors uppercase"
+            >
+              HOME
             </Link>
           </li>
           <li className="text-[var(--text-muted)]">&gt;</li>
           <li>
-            <Link href="/products" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors uppercase tracking-wider">
-              Shop
+            <Link
+              href="/products"
+              className="text-[var(--text-muted)] hover:text-white transition-colors uppercase"
+            >
+              SHOP
             </Link>
           </li>
           <li className="text-[var(--text-muted)]">&gt;</li>
           <li>
-            <Link href="/products?category=accord-g9" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors uppercase tracking-wider">
-              Accord G9
+            <Link
+              href={`/products?category=${product.categorySlug}`}
+              className="text-[var(--text-muted)] hover:text-white transition-colors uppercase"
+            >
+              {compatibility ? `${compatibility.model}` : product.categoryName}
             </Link>
           </li>
           <li className="text-[var(--text-muted)]">&gt;</li>
-          <li className="text-[var(--accent-red)] font-semibold uppercase tracking-wider">
+          <li className="text-[var(--accent-red)] uppercase truncate max-w-[200px] sm:max-w-none">
             {product.name}
           </li>
         </ol>
       </nav>
 
-      {/* Main Product Section */}
-      <div className="container-main py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Left: Gallery */}
-          <div>
-            {/* Main Image */}
-            <div className="relative aspect-[4/3] bg-[var(--bg-secondary)] rounded-sm overflow-hidden border border-[var(--border-color)]">
-              <div className="placeholder-image w-full h-full">
-                <span>{product.imagePlaceholders[currentImage]}</span>
-              </div>
+      {/* 2. Main Product Hero Section (Gallery + Purchase Box) */}
+      <div className="container-main py-8 md:py-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          {/* Left Column: Interactive Image Gallery (7 cols) */}
+          <div className="lg:col-span-7">
+            {/* Main Stage Image */}
+            <div className="relative aspect-[4/3] bg-[#121212] rounded-sm overflow-hidden border border-[#242424] shadow-2xl group">
+              <Image
+                src={product.images[currentImage]}
+                alt={`${product.name} - View ${currentImage + 1}`}
+                fill
+                priority
+                className="object-cover transition-all duration-500 ease-out"
+                sizes="(max-width: 1024px) 100vw, 700px"
+              />
 
-              {/* Fullscreen Toggle */}
+              {/* Fullscreen Modal Toggle Button */}
               <button
-                className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center bg-black/50 text-white hover:bg-black/80 transition-colors backdrop-blur-sm rounded-sm"
-                aria-label="View fullscreen"
+                onClick={() => setLightboxOpen(true)}
+                className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center bg-black/60 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm z-10"
+                aria-label="View fullscreen image"
+                title="Expand image"
               >
                 <Maximize2 size={16} />
               </button>
 
-              {/* Navigation */}
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                <span className="text-sm font-heading font-bold">
-                  {String(currentImage + 1).padStart(2, "0")} / {String(product.imageCount).padStart(2, "0")}
+              {/* Bottom Controls Bar (Counter & Navigation) */}
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
+                <span className="telemetry-pill text-xs font-bold text-white bg-black/75">
+                  {String(currentImage + 1).padStart(2, "0")} /{" "}
+                  {String(totalImages).padStart(2, "0")}
                 </span>
-                <div className="flex gap-2">
+
+                <div className="flex gap-2 pointer-events-auto">
                   <button
                     onClick={prevImage}
-                    className="w-8 h-8 flex items-center justify-center bg-black/50 text-white hover:bg-black/80 transition-colors backdrop-blur-sm"
+                    className="w-8 h-8 flex items-center justify-center bg-black/70 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm"
                     aria-label="Previous image"
                   >
                     <ChevronLeft size={16} />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="w-8 h-8 flex items-center justify-center bg-black/50 text-white hover:bg-black/80 transition-colors backdrop-blur-sm"
+                    className="w-8 h-8 flex items-center justify-center bg-black/70 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm"
                     aria-label="Next image"
                   >
                     <ChevronRight size={16} />
@@ -113,160 +152,199 @@ function ProductDetailClient({ slug }: { slug: string }) {
             </div>
 
             {/* Thumbnail Strip */}
-            <div className="flex gap-2 mt-3">
-              {Array.from({ length: product.imageCount }).map((_, i) => (
+            <div className="flex gap-2.5 mt-3.5 overflow-x-auto pb-2">
+              {product.images.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentImage(i)}
-                  className={`w-16 h-16 md:w-20 md:h-20 placeholder-image rounded-sm border-2 transition-all flex-shrink-0 ${
+                  className={`w-20 h-20 relative rounded-sm overflow-hidden border-2 transition-all flex-shrink-0 bg-[#141414] ${
                     currentImage === i
-                      ? "border-[var(--accent-red)] opacity-100"
-                      : "border-transparent opacity-60 hover:opacity-100"
+                      ? "border-[var(--accent-red)] opacity-100 shadow-md shadow-[var(--accent-red)]/30"
+                      : "border-[#262626] opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <span className="text-[0.5rem]">Thumb {i + 1}</span>
+                  <Image
+                    src={img}
+                    alt={`Thumbnail ${i + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                  />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Right: Product Info */}
-          <div>
-            {/* Compatible Badge */}
+          {/* Right Column: Product Purchasing Details (5 cols) */}
+          <div className="lg:col-span-5 space-y-5">
+            {/* Compatibility Badge */}
             {compatibility && (
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs text-[var(--text-muted)] uppercase tracking-wider">
-                  Compatible with :
+              <div className="flex items-center gap-2">
+                <span className="text-[0.65rem] text-[var(--text-muted)] font-heading font-bold uppercase tracking-widest">
+                  COMPATIBLE WITH :
                 </span>
-                <span className="text-xs font-semibold px-3 py-1 border border-[var(--border-color)] rounded-sm">
-                  {compatibility.make} {compatibility.model} | {compatibility.yearFrom} - {compatibility.yearTo}
+                <span className="text-xs font-heading font-bold tracking-wider px-2.5 py-1 bg-[#181818] border border-[#2B2B2B] text-white rounded-sm">
+                  {compatibility.make} {compatibility.model} |{" "}
+                  {compatibility.yearFrom} - {compatibility.yearTo}
                 </span>
               </div>
             )}
 
-            {/* Brand + Name */}
-            <p className="font-heading text-sm font-bold tracking-[0.15em] text-[var(--accent-red)] uppercase">
-              {product.brand}
-            </p>
-            <h1 className="heading-lg mt-1">{product.name}</h1>
+            {/* Brand & Title */}
+            <div>
+              <p className="font-heading text-xs font-bold tracking-[0.2em] text-[var(--accent-red)] uppercase">
+                {product.brand}
+              </p>
+              <h1 className="heading-lg text-white mt-1 uppercase">
+                {product.name}
+              </h1>
+            </div>
 
-            {/* Description */}
-            <p className="body-md mt-4">
+            {/* Short Description */}
+            <p className="body-md text-[var(--text-secondary)]">
               {product.shortDescription}
             </p>
 
-            {/* Price + Variant + Quantity + Actions */}
-            <div className="mt-6 space-y-4">
-              {/* Price */}
-              <div className="flex items-center justify-between py-3 border-y border-[var(--border-color)]">
-                <span className="font-heading text-sm tracking-wider uppercase text-[var(--text-secondary)]">
-                  Price
+            {/* Configuration Form & Actions */}
+            <div className="space-y-4 pt-2">
+              {/* Price Row */}
+              <div className="flex items-center justify-between py-3 border-y border-[#202020]">
+                <span className="font-heading text-xs font-bold tracking-wider uppercase text-[var(--text-secondary)]">
+                  PRICE
                 </span>
-                <span className="font-heading text-xl font-bold">
-                  ฿{parseFloat(product.price).toLocaleString()} THB
-                </span>
+                <div className="text-right">
+                  <span className="font-heading text-2xl font-bold text-white">
+                    ฿{parseFloat(product.price).toLocaleString()} THB
+                  </span>
+                  {product.compareAtPrice && (
+                    <span className="text-xs text-[var(--text-muted)] line-through ml-2">
+                      ฿{parseFloat(product.compareAtPrice).toLocaleString()}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Finish */}
-              <div className="flex items-center justify-between py-3 border-b border-[var(--border-color)]">
-                <span className="font-heading text-sm tracking-wider uppercase text-[var(--text-secondary)]">
-                  Finish
+              {/* Finish Selector */}
+              <div className="flex items-center justify-between py-2.5 border-b border-[#202020]">
+                <span className="font-heading text-xs font-bold tracking-wider uppercase text-[var(--text-secondary)]">
+                  FINISH
                 </span>
                 <select
                   value={selectedFinish}
                   onChange={(e) => setSelectedFinish(e.target.value)}
-                  className="select-dark w-auto min-w-[160px]"
+                  className="select-dark w-auto min-w-[170px] bg-[#161616] text-xs font-semibold py-2"
                   id="product-finish"
                 >
-                  <option value="Gloss Black">Gloss Black</option>
-                  <option value="Matte Black">Matte Black</option>
-                  <option value="Carbon Look">Carbon Look</option>
+                  {(product.finishOptions || [product.finish]).map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* Quantity */}
-              <div className="flex items-center justify-between py-3 border-b border-[var(--border-color)]">
-                <span className="font-heading text-sm tracking-wider uppercase text-[var(--text-secondary)]">
-                  Quantity
+              {/* Quantity Stepper */}
+              <div className="flex items-center justify-between py-2.5 border-b border-[#202020]">
+                <span className="font-heading text-xs font-bold tracking-wider uppercase text-[var(--text-secondary)]">
+                  QUANTITY
                 </span>
-                <div className="flex items-center border border-[var(--border-color)]">
+                <div className="flex items-center border border-[#2E2E2E] rounded-sm bg-[#141414]">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="w-10 h-10 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    className="w-9 h-9 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors"
                     aria-label="Decrease quantity"
                   >
-                    <Minus size={14} />
+                    <Minus size={13} />
                   </button>
-                  <span className="w-12 h-10 flex items-center justify-center text-sm font-medium border-x border-[var(--border-color)]">
+                  <span className="w-10 h-9 flex items-center justify-center text-xs font-heading font-bold text-white border-x border-[#2E2E2E]">
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="w-10 h-10 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    className="w-9 h-9 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors"
                     aria-label="Increase quantity"
                   >
-                    <Plus size={14} />
+                    <Plus size={13} />
                   </button>
                 </div>
               </div>
 
-              {/* Add to Cart */}
-              <button
-                onClick={() => {
-                  for (let i = 0; i < quantity; i++) {
-                    addItem(product, selectedFinish);
-                  }
-                }}
-                className="btn-primary w-full justify-center gap-3 py-4 text-base"
-                id="add-to-cart"
-              >
-                ADD TO CART
-                <ShoppingCart size={18} />
-              </button>
+              {/* Action Buttons */}
+              <div className="space-y-2.5 pt-2">
+                <button
+                  onClick={handleAddToCart}
+                  className="btn-primary w-full justify-center gap-3 py-3.5 text-sm"
+                  id="add-to-cart"
+                >
+                  {addedAnimation ? (
+                    <>
+                      <Check size={18} /> ADDED TO CART!
+                    </>
+                  ) : (
+                    <>
+                      ADD TO CART <ShoppingCart size={18} />
+                    </>
+                  )}
+                </button>
 
-              {/* Add to Wishlist */}
-              <button
-                className="btn-outline w-full justify-center gap-3"
-                id="add-to-wishlist"
-              >
-                ADD TO WISHLIST
-                <Heart size={18} />
-              </button>
+                <button
+                  onClick={() => setIsWishlisted(!isWishlisted)}
+                  className={`btn-outline w-full justify-center gap-2 py-3 text-xs ${
+                    isWishlisted
+                      ? "border-[var(--accent-red)] text-[var(--accent-red)] bg-[var(--accent-red)]/10"
+                      : ""
+                  }`}
+                  id="add-to-wishlist"
+                >
+                  {isWishlisted ? "SAVED IN WISHLIST" : "ADD TO WISHLIST"}
+                  <Heart
+                    size={16}
+                    className={isWishlisted ? "fill-current" : ""}
+                  />
+                </button>
+              </div>
             </div>
 
-            {/* Performance Stats */}
+            {/* Aerodynamic Telemetry Box (Matching PDP Mockup) */}
             {product.downforceN !== undefined && (
-              <div className="mt-6 card p-4">
+              <div className="card p-4 bg-[#141414] border-[#242424] mt-6">
                 <div className="grid grid-cols-2 gap-4">
+                  {/* Downforce Delta */}
                   <div className="text-center">
-                    <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">
-                      Downforce Δ
+                    <p className="text-[0.65rem] font-heading font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                      DOWNFORCE &Delta;
                     </p>
-                    <p className="font-heading text-2xl font-bold text-[var(--success)] mt-1">
+                    <p className="font-heading text-2xl font-black text-[var(--success)] mt-0.5">
                       +{product.downforceN} N
                     </p>
-                    <div className="text-xs text-[var(--text-muted)] mt-2">
-                      <span className="uppercase tracking-wider">Downforce (N)</span>
-                      <div className="flex items-center justify-center gap-1 mt-0.5">
+                    <div className="text-[0.65rem] text-[var(--text-muted)] mt-1.5 font-heading">
+                      <span>DOWNFORCE (L/B)</span>
+                      <div className="flex items-center justify-center gap-1 text-white font-bold mt-0.5">
                         <span>{product.downforceBefore}</span>
-                        <span>›</span>
-                        <span className="text-[var(--success)]">{product.downforceAfter}</span>
+                        <span className="text-[var(--accent-red)]">&rsaquo;</span>
+                        <span className="text-[var(--success)]">
+                          {product.downforceAfter}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div className="text-center border-l border-[var(--border-color)]">
-                    <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">
-                      Drag Δ
+
+                  {/* Drag Delta */}
+                  <div className="text-center border-l border-[#242424]">
+                    <p className="text-[0.65rem] font-heading font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                      DRAG &Delta;
                     </p>
-                    <p className="font-heading text-2xl font-bold text-[var(--accent-red)] mt-1">
+                    <p className="font-heading text-2xl font-black text-[var(--accent-red)] mt-0.5">
                       {product.dragN} N
                     </p>
-                    <div className="text-xs text-[var(--text-muted)] mt-2">
-                      <span className="uppercase tracking-wider">Drag (N)</span>
-                      <div className="flex items-center justify-center gap-1 mt-0.5">
+                    <div className="text-[0.65rem] text-[var(--text-muted)] mt-1.5 font-heading">
+                      <span>DRAG (CD)</span>
+                      <div className="flex items-center justify-center gap-1 text-white font-bold mt-0.5">
                         <span>{product.dragBefore}</span>
-                        <span>›</span>
-                        <span className="text-[var(--accent-red)]">{product.dragAfter}</span>
+                        <span className="text-[var(--accent-red)]">&rsaquo;</span>
+                        <span className="text-[var(--accent-red)]">
+                          {product.dragAfter}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -274,17 +352,20 @@ function ProductDetailClient({ slug }: { slug: string }) {
               </div>
             )}
 
-            {/* Mini Trust Badges */}
-            <div className="flex items-center justify-center gap-6 mt-6 py-4 border-t border-[var(--border-color)]">
+            {/* 4 Mini Trust Badges */}
+            <div className="grid grid-cols-4 gap-2 pt-4 border-t border-[#202020]">
               {[
-                { icon: Award, label: "High Quality\nMaterials" },
-                { icon: Settings, label: "Precision\nEngineered" },
-                { icon: Gauge, label: "Performance\nFocused" },
-                { icon: Headphones, label: "Dedicated\nSupport" },
+                { icon: Award, label: "HIGH QUALITY\nMATERIALS" },
+                { icon: Settings, label: "PRECISE\nENGINEERING" },
+                { icon: Gauge, label: "PERFORMANCE\nFOCUSED" },
+                { icon: Headphones, label: "DEDICATED\nSUPPORT" },
               ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex flex-col items-center text-center">
-                  <Icon size={16} className="text-[var(--text-muted)]" />
-                  <span className="text-[0.6rem] text-[var(--text-muted)] mt-1 leading-tight whitespace-pre-line uppercase tracking-wider">
+                <div
+                  key={label}
+                  className="flex flex-col items-center text-center"
+                >
+                  <Icon size={16} className="text-[var(--accent-red)]" />
+                  <span className="text-[0.6rem] font-heading font-semibold text-[var(--text-muted)] mt-1 whitespace-pre-line leading-tight">
                     {label}
                   </span>
                 </div>
@@ -294,65 +375,77 @@ function ProductDetailClient({ slug }: { slug: string }) {
         </div>
       </div>
 
-      {/* Product Details Section */}
-      <div className="border-t border-[var(--border-color)]">
+      {/* 3. Detailed Description & Specifications Section */}
+      <div className="border-t border-[#1C1C1C] bg-[#0D0D0D]">
         <div className="container-main py-12 md:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Left: Description */}
-            <div>
-              <h2 className="heading-md">
-                TRANSFORM YOUR ACCORD
-                <br />
-                WITH THE SOUTH AERO {product.name.toUpperCase()}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            {/* Left: Detailed Story & Specs Table */}
+            <div className="lg:col-span-7">
+              <h2 className="heading-md text-white uppercase">
+                TRANSFORM YOUR {compatibility?.model || "VEHICLE"} WITH THE
+                SOUTH AERO {product.name.toUpperCase()}
               </h2>
-              <div className="w-8 h-0.5 bg-[var(--accent-red)] mt-4 mb-6" />
-              <p className="body-md">{product.description}</p>
+              <div className="w-10 h-0.5 bg-[var(--accent-red)] mt-3 mb-5" />
 
-              {/* Specs Table */}
-              <div className="mt-8 space-y-0">
+              <p className="body-md text-[var(--text-secondary)] leading-relaxed">
+                {product.description}
+              </p>
+
+              {/* Specifications Table */}
+              <div className="mt-8 border-t border-[#242424]">
                 {[
-                  { label: "Material", value: product.material },
-                  { label: "Finish", value: product.finish },
-                  { label: "Installation", value: product.installation },
-                  { label: "Weight", value: `${product.weightKg} kg` },
+                  { label: "MATERIAL", value: product.material },
+                  { label: "FINISH", value: product.finish },
+                  { label: "INSTALLATION", value: product.installation },
+                  { label: "WEIGHT", value: `${product.weightKg} kg` },
+                  {
+                    label: "COMPATIBILITY",
+                    value: compatibility
+                      ? `${compatibility.make} ${compatibility.model} (${compatibility.yearFrom}-${compatibility.yearTo})`
+                      : "Universal / Model Specific",
+                  },
                 ].map(({ label, value }) => (
                   <div
                     key={label}
-                    className="flex items-center justify-between py-3 border-b border-[var(--border-color)]"
+                    className="flex items-center justify-between py-3 border-b border-[#202020]"
                   >
-                    <span className="text-sm font-semibold uppercase tracking-wider">
+                    <span className="text-xs font-heading font-bold uppercase tracking-wider text-white">
                       {label}
                     </span>
-                    <span className="text-sm text-[var(--text-secondary)]">{value}</span>
+                    <span className="text-xs text-[var(--text-secondary)] font-medium">
+                      {value}
+                    </span>
                   </div>
                 ))}
               </div>
 
-              <p className="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-4">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 16v-4M12 8h.01"/>
-                </svg>
-                Professional installation is recommended.
+              <p className="text-[0.7rem] text-[var(--text-muted)] mt-4 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)]" />
+                Professional installation is recommended for optimal aerodynamic seal.
               </p>
             </div>
 
-            {/* Right: Key Features */}
-            <div>
-              <h2 className="heading-md">KEY FEATURES</h2>
-              <div className="mt-6 space-y-6">
+            {/* Right: Key Features List */}
+            <div className="lg:col-span-5">
+              <h2 className="heading-md text-white uppercase mb-6">
+                KEY FEATURES
+              </h2>
+              <div className="space-y-5">
                 {product.features.map((feature, i) => {
                   const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
                   return (
-                    <div key={feature.title} className="flex gap-4">
-                      <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full border border-[var(--border-color)]">
+                    <div
+                      key={feature.title}
+                      className="flex gap-4 p-4 bg-[#141414] border border-[#222222] rounded-sm"
+                    >
+                      <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-[#1C1C1C] border border-[#2B2B2B]">
                         <Icon size={18} className="text-[var(--accent-red)]" />
                       </div>
                       <div>
-                        <h3 className="font-heading text-sm font-bold tracking-wider uppercase">
+                        <h3 className="font-heading text-xs md:text-sm font-bold tracking-wider uppercase text-white">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
+                        <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
                           {feature.description}
                         </p>
                       </div>
@@ -365,32 +458,64 @@ function ProductDetailClient({ slug }: { slug: string }) {
         </div>
       </div>
 
-      {/* Full-width Product Image */}
-      <div className="placeholder-image w-full aspect-[21/9]">
-        <span>Honda Accord G9 — Full Width Banner with Body Kit</span>
-      </div>
-
-      {/* Bottom Feature Badges */}
-      <div className="border-t border-[var(--border-color)]">
-        <div className="container-main py-12 md:py-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {[
-              { icon: Gauge, title: "DESIGNED FOR PERFORMANCE", desc: "Engineered to improve aerodynamics and stability." },
-              { icon: Award, title: "PREMIUM QUALITY MATERIALS", desc: "Built with durable materials for long-lasting performance." },
-              { icon: Settings, title: "PRECISION FITMENT GUARANTEED", desc: "Custom designed for a perfect and seamless fit." },
-              { icon: Headphones, title: "DEDICATED SUPPORT", desc: "Our team is here to help you before and after your purchase." },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 flex items-center justify-center rounded-full border border-[var(--border-color)] mb-3">
-                  <Icon size={20} className="text-[var(--text-secondary)]" />
-                </div>
-                <h3 className="font-heading text-xs font-bold tracking-[0.08em] uppercase">{title}</h3>
-                <p className="text-xs text-[var(--text-muted)] mt-1.5 max-w-[200px]">{desc}</p>
-              </div>
-            ))}
-          </div>
+      {/* 4. Full-Width Installed Cinematic Car Banner (Matching PDP Mockup) */}
+      <div className="relative aspect-[21/9] sm:aspect-[2.6/1] w-full overflow-hidden border-y border-[#1E1E1E] bg-[#0E0E0E]">
+        <Image
+          src="/images/BACK.png"
+          alt="Installed Rear Profile View"
+          fill
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+        <div className="absolute bottom-6 left-6 md:left-12">
+          <p className="font-heading text-lg md:text-2xl font-bold uppercase text-white">
+            {product.name} &bull; REAR AERO INTEGRATION
+          </p>
+          <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-heading mt-0.5">
+            SOUTH AERO PERFORMANCE LAB
+          </p>
         </div>
       </div>
+
+      {/* 5. Feature Badges */}
+      <FeatureBadges />
+
+      {/* 6. Lightbox Modal */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+          <button
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-6 right-6 p-2 text-white hover:text-[var(--accent-red)] transition-colors"
+            aria-label="Close fullscreen view"
+          >
+            <X size={28} />
+          </button>
+
+          <button
+            onClick={prevImage}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-[var(--accent-red)] text-white rounded-full transition-colors"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            onClick={nextImage}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-[var(--accent-red)] text-white rounded-full transition-colors"
+          >
+            <ChevronRight size={24} />
+          </button>
+
+          <div className="relative w-full max-w-5xl aspect-[4/3] max-h-[85vh]">
+            <Image
+              src={product.images[currentImage]}
+              alt={product.name}
+              fill
+              className="object-contain"
+              sizes="100vw"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

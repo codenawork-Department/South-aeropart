@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { Menu, Search, ShoppingCart, X, LogOut, User as UserIcon, Package, ChevronDown } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
@@ -9,13 +10,14 @@ import { CartSidebar } from "./CartSidebar";
 import { MobileMenu } from "./MobileMenu";
 
 const NAV_LINKS = [
-  { href: "/products", label: "SHOP", active: true },
-  { href: "/collection", label: "COLLECTION", active: false },
-  { href: "/gallery", label: "GALLERY", active: false },
-  { href: "/about", label: "ABOUT US", active: false },
+  { href: "/products", label: "SHOP", match: (p: string) => p.startsWith("/products") },
+  { href: "/collection", label: "COLLECTION", match: (p: string) => p.startsWith("/collection") },
+  { href: "/gallery", label: "GALLERY", match: (p: string) => p.startsWith("/gallery") },
+  { href: "/about", label: "ABOUT US", match: (p: string) => p.startsWith("/about") },
 ];
 
 export function Navbar() {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -39,56 +41,73 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-md border-b border-[var(--border-color)]">
-        {/* Top Row: Hamburger — Logo — Icons */}
-        <div className="container-main flex items-center justify-between h-14 md:h-16">
-          {/* Left: Hamburger */}
-          <button
-            id="mobile-menu-toggle"
-            onClick={() => setMobileMenuOpen(true)}
-            className="p-2 text-[var(--text-primary)] hover:text-[var(--accent-red)] transition-colors lg:hidden"
-            aria-label="Open menu"
-          >
-            <Menu size={22} />
-          </button>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#1E1E1E]">
+        {/* Main Row: Hamburger (mobile) — Logo — Desktop Links — Actions */}
+        <div className="container-main flex items-center justify-between h-16 md:h-20">
+          {/* Left: Mobile Hamburger Toggle */}
+          <div className="flex items-center gap-4 lg:hidden">
+            <button
+              id="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-2 text-white hover:text-[var(--accent-red)] transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu size={24} />
+            </button>
+          </div>
 
-          {/* Desktop nav links (left side on desktop) */}
-          <nav className="hidden lg:flex items-center gap-8" aria-label="Main navigation">
-            {/* Spacer for symmetry */}
+          {/* Center/Left: Brand Logo */}
+          <div className="flex items-center">
+            <Link href="/" className="flex flex-col items-center group py-1" id="logo-link">
+              <div className="flex items-center gap-1.5">
+                <span className="font-heading text-2xl md:text-3xl font-extrabold tracking-[0.2em] text-white group-hover:text-[var(--accent-red)] transition-colors">
+                  SOUTH
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] animate-pulse" />
+              </div>
+              <span className="text-[0.55rem] md:text-[0.65rem] font-heading font-medium tracking-[0.45em] text-[var(--text-secondary)] -mt-1 uppercase">
+                A E R O
+              </span>
+            </Link>
+          </div>
+
+          {/* Desktop Nav Links */}
+          <nav className="hidden lg:flex items-center gap-10" aria-label="Main navigation">
+            {NAV_LINKS.map((link) => {
+              const isActive = link.match(pathname);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`nav-link ${isActive ? "active text-white" : "text-[var(--text-secondary)]"}`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
 
-          {/* Center: Logo */}
-          <Link href="/" className="flex flex-col items-center group" id="logo-link">
-            <span className="font-heading text-2xl md:text-3xl font-bold tracking-[0.15em] text-[var(--text-primary)] group-hover:text-[var(--accent-red)] transition-colors">
-              SOUTH
-            </span>
-            <span className="text-[0.5rem] md:text-[0.6rem] font-heading tracking-[0.3em] text-[var(--text-secondary)] -mt-1">
-              A E R O
-            </span>
-          </Link>
-
           {/* Right: Search, User, Cart */}
-          <div className="flex items-center gap-3 md:gap-4">
-            {/* Search */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Search Toggle */}
             <button
               id="search-toggle"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 text-[var(--text-primary)] hover:text-[var(--accent-red)] transition-colors"
+              className="p-2 text-[var(--text-secondary)] hover:text-white transition-colors"
               aria-label="Search"
             >
               {searchOpen ? <X size={20} /> : <Search size={20} />}
             </button>
 
-            {/* User Account */}
+            {/* User Account / Sign In */}
             {isLoaded && (
               <>
                 {isSignedIn ? (
-                  /* ── Signed-in: Avatar + Dropdown ── */
                   <div className="relative hidden sm:block" ref={userMenuRef}>
                     <button
                       id="user-menu-toggle"
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="flex items-center gap-1.5 p-1 rounded-sm hover:bg-white/5 transition-colors"
+                      className="flex items-center gap-1.5 p-1 rounded hover:bg-white/5 transition-colors"
                       aria-label="User menu"
                       aria-expanded={userMenuOpen}
                     >
@@ -115,10 +134,9 @@ export function Navbar() {
 
                     {/* Dropdown Menu */}
                     {userMenuOpen && (
-                      <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-sm shadow-xl shadow-black/30 animate-fade-in overflow-hidden">
-                        {/* User info */}
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded shadow-2xl shadow-black/80 animate-fade-in overflow-hidden z-50">
                         <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
-                          <p className="text-sm font-medium text-[var(--text-primary)] truncate">
+                          <p className="text-sm font-medium text-white truncate">
                             {user?.fullName ?? "User"}
                           </p>
                           <p className="text-xs text-[var(--text-muted)] truncate mt-0.5">
@@ -126,12 +144,11 @@ export function Navbar() {
                           </p>
                         </div>
 
-                        {/* Menu items */}
                         <div className="py-1">
                           <Link
                             href="/profile"
                             onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
                           >
                             <UserIcon size={16} />
                             My Profile
@@ -139,14 +156,13 @@ export function Navbar() {
                           <Link
                             href="/orders"
                             onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
                           >
                             <Package size={16} />
                             My Orders
                           </Link>
                         </div>
 
-                        {/* Sign out */}
                         <div className="border-t border-[var(--border-subtle)] py-1">
                           <button
                             id="sign-out-button"
@@ -164,76 +180,68 @@ export function Navbar() {
                     )}
                   </div>
                 ) : (
-                  /* ── Not signed-in: Sign In link ── */
                   <Link
                     href="/sign-in"
                     id="sign-in-link"
-                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--accent-red)] hover:text-[var(--accent-red)] transition-all rounded-sm"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white transition-colors"
                   >
-                    <UserIcon size={14} />
-                    Sign In
+                    <UserIcon size={16} />
                   </Link>
                 )}
               </>
             )}
 
-            {/* Cart */}
+            {/* Cart Button with Count Badge */}
             <button
               id="cart-toggle"
               onClick={toggleCart}
-              className="relative p-2 text-[var(--text-primary)] hover:text-[var(--accent-red)] transition-colors"
+              className="relative p-2 text-white hover:text-[var(--accent-red)] transition-colors flex items-center"
               aria-label="Shopping cart"
             >
-              <ShoppingCart size={20} />
-              {itemCount > 0 && (
+              <ShoppingCart size={21} />
+              {itemCount > 0 ? (
                 <span className="absolute -top-0.5 -right-0.5 badge-red">
                   {itemCount}
+                </span>
+              ) : (
+                <span className="absolute -top-0.5 -right-0.5 bg-[var(--border-color)] text-white text-[0.6rem] font-bold min-w-[1.1rem] h-[1.1rem] rounded-full flex items-center justify-center">
+                  0
                 </span>
               )}
             </button>
           </div>
         </div>
 
-        {/* Bottom Row: Nav Links (Desktop) */}
-        <nav
-          className="hidden lg:flex items-center justify-center gap-10 h-10 border-t border-[var(--border-subtle)]"
-          aria-label="Main navigation"
-        >
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`nav-link ${link.active ? "active" : ""}`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Search Bar (expandable) */}
+        {/* Expandable Search Input Bar */}
         {searchOpen && (
-          <div className="border-t border-[var(--border-color)] bg-[var(--bg-primary)]">
+          <div className="border-t border-[var(--border-color)] bg-[#0D0D0D] animate-fade-in">
             <div className="container-main py-3">
-              <div className="relative">
+              <div className="relative flex items-center">
                 <Search
                   size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                  className="absolute left-3 text-[var(--text-muted)] pointer-events-none"
                 />
                 <input
                   id="search-input"
                   type="search"
-                  placeholder="Search products..."
-                  className="input-dark pl-10 w-full"
+                  placeholder="Search parts by name (e.g. Accord G9 Ducktail, Front Lip, Diffuser)..."
+                  className="input-dark pl-10 w-full bg-[#161616]"
                   autoFocus
                 />
+                <button
+                  onClick={() => setSearchOpen(false)}
+                  className="absolute right-3 text-xs uppercase font-heading text-[var(--text-muted)] hover:text-white"
+                >
+                  ESC
+                </button>
               </div>
             </div>
           </div>
         )}
       </header>
 
-      {/* Spacer for fixed navbar */}
-      <div className="h-14 md:h-16 lg:h-[104px]" />
+      {/* Spacer to prevent content overlapping fixed navbar */}
+      <div className="h-16 md:h-20" />
 
       {/* Mobile Menu */}
       <MobileMenu
@@ -242,7 +250,7 @@ export function Navbar() {
         links={NAV_LINKS}
       />
 
-      {/* Cart Sidebar */}
+      {/* Cart Sidebar Slide-over */}
       <CartSidebar />
     </>
   );

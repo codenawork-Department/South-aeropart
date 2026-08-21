@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { users } from "./users";
+import { users, userLoginLogs } from "./users";
 import { adminUsers, adminSessions, adminAuditLogs } from "./admin";
 import { categories, brands, products, productImages, productCompatibility } from "./products";
 import { orders, orderItems, orderStatusHistory } from "./orders";
@@ -10,6 +10,11 @@ export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
   reviews: many(reviews),
   interests: many(userInterests),
+  loginLogs: many(userLoginLogs),
+}));
+
+export const userLoginLogsRelations = relations(userLoginLogs, ({ one }) => ({
+  user: one(users, { fields: [userLoginLogs.userId], references: [users.id] }),
 }));
 
 export const adminUsersRelations = relations(adminUsers, ({ many }) => ({

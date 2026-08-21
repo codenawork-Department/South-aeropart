@@ -1,29 +1,248 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Wind, Gauge, Check, Sparkles, Layers } from "lucide-react";
+import { FeatureBadges } from "@/components/home/FeatureBadges";
+
+const FLAGSHIP_COLLECTIONS = [
+  {
+    id: "accord-g9",
+    name: "ACCORD G9 BODY KIT 02",
+    tagline: "FLAGSHIP EXECUTIVE MOTORSPORT TRANSFORMATION",
+    description:
+      "The benchmark for Japanese executive sports styling. Full 4-piece aerodynamic kit engineered using 3D laser surface scan data to ensure race-grade fitment and real-world downforce gains.",
+    image: "/images/FRONT.png",
+    downforce: "+155 N",
+    drag: "-4 N",
+    pieces: [
+      "Carbon Fiber Front Splitter Lip",
+      "Aerodynamic Side Skirt Extensions",
+      "Multi-Channel Rear Under Diffuser",
+      "Integrated Trunk Ducktail Spoiler",
+    ],
+    price: "฿21,990 THB",
+    link: "/products/accord-g9-complete-body-kit-02",
+  },
+  {
+    id: "civic-fd",
+    name: "CIVIC FD TRACK EDITION",
+    tagline: "CIRCUIT PROVEN TIME-ATTACK AERO",
+    description:
+      "Engineered for the legendary Civic FD chassis. Features wide front splitter with integrated brake duct channels and high-expansion rear underbody strakes.",
+    image: "/images/fd.png",
+    downforce: "+380 N",
+    drag: "-10 N",
+    pieces: [
+      "Track Front Air Dam Splitter",
+      "Vented Side Step Extensions",
+      "Rear Time-Attack Diffuser",
+      "Rear Low-Drag Gurney Flap",
+    ],
+    price: "฿18,990 THB",
+    link: "/products/civic-fd-track-aero-package",
+  },
+  {
+    id: "civic-fe",
+    name: "CIVIC FE STREET PERFORMANCE",
+    tagline: "NEXT-GEN CLEAN OEM+ AERO",
+    description:
+      "Designed specifically for the 11th Gen Civic FE platform. Sharp bodylines that accentuate the wider stance while reducing highway aerodynamic drag.",
+    image: "/images/fe.png",
+    downforce: "+320 N",
+    drag: "-12 N",
+    pieces: [
+      "Modern Front Spoiler Lip",
+      "Sleek Side Air Dam Extensions",
+      "Rear Bumper Lower Diffuser",
+      "Trunk Decklid Spoiler",
+    ],
+    price: "฿19,990 THB",
+    link: "/products/civic-fe-street-performance-kit",
+  },
+  {
+    id: "civic-fl5",
+    name: "CIVIC TYPE R FL5 CLUBSPORT",
+    tagline: "HIGH-DOWNFORCE MOTORSPORT PACKAGE",
+    description:
+      "Swan-neck adjustable GT rear wing and high-speed carbon dive planes designed to maximize track stability and high-speed braking confidence.",
+    image: "/images/civic-r.jpg",
+    downforce: "+520 N",
+    drag: "+18 N",
+    pieces: [
+      "Swan-Neck Dry Carbon Rear Wing",
+      "Front Bumper Carbon Dive Planes",
+      "Underbody Flow Guides",
+    ],
+    price: "฿16,990 THB",
+    link: "/products/civic-type-r-clubsport-wing",
+  },
+];
+
 export default function CollectionPage() {
   return (
-    <div className="container-main py-20">
-      <h1 className="heading-xl text-center">
-        OUR <span className="text-[var(--accent-red)]">COLLECTION</span>
-      </h1>
-      <p className="body-lg text-center mt-4 max-w-lg mx-auto">
-        Explore our complete lineup of body kits and aerodynamic components.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-        {[
-          { name: "Accord G9 Body Kit 02", desc: "Complete aerodynamic transformation for the Honda Accord G9." },
-          { name: "Civic FD Body Kit", desc: "Aggressive styling for the legendary Civic FD. Coming soon." },
-          { name: "Civic FE Body Kit", desc: "Modern aero design for the Civic FE platform. Coming soon." },
-          { name: "Civic FL5 Body Kit", desc: "Race-inspired kit for the Type R. Coming soon." },
-        ].map((kit) => (
-          <div key={kit.name} className="card p-6 group hover:border-[var(--accent-red)] transition-colors">
-            <div className="aspect-video placeholder-image rounded-sm mb-4">
-              <span>{kit.name} — Preview</span>
-            </div>
-            <h3 className="heading-sm group-hover:text-[var(--accent-red)] transition-colors">{kit.name}</h3>
-            <p className="body-sm mt-2">{kit.desc}</p>
+    <div className="bg-[#0A0A0A] min-h-screen">
+      {/* 1. Collection Hero Header */}
+      <section className="bg-gradient-to-b from-[#141414] via-[#0E0E0E] to-[#0A0A0A] border-b border-[#1E1E1E]">
+        <div className="container-main py-12 md:py-16 text-center max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#181818] border border-[#2B2B2B] rounded-full text-[0.65rem] font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase mb-3">
+            FLAGSHIP AERODYNAMICS
           </div>
-        ))}
-      </div>
+          <h1 className="heading-xl text-white">
+            OUR <span className="text-[var(--accent-red)]">COLLECTION</span>
+          </h1>
+          <p className="body-md text-[var(--text-secondary)] mt-3">
+            Complete aerodynamic vehicle packages engineered with Computational Fluid Dynamics (CFD) and track testing for real-world performance gains.
+          </p>
+        </div>
+      </section>
+
+      {/* 2. Flagship Kits Showcase */}
+      <section className="py-12 md:py-20">
+        <div className="container-main space-y-12 md:space-y-16">
+          {FLAGSHIP_COLLECTIONS.map((kit, index) => {
+            const isEven = index % 2 === 0;
+            return (
+              <div
+                key={kit.id}
+                className="card p-6 md:p-10 bg-[#121212] border-[#222222] hover:border-[var(--accent-red)] transition-all duration-500 group shadow-2xl"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                  {/* Left Column (Image) */}
+                  <div
+                    className={`lg:col-span-6 ${
+                      isEven ? "lg:order-1" : "lg:order-2"
+                    }`}
+                  >
+                    <div className="relative aspect-[16/10] w-full rounded-sm overflow-hidden border border-[#262626] bg-[#161616]">
+                      <Image
+                        src={kit.image}
+                        alt={kit.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        sizes="(max-width: 1024px) 100vw, 600px"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute bottom-3 left-3 flex gap-2">
+                        <div className="telemetry-pill text-xs">
+                          <Wind size={14} className="text-[var(--success)]" />
+                          <span className="text-[var(--success)] font-bold">
+                            {kit.downforce}
+                          </span>
+                        </div>
+                        <div className="telemetry-pill text-xs">
+                          <Gauge size={14} className="text-[var(--accent-red)]" />
+                          <span className="text-[var(--accent-red)] font-bold">
+                            {kit.drag}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column (Info) */}
+                  <div
+                    className={`lg:col-span-6 space-y-4 ${
+                      isEven ? "lg:order-2" : "lg:order-1"
+                    }`}
+                  >
+                    <p className="text-[0.65rem] font-heading font-bold tracking-[0.2em] text-[var(--accent-red)] uppercase">
+                      {kit.tagline}
+                    </p>
+                    <h2 className="heading-lg text-white">{kit.name}</h2>
+                    <p className="body-md text-[var(--text-secondary)]">
+                      {kit.description}
+                    </p>
+
+                    {/* Component Pieces List */}
+                    <div className="space-y-2 pt-2">
+                      <p className="text-xs font-heading font-bold text-white uppercase tracking-wider">
+                        INCLUDED IN PACKAGE :
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {kit.pieces.map((piece) => (
+                          <div
+                            key={piece}
+                            className="flex items-center gap-2 text-xs text-[var(--text-secondary)]"
+                          >
+                            <Check
+                              size={14}
+                              className="text-[var(--accent-red)] flex-shrink-0"
+                            />
+                            <span>{piece}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Price & Action */}
+                    <div className="pt-4 border-t border-[#1F1F1F] flex items-center justify-between gap-4 flex-wrap">
+                      <div>
+                        <span className="text-[0.65rem] text-[var(--text-muted)] font-heading uppercase">
+                          PACKAGE STARTING AT
+                        </span>
+                        <p className="font-heading text-xl font-bold text-white">
+                          {kit.price}
+                        </p>
+                      </div>
+
+                      <Link
+                        href={kit.link}
+                        className="btn-primary gap-2 text-xs py-2.5 px-5"
+                      >
+                        EXPLORE BUILD <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 3. CFD Aerodynamics Laboratory Feature */}
+      <section className="py-12 md:py-16 bg-[#0E0E0E] border-t border-[#1C1C1C]">
+        <div className="container-main">
+          <div className="card p-8 md:p-12 bg-gradient-to-r from-[#141414] via-[#161616] to-[#121212] border-[#262626]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Layers size={16} className="text-[var(--accent-red)]" />
+                  <span className="text-xs font-heading font-bold text-[var(--accent-red)] uppercase tracking-wider">
+                    COMPUTATIONAL FLUID DYNAMICS
+                  </span>
+                </div>
+                <h2 className="heading-lg text-white">
+                  ENGINEERED FOR REAL AERODYNAMIC BENEFIT
+                </h2>
+                <p className="body-md text-[var(--text-secondary)]">
+                  Every South Aero surface is subjected to high-fidelity CFD wind tunnel simulations. We analyze boundary layer separation, vortices, and drag coefficients to ensure our parts don&apos;t just look aggressive—they make your car perform better at speed.
+                </p>
+                <div className="pt-2">
+                  <Link href="/about" className="btn-outline gap-2 text-xs">
+                    LEARN ABOUT OUR R&amp;D <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+
+              <div className="lg:col-span-6">
+                <div className="relative aspect-[16/9] rounded-sm overflow-hidden border border-[#2A2A2A] bg-[#0A0A0A]">
+                  <Image
+                    src="/images/G9/Artboard 9.png"
+                    alt="CFD Wind Tunnel Simulation"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 600px"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <FeatureBadges />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
+import { recordLoginAction } from "@/actions/auth-audit.actions";
 import { Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 
 export default function SignInPage() {
@@ -55,6 +56,15 @@ export default function SignInPage() {
 
         if (result.status === "complete" && result.createdSessionId) {
           await setActive({ session: result.createdSessionId });
+          
+          // Record login history in Neon.tech
+          const userId = (result as { userData?: { id?: string } })?.userData?.id || result.createdSessionId;
+          await recordLoginAction({
+            userId,
+            email,
+            loginMethod: "email_password",
+          });
+
           router.push("/");
         } else {
           // Handle other statuses (e.g., needs_second_factor)

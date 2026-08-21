@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
+import { db, users, userLoginLogs, eq } from "@repo/db";
 
 /**
- * Clerk webhook handler — syncs Clerk users into the `users` table.
+ * Clerk webhook handler — syncs Clerk users and login sessions into Neon.tech PostgreSQL.
  *
- * NOTE: Users are customers only (no role). Admins live in the
- * separate `admin_users` table with their own auth flow.
+ * Events handled:
+ * - user.created: Inserts or updates user in `users` table
+ * - user.updated: Updates user profile in `users` table
+ * - user.deleted: Soft-bans user (`is_banned = true`) in `users` table
+ * - session.created: Records login event in `user_login_logs` and updates `users.last_login_at`
  */
 export async function POST(req: NextRequest) {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
 
-  // If webhook secret is not configured, log and accept
-  if (!webhookSecret) {
-    console.warn("CLERK_WEBHOOK_SECRET not set — skipping verification");
-    return handleEvent(await req.json());
+  // If webhook secret is not configured or is placeholder, log and accept
+  if (!webhookSecret || webhookSecret.startsWith("whsec_xxx")) {
+    console.warn("CLERK_WEBHOOK_SECRET not properly configured — parsing payload directly");
+    try {
+      const body = await req.json();
+      return handleEvent(body);
+    } catch {
+      return NextResponse.json({ error: "invalid json" }, { status: 400 });
+    }
   }
 
   // Verify webhook signature via Svix
@@ -48,66 +57,128 @@ async function handleEvent(payload: Record<string, unknown>) {
   try {
     const eventType = payload.type as string;
     const data = payload.data as Record<string, unknown>;
+    const now = new Date();
 
     switch (eventType) {
       case "user.created": {
-        const { id, email_addresses, first_name, last_name, image_url } = data as {
+        const { id, email_addresses, first_name, last_name, image_url, phone_numbers } = data as {
           id: string;
-          email_addresses: { email_address: string }[];
-          first_name: string | null;
-          last_name: string | null;
-          image_url: string | null;
+          email_addresses?: { email_address: string }[];
+          first_name?: string | null;
+          last_name?: string | null;
+          image_url?: string | null;
+          phone_numbers?: { phone_number: string }[];
         };
+
         const email = email_addresses?.[0]?.email_address;
+        if (!email) {
+          console.warn(`Clerk webhook user.created ${id} has no email address`);
+          break;
+        }
+
         const fullName = [first_name, last_name].filter(Boolean).join(" ") || null;
+        const phone = phone_numbers?.[0]?.phone_number || null;
 
-        // TODO: When database is connected:
-        // await db.insert(users).values({
-        //   id,
-        //   email,
-        //   fullName,
-        //   avatarUrl: image_url,
-        // }).onConflictDoNothing();
+        await db
+          .insert(users)
+          .values({
+            id,
+            email,
+            fullName,
+            phone,
+            avatarUrl: image_url || null,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: users.id,
+            set: {
+              email,
+              ...(fullName ? { fullName } : {}),
+              ...(image_url ? { avatarUrl: image_url } : {}),
+              ...(phone ? { phone } : {}),
+              updatedAt: now,
+            },
+          });
 
-        console.log(`Clerk webhook: user.created ${id} (${email})`);
+        console.log(`Clerk webhook: synced user.created ${id} (${email}) to Neon`);
         break;
       }
 
       case "user.updated": {
-        const { id, email_addresses, first_name, last_name, image_url } = data as {
+        const { id, email_addresses, first_name, last_name, image_url, phone_numbers } = data as {
           id: string;
-          email_addresses: { email_address: string }[];
-          first_name: string | null;
-          last_name: string | null;
-          image_url: string | null;
+          email_addresses?: { email_address: string }[];
+          first_name?: string | null;
+          last_name?: string | null;
+          image_url?: string | null;
+          phone_numbers?: { phone_number: string }[];
         };
+
         const email = email_addresses?.[0]?.email_address;
         const fullName = [first_name, last_name].filter(Boolean).join(" ") || null;
+        const phone = phone_numbers?.[0]?.phone_number || null;
 
-        // TODO: When database is connected:
-        // await db.update(users)
-        //   .set({
-        //     email,
-        //     fullName,
-        //     avatarUrl: image_url,
-        //     updatedAt: new Date(),
-        //   })
-        //   .where(eq(users.id, id));
+        await db
+          .update(users)
+          .set({
+            ...(email ? { email } : {}),
+            ...(fullName !== undefined ? { fullName } : {}),
+            ...(phone !== undefined ? { phone } : {}),
+            ...(image_url !== undefined ? { avatarUrl: image_url } : {}),
+            updatedAt: now,
+          })
+          .where(eq(users.id, id));
 
-        console.log(`Clerk webhook: user.updated ${id}`);
+        console.log(`Clerk webhook: synced user.updated ${id} to Neon`);
         break;
       }
 
       case "user.deleted": {
         const { id } = data as { id: string };
 
-        // TODO: When database is connected:
-        // await db.update(users)
-        //   .set({ isBanned: true, updatedAt: new Date() })
-        //   .where(eq(users.id, id));
-        // Note: We soft-ban instead of hard-deleting to preserve order history.
+        // Soft-ban instead of hard-deleting to preserve order and audit history
+        await db
+          .update(users)
+          .set({ isBanned: true, updatedAt: now })
+          .where(eq(users.id, id));
 
-        console.log(`Clerk webhook: user.deleted ${id} — soft-banned`);
+        console.log(`Clerk webhook: soft-banned deleted user ${id} in Neon`);
+        break;
+      }
+
+      case "session.created": {
+        const { user_id, id: sessionId, client_id } = data as {
+          user_id: string;
+          id: string;
+          client_id?: string;
+        };
+
+        if (user_id) {
+          // 1. Update user last login
+          await db
+            .update(users)
+            .set({
+              lastLoginAt: now,
+              updatedAt: now,
+            })
+            .where(eq(users.id, user_id));
+
+          // 2. Insert login log into user_login_logs
+          await db.insert(userLoginLogs).values({
+            userId: user_id,
+            loginMethod: "clerk_session",
+            metadata: {
+              sessionId,
+              clientId: client_id,
+              source: "clerk_webhook",
+              timestamp: now.toISOString(),
+            },
+            createdAt: now,
+          });
+
+          console.log(`Clerk webhook: recorded session.created for user ${user_id} in Neon`);
+        }
         break;
       }
 
@@ -117,7 +188,7 @@ async function handleEvent(payload: Record<string, unknown>) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Clerk webhook error:", error);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    console.error("Clerk webhook processing error:", error);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }

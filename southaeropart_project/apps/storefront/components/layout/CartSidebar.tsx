@@ -3,6 +3,7 @@
 import { X, Minus, Plus, Trash2, ShoppingCart, Lock, Award, RotateCcw, Headphones, ArrowRight } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
 import Link from "next/link";
+import Image from "next/image";
 
 export function CartSidebar() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, itemCount, subtotal } = useCart();
@@ -13,108 +14,131 @@ export function CartSidebar() {
     <div className="fixed inset-0 z-[70]">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
         onClick={closeCart}
         aria-hidden="true"
       />
 
       {/* Sidebar Panel */}
       <aside
-        className="absolute top-0 right-0 bottom-0 w-full max-w-[420px] bg-[var(--bg-primary)] border-l border-[var(--border-color)] flex flex-col animate-slide-in-right"
+        className="absolute top-0 right-0 bottom-0 w-full max-w-[430px] bg-[#0D0D0D] border-l border-[#222222] flex flex-col shadow-2xl shadow-black animate-slide-in-right z-10"
         role="dialog"
         aria-label="Shopping cart"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)]">
-          <h2 className="font-heading text-lg font-bold tracking-wider uppercase">
-            MY CART <span className="text-[var(--text-secondary)]">({itemCount})</span>
-          </h2>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#222222]">
+          <div className="flex items-center gap-2">
+            <h2 className="font-heading text-lg font-bold tracking-wider uppercase text-white">
+              MY CART
+            </h2>
+            <span className="text-[var(--accent-red)] font-heading text-lg font-bold">
+              ({itemCount})
+            </span>
+          </div>
           <button
             id="cart-close"
             onClick={closeCart}
-            className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            className="p-1.5 text-[var(--text-muted)] hover:text-white transition-colors rounded hover:bg-white/5"
             aria-label="Close cart"
           >
-            <X size={22} />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        {/* Cart Items List */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <ShoppingCart size={48} className="text-[var(--border-color)] mb-4" />
-              <p className="font-heading text-sm tracking-wider text-[var(--text-secondary)] uppercase">
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="w-16 h-16 rounded-full bg-[#181818] flex items-center justify-center mb-4 text-[var(--text-muted)]">
+                <ShoppingCart size={28} />
+              </div>
+              <p className="font-heading text-base font-semibold tracking-wider text-white uppercase">
                 Your cart is empty
+              </p>
+              <p className="text-xs text-[var(--text-muted)] mt-1.5 max-w-xs">
+                Explore our precision-engineered aerodynamic body kits and parts.
               </p>
               <Link
                 href="/products"
                 onClick={closeCart}
-                className="btn-primary mt-6 text-xs"
+                className="btn-primary mt-6 text-xs gap-2"
               >
-                BROWSE PRODUCTS
+                BROWSE ACCESSORIES <ArrowRight size={14} />
               </Link>
             </div>
           ) : (
             items.map((item) => (
               <div
                 key={item.id}
-                className="flex gap-4 p-4 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded"
+                className="flex gap-4 p-3.5 bg-[#141414] border border-[#222222] rounded relative group"
               >
-                {/* Product Image Placeholder */}
-                <div className="w-20 h-20 flex-shrink-0 placeholder-image rounded" style={{ background: '#1a1a1a' }}>
-                  <span className="text-[0.6rem] text-[var(--text-muted)]">
-                    {item.product.name}
-                  </span>
+                {/* Product Thumbnail */}
+                <div className="w-20 h-20 flex-shrink-0 bg-[#1C1C1C] rounded overflow-hidden relative border border-[#2A2A2A]">
+                  {item.product.images?.[0] ? (
+                    <Image
+                      src={item.product.images[0]}
+                      alt={item.product.name}
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[0.6rem] text-[var(--text-muted)] p-1 text-center font-heading">
+                      {item.product.name}
+                    </div>
+                  )}
                 </div>
 
                 {/* Product Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-[0.65rem] text-[var(--accent-red)] font-heading font-semibold tracking-wider uppercase">
-                        SOUTH AERO
-                      </p>
-                      <h3 className="font-heading text-sm font-bold tracking-wide uppercase leading-tight mt-0.5">
-                        {item.product.name}
-                      </h3>
-                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                        {item.variant}
-                      </p>
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[0.65rem] text-[var(--accent-red)] font-heading font-bold tracking-widest uppercase">
+                          SOUTH AERO
+                        </p>
+                        <h3 className="font-heading text-sm font-bold tracking-wide uppercase leading-tight text-white mt-0.5 truncate">
+                          {item.product.name}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="p-1 text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors"
+                        aria-label={`Remove ${item.product.name}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="p-1 text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors flex-shrink-0"
-                      aria-label={`Remove ${item.product.name}`}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+
+                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                      Finish: <span className="text-white font-medium">{item.variant || item.product.finish}</span>
+                    </p>
                   </div>
 
-                  <div className="flex items-center justify-between mt-3">
-                    <p className="font-heading text-sm font-bold">
+                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#202020]">
+                    <p className="font-heading text-sm font-bold text-white">
                       ฿{parseFloat(item.product.price).toLocaleString()} THB
                     </p>
 
-                    {/* Quantity Controls */}
-                    <div className="flex items-center border border-[var(--border-color)]">
+                    {/* Quantity Selector Stepper */}
+                    <div className="flex items-center border border-[#333333] rounded-sm bg-[#0E0E0E]">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-7 h-7 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                        className="w-6 h-6 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors"
                         aria-label="Decrease quantity"
                         disabled={item.quantity <= 1}
                       >
-                        <Minus size={12} />
+                        <Minus size={11} />
                       </button>
-                      <span className="w-8 h-7 flex items-center justify-center text-xs font-medium border-x border-[var(--border-color)]">
+                      <span className="w-7 h-6 flex items-center justify-center text-xs font-heading font-bold text-white border-x border-[#333333]">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-7 h-7 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                        className="w-6 h-6 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors"
                         aria-label="Increase quantity"
                       >
-                        <Plus size={12} />
+                        <Plus size={11} />
                       </button>
                     </div>
                   </div>
@@ -124,51 +148,57 @@ export function CartSidebar() {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer Checkout Summary */}
         {items.length > 0 && (
-          <div className="border-t border-[var(--border-color)] px-6 py-5 space-y-4">
+          <div className="border-t border-[#222222] bg-[#111111] px-6 py-5 space-y-4">
             {/* Subtotal */}
             <div className="flex items-center justify-between">
-              <span className="font-heading text-sm tracking-wider text-[var(--text-secondary)] uppercase">
-                Subtotal ({itemCount} {itemCount === 1 ? "Item" : "Items"})
+              <span className="font-heading text-sm font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+                SUBTOTAL ({itemCount} {itemCount === 1 ? "ITEM" : "ITEMS"})
               </span>
-              <span className="font-heading text-lg font-bold">
+              <span className="font-heading text-xl font-bold text-white">
                 ฿{parseFloat(subtotal).toLocaleString()} THB
               </span>
             </div>
-            <p className="text-xs text-[var(--text-muted)]">
-              Shipping and taxes calculated at checkout.
+            <p className="text-[0.75rem] text-[var(--text-muted)] -mt-2">
+              Shipping &amp; taxes calculated at checkout.
             </p>
 
             {/* Actions */}
-            <Link
-              href="/checkout"
-              onClick={closeCart}
-              id="checkout-btn"
-              className="btn-primary w-full justify-center gap-2"
-            >
-              CHECK OUT <ArrowRight size={16} />
-            </Link>
-            <button
-              onClick={closeCart}
-              className="btn-outline w-full justify-center gap-2"
-            >
-              CONTINUE SHOPPING <ArrowRight size={16} />
-            </button>
+            <div className="space-y-2.5 pt-1">
+              <Link
+                href="/checkout"
+                onClick={closeCart}
+                id="checkout-btn"
+                className="btn-primary w-full justify-center gap-2 py-3.5"
+              >
+                CHECK OUT <ArrowRight size={16} />
+              </Link>
+              <button
+                onClick={closeCart}
+                className="btn-outline w-full justify-center gap-2 py-3"
+              >
+                CONTINUE SHOPPING <ArrowRight size={16} />
+              </button>
+            </div>
 
-            {/* Trust Badges */}
-            <div className="pt-4 border-t border-[var(--border-color)] space-y-3">
+            {/* 4 Trust Badges */}
+            <div className="pt-4 border-t border-[#222222] grid grid-cols-2 gap-3">
               {[
-                { icon: Lock, title: "Secure Checkout", desc: "Your payment is 100% secure." },
-                { icon: Award, title: "Premium Quality", desc: "Built for performance and style." },
-                { icon: RotateCcw, title: "Easy Returns", desc: "Hassle-free returns within 30 days." },
-                { icon: Headphones, title: "Dedicated Support", desc: "We're here to help you." },
+                { icon: Lock, title: "SECURE CHECKOUT", desc: "Your payment is 100% secure." },
+                { icon: Award, title: "PREMIUM QUALITY", desc: "Built for performance and style." },
+                { icon: RotateCcw, title: "EASY RETURNS", desc: "Hassle-free 30-day policy." },
+                { icon: Headphones, title: "DEDICATED SUPPORT", desc: "We're here to help you." },
               ].map(({ icon: Icon, title, desc }) => (
-                <div key={title} className="flex items-start gap-3">
-                  <Icon size={16} className="text-[var(--text-muted)] flex-shrink-0 mt-0.5" />
+                <div key={title} className="flex items-start gap-2.5">
+                  <Icon size={14} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider">{title}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{desc}</p>
+                    <p className="text-[0.65rem] font-heading font-bold text-white tracking-wider uppercase">
+                      {title}
+                    </p>
+                    <p className="text-[0.65rem] text-[var(--text-muted)] leading-tight mt-0.5">
+                      {desc}
+                    </p>
                   </div>
                 </div>
               ))}
