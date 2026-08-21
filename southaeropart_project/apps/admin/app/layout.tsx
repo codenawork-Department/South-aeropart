@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -6,6 +6,13 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0A0A0A",
+};
 
 export const metadata: Metadata = {
   title: "South Aero Admin — Dashboard",
@@ -19,7 +26,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" className={inter.variable}>
-      <body>{children}</body>
+      <body className="min-h-screen bg-[#0A0A0A] antialiased text-white selection:bg-red-900 selection:text-white">
+        {children}
+      </body>
     </html>
   );
 }
+

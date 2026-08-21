@@ -6,7 +6,14 @@ module.exports = {
     "../../packages/ui/src/**/*.{ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      screens: {
+        xs: "420px",
+        "3xl": "1920px",
+        "4xl": "2560px",
+      },
+    },
   },
   plugins: [],
 };
+
