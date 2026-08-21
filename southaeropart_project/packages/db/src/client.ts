@@ -8,5 +8,9 @@ if (!connectionString) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
-const sql = neon(connectionString);
-export const db = drizzle(sql, { schema });
+const sqlClient = neon(connectionString);
+export const rawSql = sqlClient;
+export { neon };
+export const db = drizzle(sqlClient, { schema });
+
+

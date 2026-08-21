@@ -34,19 +34,20 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="auth-bg">
-      <div className="glass-card w-full max-w-[420px] mx-4 p-8 animate-in">
+    <div className="auth-bg px-4 py-8 sm:py-12 safe-top safe-bottom">
+      <div className="glass-card w-full max-w-[420px] mx-auto p-6 sm:p-8 animate-in">
         {/* ─── Branding ─── */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] mb-4">
-            <ShieldCheck size={28} className="text-blue-500" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] mb-3 sm:mb-4">
+            <ShieldCheck size={26} className="text-blue-500 sm:w-7 sm:h-7" />
           </div>
           <h1 className="brand-title brand-glow">SOUTH</h1>
           <p className="brand-subtitle">A E R O&ensp;P E R F O R M A N C E</p>
-          <p className="text-xs text-gray-500 mt-3 tracking-wide">
+          <p className="text-xs text-gray-500 mt-2 sm:mt-3 tracking-wide">
             Admin Dashboard — เข้าสู่ระบบ
           </p>
         </div>
+
 
         {/* ─── Error Alert ─── */}
         {state?.error && (

@@ -113,15 +113,15 @@ export function SetupForm() {
   // ─── Success Screen ───
   if (showSuccess) {
     return (
-      <div className="auth-bg">
-        <div className="glass-card w-full max-w-[420px] mx-4 p-8 animate-in text-center">
+      <div className="auth-bg px-4 py-8 sm:py-12 safe-top safe-bottom">
+        <div className="glass-card w-full max-w-[420px] mx-auto p-6 sm:p-8 animate-in text-center">
           <div className="flex justify-center mb-5">
             <div className="success-ring">
               <Check size={28} className="text-green-400" />
             </div>
           </div>
-          <h2 className="text-xl font-bold mb-2">สร้าง Super Admin สำเร็จ!</h2>
-          <p className="text-sm text-gray-400 mb-4">
+          <h2 className="text-lg sm:text-xl font-bold mb-2">สร้าง Super Admin สำเร็จ!</h2>
+          <p className="text-xs sm:text-sm text-gray-400 mb-4">
             บัญชี Super Admin ถูกสร้างเรียบร้อยแล้ว
             <br />
             กำลังนำคุณไปหน้าเข้าสู่ระบบ...
@@ -136,27 +136,28 @@ export function SetupForm() {
   }
 
   return (
-    <div className="auth-bg">
-      <div className="glass-card w-full max-w-[480px] mx-4 p-8 animate-in">
+    <div className="auth-bg px-4 py-8 sm:py-12 safe-top safe-bottom">
+      <div className="glass-card w-full max-w-[480px] mx-auto p-6 sm:p-8 animate-in">
         {/* ─── Branding ─── */}
-        <div className="text-center mb-7">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] mb-4">
-            <KeyRound size={28} className="text-blue-500" />
+        <div className="text-center mb-6 sm:mb-7">
+          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] mb-3 sm:mb-4">
+            <KeyRound size={26} className="text-blue-500 sm:w-7 sm:h-7" />
           </div>
           <h1 className="brand-title brand-glow">SOUTH</h1>
           <p className="brand-subtitle">A E R O&ensp;P E R F O R M A N C E</p>
-          <p className="text-xs text-gray-500 mt-3 tracking-wide">
+          <p className="text-xs text-gray-500 mt-2 sm:mt-3 tracking-wide">
             Initial Setup — สร้าง Super Admin คนแรก
           </p>
         </div>
 
         {/* ─── Info Banner ─── */}
-        <div className="alert-warning mb-6">
+        <div className="alert-warning mb-5 sm:mb-6">
           <AlertTriangle size={16} className="flex-shrink-0" />
-          <span>
+          <span className="text-xs sm:text-sm">
             หน้านี้ใช้ได้เพียงครั้งเดียว หลังจากสร้าง Super Admin แล้วจะไม่สามารถเข้าถึงได้อีก
           </span>
         </div>
+
 
         {/* ─── Server Error ─── */}
         {state?.error && (
@@ -373,45 +374,45 @@ export function SetupForm() {
 
       {/* ─── Confirmation Modal ─── */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay p-4" onClick={() => setShowModal(false)}>
           <div
-            className="modal-content"
+            className="modal-content w-full max-w-[420px] p-5 sm:p-7"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
                 <ShieldCheck size={20} className="text-blue-400" />
               </div>
               <div>
-                <h3 className="font-bold text-sm">ยืนยันการสร้าง Super Admin</h3>
-                <p className="text-xs text-gray-500">กรุณาตรวจสอบข้อมูลก่อนดำเนินการ</p>
+                <h3 className="font-bold text-sm text-white">ยืนยันการสร้าง Super Admin</h3>
+                <p className="text-[0.7rem] sm:text-xs text-gray-500">กรุณาตรวจสอบข้อมูลก่อนดำเนินการ</p>
               </div>
             </div>
 
-            <div className="bg-[#0A0A0A] rounded-lg p-4 mb-5 border border-[#2A2A2A]">
+            <div className="bg-[#0A0A0A] rounded-lg p-3.5 sm:p-4 mb-5 border border-[#2A2A2A]">
               <p className="text-xs text-gray-400 mb-3">
                 คุณกำลังจะสร้างบัญชี Super Admin ซึ่งมีสิทธิ์สูงสุดในระบบ:
               </p>
               <ul className="text-xs text-gray-300 space-y-1.5">
                 <li className="flex items-center gap-2">
-                  <Check size={12} className="text-blue-400" />
-                  จัดการสินค้า, คำสั่งซื้อ, รีวิว
+                  <Check size={12} className="text-blue-400 shrink-0" />
+                  <span>จัดการสินค้า, คำสั่งซื้อ, รีวิว</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={12} className="text-blue-400" />
-                  สร้าง/ลบ Admin และ Staff
+                  <Check size={12} className="text-blue-400 shrink-0" />
+                  <span>สร้าง/ลบ Admin และ Staff</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={12} className="text-blue-400" />
-                  เข้าถึง Audit Logs ทั้งหมด
+                  <Check size={12} className="text-blue-400 shrink-0" />
+                  <span>เข้าถึง Audit Logs ทั้งหมด</span>
                 </li>
               </ul>
             </div>
 
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 sm:justify-end">
               <button
                 type="button"
-                className="modal-btn modal-btn-cancel"
+                className="modal-btn modal-btn-cancel w-full sm:w-auto text-center"
                 onClick={() => setShowModal(false)}
                 disabled={isPending}
               >
@@ -419,14 +420,14 @@ export function SetupForm() {
               </button>
               <button
                 type="button"
-                className="modal-btn modal-btn-confirm flex items-center gap-2"
+                className="modal-btn modal-btn-confirm flex items-center justify-center gap-2 w-full sm:w-auto"
                 onClick={handleConfirm}
                 disabled={isPending}
               >
                 {isPending ? (
                   <>
                     <span className="btn-spinner !w-3.5 !h-3.5" />
-                    กำลังสร้าง...
+                    <span>กำลังสร้าง...</span>
                   </>
                 ) : (
                   "ยืนยัน สร้าง Super Admin"
@@ -436,6 +437,7 @@ export function SetupForm() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

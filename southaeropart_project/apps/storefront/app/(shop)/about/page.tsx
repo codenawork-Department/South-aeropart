@@ -48,7 +48,7 @@ const PROCESS_STEPS = [
   },
 ];
 
-export function AboutPage() {
+function AboutPage() {
   const [formSent, setFormSent] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
