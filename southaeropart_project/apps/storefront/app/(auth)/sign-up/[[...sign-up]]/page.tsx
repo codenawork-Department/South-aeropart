@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
+import { recordLoginAction } from "@/actions/auth-audit.actions";
 import { Eye, EyeOff, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 
 export default function SignUpPage() {
@@ -104,6 +105,16 @@ export default function SignUpPage() {
 
         if (result.status === "complete" && result.createdSessionId) {
           await setActive({ session: result.createdSessionId });
+
+          // Record login history in Neon.tech
+          const userId = (result as { createdUserId?: string })?.createdUserId || signUp.createdUserId || result.createdSessionId;
+          await recordLoginAction({
+            userId,
+            email,
+            fullName: [firstName, lastName].filter(Boolean).join(" "),
+            loginMethod: "email_password",
+          });
+
           router.push("/");
         } else {
           setError("Verification incomplete. Please try again.");
