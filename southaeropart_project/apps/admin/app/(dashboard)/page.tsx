@@ -1,16 +1,13 @@
 import Link from "next/link";
 import {
-  Package,
-  ShoppingCart,
-  Star,
   Activity,
   ArrowRight,
   Database,
   Users,
   HardDrive,
-  ShieldCheck,
 } from "lucide-react";
 import { getServiceUsageMetrics } from "@/actions/service-usage.actions";
+import { DashboardViewController } from "@/components/dashboard/dashboard-view-controller";
 
 export default async function AdminDashboard() {
   // Fetch high-level metrics for the dashboard overview
@@ -36,80 +33,9 @@ export default async function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-            ภาพรวมระบบ (Dashboard Overview)
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-400 mt-1">
-            ยินดีต้อนรับสู่ระบบจัดการ South Aero Performance E-Commerce
-          </p>
-        </div>
-
-        <Link
-          href="/services"
-          className="inline-flex items-center justify-between sm:justify-start gap-2 px-3.5 py-2 rounded-lg bg-[#161616] hover:bg-[#202020] border border-[#2A2A2A] hover:border-gray-700 text-xs font-medium text-gray-300 hover:text-white transition-all shadow-sm group w-full sm:w-auto shrink-0"
-        >
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>สถานะบริการ: 5 ระบบทำงานปกติ</span>
-          </div>
-          <ArrowRight size={13} className="text-gray-500 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 2xl:gap-5">
-        {[
-          {
-            label: "Total Products",
-            value: "4",
-            change: "+2 this week",
-            icon: Package,
-            href: "/products",
-          },
-          {
-            label: "Total Orders",
-            value: "0",
-            change: "No orders yet",
-            icon: ShoppingCart,
-            href: "/orders",
-          },
-          {
-            label: "Revenue",
-            value: "฿0",
-            change: "—",
-            icon: ShieldCheck,
-            href: "/orders",
-          },
-          {
-            label: "Pending Reviews",
-            value: "0",
-            change: "—",
-            icon: Star,
-            href: "/reviews",
-          },
-        ].map(({ label, value, change, icon: Icon, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className="group block bg-[#141414] hover:bg-[#181818] border border-[#222222] hover:border-[#333333] rounded-xl sm:rounded-2xl p-4 sm:p-5 transition-all shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                {label}
-              </p>
-              <div className="p-2 rounded-lg bg-[#1E1E1E] text-gray-400 group-hover:text-white transition-colors">
-                <Icon size={16} />
-              </div>
-            </div>
-            <p className="text-2xl sm:text-3xl font-bold mt-2 text-white">{value}</p>
-            <p className="text-xs text-gray-500 mt-1">{change}</p>
-          </Link>
-        ))}
-      </div>
+    <div className="space-y-8 pb-10">
+      {/* Interactive Business Analytics Cockpit */}
+      <DashboardViewController />
 
       {/* Service Usage & Quota Banner Widget */}
       <div className="bg-gradient-to-r from-[#141414] via-[#161616] to-[#121212] border border-[#242424] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-md">
@@ -123,7 +49,7 @@ export default async function AdminDashboard() {
                 <h3 className="text-sm sm:text-base font-semibold text-white">
                   สถานะบริการ &amp; โควต้า Free Tier (Services &amp; Quotas)
                 </h3>
-                <span className="text-[0.65rem] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
+                <span className="text-[0.65rem] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium font-mono">
                   {serviceStatus.overallHealthy ? "สมบูรณ์ 100%" : "ต้องการการตรวจสอบ"}
                 </span>
               </div>
@@ -135,9 +61,9 @@ export default async function AdminDashboard() {
 
           <Link
             href="/services"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold tracking-wide transition-all shadow-md shadow-red-950/50 w-full sm:w-auto shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#222222] hover:bg-[#2A2A2A] border border-white/10 text-white text-xs font-semibold tracking-wide transition-all shadow-md w-full sm:w-auto shrink-0"
           >
-            <span>ดูรายงานสถานะทั้งหมด</span>
+            <span>ดูรายงานสถานะบริการทั้งหมด</span>
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -217,4 +143,3 @@ export default async function AdminDashboard() {
     </div>
   );
 }
-
