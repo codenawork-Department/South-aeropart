@@ -97,13 +97,15 @@ export interface OmiseMetrics {
 }
 
 export interface HostingMetrics {
+  isDeployed: boolean;
   platform: string;
   tier: string;
   bandwidthLimit: string;
   serverlessLimit: string;
   edgeInvocationsLimit: string;
   nodeVersion: string;
-  status: "healthy";
+  status: "healthy" | "local" | "warning";
+  statusLabel: string;
 }
 
 export interface ServiceUsageReport {
@@ -507,14 +509,17 @@ function fetchOmiseMetrics(): OmiseMetrics {
 }
 
 function fetchHostingMetrics(): HostingMetrics {
+  const isVercel = !!process.env.VERCEL;
   return {
-    platform: process.env.VERCEL ? "Vercel Cloud Platform" : "Next.js Standalone / Serverless",
-    tier: "Hobby Free Tier",
-    bandwidthLimit: "100 GB / เดือน",
+    isDeployed: isVercel,
+    platform: isVercel ? "Vercel Cloud Platform" : "Local Development Server",
+    tier: isVercel ? "Hobby Free Tier" : "Localhost (Node.js)",
+    bandwidthLimit: "100 GB / เดือน (Free Quota)",
     serverlessLimit: "100 GB-hours / เดือน",
     edgeInvocationsLimit: "1,000,000 ครั้ง / เดือน",
     nodeVersion: process.version,
-    status: "healthy",
+    status: isVercel ? "healthy" : "local",
+    statusLabel: isVercel ? "Online (Vercel)" : "Local (ยังไม่ Deploy)",
   };
 }
 

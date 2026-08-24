@@ -49,6 +49,8 @@ function StatusDot({ status }: { status: string }) {
       ? "bg-amber-400"
       : status === "critical"
       ? "bg-red-400"
+      : status === "local"
+      ? "bg-blue-400"
       : "bg-gray-500";
   return (
     <span className="relative flex h-2.5 w-2.5">
@@ -71,6 +73,10 @@ function StatusBadge({
     healthy: {
       cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25",
       text: "ปกติ",
+    },
+    local: {
+      cls: "bg-blue-500/10 text-blue-400 border-blue-500/25",
+      text: "Localhost",
     },
     warning: {
       cls: "bg-amber-500/10 text-amber-400 border-amber-500/25",
@@ -673,15 +679,22 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
             <div className="bg-[#080808] border border-[#1A1A1A] rounded-xl p-3.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[0.62rem] text-gray-500 uppercase tracking-widest">Vercel Hosting</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">Hobby Free Tier</p>
+                  <p className="text-[0.62rem] text-gray-500 uppercase tracking-widest">
+                    {report.hosting.isDeployed ? "Vercel Cloud Hosting" : "Hosting / Server Environment"}
+                  </p>
+                  <p className="text-sm font-semibold text-white mt-0.5">{report.hosting.tier}</p>
                   <p className="text-[0.65rem] text-gray-500 mt-0.5">
-                    Node {report.hosting.nodeVersion}
+                    {report.hosting.platform} · Node {report.hosting.nodeVersion}
                   </p>
                 </div>
                 <div className="text-right">
-                  <StatusBadge status="healthy" label="Online" />
-                  <p className="text-[0.62rem] text-gray-500 mt-1">{report.hosting.bandwidthLimit}</p>
+                  <StatusBadge
+                    status={report.hosting.status}
+                    label={report.hosting.statusLabel}
+                  />
+                  <p className="text-[0.62rem] text-gray-500 mt-1">
+                    {report.hosting.isDeployed ? report.hosting.bandwidthLimit : "โควต้า Vercel: 100 GB/ด."}
+                  </p>
                 </div>
               </div>
 

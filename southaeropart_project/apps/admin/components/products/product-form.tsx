@@ -6,8 +6,11 @@ import Link from "next/link";
 import {
   createProductAction,
   updateProductAction,
+  generateSuggestedSkuAction,
+  checkSkuAvailabilityAction,
   type ProductInput,
 } from "@/actions/product.actions";
+import { parseSku } from "@/lib/sku-helper";
 import { ImageUploader, type ImageUploadItem } from "./image-uploader";
 import {
   Package,
@@ -24,6 +27,12 @@ import {
   FolderTree,
   Car,
   Tag,
+  Wand2,
+  HelpCircle,
+  Hash,
+  Info,
+  Check,
+  BookOpen,
 } from "lucide-react";
 
 interface CategoryOption {
@@ -124,18 +133,91 @@ export function ProductForm({
   const [brandId, setBrandId] = useState(initialData?.brandId || "");
   const [carModelId, setCarModelId] = useState(initialData?.carModelId || "");
 
+  // SKU Auto-generation & Helper States
+  const [isGeneratingSku, setIsGeneratingSku] = useState(false);
+  const [showSkuGuide, setShowSkuGuide] = useState(false);
+  const [skuFeedback, setSkuFeedback] = useState<{
+    status: "idle" | "success" | "warning";
+    message: string;
+  } | null>(null);
+  const [skuAvailability, setSkuAvailability] = useState<{
+    isAvailable?: boolean;
+    message?: string;
+    isChecking?: boolean;
+  } | null>(null);
+
   // Available models filtered by brand
   const availableModels = useMemo(() => {
     if (!brandId) return carModels;
     return carModels.filter((m) => m.brandId === brandId);
   }, [brandId, carModels]);
 
-  // Cloudinary Folder Path Preview
+  // Cloudinary Folder Path Preview & Selected Entity Labels
   const selectedBrand = brands.find((b) => b.id === brandId);
   const selectedModel = carModels.find((m) => m.id === carModelId);
   const selectedCategory = categories.find((c) => c.id === categoryId);
 
   const previewCloudinaryPath = `south-aero/products/${selectedBrand?.slug || "general"}/${selectedModel?.slug || "universal"}/${selectedCategory?.slug || "aeropart"}/${slug || "product-slug"}`;
+
+  // Live SKU Decoder: Breakdown format [Brand][Model]-[Type][Seq] e.g. HDAC-DT01
+  const parsedSku = useMemo(() => {
+    return parseSku(
+      sku,
+      selectedBrand?.name,
+      selectedModel?.name,
+      selectedCategory?.name
+    );
+  }, [sku, selectedBrand, selectedModel, selectedCategory]);
+
+  const handleAutoGenerateSku = async (silent = false) => {
+    setIsGeneratingSku(true);
+    try {
+      const res = await generateSuggestedSkuAction({
+        brandId: brandId || null,
+        carModelId: carModelId || null,
+        categoryId: categoryId || null,
+      });
+      if (res.success && res.data) {
+        setSku(res.data.sku);
+        setSkuFeedback({
+          status: "success",
+          message: `สร้างรหัส: ${res.data.sku} (${res.data.brandName} ${res.data.modelName} · ${res.data.categoryName} ลำดับ #${res.data.sequence})`,
+        });
+        setSkuAvailability({
+          isAvailable: true,
+          message: "รหัส SKU นี้พร้อมใช้งาน (รันหมายเลขลำดับล่าสุดอัตโนมัติ ไม่ซ้ำ)",
+        });
+      } else if (!silent) {
+        setSkuFeedback({
+          status: "warning",
+          message: res.message || "ไม่สามารถคำนวณรหัส SKU อัตโนมัติได้",
+        });
+      }
+    } catch {
+      if (!silent) {
+        setSkuFeedback({
+          status: "warning",
+          message: "เกิดข้อผิดพลาดในการสร้างรหัส SKU",
+        });
+      }
+    } finally {
+      setIsGeneratingSku(false);
+    }
+  };
+
+  const handleSkuBlur = async () => {
+    if (!sku.trim()) {
+      setSkuAvailability(null);
+      return;
+    }
+    setSkuAvailability({ isChecking: true });
+    const res = await checkSkuAvailabilityAction(sku, initialData?.id);
+    setSkuAvailability({
+      isAvailable: res.isAvailable,
+      message: res.message,
+      isChecking: false,
+    });
+  };
 
   // Images state
   const [images, setImages] = useState<ImageUploadItem[]>(
@@ -357,33 +439,150 @@ export function ProductForm({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                    รหัสสินค้า (SKU) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={sku}
-                    onChange={(e) => setSku(e.target.value.toUpperCase())}
-                    required
-                    placeholder="เช่น SA-AERO-DT86-01"
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white font-mono placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors uppercase"
-                  />
+              {/* ─── SKU Manager & Generator Section ─── */}
+              <div className="p-4 rounded-xl bg-[#151515] border border-[#262626] space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                      <Hash size={14} className="text-red-500" />
+                      <span>รหัสสินค้า (SKU)</span>
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowSkuGuide(!showSkuGuide)}
+                      className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-2 py-0.5 rounded-md bg-[#202020] hover:bg-[#282828] border border-white/5 transition-colors cursor-pointer"
+                    >
+                      <BookOpen size={11} className="text-amber-400" />
+                      <span>{showSkuGuide ? "ซ่อนแนวทางตั้งรหัส" : "แนวทางการตั้งรหัส SKU"}</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAutoGenerateSku(false)}
+                    disabled={isGeneratingSku}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {isGeneratingSku ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Wand2 size={13} />
+                    )}
+                    <span>สร้างรหัส SKU อัตโนมัติ</span>
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                    URL Slug (เว้นว่างเพื่อสร้างอัตโนมัติ)
-                  </label>
-                  <input
-                    type="text"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    placeholder="เช่น south-aero-carbon-ducktail-gr86"
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors font-mono"
-                  />
+                {/* SKU Convention Guide Card */}
+                {showSkuGuide && (
+                  <div className="p-3.5 rounded-lg bg-[#0F0F0F] border border-amber-500/25 space-y-2.5 text-xs text-gray-300 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <span className="font-bold text-amber-300 flex items-center gap-1.5 text-xs">
+                        <Info size={14} className="text-amber-400" />
+                        โครงสร้างการตั้งรหัส SKU มาตรฐาน South Aero
+                      </span>
+                      <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">
+                        [แบรนด์][รุ่น]-[ประเภท][ลำดับ]
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[11px]">
+                      <div className="bg-[#181818] p-2 rounded-md border border-white/5">
+                        <span className="text-emerald-400 font-bold block text-sm">HD</span>
+                        <span className="text-[10px] text-gray-400">Honda (แบรนด์)</span>
+                      </div>
+                      <div className="bg-[#181818] p-2 rounded-md border border-white/5">
+                        <span className="text-blue-400 font-bold block text-sm">AC</span>
+                        <span className="text-[10px] text-gray-400">Accord (รุ่นรถ)</span>
+                      </div>
+                      <div className="bg-[#181818] p-2 rounded-md border border-white/5">
+                        <span className="text-purple-400 font-bold block text-sm">DT</span>
+                        <span className="text-[10px] text-gray-400">Ducktail (ประเภท)</span>
+                      </div>
+                      <div className="bg-[#181818] p-2 rounded-md border border-white/5">
+                        <span className="text-orange-400 font-bold block text-sm">01, 02...</span>
+                        <span className="text-[10px] text-gray-400">ลำดับชิ้นส่วน (ไม่ซ้ำ)</span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-gray-400 leading-relaxed pt-1">
+                      💡 <strong>ตัวอย่าง:</strong> รหัส <code className="text-amber-300 font-bold bg-black/40 px-1 py-0.5 rounded">HDAC-DT01</code> คือ Ducktail ชิ้นที่ 1 ของ Honda Accord — หากมี Ducktail ลายใหม่อีกสำหรับรุ่นนี้ ระบบจะรันเป็น <code className="text-amber-300 font-bold bg-black/40 px-1 py-0.5 rounded">HDAC-DT02</code> อัตโนมัติ
+                    </p>
+                  </div>
+                )}
+
+                {/* SKU Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      type="text"
+                      value={sku}
+                      onChange={(e) => setSku(e.target.value.toUpperCase())}
+                      onBlur={handleSkuBlur}
+                      required
+                      placeholder="เช่น HDAC-DT01"
+                      className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white font-mono placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors uppercase tracking-wider font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      placeholder="URL Slug (เช่น south-aero-ducktail-accord)"
+                      className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors font-mono"
+                    />
+                  </div>
                 </div>
+
+                {/* Live SKU Decoder Pills */}
+                {parsedSku.isValid && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] font-mono">
+                    <span className="text-gray-500 text-[10px]">ถอดรหัส SKU:</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      🚗 {parsedSku.brandCode}: {parsedSku.brandLabel}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      🏎️ {parsedSku.modelCode}: {parsedSku.modelLabel}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                      🪽 {parsedSku.partCode}: {parsedSku.partLabel}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold">
+                      🔢 ลำดับ #{parsedSku.sequence}
+                    </span>
+                  </div>
+                )}
+
+                {/* SKU Availability Feedback */}
+                {skuAvailability && (
+                  <div
+                    className={`flex items-center gap-1.5 text-xs pt-1 ${
+                      skuAvailability.isChecking
+                        ? "text-gray-400"
+                        : skuAvailability.isAvailable
+                        ? "text-emerald-400"
+                        : "text-rose-400 font-semibold"
+                    }`}
+                  >
+                    {skuAvailability.isChecking ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : skuAvailability.isAvailable ? (
+                      <CheckCircle2 size={13} className="shrink-0" />
+                    ) : (
+                      <AlertCircle size={13} className="shrink-0" />
+                    )}
+                    <span>{skuAvailability.message}</span>
+                  </div>
+                )}
+
+                {skuFeedback && !skuAvailability && (
+                  <p className="text-xs text-emerald-400 flex items-center gap-1.5 pt-1">
+                    <CheckCircle2 size={12} />
+                    <span>{skuFeedback.message}</span>
+                  </p>
+                )}
               </div>
 
               <div>

@@ -26,6 +26,12 @@ import {
   renameImage,
 } from "@repo/lib/cloudinary";
 import { validateSession, logAuditEvent } from "@/lib/auth";
+import {
+  BRAND_CODE_MAP,
+  MODEL_CODE_MAP,
+  CATEGORY_CODE_MAP,
+  getCodeFromSlug,
+} from "@/lib/sku-helper";
 
 // ─── Types & Schemas ──────────────────────────────────────────────────────────
 
@@ -783,3 +789,163 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
     };
   }
 }
+
+// ─── SKU Helpers & Auto-Generation Actions ───────────────────────────────────
+
+export interface SkuSuggestionResult {
+  sku: string;
+  brandCode: string;
+  brandName: string;
+  modelCode: string;
+  modelName: string;
+  categoryCode: string;
+  categoryName: string;
+  sequence: string;
+  prefix: string;
+  existingCount: number;
+}
+
+/**
+ * Generate a smart standardized SKU: [BrandCode][ModelCode]-[CategoryCode][Sequence]
+ * Example: Honda + Accord + Ducktail => "HDAC-DT01"
+ */
+export async function generateSuggestedSkuAction(params: {
+  brandId?: string | null;
+  carModelId?: string | null;
+  categoryId?: string | null;
+}): Promise<ActionResult<SkuSuggestionResult>> {
+  try {
+    let brandSlug = "universal";
+    let brandName = "Universal";
+    let modelSlug = "universal";
+    let modelName = "Universal";
+    let categorySlug = "aeropart";
+    let categoryName = "Aeropart";
+
+    if (params.brandId) {
+      const [b] = await db
+        .select({ slug: brands.slug, name: brands.name })
+        .from(brands)
+        .where(eq(brands.id, params.brandId))
+        .limit(1);
+      if (b) {
+        brandSlug = b.slug;
+        brandName = b.name;
+      }
+    }
+
+    if (params.carModelId) {
+      const [m] = await db
+        .select({ slug: carModels.slug, name: carModels.name })
+        .from(carModels)
+        .where(eq(carModels.id, params.carModelId))
+        .limit(1);
+      if (m) {
+        modelSlug = m.slug;
+        modelName = m.name;
+      }
+    }
+
+    if (params.categoryId) {
+      const [c] = await db
+        .select({ slug: categories.slug, name: categories.name })
+        .from(categories)
+        .where(eq(categories.id, params.categoryId))
+        .limit(1);
+      if (c) {
+        categorySlug = c.slug;
+        categoryName = c.name;
+      }
+    }
+
+    const brandCode = getCodeFromSlug(brandSlug, BRAND_CODE_MAP, "UN");
+    const modelCode = getCodeFromSlug(modelSlug, MODEL_CODE_MAP, "UN");
+    const categoryCode = getCodeFromSlug(categorySlug, CATEGORY_CODE_MAP, "AP");
+
+    const prefix = `${brandCode}${modelCode}-${categoryCode}`;
+
+    // Find all existing SKUs matching this prefix
+    const matchingProducts = await db
+      .select({ sku: products.sku })
+      .from(products)
+      .where(ilike(products.sku, `${prefix}%`));
+
+    // Find the highest sequence number
+    let maxSequence = 0;
+    const regex = new RegExp(`^${prefix}(\\d+)$`, "i");
+
+    for (const item of matchingProducts) {
+      const match = item.sku.match(regex);
+      if (match && match[1]) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxSequence) {
+          maxSequence = num;
+        }
+      }
+    }
+
+    const nextSeq = maxSequence + 1;
+    const sequenceStr = String(nextSeq).padStart(2, "0");
+    const suggestedSku = `${prefix}${sequenceStr}`;
+
+    return {
+      success: true,
+      data: {
+        sku: suggestedSku,
+        brandCode,
+        brandName,
+        modelCode,
+        modelName,
+        categoryCode,
+        categoryName,
+        sequence: sequenceStr,
+        prefix,
+        existingCount: matchingProducts.length,
+      },
+    };
+  } catch (error) {
+    console.error("[generateSuggestedSkuAction] Error:", error);
+    return {
+      success: false,
+      message: "ไม่สามารถคำนวณรหัส SKU อัตโนมัติได้",
+    };
+  }
+}
+
+/**
+ * Check if an SKU is available or already used
+ */
+export async function checkSkuAvailabilityAction(
+  sku: string,
+  excludeProductId?: string
+): Promise<{ isAvailable: boolean; message: string; existingName?: string }> {
+  try {
+    const trimmed = sku.trim().toUpperCase();
+    if (!trimmed) {
+      return { isAvailable: true, message: "" };
+    }
+
+    const existing = await db
+      .select({ id: products.id, sku: products.sku, name: products.name })
+      .from(products)
+      .where(ilike(products.sku, trimmed))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return { isAvailable: true, message: "รหัส SKU นี้พร้อมใช้งาน (ไม่ซ้ำ)" };
+    }
+
+    if (excludeProductId && existing[0].id === excludeProductId) {
+      return { isAvailable: true, message: "รหัส SKU ของสินค้านี้" };
+    }
+
+    return {
+      isAvailable: false,
+      message: `รหัส SKU นี้ถูกใช้งานแล้ว โดยสินค้า "${existing[0].name}"`,
+      existingName: existing[0].name,
+    };
+  } catch {
+    return { isAvailable: true, message: "" };
+  }
+}
+
