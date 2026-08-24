@@ -143,19 +143,19 @@ export function RevenueProfitTrendChart() {
 
             <div className="flex items-center gap-6 font-mono text-xs">
               <div>
-                <span className="text-[10px] text-gray-500 block">รายได้รวม:</span>
+                <span className="text-[10px] text-zinc-400 block">รายได้รวม:</span>
                 <span className="text-sm font-bold text-blue-400">
                   ฿{activeData.revenue.toLocaleString()}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-gray-500 block">กำไรสุทธิ:</span>
+                <span className="text-[10px] text-zinc-400 block">กำไรสุทธิ:</span>
                 <span className="text-sm font-bold text-emerald-400">
                   ฿{activeData.profit.toLocaleString()}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-gray-500 block">Net Margin:</span>
+                <span className="text-[10px] text-zinc-400 block">Net Margin:</span>
                 <span className="text-sm font-bold text-white">
                   {activeData.margin}%
                 </span>

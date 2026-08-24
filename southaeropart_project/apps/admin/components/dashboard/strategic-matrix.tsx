@@ -177,11 +177,11 @@ export function StrategicMatrix() {
         {/* ⚠️ Weaknesses & Bottlenecks Column */}
         <div className="space-y-3.5">
           <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2 text-rose-400 font-bold text-sm">
+            <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
               <AlertTriangle size={18} />
               <span>⚠️ 3 จุดด้อย &amp; ประเด็นต้องจับตา (Bottlenecks)</span>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-mono">
               Action Required
             </span>
           </div>
@@ -196,17 +196,17 @@ export function StrategicMatrix() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                      <div className="p-2 rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/30">
                         <Icon size={16} />
                       </div>
                       <div>
                         <h4 className="text-xs sm:text-sm font-bold text-white">{item.title}</h4>
-                        <span className="text-[11px] font-mono text-rose-400 font-semibold">
+                        <span className="text-[11px] font-mono text-rose-300 font-semibold">
                           {item.metric}
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 font-semibold uppercase tracking-wider shrink-0">
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 font-semibold uppercase tracking-wider shrink-0">
                       {item.tag}
                     </span>
                   </div>
@@ -229,7 +229,7 @@ export function StrategicMatrix() {
       {/* Risk Alert Warning Bar */}
       <div className="bg-gradient-to-r from-rose-950/30 via-[#181212] to-[#121212] border border-rose-500/30 rounded-xl p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-rose-400 font-bold text-xs sm:text-sm">
+          <div className="flex items-center gap-2 text-rose-300 font-bold text-xs sm:text-sm">
             <ShieldAlert size={16} />
             <span>🔴 แผงตรวจจับความเสี่ยงทางธุรกิจ (Risk Alerts &amp; Monitoring Matrix)</span>
           </div>
@@ -249,8 +249,8 @@ export function StrategicMatrix() {
                 <span
                   className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
                     risk.level === "High"
-                      ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                      : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                      ? "bg-rose-500/25 text-rose-200 border border-rose-500/40"
+                      : "bg-amber-500/25 text-amber-300 border border-amber-500/40"
                   }`}
                 >
                   {risk.level} Risk

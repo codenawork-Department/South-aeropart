@@ -51,7 +51,7 @@ export function ProfitWaterfallChart() {
       amount: 793600,
       percentOfRev: 62.0,
       remainingAmount: 486400,
-      color: "text-rose-400",
+      color: "text-rose-300",
       barColor: "from-rose-500 to-red-600",
       note: "คงระดับ Gross Margin 38.0% (กำไรขั้นต้น ฿486,400)",
     },
@@ -75,7 +75,7 @@ export function ProfitWaterfallChart() {
       amount: 115000,
       percentOfRev: 9.0,
       remainingAmount: 261400,
-      color: "text-rose-400",
+      color: "text-rose-300",
       barColor: "from-red-600 to-rose-700",
       note: "⚠️ รูรั่วกำไร: TikTok Return Rate 6.1% ดึงต้นทุนค่าขนส่งสูญเปล่า",
       leakWarning: true,
@@ -151,7 +151,7 @@ export function ProfitWaterfallChart() {
                 {/* Floating Value Tag */}
                 <div className="mb-2 text-center">
                   {step.leakWarning && (
-                    <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 font-mono block mb-1 animate-pulse">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/30 text-rose-200 border border-rose-500/40 font-mono block mb-1 animate-pulse">
                       จุดรั่วไหล!
                     </span>
                   )}
@@ -178,9 +178,16 @@ export function ProfitWaterfallChart() {
                 </div>
 
                 {/* Step Label */}
-                <div className="mt-2.5 text-center">
-                  <span className="text-[11px] font-semibold text-gray-300 block line-clamp-1">
-                    {step.name}
+                <div className="mt-3 text-center w-full">
+                  <span
+                    className={`text-xs font-semibold block transition-colors ${
+                      isHovered ? "text-white" : "text-gray-300"
+                    }`}
+                  >
+                    {step.name.split(" ")[1] || step.name}
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-mono block mt-0.5">
+                    ฿{(step.remainingAmount / 1000).toFixed(0)}k
                   </span>
                 </div>
               </div>
@@ -188,21 +195,21 @@ export function ProfitWaterfallChart() {
           })}
         </div>
 
-        {/* Detailed Breakdown Cards on Hover or Default */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-          <div className="bg-[#151515] border border-emerald-500/20 rounded-xl p-3.5 space-y-1">
+        {/* 3 Executive Insight Callouts */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div className="bg-[#151515] border border-white/5 rounded-xl p-3.5 space-y-1">
             <span className="text-[10px] uppercase font-bold text-emerald-400 font-mono">
-              1. Gross Margin Retention
+              1. Gross Margin Pillar
             </span>
             <p className="text-xs text-gray-200 font-semibold">
               กำไรขั้นต้น ฿486,400 (38.0%)
             </p>
             <p className="text-[11px] text-gray-400 leading-relaxed">
-              ต้นทุนสินค้า (COGS 62%) ถูกควบคุมอยู่ในเกณฑ์ดีเยี่ยม สามารถสร้างกระแสเงินสดรองรับการทำการตลาด
+              ต้นทุนสินค้า (COGS) คุมได้ที่ 62% จากการสั่งผลิตล็อตใหญ่ ทำให้มีพื้นที่ทำการตลาดได้ต่อเนื่อง
             </p>
           </div>
 
-          <div className="bg-[#151515] border border-amber-500/20 rounded-xl p-3.5 space-y-1">
+          <div className="bg-[#151515] border border-white/5 rounded-xl p-3.5 space-y-1">
             <span className="text-[10px] uppercase font-bold text-amber-400 font-mono">
               2. Marketing Efficiency
             </span>
@@ -215,7 +222,7 @@ export function ProfitWaterfallChart() {
           </div>
 
           <div className="bg-[#151515] border border-rose-500/30 rounded-xl p-3.5 space-y-1">
-            <span className="text-[10px] uppercase font-bold text-rose-400 font-mono">
+            <span className="text-[10px] uppercase font-bold text-rose-300 font-mono">
               3. Critical Margin Leak
             </span>
             <p className="text-xs text-gray-200 font-semibold text-rose-300">

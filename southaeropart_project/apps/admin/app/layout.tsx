@@ -5,6 +5,7 @@ import "./globals.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -26,10 +27,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" className={inter.variable}>
-      <body className="min-h-screen bg-[#0A0A0A] antialiased text-white selection:bg-red-900 selection:text-white">
+      <body className={`${inter.className} min-h-screen bg-[#0A0A0A] antialiased text-white selection:bg-red-900 selection:text-white`}>
         {children}
       </body>
     </html>
   );
 }
-
