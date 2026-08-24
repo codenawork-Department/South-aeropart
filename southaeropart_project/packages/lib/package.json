@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    ".": "./src/index.ts",
     "./cloudinary": "./src/cloudinary.ts",
     "./omise": "./src/omise.ts",
     "./moderation": "./src/moderation/text-moderation.ts"

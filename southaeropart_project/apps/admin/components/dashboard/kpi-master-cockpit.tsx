@@ -234,7 +234,7 @@ export function KpiMasterCockpit() {
             <div className="flex items-center justify-between text-gray-400">
               <span className="text-[11px] font-medium truncate">{m.title}</span>
               <div className="relative group/tip cursor-pointer">
-                <Info size={12} className="text-gray-500 hover:text-white" />
+                <Info size={12} className="text-zinc-400 hover:text-white" />
                 <div className="absolute top-5 left-1/2 -translate-x-1/2 w-52 p-2 rounded-lg bg-[#222222] border border-white/10 text-[10px] text-gray-300 shadow-xl opacity-0 group-hover/tip:opacity-100 pointer-events-none transition-opacity z-50">
                   {m.tooltip}
                 </div>
@@ -244,7 +244,7 @@ export function KpiMasterCockpit() {
               <span className="text-base sm:text-lg font-bold font-mono tracking-tight text-white block">{m.value}</span>
             </div>
             <div className="text-[10px] font-medium font-mono">
-              <span className={m.isPositive ? "text-emerald-400" : "text-rose-400"}>{m.delta}</span>
+              <span className={m.isPositive ? "text-emerald-400" : "text-rose-300"}>{m.delta}</span>
             </div>
           </div>
         ))}

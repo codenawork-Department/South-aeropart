@@ -48,14 +48,14 @@ export function SimpleDashboardView({ onSwitchToAnalyst }: SimpleDashboardViewPr
             <span className="text-emerald-400 font-semibold flex items-center gap-0.5">
               <ArrowUpRight size={13} /> +12.6% YoY
             </span>
-            <span className="text-gray-500 font-mono">เป้า: ฿1.20M (106%)</span>
+            <span className="text-zinc-400 font-mono">เป้า: ฿1.20M (106%)</span>
           </div>
         </div>
 
         {/* 2. Net Profit */}
         <div className="bg-[#121212] border border-[#222222] hover:border-emerald-500/30 rounded-2xl p-4 sm:p-5 transition-all shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-400">กำไรสุทธิ (Net Profit)</span>
+            <span className="text-xs font-medium text-zinc-400">กำไรสุทธิ (Net Profit)</span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <TrendingUp size={16} />
             </div>
@@ -67,26 +67,26 @@ export function SimpleDashboardView({ onSwitchToAnalyst }: SimpleDashboardViewPr
             <span className="text-emerald-400 font-semibold flex items-center gap-0.5">
               <ArrowUpRight size={13} /> +18.4% YoY
             </span>
-            <span className="text-gray-500 font-mono">Margin 15.5%</span>
+            <span className="text-zinc-400 font-mono">Margin 15.5%</span>
           </div>
         </div>
 
         {/* 3. Total Orders */}
         <div className="bg-[#121212] border border-[#222222] hover:border-blue-500/30 rounded-2xl p-4 sm:p-5 transition-all shadow-sm relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-400">คำสั่งซื้อ (Total Orders)</span>
+            <span className="text-xs font-medium text-zinc-400">คำสั่งซื้อ (Total Orders)</span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
               <ShoppingCart size={16} />
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold text-white font-mono mt-3">
-            4,320 <span className="text-xs font-normal text-gray-400 font-sans">ออเดอร์</span>
+            4,320 <span className="text-xs font-normal text-zinc-400 font-sans">ออเดอร์</span>
           </p>
           <div className="mt-2.5 flex items-center justify-between text-xs">
             <span className="text-blue-400 font-semibold flex items-center gap-0.5">
               <ArrowUpRight size={13} /> +8.2% YoY
             </span>
-            <span className="text-gray-500 font-mono">AOV ฿296</span>
+            <span className="text-zinc-400 font-mono">AOV ฿296</span>
           </div>
         </div>
 
@@ -101,7 +101,7 @@ export function SimpleDashboardView({ onSwitchToAnalyst }: SimpleDashboardViewPr
           <p className="text-lg sm:text-xl font-bold text-white mt-3">
             3 ประเด็นต้องแก้ไข
           </p>
-          <div className="mt-2 text-xs text-gray-400 line-clamp-1">
+          <div className="mt-2 text-xs text-zinc-400 line-clamp-1">
             Repeat Rate 27% • Drop-off 44.6% • ค่าส่ง INTL สูง
           </div>
         </div>
@@ -113,19 +113,19 @@ export function SimpleDashboardView({ onSwitchToAnalyst }: SimpleDashboardViewPr
           <Globe size={15} className="text-blue-400" />
           <span className="font-semibold text-white">ตลาดการขาย:</span>
           <span className="text-blue-300 font-mono font-bold">🇹🇭 ในประเทศ 80% (฿1.02M)</span>
-          <span className="text-gray-600">•</span>
+          <span className="text-zinc-500">•</span>
           <span className="text-emerald-400 font-mono font-bold">🌏 ต่างประเทศ 20% (฿256k)</span>
         </div>
 
         <div className="flex items-center gap-2 text-gray-300">
-          <Megaphone size={15} className="text-rose-400" />
+          <Megaphone size={15} className="text-rose-300" />
           <span className="font-semibold text-white">แหล่ง Traffic หลัก:</span>
           <span className="text-gray-300 font-mono">Google Ads 35%</span>
-          <span className="text-gray-600">•</span>
+          <span className="text-zinc-500">•</span>
           <span className="text-gray-300 font-mono">FB/IG 21%</span>
-          <span className="text-gray-600">•</span>
-          <span className="text-rose-400 font-mono font-bold">TikTok 15% (ROAS 7.2x)</span>
-          <span className="text-gray-600">•</span>
+          <span className="text-zinc-500">•</span>
+          <span className="text-rose-300 font-mono font-bold">TikTok 15% (ROAS 7.2x)</span>
+          <span className="text-zinc-500">•</span>
           <span className="text-emerald-400 font-mono">SEO 16%</span>
         </div>
       </div>

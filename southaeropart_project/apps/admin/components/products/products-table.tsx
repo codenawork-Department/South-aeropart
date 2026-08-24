@@ -1,0 +1,429 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import {
+  Package,
+  Plus,
+  Search,
+  Filter,
+  Edit2,
+  Trash2,
+  ExternalLink,
+  Layers,
+  Image as ImageIcon,
+  AlertTriangle,
+  Loader2,
+  Tag,
+  CheckCircle2,
+} from "lucide-react";
+import { deleteProductAction } from "@/actions/product.actions";
+
+interface ProductRow {
+  id: string;
+  sku: string;
+  slug: string;
+  name: string;
+  price: string;
+  compareAtPrice?: string | null;
+  stockQuantity: number;
+  status: "draft" | "active" | "archived" | "out_of_stock";
+  categoryName?: string | null;
+  brandName?: string | null;
+  primaryImage?: {
+    id: string;
+    cloudinaryPublicId: string;
+    secureUrl: string;
+  } | null;
+  imagesCount: number;
+  createdAt: Date;
+}
+
+interface ProductsTableProps {
+  products: ProductRow[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  categories: Array<{ id: string; name: string }>;
+  brands: Array<{ id: string; name: string }>;
+}
+
+export function ProductsTable({
+  products,
+  pagination,
+  categories,
+  brands,
+}: ProductsTableProps) {
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [deleteModalProduct, setDeleteModalProduct] = useState<ProductRow | null>(
+    null
+  );
+  const [isPending, startTransition] = useTransition();
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Client-side filtering for fast UI response
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch =
+      !searchTerm.trim() ||
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" || p.status === statusFilter;
+
+    const matchesCategory =
+      categoryFilter === "all" || p.categoryName === categoryFilter;
+
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  const handleDelete = async (productId: string) => {
+    setIsDeletingId(productId);
+    startTransition(async () => {
+      const res = await deleteProductAction(productId);
+      setIsDeletingId(null);
+      setDeleteModalProduct(null);
+      if (res.success) {
+        setToastMessage("ลบสินค้าและรูปภาพจาก Cloudinary สำเร็จ");
+        router.refresh();
+        setTimeout(() => setToastMessage(null), 3000);
+      } else {
+        alert(res.message || "เกิดข้อผิดพลาดในการลบสินค้า");
+      }
+    });
+  };
+
+  const getStatusBadge = (status: ProductRow["status"]) => {
+    switch (status) {
+      case "active":
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+            วางขาย (Active)
+          </span>
+        );
+      case "draft":
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-zinc-800/80 text-zinc-300 border border-zinc-700">
+            ร่าง (Draft)
+          </span>
+        );
+      case "out_of_stock":
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-950/60 text-amber-400 border border-amber-800/60">
+            สินค้าหมด
+          </span>
+        );
+      case "archived":
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-900 text-gray-400 border border-gray-800">
+            เก็บเข้ากรุ
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#181818] border border-emerald-500/50 text-emerald-300 shadow-2xl animate-fade-in text-xs font-semibold">
+          <CheckCircle2 size={16} className="text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Header bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+            <Package size={24} className="text-red-500" />
+            จัดการสินค้า (Products Management)
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-400 mt-1">
+            รายการสินค้าอะไหล่และชิ้นส่วน South Aero พร้อมจัดการรูปภาพ Cloudinary
+          </p>
+        </div>
+
+        <Link
+          href="/products/new"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold tracking-wide transition-all shadow-md shadow-red-950/40 w-full sm:w-auto shrink-0 cursor-pointer"
+        >
+          <Plus size={15} />
+          <span>เพิ่มสินค้าใหม่</span>
+        </Link>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-[#121212] border border-[#222222] rounded-xl sm:rounded-2xl p-4 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"
+          />
+          <input
+            type="text"
+            placeholder="ค้นหาตามชื่อสินค้า หรือ รหัส SKU..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs focus:outline-none focus:border-red-500 transition-colors"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500 transition-colors"
+          >
+            <option value="all">ทุกสถานะ</option>
+            <option value="active">วางขาย (Active)</option>
+            <option value="draft">ร่าง (Draft)</option>
+            <option value="out_of_stock">สินค้าหมด</option>
+            <option value="archived">เก็บเข้ากรุ</option>
+          </select>
+
+          {/* Category Filter */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500 transition-colors"
+          >
+            <option value="all">ทุกหมวดหมู่</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-[#121212] border border-[#222222] rounded-xl sm:rounded-2xl overflow-hidden shadow-lg">
+        {filteredProducts.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="w-12 h-12 rounded-full bg-[#1A1A1A] text-gray-500 mx-auto flex items-center justify-center mb-3">
+              <Package size={24} />
+            </div>
+            <h3 className="text-sm font-bold text-white mb-1">
+              ไม่พบสินค้าในเงื่อนไขที่เลือก
+            </h3>
+            <p className="text-xs text-gray-400 max-w-sm mx-auto mb-4">
+              ลองเปลี่ยนคำค้นหา หรือกดปุ่มด้านล่างเพื่อเพิ่มสินค้าชิ้นแรกเข้าสู่ระบบ
+            </p>
+            <Link
+              href="/products/new"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow transition-all"
+            >
+              <Plus size={14} />
+              <span>เพิ่มสินค้าใหม่</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#181818] border-b border-[#222222] text-gray-400 font-semibold uppercase tracking-wider">
+                <tr>
+                  <th className="py-3 px-4 w-16">รูปภาพ</th>
+                  <th className="py-3 px-4">ชื่อสินค้า / SKU</th>
+                  <th className="py-3 px-4">หมวดหมู่ & แบรนด์</th>
+                  <th className="py-3 px-4 text-right">ราคา</th>
+                  <th className="py-3 px-4 text-center">สต็อก</th>
+                  <th className="py-3 px-4 text-center">สถานะ</th>
+                  <th className="py-3 px-4 text-right">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1D1D1D] text-gray-300">
+                {filteredProducts.map((product) => {
+                  const hasImage = Boolean(product.primaryImage?.secureUrl);
+                  return (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-[#161616] transition-colors"
+                    >
+                      {/* Image Thumbnail */}
+                      <td className="py-3 px-4">
+                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#1D1D1D] border border-[#2D2D2D] shrink-0">
+                          {hasImage ? (
+                            <Image
+                              src={product.primaryImage!.secureUrl}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-600">
+                              <ImageIcon size={18} />
+                            </div>
+                          )}
+                          {product.imagesCount > 1 && (
+                            <div className="absolute bottom-0 right-0 px-1 rounded-tl bg-black/80 text-[9px] font-mono text-gray-300">
+                              +{product.imagesCount}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Name and SKU */}
+                      <td className="py-3 px-4 max-w-xs">
+                        <div className="font-semibold text-white truncate hover:text-red-400 transition-colors">
+                          <Link href={`/products/${product.id}/edit`}>
+                            {product.name}
+                          </Link>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="font-mono text-[11px] text-red-400 bg-red-950/40 px-1.5 py-0.2 rounded border border-red-900/40">
+                            {product.sku}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Category & Brand */}
+                      <td className="py-3 px-4">
+                        <div className="text-gray-200">
+                          {product.categoryName || "-"}
+                        </div>
+                        <div className="text-[11px] text-gray-500">
+                          {product.brandName || "-"}
+                        </div>
+                      </td>
+
+                      {/* Price */}
+                      <td className="py-3 px-4 text-right font-mono">
+                        <div className="font-bold text-white">
+                          ฿{Number(product.price).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                        </div>
+                        {product.compareAtPrice && (
+                          <div className="text-[10px] text-gray-500 line-through">
+                            ฿{Number(product.compareAtPrice).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Stock */}
+                      <td className="py-3 px-4 text-center">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full font-mono text-[11px] font-semibold ${
+                            product.stockQuantity > 10
+                              ? "bg-emerald-950/40 text-emerald-400 border border-emerald-800/40"
+                              : product.stockQuantity > 0
+                              ? "bg-amber-950/40 text-amber-400 border border-amber-800/40"
+                              : "bg-red-950/40 text-red-400 border border-red-800/40"
+                          }`}
+                        >
+                          {product.stockQuantity} ชิ้น
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-3 px-4 text-center">
+                        {getStatusBadge(product.status)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3 px-4 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <Link
+                            href={`/products/${product.id}/edit`}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#252525] transition-colors"
+                            title="แก้ไขข้อมูลสินค้า"
+                          >
+                            <Edit2 size={15} />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteModalProduct(product)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/30 transition-colors"
+                            title="ลบสินค้า"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-[#141414] border border-[#2D2D2D] p-6 space-y-4 shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-3 text-red-500">
+              <div className="w-10 h-10 rounded-full bg-red-950/60 border border-red-800 flex items-center justify-center">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  ยืนยันการลบสินค้า
+                </h3>
+                <p className="text-xs text-gray-400">
+                  การกระทำนี้ไม่สามารถย้อนกลับได้
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#1A1A1A] border border-[#262626] text-xs space-y-1">
+              <p className="text-gray-300 font-semibold">
+                {deleteModalProduct.name}
+              </p>
+              <p className="text-gray-500 font-mono">
+                SKU: {deleteModalProduct.sku}
+              </p>
+              {deleteModalProduct.imagesCount > 0 && (
+                <p className="text-amber-400/90 text-[11px] pt-1">
+                  ⚠️ รูปภาพทั้งหมด ({deleteModalProduct.imagesCount} รูป) ใน Cloudinary จะถูกทำลายถาวร
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setDeleteModalProduct(null)}
+                className="px-4 py-2 rounded-lg bg-[#222222] hover:bg-[#2C2C2C] text-gray-300 text-xs font-semibold transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => handleDelete(deleteModalProduct.id)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-md transition-all disabled:opacity-50"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>กำลังลบข้อมูล...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} />
+                    <span>ยืนยันลบสินค้า</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

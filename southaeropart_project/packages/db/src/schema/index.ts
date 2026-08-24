@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { users, userLoginLogs } from "./users";
 import { adminUsers, adminSessions, adminAuditLogs } from "./admin";
-import { categories, brands, products, productImages, productCompatibility } from "./products";
+import { categories, brands, carModels, products, productImages, productCompatibility } from "./products";
 import { orders, orderItems, orderStatusHistory } from "./orders";
 import { reviews } from "./reviews";
 import { userInterests } from "./user-interests";
@@ -44,12 +44,19 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
 }));
 
 export const brandsRelations = relations(brands, ({ many }) => ({
+  models: many(carModels),
+  products: many(products),
+}));
+
+export const carModelsRelations = relations(carModels, ({ one, many }) => ({
+  brand: one(brands, { fields: [carModels.brandId], references: [brands.id] }),
   products: many(products),
 }));
 
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, { fields: [products.categoryId], references: [categories.id] }),
   brand: one(brands, { fields: [products.brandId], references: [brands.id] }),
+  carModel: one(carModels, { fields: [products.carModelId], references: [carModels.id] }),
   images: many(productImages),
   compatibility: many(productCompatibility),
   reviews: many(reviews),

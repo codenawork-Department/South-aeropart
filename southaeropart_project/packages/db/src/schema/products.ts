@@ -8,9 +8,8 @@ export const productStatusEnum = pgEnum("product_status", [
 ]);
 
 /**
- * Hierarchical categories (self-referencing parent/child) so the
- * catalog can grow into nested categories/subcategories without a
- * schema migration later.
+ * Hierarchical categories (self-referencing parent/child) for Aeropart categories
+ * e.g. "Front Lip", "Ducktail Spoiler", "Rear Diffuser", "Side Skirts", "GT Wing", "Canards"
  */
 export const categories = pgTable("categories", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -22,10 +21,12 @@ export const categories = pgTable("categories", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   parentIdx: index("categories_parent_idx").on(table.parentId),
+  slugIdx: index("categories_slug_idx").on(table.slug),
 }));
 
-/** Normalized out of the old free-text `brand` column so you can manage
- *  brand pages, logos, and filters without string-matching typos. */
+/** 
+ * Car Brands (แบรนด์รถยนต์) e.g. "Toyota", "Honda", "Nissan", "BMW", "Porsche", "Subaru"
+ */
 export const brands = pgTable("brands", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),
@@ -33,7 +34,28 @@ export const brands = pgTable("brands", {
   logoUrl: text("logo_url"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  slugIdx: index("brands_slug_idx").on(table.slug),
+}));
+
+/**
+ * Car Models (รุ่น/โมเดลรถยนต์) linked to Car Brands
+ * e.g. Toyota -> "GR86", "GR Yaris", "Supra A90", Honda -> "Civic Type R FL5", Nissan -> "GTR R35"
+ */
+export const carModels = pgTable("car_models", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  brandId: uuid("brand_id").notNull().references(() => brands.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+  generation: text("generation"), // e.g. "ZN8 / ZD8", "FL5", "R35"
+  yearFrom: integer("year_from"), // e.g. 2022
+  yearTo: integer("year_to"), // e.g. 2024
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  brandIdx: index("car_models_brand_idx").on(table.brandId),
+  slugIdx: index("car_models_slug_idx").on(table.slug),
+}));
 
 export const products = pgTable("products", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -42,6 +64,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
+  carModelId: uuid("car_model_id").references(() => carModels.id, { onDelete: "set null" }),
   categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
   price: numeric("price", { precision: 12, scale: 2 }).notNull(),
   compareAtPrice: numeric("compare_at_price", { precision: 12, scale: 2 }),
@@ -54,6 +77,7 @@ export const products = pgTable("products", {
   slugIdx: index("products_slug_idx").on(table.slug),
   categoryIdx: index("products_category_idx").on(table.categoryId),
   brandIdx: index("products_brand_idx").on(table.brandId),
+  carModelIdx: index("products_car_model_idx").on(table.carModelId),
   statusIdx: index("products_status_idx").on(table.status),
 }));
 
@@ -70,9 +94,7 @@ export const productImages = pgTable("product_images", {
 }));
 
 /**
- * Normalized out of the old `compatibility` JSONB column so make/model/
- * year can actually be filtered and indexed at scale — e.g. "parts that
- * fit a 2018 Toyota Camry" — instead of scanning JSON on every request.
+ * Specific compatibility fitments (make/model/years)
  */
 export const productCompatibility = pgTable("product_compatibility", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -91,6 +113,8 @@ export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Brand = typeof brands.$inferSelect;
 export type NewBrand = typeof brands.$inferInsert;
+export type CarModel = typeof carModels.$inferSelect;
+export type NewCarModel = typeof carModels.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type ProductImage = typeof productImages.$inferSelect;

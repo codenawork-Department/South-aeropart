@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
+  Layers,
   ShoppingCart,
   Star,
   Activity,
@@ -66,6 +67,13 @@ export function AdminSidebar({
       label: "Products",
       href: "/products",
       icon: Package,
+      badge: null,
+    },
+    {
+      label: "แคตตาล็อก & หมวดหมู่",
+      sublabel: "Brands, Models & Categories",
+      href: "/catalog",
+      icon: Layers,
       badge: null,
     },
     {

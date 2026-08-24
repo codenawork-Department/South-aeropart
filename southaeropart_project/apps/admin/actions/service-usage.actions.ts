@@ -2,6 +2,7 @@
 
 import { db, users, sql, rawSql } from "@repo/db";
 import { validateSession } from "@/lib/auth";
+import { unstable_cache } from "next/cache";
 
 // ─── Types ───
 
@@ -150,18 +151,11 @@ function parseHostAndRegion(dbUrl?: string): { host: string; region: string } {
   }
 }
 
-// ─── Fetchers ───
+// ─── Individual Service Fetchers ───
 
-export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
-  const admin = await validateSession();
-  if (!admin) {
-    throw new Error("Unauthorized: Please log in as admin");
-  }
-
+async function fetchNeonMetrics(): Promise<NeonMetrics> {
   const NEON_STORAGE_LIMIT_BYTES = 512 * 1024 * 1024; // 512 MB Free Tier limit
-  const CLERK_FREE_TIER_LIMIT = 50000; // 50,000 Monthly Active Users (MRU / MAU)
 
-  // 1. NEON POSTGRESQL METRICS
   let neonMetrics: NeonMetrics = {
     configured: false,
     status: "unconfigured",
@@ -187,36 +181,28 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
   };
 
   const dbUrl = process.env.DATABASE_URL;
-  if (dbUrl) {
-    try {
-      const { host, region } = parseHostAndRegion(dbUrl);
-      const sqlClient = rawSql;
+  if (!dbUrl) return neonMetrics;
 
-      // 1) Query App Database size (neondb) & version
-      const [dbInfo] = await sqlClient`
+  try {
+    const { host, region } = parseHostAndRegion(dbUrl);
+    const sqlClient = rawSql;
+
+    // Run database queries concurrently
+    const [[dbInfo], [clusterInfo], rawTables] = await Promise.all([
+      sqlClient`
         SELECT 
           pg_database_size(current_database())::bigint AS size_bytes,
           pg_size_pretty(pg_database_size(current_database())) AS size_pretty,
           current_database() AS db_name,
           version() AS pg_version;
-      `;
-
-      // 2) Query Total Storage across all DBs in the Neon Project (matches Neon Console 0.03 / 0.5 GB)
-      const [clusterInfo] = await sqlClient`
+      `,
+      sqlClient`
         SELECT 
           COALESCE(SUM(pg_database_size(datname)), 0)::bigint AS total_cluster_bytes,
           pg_size_pretty(COALESCE(SUM(pg_database_size(datname)), 0)) AS total_cluster_pretty
         FROM pg_database;
-      `;
-
-      const usedBytes = Number(dbInfo?.size_bytes || 0);
-      const clusterTotalBytes = Number(clusterInfo?.total_cluster_bytes || usedBytes);
-      const clusterTotalGb = (clusterTotalBytes / (1024 * 1024 * 1024)).toFixed(2); // e.g. "0.03"
-      const percentUsed = Math.min(100, parseFloat(((usedBytes / NEON_STORAGE_LIMIT_BYTES) * 100).toFixed(2)));
-      const percentClusterUsed = Math.min(100, parseFloat(((clusterTotalBytes / NEON_STORAGE_LIMIT_BYTES) * 100).toFixed(2)));
-
-      // Query detailed tables breakdown
-      const rawTables = await sqlClient`
+      `,
+      sqlClient`
         SELECT 
           s.relname AS table_name,
           COALESCE(s.n_live_tup, 0)::bigint AS row_count,
@@ -228,68 +214,78 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
         JOIN pg_class c ON c.relname = s.relname
         WHERE s.schemaname = 'public'
         ORDER BY pg_total_relation_size(c.oid) DESC;
-      `;
+      `,
+    ]);
 
-      let totalRows = 0;
-      const tables: TableUsageMetric[] = rawTables.map((t: any) => {
-        const tBytes = Number(t.total_bytes || 0);
-        const rows = Number(t.row_count || 0);
-        totalRows += rows;
-        const percentOfDb = usedBytes > 0 ? parseFloat(((tBytes / usedBytes) * 100).toFixed(1)) : 0;
-        return {
-          name: t.table_name,
-          rowCount: rows,
-          totalBytes: tBytes,
-          totalPretty: t.total_pretty || formatBytes(tBytes),
-          dataPretty: t.data_pretty || "0 bytes",
-          indexPretty: t.index_pretty || "0 bytes",
-          percentOfDb,
-        };
-      });
+    const usedBytes = Number(dbInfo?.size_bytes || 0);
+    const clusterTotalBytes = Number(clusterInfo?.total_cluster_bytes || usedBytes);
+    const clusterTotalGb = (clusterTotalBytes / (1024 * 1024 * 1024)).toFixed(2);
+    const percentUsed = Math.min(100, parseFloat(((usedBytes / NEON_STORAGE_LIMIT_BYTES) * 100).toFixed(2)));
+    const percentClusterUsed = Math.min(100, parseFloat(((clusterTotalBytes / NEON_STORAGE_LIMIT_BYTES) * 100).toFixed(2)));
 
-      let status: "healthy" | "warning" | "critical" = "healthy";
-      let message = "การใช้งานพื้นที่ฐานข้อมูลอยู่ในเกณฑ์ปกติ (Free Tier 0.5 GB / 512 MB)";
-      if (percentClusterUsed >= 90) {
-        status = "critical";
-        message = "เตือน: พื้นที่จัดเก็บ Neon Project ใกล้เต็มขีดจำกัด 0.5 GB แล้ว แนะนำให้สำรองข้อมูลหรือลบ Log เก่า";
-      } else if (percentClusterUsed >= 75) {
-        status = "warning";
-        message = "แจ้งเตือน: พื้นที่จัดเก็บ Neon Project ใช้งานไปเกิน 75% ของโควต้า 0.5 GB ฟรี";
-      }
-
-      // Simplify version string
-      const fullVer = String(dbInfo?.pg_version || "");
-      const shortVer = fullVer.split(" ")[0] + " " + fullVer.split(" ")[1];
-
-      neonMetrics = {
-        configured: true,
-        status,
-        usedBytes,
-        usedPretty: formatBytes(usedBytes),
-        clusterTotalBytes,
-        clusterTotalPretty: String(clusterInfo?.total_cluster_pretty || formatBytes(clusterTotalBytes)),
-        clusterTotalGb,
-        limitBytes: NEON_STORAGE_LIMIT_BYTES,
-        limitPretty: "512 MB",
-        limitGb: "0.5 GB",
-        percentUsed,
-        percentClusterUsed,
-        dbName: String(dbInfo?.db_name || "neondb"),
-        pgVersion: shortVer,
-        host,
-        region,
-        computeLimit: "0.25 CU autosuspend / 100 CU-hrs/mo",
-        totalTables: tables.length,
-        totalRows,
-        tables,
-        message,
+    let totalRows = 0;
+    const tables: TableUsageMetric[] = rawTables.map((t: any) => {
+      const tBytes = Number(t.total_bytes || 0);
+      const rows = Number(t.row_count || 0);
+      totalRows += rows;
+      const percentOfDb = usedBytes > 0 ? parseFloat(((tBytes / usedBytes) * 100).toFixed(1)) : 0;
+      return {
+        name: t.table_name,
+        rowCount: rows,
+        totalBytes: tBytes,
+        totalPretty: t.total_pretty || formatBytes(tBytes),
+        dataPretty: t.data_pretty || "0 bytes",
+        indexPretty: t.index_pretty || "0 bytes",
+        percentOfDb,
       };
-    } catch (e: any) {
-      neonMetrics.message = `ไม่สามารถเชื่อมต่อฐานข้อมูล Neon ได้: ${e.message}`;
+    });
+
+    let status: "healthy" | "warning" | "critical" = "healthy";
+    let message = "การใช้งานพื้นที่ฐานข้อมูลอยู่ในเกณฑ์ปกติ (Free Tier 0.5 GB / 512 MB)";
+    if (percentClusterUsed >= 90) {
+      status = "critical";
+      message = "เตือน: พื้นที่จัดเก็บ Neon Project ใกล้เต็มขีดจำกัด 0.5 GB แล้ว แนะนำให้สำรองข้อมูลหรือลบ Log เก่า";
+    } else if (percentClusterUsed >= 75) {
+      status = "warning";
+      message = "แจ้งเตือน: พื้นที่จัดเก็บ Neon Project ใช้งานไปเกิน 75% ของโควต้า 0.5 GB ฟรี";
     }
+
+    const fullVer = String(dbInfo?.pg_version || "");
+    const shortVer = fullVer.split(" ")[0] + " " + fullVer.split(" ")[1];
+
+    neonMetrics = {
+      configured: true,
+      status,
+      usedBytes,
+      usedPretty: formatBytes(usedBytes),
+      clusterTotalBytes,
+      clusterTotalPretty: String(clusterInfo?.total_cluster_pretty || formatBytes(clusterTotalBytes)),
+      clusterTotalGb,
+      limitBytes: NEON_STORAGE_LIMIT_BYTES,
+      limitPretty: "512 MB",
+      limitGb: "0.5 GB",
+      percentUsed,
+      percentClusterUsed,
+      dbName: String(dbInfo?.db_name || "neondb"),
+      pgVersion: shortVer,
+      host,
+      region,
+      computeLimit: "0.25 CU autosuspend / 100 CU-hrs/mo",
+      totalTables: tables.length,
+      totalRows,
+      tables,
+      message,
+    };
+  } catch (e: any) {
+    neonMetrics.message = `ไม่สามารถเชื่อมต่อฐานข้อมูล Neon ได้: ${e.message}`;
   }
 
-  // 2. CLERK AUTHENTICATION METRICS
+  return neonMetrics;
+}
+
+async function fetchClerkMetrics(): Promise<ClerkMetrics> {
+  const CLERK_FREE_TIER_LIMIT = 50000; // 50,000 Monthly Active Users (MRU / MAU)
+
   let clerkMetrics: ClerkMetrics = {
     configured: false,
     status: "unconfigured",
@@ -305,93 +301,89 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
   };
 
   const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-  if (clerkSecretKey && !clerkSecretKey.includes("sk_test_xxx")) {
-    try {
-      // 1) Fetch total user count from Clerk REST API
-      const countRes = await fetch("https://api.clerk.com/v1/users/count", {
-        headers: {
-          Authorization: `Bearer ${clerkSecretKey}`,
-        },
-        cache: "no-store",
-      });
-
-      let totalUsers = 0;
-      if (countRes.ok) {
-        const countData = await countRes.json();
-        totalUsers = Number(countData?.total_count || 0);
-      }
-
-      // 2) Fetch local DB synced user count
-      let dbSyncedUsers = 0;
-      try {
-        const [localUserCount] = await db
-          .select({ count: sql<number>`cast(count(*) as int)` })
-          .from(users);
-        dbSyncedUsers = Number(localUserCount?.count || 0);
-      } catch {
-        dbSyncedUsers = 0;
-      }
-
-      // 3) Fetch recent users list (top 5)
-      const usersListRes = await fetch("https://api.clerk.com/v1/users?limit=5&order_by=-created_at", {
-        headers: {
-          Authorization: `Bearer ${clerkSecretKey}`,
-        },
-        cache: "no-store",
-      });
-
-      let recentUsers: ClerkRecentUser[] = [];
-      if (usersListRes.ok) {
-        const usersData = await usersListRes.json();
-        if (Array.isArray(usersData)) {
-          recentUsers = usersData.map((u: any) => {
-            const primaryEmail = u.email_addresses?.find((e: any) => e.id === u.primary_email_address_id)?.email_address
-              || u.email_addresses?.[0]?.email_address
-              || "—";
-            const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || primaryEmail.split("@")[0] || "User";
-            return {
-              id: u.id,
-              name,
-              email: primaryEmail,
-              imageUrl: u.image_url,
-              createdAt: new Date(u.created_at).toISOString(),
-              lastSignInAt: u.last_sign_in_at ? new Date(u.last_sign_in_at).toISOString() : null,
-            };
-          });
-        }
-      }
-
-      const percentUsed = Math.min(100, parseFloat(((totalUsers / CLERK_FREE_TIER_LIMIT) * 100).toFixed(3)));
-
-      let status: "healthy" | "warning" | "critical" = "healthy";
-      let message = "จำนวนผู้ใช้งานอยู่ในเกณฑ์ Free Tier (เพดาน 50,000 MAU)";
-      if (percentUsed >= 90) {
-        status = "critical";
-        message = "เตือน: ผู้ใช้งานใกล้เกินเพดาน 50,000 MAU ของ Free Tier แนะนำอัปเกรดเป็น Pro Plan";
-      } else if (percentUsed >= 75) {
-        status = "warning";
-        message = "แจ้งเตือน: ผู้ใช้งานเกิน 75% ของโควต้า 50,000 MAU";
-      }
-
-      clerkMetrics = {
-        configured: true,
-        status,
-        totalUsers,
-        limitUsers: CLERK_FREE_TIER_LIMIT,
-        limitPretty: "50,000 MAU",
-        percentUsed,
-        dbSyncedUsers,
-        tierName: "Clerk Free Tier (50K MAU)",
-        oauthProviders: ["Google OAuth", "Email OTP / Password"],
-        recentUsers,
-        message,
-      };
-    } catch (e: any) {
-      clerkMetrics.message = `เชื่อมต่อ Clerk API ไม่สำเร็จ: ${e.message}`;
-    }
+  if (!clerkSecretKey || clerkSecretKey.includes("sk_test_xxx")) {
+    return clerkMetrics;
   }
 
-  // 3. CLOUDINARY METRICS
+  try {
+    const [countRes, localUserCountRes, usersListRes] = await Promise.allSettled([
+      fetch("https://api.clerk.com/v1/users/count", {
+        headers: { Authorization: `Bearer ${clerkSecretKey}` },
+        next: { revalidate: 60 },
+      }),
+      db.select({ count: sql<number>`cast(count(*) as int)` }).from(users),
+      fetch("https://api.clerk.com/v1/users?limit=5&order_by=-created_at", {
+        headers: { Authorization: `Bearer ${clerkSecretKey}` },
+        next: { revalidate: 60 },
+      }),
+    ]);
+
+    let totalUsers = 0;
+    if (countRes.status === "fulfilled" && countRes.value.ok) {
+      const countData = await countRes.value.json();
+      totalUsers = Number(countData?.total_count || 0);
+    }
+
+    let dbSyncedUsers = 0;
+    if (localUserCountRes.status === "fulfilled" && localUserCountRes.value[0]) {
+      dbSyncedUsers = Number(localUserCountRes.value[0]?.count || 0);
+    }
+
+    let recentUsers: ClerkRecentUser[] = [];
+    if (usersListRes.status === "fulfilled" && usersListRes.value.ok) {
+      const usersData = await usersListRes.value.json();
+      if (Array.isArray(usersData)) {
+        recentUsers = usersData.map((u: any) => {
+          const primaryEmail =
+            u.email_addresses?.find((e: any) => e.id === u.primary_email_address_id)?.email_address ||
+            u.email_addresses?.[0]?.email_address ||
+            "—";
+          const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || primaryEmail.split("@")[0] || "User";
+          return {
+            id: u.id,
+            name,
+            email: primaryEmail,
+            imageUrl: u.image_url,
+            createdAt: new Date(u.created_at).toISOString(),
+            lastSignInAt: u.last_sign_in_at ? new Date(u.last_sign_in_at).toISOString() : null,
+          };
+        });
+      }
+    }
+
+    const percentUsed = Math.min(100, parseFloat(((totalUsers / CLERK_FREE_TIER_LIMIT) * 100).toFixed(3)));
+
+    let status: "healthy" | "warning" | "critical" = "healthy";
+    let message = "จำนวนผู้ใช้งานอยู่ในเกณฑ์ Free Tier (เพดาน 50,000 MAU)";
+    if (percentUsed >= 90) {
+      status = "critical";
+      message = "เตือน: ผู้ใช้งานใกล้เกินเพดาน 50,000 MAU ของ Free Tier แนะนำอัปเกรดเป็น Pro Plan";
+    } else if (percentUsed >= 75) {
+      status = "warning";
+      message = "แจ้งเตือน: ผู้ใช้งานเกิน 75% ของโควต้า 50,000 MAU";
+    }
+
+    clerkMetrics = {
+      configured: true,
+      status,
+      totalUsers,
+      limitUsers: CLERK_FREE_TIER_LIMIT,
+      limitPretty: "50,000 MAU",
+      percentUsed,
+      dbSyncedUsers,
+      tierName: "Clerk Free Tier (50K MAU)",
+      oauthProviders: ["Google OAuth", "Email OTP / Password"],
+      recentUsers,
+      message,
+    };
+  } catch (e: any) {
+    clerkMetrics.message = `เชื่อมต่อ Clerk API ไม่สำเร็จ: ${e.message}`;
+  }
+
+  return clerkMetrics;
+}
+
+async function fetchCloudinaryMetrics(): Promise<CloudinaryMetrics> {
   const cName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "";
   const cKey = process.env.CLOUDINARY_API_KEY || "";
   const cSecret = process.env.CLOUDINARY_API_SECRET || "";
@@ -412,13 +404,12 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
       : "เชื่อมต่อระบบจัดการรูปภาพ Cloudinary เรียบร้อย (Free Tier 25 Credits / 25 GB)",
   };
 
-  // If live credentials are provided, try querying usage API
   if (!isCloudinaryPlaceholder && cSecret) {
     try {
       const authHeader = "Basic " + Buffer.from(`${cKey}:${cSecret}`).toString("base64");
       const usageRes = await fetch(`https://api.cloudinary.com/v1_1/${cName}/usage`, {
         headers: { Authorization: authHeader },
-        cache: "no-store",
+        next: { revalidate: 60 },
       });
       if (usageRes.ok) {
         const usageData = await usageRes.json();
@@ -440,17 +431,20 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
         cloudinaryMetrics.status = creditsUsed > 22 ? "critical" : creditsUsed > 18 ? "warning" : "healthy";
       }
     } catch {
-      // Fallback gracefully to configured state
+      // Fallback gracefully
     }
   }
 
-  // 4. OMISE PAYMENT METRICS
+  return cloudinaryMetrics;
+}
+
+function fetchOmiseMetrics(): OmiseMetrics {
   const omiseSecret = process.env.OMISE_SECRET_KEY || "";
   const omisePublic = process.env.OMISE_PUBLIC_KEY || "";
   const isOmisePlaceholder = !omiseSecret || omiseSecret.includes("skey_test_xxx") || !omisePublic;
   const isTestMode = omisePublic.startsWith("pkey_test") || omiseSecret.startsWith("skey_test");
 
-  const omiseMetrics: OmiseMetrics = {
+  return {
     configured: !isOmisePlaceholder,
     isPlaceholder: isOmisePlaceholder,
     status: isOmisePlaceholder ? "unconfigured" : "healthy",
@@ -464,9 +458,10 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
       ? "เชื่อมต่อ Omise Sandbox (โหมดทดสอบ) พร้อมรับชำระเงินทดสอบแบบไม่มีค่าใช้จ่าย"
       : "เชื่อมต่อ Omise Live พร้อมรับชำระเงินจริง คิดค่าธรรมเนียมตามรายการใช้งาน",
   };
+}
 
-  // 5. HOSTING & ENVIRONMENT METRICS
-  const hostingMetrics: HostingMetrics = {
+function fetchHostingMetrics(): HostingMetrics {
+  return {
     platform: process.env.VERCEL ? "Vercel Cloud Platform" : "Next.js Standalone / Serverless",
     tier: "Hobby Free Tier",
     bandwidthLimit: "100 GB / เดือน",
@@ -475,8 +470,27 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
     nodeVersion: process.version,
     status: "healthy",
   };
+}
 
-  // 6. OVERALL SUMMARY CALCULATION
+// ─── Main Aggregator ───
+
+export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
+  const admin = await validateSession();
+  if (!admin) {
+    throw new Error("Unauthorized: Please log in as admin");
+  }
+
+  // Execute all service metric fetches concurrently
+  const [neonMetrics, clerkMetrics, cloudinaryMetrics] = await Promise.all([
+    fetchNeonMetrics(),
+    fetchClerkMetrics(),
+    fetchCloudinaryMetrics(),
+  ]);
+
+  const omiseMetrics = fetchOmiseMetrics();
+  const hostingMetrics = fetchHostingMetrics();
+
+  // Calculate summary
   const allServices = [neonMetrics.status, clerkMetrics.status, cloudinaryMetrics.status];
   const criticalServices = allServices.filter((s) => s === "critical").length;
   const warningServices = allServices.filter((s) => s === "warning").length;
@@ -502,3 +516,11 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
     hosting: hostingMetrics,
   };
 }
+
+// ─── Cached Service Usage (1 minute Cache) ───
+
+export const getCachedServiceUsageMetrics = unstable_cache(
+  async () => getServiceUsageMetrics(),
+  ["admin-service-usage-metrics-report"],
+  { revalidate: 60, tags: ["service-usage"] }
+);
