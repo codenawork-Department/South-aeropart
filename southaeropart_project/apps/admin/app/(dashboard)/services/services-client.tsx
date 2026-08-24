@@ -319,7 +319,9 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
               <ImageIcon size={12} className="text-amber-400" />
               <span className="text-gray-400">Cloudinary</span>
               <span className="font-bold text-white font-mono">
-                {report.cloudinary.liveUsage?.creditsUsed != null
+                {report.cloudinary.liveUsage?.creditsUsedPretty != null
+                  ? `${report.cloudinary.liveUsage.creditsUsedPretty} / 25`
+                  : report.cloudinary.liveUsage?.creditsUsed != null
                   ? `${report.cloudinary.liveUsage.creditsUsed} / 25`
                   : "25 Credits"}
               </span>
@@ -556,7 +558,7 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
                   </p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-black text-white font-mono">
-                      {report.cloudinary.liveUsage.creditsUsed ?? 0}
+                      {report.cloudinary.liveUsage.creditsUsedPretty || report.cloudinary.liveUsage.creditsUsed || "0"}
                     </span>
                     <span className="text-xs text-gray-600">/ 25 Credits</span>
                   </div>

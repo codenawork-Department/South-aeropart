@@ -74,6 +74,7 @@ export interface CloudinaryMetrics {
   limitTransformations: number;
   liveUsage: {
     creditsUsed?: number;
+    creditsUsedPretty?: string;
     storageBytes?: number;
     storagePretty?: string;
     bandwidthBytes?: number;
@@ -407,20 +408,62 @@ async function fetchCloudinaryMetrics(): Promise<CloudinaryMetrics> {
   if (!isCloudinaryPlaceholder && cSecret) {
     try {
       const authHeader = "Basic " + Buffer.from(`${cKey}:${cSecret}`).toString("base64");
-      const usageRes = await fetch(`https://api.cloudinary.com/v1_1/${cName}/usage`, {
-        headers: { Authorization: authHeader },
-        next: { revalidate: 60 },
-      });
+      const [usageRes, resourcesRes] = await Promise.all([
+        fetch(`https://api.cloudinary.com/v1_1/${cName}/usage`, {
+          headers: { Authorization: authHeader },
+          next: { revalidate: 60 },
+        }),
+        fetch(`https://api.cloudinary.com/v1_1/${cName}/resources/image?max_results=500`, {
+          headers: { Authorization: authHeader },
+          next: { revalidate: 60 },
+        }),
+      ]);
+
       if (usageRes.ok) {
         const usageData = await usageRes.json();
-        const creditsUsed = Number(usageData?.credits?.usage || 0);
-        const storageBytes = Number(usageData?.storage?.usage || 0);
-        const bandwidthBytes = Number(usageData?.bandwidth?.usage || 0);
-        const transformationsUsed = Number(usageData?.transformations?.usage || 0);
-        const resourcesCount = Number(usageData?.resources || 0);
+        let resourcesList: any[] = [];
+        if (resourcesRes.ok) {
+          const resJson = await resourcesRes.json();
+          if (Array.isArray(resJson?.resources)) {
+            resourcesList = resJson.resources;
+          }
+        }
+
+        const liveStorageBytes = resourcesList.reduce(
+          (acc, item) => acc + (Number(item?.bytes) || 0),
+          0
+        );
+        const liveResourcesCount = resourcesList.length;
+
+        const storageBytes = liveStorageBytes > 0
+          ? liveStorageBytes
+          : Math.max(0, Number(usageData?.storage?.usage || 0));
+
+        const resourcesCount = liveResourcesCount > 0
+          ? liveResourcesCount
+          : Math.max(0, Number(usageData?.resources || 0));
+
+        const bandwidthBytes = Math.max(0, Number(usageData?.bandwidth?.usage || 0));
+        const transformationsUsed = Math.max(0, Number(usageData?.transformations?.usage || 0));
+
+        // 1 Credit = 1 GB Storage, 1 GB Bandwidth, 1000 Transformations
+        const storageCredits = storageBytes / (1024 * 1024 * 1024);
+        const bandwidthCredits = bandwidthBytes / (1024 * 1024 * 1024);
+        const transformCredits = transformationsUsed / 1000;
+        const rawCredits = Math.max(0, storageCredits + bandwidthCredits + transformCredits);
+
+        let creditsUsedPretty = "0";
+        if (rawCredits > 0 && rawCredits < 0.01) {
+          creditsUsedPretty = rawCredits < 0.001 ? "< 0.001" : rawCredits.toFixed(3);
+        } else {
+          creditsUsedPretty = rawCredits.toFixed(2);
+        }
+
+        const creditsUsed = parseFloat(rawCredits.toFixed(4));
 
         cloudinaryMetrics.liveUsage = {
           creditsUsed,
+          creditsUsedPretty,
           storageBytes,
           storagePretty: formatBytes(storageBytes),
           bandwidthBytes,
@@ -429,9 +472,12 @@ async function fetchCloudinaryMetrics(): Promise<CloudinaryMetrics> {
           resourcesCount,
         };
         cloudinaryMetrics.status = creditsUsed > 22 ? "critical" : creditsUsed > 18 ? "warning" : "healthy";
+      } else {
+        const errData = await usageRes.json().catch(() => ({}));
+        cloudinaryMetrics.message = `Cloudinary API: ${errData?.error?.message || usageRes.statusText}`;
       }
-    } catch {
-      // Fallback gracefully
+    } catch (e: any) {
+      cloudinaryMetrics.message = `เชื่อมต่อ Cloudinary API ไม่สำเร็จ: ${e.message}`;
     }
   }
 

@@ -9,16 +9,31 @@ export async function ServiceUsageBanner() {
     neonPercent: 1.67,
     clerkUsers: 3,
     clerkPercent: 0.006,
+    cloudinaryCreditsUsed: 0.12,
+    cloudinaryCreditsPretty: "0.12",
+    cloudinaryPercent: 0.48,
+    cloudinaryStorage: "120 MB",
+    cloudinaryFiles: 2,
     overallHealthy: true,
   };
 
   try {
     const report = await getCachedServiceUsageMetrics();
+    const creditsUsed = report.cloudinary.liveUsage?.creditsUsed ?? 0;
+    const creditsUsedPretty = report.cloudinary.liveUsage?.creditsUsedPretty ?? (creditsUsed > 0 && creditsUsed < 0.01 ? "< 0.01" : String(creditsUsed));
+    const creditsPercent = parseFloat(((creditsUsed / 25) * 100).toFixed(2));
+    const resourcesCount = report.cloudinary.liveUsage?.resourcesCount ?? 0;
+
     serviceStatus = {
       neonUsed: report.neon.usedPretty,
       neonPercent: report.neon.percentUsed,
       clerkUsers: report.clerk.totalUsers,
       clerkPercent: report.clerk.percentUsed,
+      cloudinaryCreditsUsed: creditsUsed,
+      cloudinaryCreditsPretty: creditsUsedPretty,
+      cloudinaryPercent: creditsPercent,
+      cloudinaryStorage: report.cloudinary.liveUsage?.storagePretty ?? "0 KB",
+      cloudinaryFiles: resourcesCount,
       overallHealthy: report.summary.overallStatus === "healthy",
     };
   } catch {
@@ -111,19 +126,19 @@ export async function ServiceUsageBanner() {
               <HardDrive size={14} className="text-amber-400" />
               <span>Cloudinary Storage</span>
             </div>
-            <span className="text-[0.68rem] text-zinc-400 font-semibold">
-              25 Credits Free
+            <span className="text-[0.68rem] text-emerald-400 font-semibold font-mono">
+              {serviceStatus.cloudinaryCreditsPretty || serviceStatus.cloudinaryCreditsUsed} / 25 Credits
             </span>
           </div>
           <div className="w-full bg-[#1F1F1F] rounded-full h-2 overflow-hidden mb-2">
             <div
               className="bg-gradient-to-r from-amber-500 to-orange-400 h-full rounded-full transition-all"
-              style={{ width: `4%` }}
+              style={{ width: `${Math.max(2, serviceStatus.cloudinaryPercent)}%` }}
             />
           </div>
-          <div className="flex justify-between text-[0.68rem] text-zinc-400">
-            <span>จัดเก็บรูปภาพสินค้า</span>
-            <span>จำกัด: 25 GB</span>
+          <div className="flex justify-between text-[0.68rem] text-zinc-400 font-mono">
+            <span>ใช้ไป: {serviceStatus.cloudinaryCreditsPretty} Credits ({serviceStatus.cloudinaryStorage})</span>
+            <span>จำกัด: 25 Credits Free</span>
           </div>
         </div>
       </div>
