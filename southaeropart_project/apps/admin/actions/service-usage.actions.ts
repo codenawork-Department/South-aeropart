@@ -4,6 +4,29 @@ import { db, users, sql, rawSql } from "@repo/db";
 import { validateSession } from "@/lib/auth";
 import { unstable_cache } from "next/cache";
 
+// ─── Raw SQL result types (replace `any`) ───
+
+interface PgDbInfoRow {
+  size_bytes: string;
+  size_pretty: string;
+  db_name: string;
+  pg_version: string;
+}
+
+interface PgClusterInfoRow {
+  total_cluster_bytes: string;
+  total_cluster_pretty: string;
+}
+
+interface PgTableRow {
+  table_name: string;
+  row_count: string;
+  total_bytes: string;
+  total_pretty: string;
+  data_pretty: string;
+  index_pretty: string;
+}
+
 // ─── Types ───
 
 export interface TableUsageMetric {
@@ -198,13 +221,13 @@ async function fetchNeonMetrics(): Promise<NeonMetrics> {
           pg_size_pretty(pg_database_size(current_database())) AS size_pretty,
           current_database() AS db_name,
           version() AS pg_version;
-      `,
+      ` as unknown as Promise<PgDbInfoRow[]>,
       sqlClient`
         SELECT 
           COALESCE(SUM(pg_database_size(datname)), 0)::bigint AS total_cluster_bytes,
           pg_size_pretty(COALESCE(SUM(pg_database_size(datname)), 0)) AS total_cluster_pretty
         FROM pg_database;
-      `,
+      ` as unknown as Promise<PgClusterInfoRow[]>,
       sqlClient`
         SELECT 
           s.relname AS table_name,
@@ -217,7 +240,7 @@ async function fetchNeonMetrics(): Promise<NeonMetrics> {
         JOIN pg_class c ON c.relname = s.relname
         WHERE s.schemaname = 'public'
         ORDER BY pg_total_relation_size(c.oid) DESC;
-      `,
+      ` as unknown as Promise<PgTableRow[]>,
     ]);
 
     const usedBytes = Number(dbInfo?.size_bytes || 0);
@@ -227,7 +250,7 @@ async function fetchNeonMetrics(): Promise<NeonMetrics> {
     const percentClusterUsed = Math.min(100, parseFloat(((clusterTotalBytes / NEON_STORAGE_LIMIT_BYTES) * 100).toFixed(2)));
 
     let totalRows = 0;
-    const tables: TableUsageMetric[] = rawTables.map((t: any) => {
+    const tables: TableUsageMetric[] = rawTables.map((t: PgTableRow) => {
       const tBytes = Number(t.total_bytes || 0);
       const rows = Number(t.row_count || 0);
       totalRows += rows;
@@ -279,8 +302,8 @@ async function fetchNeonMetrics(): Promise<NeonMetrics> {
       tables,
       message,
     };
-  } catch (e: any) {
-    neonMetrics.message = `ไม่สามารถเชื่อมต่อฐานข้อมูล Neon ได้: ${e.message}`;
+  } catch (e: unknown) {
+    neonMetrics.message = `ไม่สามารถเชื่อมต่อฐานข้อมูล Neon ได้: ${e instanceof Error ? e.message : String(e)}`;
   }
 
   return neonMetrics;
@@ -336,19 +359,21 @@ async function fetchClerkMetrics(): Promise<ClerkMetrics> {
     if (usersListRes.status === "fulfilled" && usersListRes.value.ok) {
       const usersData = await usersListRes.value.json();
       if (Array.isArray(usersData)) {
-        recentUsers = usersData.map((u: any) => {
+        recentUsers = usersData.map((u: Record<string, unknown>) => {
+          const emailAddresses = u.email_addresses as Array<{ id: string; email_address: string }> | undefined;
+          const primaryEmailId = u.primary_email_address_id as string | undefined;
           const primaryEmail =
-            u.email_addresses?.find((e: any) => e.id === u.primary_email_address_id)?.email_address ||
-            u.email_addresses?.[0]?.email_address ||
+            emailAddresses?.find((e) => e.id === primaryEmailId)?.email_address ||
+            emailAddresses?.[0]?.email_address ||
             "—";
-          const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || primaryEmail.split("@")[0] || "User";
+          const name = [u.first_name as string, u.last_name as string].filter(Boolean).join(" ") || primaryEmail.split("@")[0] || "User";
           return {
-            id: u.id,
+            id: String(u.id || ""),
             name,
             email: primaryEmail,
-            imageUrl: u.image_url,
-            createdAt: new Date(u.created_at).toISOString(),
-            lastSignInAt: u.last_sign_in_at ? new Date(u.last_sign_in_at).toISOString() : null,
+            imageUrl: u.image_url as string | undefined,
+            createdAt: new Date(u.created_at as string | number).toISOString(),
+            lastSignInAt: u.last_sign_in_at ? new Date(u.last_sign_in_at as string | number).toISOString() : null,
           };
         });
       }
@@ -379,8 +404,8 @@ async function fetchClerkMetrics(): Promise<ClerkMetrics> {
       recentUsers,
       message,
     };
-  } catch (e: any) {
-    clerkMetrics.message = `เชื่อมต่อ Clerk API ไม่สำเร็จ: ${e.message}`;
+  } catch (e: unknown) {
+    clerkMetrics.message = `เชื่อมต่อ Clerk API ไม่สำเร็จ: ${e instanceof Error ? e.message : String(e)}`;
   }
 
   return clerkMetrics;
@@ -423,7 +448,7 @@ async function fetchCloudinaryMetrics(): Promise<CloudinaryMetrics> {
 
       if (usageRes.ok) {
         const usageData = await usageRes.json();
-        let resourcesList: any[] = [];
+        let resourcesList: Array<Record<string, unknown>> = [];
         if (resourcesRes.ok) {
           const resJson = await resourcesRes.json();
           if (Array.isArray(resJson?.resources)) {
@@ -475,11 +500,12 @@ async function fetchCloudinaryMetrics(): Promise<CloudinaryMetrics> {
         };
         cloudinaryMetrics.status = creditsUsed > 22 ? "critical" : creditsUsed > 18 ? "warning" : "healthy";
       } else {
-        const errData = await usageRes.json().catch(() => ({}));
-        cloudinaryMetrics.message = `Cloudinary API: ${errData?.error?.message || usageRes.statusText}`;
+        const errData = await usageRes.json().catch(() => ({} as Record<string, unknown>));
+        const errObj = errData?.error as Record<string, unknown> | undefined;
+        cloudinaryMetrics.message = `Cloudinary API: ${errObj?.message || usageRes.statusText}`;
       }
-    } catch (e: any) {
-      cloudinaryMetrics.message = `เชื่อมต่อ Cloudinary API ไม่สำเร็จ: ${e.message}`;
+    } catch (e: unknown) {
+      cloudinaryMetrics.message = `เชื่อมต่อ Cloudinary API ไม่สำเร็จ: ${e instanceof Error ? e.message : String(e)}`;
     }
   }
 
@@ -523,14 +549,9 @@ function fetchHostingMetrics(): HostingMetrics {
   };
 }
 
-// ─── Main Aggregator ───
+// ─── Internal Metrics Fetcher (no auth — safe for caching) ───
 
-export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
-  const admin = await validateSession();
-  if (!admin) {
-    throw new Error("Unauthorized: Please log in as admin");
-  }
-
+async function fetchAllServiceMetrics(): Promise<ServiceUsageReport> {
   // Execute all service metric fetches concurrently
   const [neonMetrics, clerkMetrics, cloudinaryMetrics] = await Promise.all([
     fetchNeonMetrics(),
@@ -569,9 +590,23 @@ export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
 }
 
 // ─── Cached Service Usage (1 minute Cache) ───
+// NOTE: Auth is intentionally NOT inside the cache wrapper.
+// validateSession() reads per-request cookies and must NOT be cached.
 
-export const getCachedServiceUsageMetrics = unstable_cache(
-  async () => getServiceUsageMetrics(),
+const getCachedMetrics = unstable_cache(
+  fetchAllServiceMetrics,
   ["admin-service-usage-metrics-report"],
   { revalidate: 60, tags: ["service-usage"] }
 );
+
+// ─── Public API (auth guard + cached data) ───
+
+export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
+  const admin = await validateSession();
+  if (!admin) {
+    throw new Error("Unauthorized: Please log in as admin");
+  }
+  return getCachedMetrics();
+}
+
+export const getCachedServiceUsageMetrics = getServiceUsageMetrics;

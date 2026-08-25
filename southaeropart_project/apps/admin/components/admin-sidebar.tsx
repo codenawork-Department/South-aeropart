@@ -24,6 +24,8 @@ interface AdminSidebarProps {
   adminRole?: string;
 }
 
+const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000";
+
 export function AdminSidebar({
   adminEmail = "admin@southaero.com",
   adminName = "Super Admin",
@@ -283,7 +285,7 @@ export function AdminSidebar({
                     Quick Actions
                   </p>
                   <a
-                    href="http://localhost:3000"
+                    href={STOREFRONT_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-200 hover:bg-[#181818] transition-colors border border-transparent hover:border-[#282828]"
@@ -292,7 +294,7 @@ export function AdminSidebar({
                       <ExternalLink size={14} className="text-gray-500" />
                       <span>ไปหน้าร้านค้า Storefront</span>
                     </div>
-                    <span className="text-[0.6rem] text-gray-600 font-mono">:3000</span>
+                    <span className="text-[0.6rem] text-gray-600 font-mono">{new URL(STOREFRONT_URL).port ? `:${new URL(STOREFRONT_URL).port}` : ""}</span>
                   </a>
                 </div>
               </div>

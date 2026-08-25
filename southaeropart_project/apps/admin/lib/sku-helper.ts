@@ -75,7 +75,7 @@ export const MODEL_CODE_MAP: Record<string, string> = {
   swift: "SW",
   ranger: "RG",
   everest: "EV",
-  mustang: "MT",
+  mustang: "MU",
   universal: "UN",
 };
 

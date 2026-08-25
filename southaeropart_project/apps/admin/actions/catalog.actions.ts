@@ -170,6 +170,12 @@ export async function updateBrandAction(
   const { name, logoUrl, isActive } = parsed.data;
   const slug = parsed.data.slug?.trim() ? slugify(parsed.data.slug) : slugify(name);
 
+  // Check unique slug (excluding self)
+  const [existing] = await db.select({ id: brands.id }).from(brands).where(eq(brands.slug, slug)).limit(1);
+  if (existing && existing.id !== id) {
+    return { success: false, message: `Slug '${slug}' ถูกใช้โดยแบรนด์อื่นแล้ว` };
+  }
+
   await db
     .update(brands)
     .set({
@@ -324,6 +330,16 @@ export async function updateCarModelAction(
   const { brandId, name, generation, yearFrom, yearTo, isActive } = parsed.data;
   const slug = parsed.data.slug?.trim() ? slugify(parsed.data.slug) : slugify(name);
 
+  // Check unique slug within brand (excluding self)
+  const [existing] = await db
+    .select({ id: carModels.id })
+    .from(carModels)
+    .where(and(eq(carModels.brandId, brandId), eq(carModels.slug, slug)))
+    .limit(1);
+  if (existing && existing.id !== id) {
+    return { success: false, message: `รุ่นรถที่มี slug '${slug}' ในแบรนด์นี้มีอยู่แล้ว` };
+  }
+
   await db
     .update(carModels)
     .set({
@@ -465,6 +481,12 @@ export async function updateCategoryAction(
 
   const { name, parentId, position, isActive } = parsed.data;
   const slug = parsed.data.slug?.trim() ? slugify(parsed.data.slug) : slugify(name);
+
+  // Check unique slug (excluding self)
+  const [existing] = await db.select({ id: categories.id }).from(categories).where(eq(categories.slug, slug)).limit(1);
+  if (existing && existing.id !== id) {
+    return { success: false, message: `หมวดหมู่ที่มี slug '${slug}' มีอยู่ในระบบแล้ว` };
+  }
 
   await db
     .update(categories)

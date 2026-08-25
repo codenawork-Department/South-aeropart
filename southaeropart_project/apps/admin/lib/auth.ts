@@ -148,6 +148,10 @@ export async function validateSession(): Promise<AdminUser | null> {
 
   if (!session) return null;
 
+  // Verify the token matches the stored hash (prevents session ID forgery)
+  const isTokenValid = await compare(token, session.tokenHash);
+  if (!isTokenValid) return null;
+
   // Fetch the admin user — must be active
   const [admin] = await db
     .select()
