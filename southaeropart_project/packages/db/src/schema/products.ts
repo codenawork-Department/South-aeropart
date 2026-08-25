@@ -1,7 +1,14 @@
 import {
   pgTable, uuid, text, integer, numeric, pgEnum,
-  timestamp, boolean, index, AnyPgColumn,
+  timestamp, boolean, index, jsonb, AnyPgColumn,
 } from "drizzle-orm/pg-core";
+
+export interface ProductFeatureItem {
+  title: string;
+  description: string;
+  iconSlug?: string | null;
+  iconId?: string | null;
+}
 
 export const productStatusEnum = pgEnum("product_status", [
   "draft", "active", "archived", "out_of_stock",
@@ -71,6 +78,7 @@ export const products = pgTable("products", {
   stockQuantity: integer("stock_quantity").notNull().default(0),
   status: productStatusEnum("status").notNull().default("draft"),
   weightKg: numeric("weight_kg", { precision: 8, scale: 2 }),
+  features: jsonb("features").$type<ProductFeatureItem[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({

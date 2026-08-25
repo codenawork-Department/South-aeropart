@@ -500,3 +500,37 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* ─── Dark Mode Skeleton Shimmer ─── */
+@keyframes shimmerWave {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #151515 0%,
+    #1F1F1F 20%,
+    #272727 50%,
+    #1F1F1F 80%,
+    #151515 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerWave 1.8s ease-in-out infinite;
+}
+
+/* ─── Top Glow Progress Bar ─── */
+.top-loader-bar {
+  background: linear-gradient(90deg, #991B1B 0%, #E11D48 50%, #FF4D4D 100%);
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.8), 0 0 4px rgba(255, 77, 77, 0.9);
+}
+
+.top-loader-glow {
+  box-shadow: 0 0 15px #FF2E55, 0 0 8px #FF4D4D;
+}
+
+

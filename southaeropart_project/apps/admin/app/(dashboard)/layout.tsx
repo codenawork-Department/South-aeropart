@@ -1,5 +1,6 @@
 import { validateSession } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { DashboardContentFrame } from "@/components/layout/dashboard-content-frame";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
@@ -25,7 +26,7 @@ export default async function DashboardLayout({
       {/* Main Content Area */}
       <div className="flex-1 lg:ml-64 min-w-0 pt-16 lg:pt-0 flex flex-col">
         <main className="flex-1 p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-7xl 2xl:max-w-[1720px] 3xl:max-w-[2160px] 4xl:max-w-[2560px] w-full mx-auto">
-          {children}
+          <DashboardContentFrame>{children}</DashboardContentFrame>
         </main>
       </div>
     </div>

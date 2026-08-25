@@ -52,6 +52,13 @@ const compatibilityItemSchema = z.object({
   yearTo: z.number().int().min(1900).max(2100),
 });
 
+const featureItemSchema = z.object({
+  title: z.string().min(1, "กรุณากรอกหัวข้อจุดเด่น").max(200).trim(),
+  description: z.string().min(1, "กรุณากรอกคำอธิบายจุดเด่น").max(1000).trim(),
+  iconSlug: z.string().optional().nullable(),
+  iconId: z.string().optional().nullable(),
+});
+
 const productInputSchema = z.object({
   sku: z.string().min(1, "กรุณากรอกรหัสสินค้า (SKU)").max(100).trim(),
   name: z.string().min(1, "กรุณากรอกชื่อสินค้า").max(255).trim(),
@@ -81,6 +88,7 @@ const productInputSchema = z.object({
     .max(20, "สามารถเพิ่มรูปภาพสินค้าได้สูงสุดไม่เกิน 20 รูป")
     .default([]),
   compatibility: z.array(compatibilityItemSchema).optional().default([]),
+  features: z.array(featureItemSchema).optional().default([]),
 });
 
 export type ProductInput = z.infer<typeof productInputSchema>;
@@ -443,6 +451,7 @@ export async function createProductAction(
         categoryId: data.categoryId ?? null,
         brandId: data.brandId ?? null,
         carModelId: data.carModelId ?? null,
+        features: data.features || [],
       })
       .returning({ id: products.id });
 
@@ -709,6 +718,7 @@ export async function updateProductAction(
         categoryId: data.categoryId ?? null,
         brandId: data.brandId ?? null,
         carModelId: data.carModelId ?? null,
+        features: data.features || [],
         updatedAt: new Date(),
       })
       .where(eq(products.id, productId));

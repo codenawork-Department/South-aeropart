@@ -8,6 +8,10 @@ const inter = Inter({
   display: "swap",
 });
 
+import { Suspense } from "react";
+import { TopProgressBar } from "@/components/layout/top-progress-bar";
+import { NavigationProvider } from "@/components/layout/navigation-context";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -28,7 +32,12 @@ export default function RootLayout({
   return (
     <html lang="th" className={inter.variable}>
       <body className={`${inter.className} min-h-screen bg-[#0A0A0A] antialiased text-white selection:bg-red-900 selection:text-white`}>
-        {children}
+        <NavigationProvider>
+          <Suspense fallback={null}>
+            <TopProgressBar />
+          </Suspense>
+          {children}
+        </NavigationProvider>
       </body>
     </html>
   );

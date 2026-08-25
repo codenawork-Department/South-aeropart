@@ -19,7 +19,10 @@ import {
   ExternalLink,
   ChevronRight,
   RefreshCw,
+  Palette,
 } from "lucide-react";
+import { IconsTab } from "./components/icons-tab";
+import type { IconData } from "@/components/icons/app-icon";
 import {
   createBrandAction,
   updateBrandAction,
@@ -73,15 +76,17 @@ interface CatalogClientProps {
   initialBrands: BrandItem[];
   initialCarModels: CarModelItem[];
   initialCategories: CategoryItem[];
+  initialIcons?: IconData[];
 }
 
 export function CatalogClient({
   initialBrands,
   initialCarModels,
   initialCategories,
+  initialIcons = [],
 }: CatalogClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"brands" | "models" | "categories">("brands");
+  const [activeTab, setActiveTab] = useState<"brands" | "models" | "categories" | "icons">("brands");
   const [isPending, startTransition] = useTransition();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -289,38 +294,40 @@ export function CatalogClient({
             </button>
           )}
 
-          <button
-            onClick={() => {
-              if (activeTab === "brands") {
-                setBrandForm({ name: "", slug: "", logoUrl: "", isActive: true });
-                setBrandModal({ isOpen: true, item: null });
-              } else if (activeTab === "models") {
-                setModelForm({
-                  brandId: initialBrands[0]?.id || "",
-                  name: "",
-                  slug: "",
-                  generation: "",
-                  yearFrom: 2022,
-                  yearTo: 2025,
-                  isActive: true,
-                });
-                setModelModal({ isOpen: true, item: null });
-              } else {
-                setCategoryForm({ name: "", slug: "", position: initialCategories.length + 1, isActive: true });
-                setCategoryModal({ isOpen: true, item: null });
-              }
-            }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-md shadow-red-950/40 transition-all cursor-pointer"
-          >
-            <Plus size={15} />
-            <span>
-              {activeTab === "brands"
-                ? "เพิ่มแบรนด์รถ"
-                : activeTab === "models"
-                ? "เพิ่มโมเดลรถ"
-                : "เพิ่มหมวดหมู่ชิ้นส่วน"}
-            </span>
-          </button>
+          {activeTab !== "icons" && (
+            <button
+              onClick={() => {
+                if (activeTab === "brands") {
+                  setBrandForm({ name: "", slug: "", logoUrl: "", isActive: true });
+                  setBrandModal({ isOpen: true, item: null });
+                } else if (activeTab === "models") {
+                  setModelForm({
+                    brandId: initialBrands[0]?.id || "",
+                    name: "",
+                    slug: "",
+                    generation: "",
+                    yearFrom: 2022,
+                    yearTo: 2025,
+                    isActive: true,
+                  });
+                  setModelModal({ isOpen: true, item: null });
+                } else if (activeTab === "categories") {
+                  setCategoryForm({ name: "", slug: "", position: initialCategories.length + 1, isActive: true });
+                  setCategoryModal({ isOpen: true, item: null });
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-md shadow-red-950/40 transition-all cursor-pointer"
+            >
+              <Plus size={15} />
+              <span>
+                {activeTab === "brands"
+                  ? "เพิ่มแบรนด์รถ"
+                  : activeTab === "models"
+                  ? "เพิ่มโมเดลรถ"
+                  : "เพิ่มหมวดหมู่ชิ้นส่วน"}
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -360,13 +367,13 @@ export function CatalogClient({
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-[#222222] pb-1">
+      <div className="flex items-center gap-2 border-b border-[#222222] pb-1 overflow-x-auto scrollbar-none">
         <button
           onClick={() => {
             setActiveTab("brands");
             setSearchTerm("");
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all whitespace-nowrap ${
             activeTab === "brands"
               ? "bg-[#181818] text-white border-t border-x border-[#2A2A2A] shadow-md text-red-400"
               : "text-gray-400 hover:text-gray-200"
@@ -384,7 +391,7 @@ export function CatalogClient({
             setActiveTab("models");
             setSearchTerm("");
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all whitespace-nowrap ${
             activeTab === "models"
               ? "bg-[#181818] text-white border-t border-x border-[#2A2A2A] shadow-md text-red-400"
               : "text-gray-400 hover:text-gray-200"
@@ -402,50 +409,70 @@ export function CatalogClient({
             setActiveTab("categories");
             setSearchTerm("");
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all whitespace-nowrap ${
             activeTab === "categories"
               ? "bg-[#181818] text-white border-t border-x border-[#2A2A2A] shadow-md text-red-400"
               : "text-gray-400 hover:text-gray-200"
           }`}
         >
           <Tag size={15} />
-          <span>ประเภทชิ้นส่วน Aeropart (Categories)</span>
+          <span>ประเภทชิ้นส่วน (Categories)</span>
           <span className="px-1.5 py-0.2 rounded-full bg-[#242424] text-[10px] text-gray-300 font-mono">
             {initialCategories.length}
           </span>
         </button>
+
+        <button
+          onClick={() => {
+            setActiveTab("icons");
+            setSearchTerm("");
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === "icons"
+              ? "bg-[#181818] text-white border-t border-x border-[#2A2A2A] shadow-md text-red-400"
+              : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          <Palette size={15} />
+          <span>คลังไอคอน (Icons Library)</span>
+          <span className="px-1.5 py-0.2 rounded-full bg-[#242424] text-[10px] text-gray-300 font-mono">
+            {initialIcons.length}
+          </span>
+        </button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-[#121212] border border-[#222222] rounded-xl p-3.5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="relative flex-1">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            placeholder={`ค้นหาใน ${
-              activeTab === "brands" ? "แบรนด์..." : activeTab === "models" ? "รุ่นรถ / รหัสตัวถัง..." : "หมวดหมู่ชิ้นส่วน..."
-            }`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs focus:outline-none focus:border-red-500 transition-colors"
-          />
+      {/* Filter Bar (Only for Brands, Models, Categories) */}
+      {activeTab !== "icons" && (
+        <div className="bg-[#121212] border border-[#222222] rounded-xl p-3.5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              type="text"
+              placeholder={`ค้นหาใน ${
+                activeTab === "brands" ? "แบรนด์..." : activeTab === "models" ? "รุ่นรถ / รหัสตัวถัง..." : "หมวดหมู่ชิ้นส่วน..."
+              }`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-1.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs focus:outline-none focus:border-red-500 transition-colors"
+            />
+          </div>
+
+          {activeTab === "models" && (
+            <select
+              value={selectedBrandFilter}
+              onChange={(e) => setSelectedBrandFilter(e.target.value)}
+              className="px-3 py-1.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500"
+            >
+              <option value="all">ทุกแบรนด์รถ</option>
+              {initialBrands.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
-
-        {activeTab === "models" && (
-          <select
-            value={selectedBrandFilter}
-            onChange={(e) => setSelectedBrandFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500"
-          >
-            <option value="all">ทุกแบรนด์รถ</option>
-            {initialBrands.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+      )}
 
       {/* ─── TAB 1: BRANDS ─── */}
       {activeTab === "brands" && (
@@ -727,6 +754,11 @@ export function CatalogClient({
             </table>
           )}
         </div>
+      )}
+
+      {/* ─── TAB 4: ICONS LIBRARY ─── */}
+      {activeTab === "icons" && (
+        <IconsTab initialIcons={initialIcons} showToast={showToast} />
       )}
 
       {/* ─── MODAL: BRAND ADD/EDIT ─── */}
