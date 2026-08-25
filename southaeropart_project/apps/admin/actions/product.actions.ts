@@ -670,11 +670,35 @@ export async function updateProductAction(
       }
     }
 
-    // 5. Update main product info
+    // 5. Update main product info (including slug if name changed)
+    let newSlug = existingProduct.slug;
+    if (data.name !== existingProduct.name) {
+      newSlug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
+      if (!newSlug) newSlug = existingProduct.slug;
+
+      // Check slug uniqueness (excluding self)
+      const [slugConflict] = await db
+        .select({ id: products.id })
+        .from(products)
+        .where(and(eq(products.slug, newSlug), eq(products.id, productId)))
+        .limit(1);
+
+      // If slug conflicts with another product, append timestamp
+      const [anyConflict] = await db
+        .select({ id: products.id })
+        .from(products)
+        .where(eq(products.slug, newSlug))
+        .limit(1);
+      if (anyConflict && anyConflict.id !== productId) {
+        newSlug = `${newSlug}-${Date.now().toString(36)}`;
+      }
+    }
+
     await db
       .update(products)
       .set({
         sku: data.sku,
+        slug: newSlug,
         name: data.name,
         description: data.description ?? null,
         price: data.price,

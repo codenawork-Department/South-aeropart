@@ -1,6 +1,7 @@
 "use server";
 
 import { db, orders, reviews, users, products, sql, and, gte, lte, eq, desc } from "@repo/db";
+import { validateSession } from "@/lib/auth";
 
 export interface AnalyticsSummary {
   revenue: {
@@ -79,6 +80,11 @@ export interface AnalyticsSummary {
  * for multi-channel and marketing API data points.
  */
 export async function getBusinessAnalyticsMetrics(): Promise<AnalyticsSummary> {
+  const admin = await validateSession();
+  if (!admin) {
+    throw new Error("Unauthorized: Please log in as admin");
+  }
+
   try {
     // 1. Query real database counts
     let realOrderCount = 0;
