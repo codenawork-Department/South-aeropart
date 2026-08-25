@@ -105,6 +105,7 @@ export const userInterestsRelations = relations(userInterests, ({ one }) => ({
   product: one(products, { fields: [userInterests.productId], references: [products.id] }),
 }));
 
+export * from "./icons";
 export * from "./users";
 export * from "./admin";
 export * from "./products";

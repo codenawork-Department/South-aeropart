@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useNavigation } from "@/components/layout/navigation-context";
 import {
   LayoutDashboard,
   Package,
@@ -32,6 +33,9 @@ export function AdminSidebar({
   adminRole = "super_admin",
 }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { pendingPathname } = useNavigation();
+  const activePath = pendingPathname || pathname;
+
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Close mobile drawer when route changes
@@ -107,8 +111,8 @@ export function AdminSidebar({
         const Icon = item.icon;
         const isActive =
           item.href === "/"
-            ? pathname === "/"
-            : pathname.startsWith(item.href);
+            ? activePath === "/"
+            : activePath.startsWith(item.href);
 
         return (
           <Link

@@ -12,6 +12,7 @@ import {
 } from "@/actions/product.actions";
 import { parseSku } from "@/lib/sku-helper";
 import { ImageUploader, type ImageUploadItem } from "./image-uploader";
+import { IconPicker } from "@/components/icons/icon-picker";
 import {
   Package,
   DollarSign,
@@ -33,6 +34,9 @@ import {
   Info,
   Check,
   BookOpen,
+  ChevronUp,
+  ChevronDown,
+  Zap,
 } from "lucide-react";
 
 interface CategoryOption {
@@ -92,6 +96,12 @@ interface ProductFormProps {
       model: string;
       yearFrom: number;
       yearTo: number;
+    }>;
+    features?: Array<{
+      title: string;
+      description: string;
+      iconSlug?: string | null;
+      iconId?: string | null;
     }>;
   };
   categories: CategoryOption[];
@@ -230,6 +240,95 @@ export function ProductForm({
     })) || []
   );
 
+  // Key Features state
+  interface FormFeatureItem {
+    title: string;
+    description: string;
+    iconSlug?: string | null;
+    iconId?: string | null;
+  }
+
+  const [features, setFeatures] = useState<FormFeatureItem[]>(
+    initialData?.features?.map((f) => ({
+      title: f.title,
+      description: f.description,
+      iconSlug: f.iconSlug || null,
+      iconId: f.iconId || null,
+    })) || []
+  );
+
+  const handleAddFeature = () => {
+    setFeatures((prev) => [
+      ...prev,
+      {
+        title: "",
+        description: "",
+        iconSlug: "aero-downforce",
+        iconId: null,
+      },
+    ]);
+  };
+
+  const handleRemoveFeature = (idx: number) => {
+    setFeatures((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleUpdateFeature = (
+    idx: number,
+    field: keyof FormFeatureItem,
+    value: string | null
+  ) => {
+    setFeatures((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleMoveFeature = (idx: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIndex < 0 || targetIndex >= features.length) return;
+    const updated = [...features];
+    const [moved] = updated.splice(idx, 1);
+    updated.splice(targetIndex, 0, moved);
+    setFeatures(updated);
+  };
+
+  const handleLoadAeroPresets = () => {
+    const defaultPresets: FormFeatureItem[] = [
+      {
+        title: "High-Speed Downforce Generation",
+        description:
+          "ออกแบบตามหลักอากาศพลศาสตร์ จัดระเบียบกระแสลมและสร้างแรงกดท้ายรถ (Positive Downforce) เพื่อการทรงตัวที่มั่นคงในย่านความเร็วสูง",
+        iconSlug: "aero-downforce",
+      },
+      {
+        title: "3D Laser Scan & CAD Precision Fit",
+        description:
+          "ขึ้นรูปจากโมเดลสแกน 3 มิติจากตัวรถจริง เข้ารูปแนบสนิท 100% ตามแนวเส้นสายตัวถังเดิม ไม่ต้องดัดแปลงตัวรถ",
+        iconSlug: "fitment-cad",
+      },
+      {
+        title: "Pre-preg Carbon / High-Grade ABS",
+        description:
+          "วัสดุเกรดพรีเมียม น้ำหนักเบา ทนทานต่อแรงกระแทก เคลือบชั้นกันรังสี UV แบบ High-Gloss ใสเงางาม ไม่ซีดเหลือง",
+        iconSlug: "material-carbon",
+      },
+      {
+        title: "Direct Bolt-On & 3M VHB Tape Mounting",
+        description:
+          "รองรับการติดตั้งแบบตรงรุ่น พร้อมอุปกรณ์ยึดและเทปกาว 3M VHB คุณภาพสูง แน่นหนา ปลอดภัยต่อสีรถ",
+        iconSlug: "install-hardware",
+      },
+    ];
+
+    if (features.length > 0) {
+      if (!confirm("คุณต้องการโหลดชุดเทมเพลตมาตรฐาน Aeropart ทับรายการจุดเด่นปัจจุบันหรือไม่?")) {
+        return;
+      }
+    }
+
+    setFeatures(defaultPresets);
+  };
+
   // Vehicle Compatibility state
   const [compatibility, setCompatibility] = useState<CompatibilityItem[]>(
     initialData?.compatibility?.map((c) => ({
@@ -293,6 +392,7 @@ export function ProductForm({
       carModelId: carModelId || null,
       images,
       compatibility: compatibility.filter((c) => c.make.trim() && c.model.trim()),
+      features: features.filter((f) => f.title.trim() && f.description.trim()),
     };
 
     startTransition(async () => {
@@ -600,6 +700,161 @@ export function ProductForm({
             </div>
           </div>
 
+          {/* Section: Key Features (จุดเด่นสินค้า) */}
+          <div className="bg-[#121212] border border-[#222222] rounded-2xl p-5 sm:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1E1E1E] pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Sparkles size={16} className="text-red-500" />
+                  <span>จุดเด่นสินค้า (Key Features)</span>
+                  {features.length > 0 && (
+                    <span className="text-[10px] px-2 py-0.2 rounded-full bg-red-950/60 text-red-400 border border-red-800/40 font-mono">
+                      {features.length} รายการ
+                    </span>
+                  )}
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  ระบุจุดเด่นสำคัญ 3-5 ข้อ พร้อมเลือกไอคอนเพื่อนำไปแสดงผลบนหน้าสินค้า
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleLoadAeroPresets}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-300 hover:text-white bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg transition-all cursor-pointer"
+                  title="โหลดชุดจุดเด่นมาตรฐาน Aeropart (4 ข้อ)"
+                >
+                  <Zap size={13} className="text-amber-400" />
+                  <span>โหลดเทมเพลต Aeropart</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAddFeature}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 hover:text-white bg-red-950/40 hover:bg-red-600/80 border border-red-800/50 rounded-lg transition-all cursor-pointer"
+                >
+                  <Plus size={14} />
+                  <span>เพิ่มจุดเด่น</span>
+                </button>
+              </div>
+            </div>
+
+            {features.length === 0 ? (
+              <div className="p-6 rounded-xl bg-[#161616] border border-dashed border-[#2A2A2A] text-center space-y-2">
+                <div className="w-9 h-9 mx-auto rounded-full bg-[#1F1F1F] flex items-center justify-center text-gray-500">
+                  <Sparkles size={16} />
+                </div>
+                <p className="text-xs text-gray-400 font-medium">ยังไม่มีการระบุจุดเด่นสินค้า</p>
+                <p className="text-[11px] text-gray-500">
+                  คลิกปุ่ม &quot;+ เพิ่มจุดเด่น&quot; เพื่อกรอกเอง หรือคลิก &quot;โหลดเทมเพลต Aeropart&quot; เพื่อเติมข้อมูลสำเร็จรูป
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {features.map((feature, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-[#181818] border border-[#282828] space-y-3 relative group transition-colors hover:border-[#383838]"
+                  >
+                    {/* Row Header: Number Badge, Reorder, Delete */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-red-400 bg-red-950/60 px-2 py-0.5 rounded border border-red-800/40 font-mono">
+                          #{idx + 1}
+                        </span>
+                        <span className="text-xs text-gray-400 font-medium truncate max-w-[220px]">
+                          {feature.title || `จุดเด่นข้อที่ ${idx + 1}`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        {/* Reorder Buttons */}
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => handleMoveFeature(idx, "up")}
+                          className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="เลื่อนขึ้น"
+                        >
+                          <ChevronUp size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === features.length - 1}
+                          onClick={() => handleMoveFeature(idx, "down")}
+                          className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="เลื่อนลง"
+                        >
+                          <ChevronDown size={14} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFeature(idx)}
+                          className="p-1 rounded text-gray-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors ml-1"
+                          title="ลบข้อนี้"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Form Fields: Icon Picker + Title */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                      <div className="sm:col-span-4 min-w-0">
+                        <label className="block text-[11px] font-semibold text-gray-400 mb-1">
+                          ไอคอนประจำจุดเด่น
+                        </label>
+                        <IconPicker
+                          value={feature.iconSlug || undefined}
+                          onChange={(selected) => {
+                            handleUpdateFeature(idx, "iconSlug", selected.slug);
+                            if (selected.id) handleUpdateFeature(idx, "iconId", selected.id);
+                          }}
+                          onClear={() => {
+                            handleUpdateFeature(idx, "iconSlug", null);
+                            handleUpdateFeature(idx, "iconId", null);
+                          }}
+                          label="เลือกไอคอน"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-8 min-w-0">
+                        <label className="block text-[11px] font-semibold text-gray-400 mb-1">
+                          หัวข้อจุดเด่น (Feature Title) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={feature.title}
+                          onChange={(e) => handleUpdateFeature(idx, "title", e.target.value)}
+                          placeholder="เช่น High-Speed Downforce Generation"
+                          className="w-full h-[38px] px-3 py-2 rounded-lg bg-[#141414] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-w-0"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Description Textarea */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-400 mb-1">
+                        คำอธิบายจุดเด่น (Description) <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        required
+                        value={feature.description}
+                        onChange={(e) => handleUpdateFeature(idx, "description", e.target.value)}
+                        placeholder="เช่น ออกแบบตามหลักอากาศพลศาสตร์ จัดระเบียบกระแสลมและสร้างแรงกดท้ายรถ..."
+                        className="w-full px-3 py-2 rounded-lg bg-[#141414] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-h-[64px]"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Section: Cloudinary Media Upload */}
           <div className="bg-[#121212] border border-[#222222] rounded-2xl p-5 sm:p-6">
             <ImageUploader
@@ -624,7 +879,7 @@ export function ProductForm({
               <button
                 type="button"
                 onClick={addCompatibilityRow}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 hover:text-white bg-red-950/40 hover:bg-red-600/80 border border-red-800/50 rounded-lg transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400 hover:text-white bg-red-950/40 hover:bg-red-600/80 border border-red-800/50 rounded-lg transition-all cursor-pointer shrink-0"
               >
                 <Plus size={14} />
                 <span>เพิ่มรุ่นรถ</span>
@@ -640,31 +895,35 @@ export function ProductForm({
                 {compatibility.map((row, idx) => (
                   <div
                     key={idx}
-                    className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 p-3 rounded-xl bg-[#181818] border border-[#2A2A2A]"
+                    className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 p-3 rounded-xl bg-[#181818] border border-[#2A2A2A] items-center"
                   >
-                    <input
-                      type="text"
-                      placeholder="ยี่ห้อ เช่น Toyota"
-                      value={row.make}
-                      onChange={(e) =>
-                        updateCompatibilityRow(idx, "make", e.target.value)
-                      }
-                      className="flex-1 px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500"
-                    />
-                    <input
-                      type="text"
-                      placeholder="รุ่น เช่น GR86"
-                      value={row.model}
-                      onChange={(e) =>
-                        updateCompatibilityRow(idx, "model", e.target.value)
-                      }
-                      className="flex-1 px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500"
-                    />
-                    <div className="flex items-center gap-1.5">
+                    <div className="sm:col-span-4 min-w-0">
+                      <input
+                        type="text"
+                        placeholder="ยี่ห้อ เช่น Toyota"
+                        value={row.make}
+                        onChange={(e) =>
+                          updateCompatibilityRow(idx, "make", e.target.value)
+                        }
+                        className="w-full h-[36px] px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-w-0"
+                      />
+                    </div>
+                    <div className="sm:col-span-4 min-w-0">
+                      <input
+                        type="text"
+                        placeholder="รุ่น เช่น GR86"
+                        value={row.model}
+                        onChange={(e) =>
+                          updateCompatibilityRow(idx, "model", e.target.value)
+                        }
+                        className="w-full h-[36px] px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-w-0"
+                      />
+                    </div>
+                    <div className="sm:col-span-3 min-w-0 flex items-center gap-1.5">
                       <input
                         type="number"
                         placeholder="ปีเริ่ม"
-                        value={row.yearFrom}
+                        value={row.yearFrom || ""}
                         onChange={(e) =>
                           updateCompatibilityRow(
                             idx,
@@ -672,13 +931,13 @@ export function ProductForm({
                             Number(e.target.value)
                           )
                         }
-                        className="w-20 px-2.5 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs text-center font-mono focus:outline-none focus:border-red-500"
+                        className="w-full min-w-0 h-[36px] px-2 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs text-center font-mono focus:outline-none focus:border-red-500"
                       />
-                      <span className="text-gray-500 text-xs">-</span>
+                      <span className="text-gray-500 text-xs shrink-0">-</span>
                       <input
                         type="number"
                         placeholder="ปีสิ้นสุด"
-                        value={row.yearTo}
+                        value={row.yearTo || ""}
                         onChange={(e) =>
                           updateCompatibilityRow(
                             idx,
@@ -686,17 +945,19 @@ export function ProductForm({
                             Number(e.target.value)
                           )
                         }
-                        className="w-20 px-2.5 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs text-center font-mono focus:outline-none focus:border-red-500"
+                        className="w-full min-w-0 h-[36px] px-2 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs text-center font-mono focus:outline-none focus:border-red-500"
                       />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeCompatibilityRow(idx)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/30 transition-colors self-end sm:self-auto cursor-pointer"
-                      title="ลบรายการนี้"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    <div className="sm:col-span-1 flex justify-end shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => removeCompatibilityRow(idx)}
+                        className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer"
+                        title="ลบรายการนี้"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
