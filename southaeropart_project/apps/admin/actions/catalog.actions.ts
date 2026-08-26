@@ -7,6 +7,8 @@ import {
   brands,
   carModels,
   categories,
+  materials,
+  installations,
   products,
   eq,
   and,
@@ -55,9 +57,25 @@ const categorySchema = z.object({
   isActive: z.boolean().default(true),
 });
 
+const materialSchema = z.object({
+  name: z.string().min(1, "กรุณากรอกชื่อวัสดุ").max(150).trim(),
+  slug: z.string().optional(),
+  description: z.string().max(500).optional().nullable().or(z.literal("")),
+  isActive: z.boolean().default(true),
+});
+
+const installationSchema = z.object({
+  name: z.string().min(1, "กรุณากรอกชื่อวิธีการติดตั้ง").max(150).trim(),
+  slug: z.string().optional(),
+  description: z.string().max(500).optional().nullable().or(z.literal("")),
+  isActive: z.boolean().default(true),
+});
+
 export type BrandInput = z.infer<typeof brandSchema>;
 export type CarModelInput = z.infer<typeof carModelSchema>;
 export type CategoryInput = z.infer<typeof categorySchema>;
+export type MaterialInput = z.infer<typeof materialSchema>;
+export type InstallationInput = z.infer<typeof installationSchema>;
 
 export interface CatalogActionResult<T = unknown> {
   success: boolean;
@@ -674,3 +692,396 @@ export async function seedInitialCatalogAction(): Promise<CatalogActionResult> {
     };
   }
 }
+
+// ─── Material Actions ─────────────────────────────────────────────────────────
+
+export async function getMaterialsAction() {
+  const rows = await db
+    .select({
+      id: materials.id,
+      name: materials.name,
+      slug: materials.slug,
+      description: materials.description,
+      isActive: materials.isActive,
+      createdAt: materials.createdAt,
+      updatedAt: materials.updatedAt,
+    })
+    .from(materials)
+    .orderBy(asc(materials.name));
+
+  // เพิ่มจำนวนสินค้าที่ใช้วัสดุนี้
+  const withCounts = await Promise.all(
+    rows.map(async (mat) => {
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(products)
+        .where(eq(products.materialId, mat.id));
+      return { ...mat, productsCount: Number(total) };
+    })
+  );
+
+  return withCounts;
+}
+
+export async function createMaterialAction(
+  input: MaterialInput
+): Promise<CatalogActionResult<{ id: string }>> {
+  const admin = await validateSession();
+  if (!admin) return { success: false, message: "Unauthorized" };
+
+  const parsed = materialSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "ข้อมูลไม่ถูกต้อง",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const data = parsed.data;
+  const slug = data.slug?.trim()
+    ? data.slug.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "")
+    : data.name.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
+
+  try {
+    const [existing] = await db
+      .select({ id: materials.id })
+      .from(materials)
+      .where(eq(materials.slug, slug))
+      .limit(1);
+
+    if (existing) {
+      return { success: false, message: `ชื่อวัสดุ slug "${slug}" นี้มีอยู่แล้ว` };
+    }
+
+    const [newMat] = await db
+      .insert(materials)
+      .values({
+        name: data.name,
+        slug,
+        description: data.description || null,
+        isActive: data.isActive,
+      })
+      .returning({ id: materials.id });
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "material.created",
+      entityType: "material",
+      entityId: newMat.id,
+      metadata: { name: data.name },
+    });
+
+    revalidatePath("/catalog");
+    revalidatePath("/products");
+    return { success: true, message: "เพิ่มวัสดุสำเร็จ", data: { id: newMat.id } };
+  } catch (error) {
+    console.error("[createMaterialAction] Error:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการเพิ่มวัสดุ",
+    };
+  }
+}
+
+export async function updateMaterialAction(
+  id: string,
+  input: MaterialInput
+): Promise<CatalogActionResult> {
+  const admin = await validateSession();
+  if (!admin) return { success: false, message: "Unauthorized" };
+
+  const parsed = materialSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "ข้อมูลไม่ถูกต้อง",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const data = parsed.data;
+
+  try {
+    const [existing] = await db
+      .select({ id: materials.id })
+      .from(materials)
+      .where(eq(materials.id, id))
+      .limit(1);
+
+    if (!existing) return { success: false, message: "ไม่พบวัสดุในระบบ" };
+
+    await db
+      .update(materials)
+      .set({
+        name: data.name,
+        description: data.description || null,
+        isActive: data.isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(materials.id, id));
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "material.updated",
+      entityType: "material",
+      entityId: id,
+      metadata: { name: data.name },
+    });
+
+    revalidatePath("/catalog");
+    revalidatePath("/products");
+    return { success: true, message: "แก้ไขวัสดุสำเร็จ" };
+  } catch (error) {
+    console.error("[updateMaterialAction] Error:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการแก้ไขวัสดุ",
+    };
+  }
+}
+
+export async function deleteMaterialAction(id: string): Promise<CatalogActionResult> {
+  const admin = await validateSession();
+  if (!admin) return { success: false, message: "Unauthorized" };
+
+  try {
+    const [existing] = await db
+      .select({ id: materials.id, name: materials.name })
+      .from(materials)
+      .where(eq(materials.id, id))
+      .limit(1);
+
+    if (!existing) return { success: false, message: "ไม่พบวัสดุในระบบ" };
+
+    // เช็คว่ามีสินค้าที่ใช้วัสดุนี้อยู่หรือไม่
+    const [{ usageCount }] = await db
+      .select({ usageCount: count() })
+      .from(products)
+      .where(eq(products.materialId, id));
+
+    if (Number(usageCount) > 0) {
+      return {
+        success: false,
+        message: `ไม่สามารถลบวัสดุ "${existing.name}" ได้ เนื่องจากมีสินค้า ${usageCount} รายการที่ใช้วัสดุนี้อยู่ กรุณาเปลี่ยนวัสดุของสินค้าก่อน`,
+      };
+    }
+
+    await db.delete(materials).where(eq(materials.id, id));
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "material.deleted",
+      entityType: "material",
+      entityId: id,
+      metadata: { name: existing.name },
+    });
+
+    revalidatePath("/catalog");
+    revalidatePath("/products");
+    return { success: true, message: `ลบวัสดุ "${existing.name}" สำเร็จ` };
+  } catch (error) {
+    console.error("[deleteMaterialAction] Error:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการลบวัสดุ",
+    };
+  }
+}
+
+// ─── Installation Actions ───────────────────────────────────────────────────
+
+export async function getInstallationsAction() {
+  const rows = await db
+    .select({
+      id: installations.id,
+      name: installations.name,
+      slug: installations.slug,
+      description: installations.description,
+      isActive: installations.isActive,
+      createdAt: installations.createdAt,
+      updatedAt: installations.updatedAt,
+    })
+    .from(installations)
+    .orderBy(asc(installations.name));
+
+  // นับจำนวนสินค้าที่ใช้วิธีการติดตั้งนี้
+  const withCounts = await Promise.all(
+    rows.map(async (inst) => {
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(products)
+        .where(eq(products.installationId, inst.id));
+      return { ...inst, productsCount: Number(total) };
+    })
+  );
+
+  return withCounts;
+}
+
+export async function createInstallationAction(
+  input: InstallationInput
+): Promise<CatalogActionResult<{ id: string }>> {
+  const admin = await validateSession();
+  if (!admin) return { success: false, message: "Unauthorized" };
+
+  const parsed = installationSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "ข้อมูลไม่ถูกต้อง",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const data = parsed.data;
+  const slug = data.slug?.trim()
+    ? slugify(data.slug)
+    : slugify(data.name);
+
+  try {
+    const [existing] = await db
+      .select({ id: installations.id })
+      .from(installations)
+      .where(eq(installations.slug, slug))
+      .limit(1);
+
+    if (existing) {
+      return { success: false, message: `ชื่อวิธีการติดตั้ง slug "${slug}" นี้มีอยู่แล้ว` };
+    }
+
+    const [newInst] = await db
+      .insert(installations)
+      .values({
+        name: data.name,
+        slug,
+        description: data.description || null,
+        isActive: data.isActive,
+      })
+      .returning({ id: installations.id });
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "installation.created",
+      entityType: "installation",
+      entityId: newInst.id,
+      metadata: { name: data.name },
+    });
+
+    revalidatePath("/catalog");
+    revalidatePath("/products");
+    return { success: true, message: "เพิ่มวิธีการติดตั้งสำเร็จ", data: { id: newInst.id } };
+  } catch (error) {
+    console.error("[createInstallationAction] Error:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการเพิ่มวิธีการติดตั้ง",
+    };
+  }
+}
+
+export async function updateInstallationAction(
+  id: string,
+  input: InstallationInput
+): Promise<CatalogActionResult> {
+  const admin = await validateSession();
+  if (!admin) return { success: false, message: "Unauthorized" };
+
+  const parsed = installationSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "ข้อมูลไม่ถูกต้อง",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const data = parsed.data;
+
+  try {
+    const [existing] = await db
+      .select({ id: installations.id })
+      .from(installations)
+      .where(eq(installations.id, id))
+      .limit(1);
+
+    if (!existing) return { success: false, message: "ไม่พบวิธีการติดตั้งในระบบ" };
+
+    await db
+      .update(installations)
+      .set({
+        name: data.name,
+        description: data.description || null,
+        isActive: data.isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(installations.id, id));
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "installation.updated",
+      entityType: "installation",
+      entityId: id,
+      metadata: { name: data.name },
+    });
+
+    revalidatePath("/catalog");
+    revalidatePath("/products");
+    return { success: true, message: "แก้ไขวิธีการติดตั้งสำเร็จ" };
+  } catch (error) {
+    console.error("[updateInstallationAction] Error:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการแก้ไขวิธีการติดตั้ง",
+    };
+  }
+}
+
+export async function deleteInstallationAction(id: string): Promise<CatalogActionResult> {
+  const admin = await validateSession();
+  if (!admin) return { success: false, message: "Unauthorized" };
+
+  try {
+    const [existing] = await db
+      .select({ id: installations.id, name: installations.name })
+      .from(installations)
+      .where(eq(installations.id, id))
+      .limit(1);
+
+    if (!existing) return { success: false, message: "ไม่พบวิธีการติดตั้งในระบบ" };
+
+    // เช็คว่ามีสินค้าที่ใช้วิธีการติดตั้งนี้อยู่หรือไม่
+    const [{ usageCount }] = await db
+      .select({ usageCount: count() })
+      .from(products)
+      .where(eq(products.installationId, id));
+
+    if (Number(usageCount) > 0) {
+      return {
+        success: false,
+        message: `ไม่สามารถลบวิธีการติดตั้ง "${existing.name}" ได้ เนื่องจากมีสินค้า ${usageCount} รายการที่ใช้วิธีการติดตั้งนี้อยู่ กรุณาเปลี่ยนวิธีการติดตั้งของสินค้าก่อน`,
+      };
+    }
+
+    await db.delete(installations).where(eq(installations.id, id));
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "installation.deleted",
+      entityType: "installation",
+      entityId: id,
+      metadata: { name: existing.name },
+    });
+
+    revalidatePath("/catalog");
+    revalidatePath("/products");
+    return { success: true, message: `ลบวิธีการติดตั้ง "${existing.name}" สำเร็จ` };
+  } catch (error) {
+    console.error("[deleteInstallationAction] Error:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการลบวิธีการติดตั้ง",
+    };
+  }
+}
+

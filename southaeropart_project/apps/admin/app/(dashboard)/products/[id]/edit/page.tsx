@@ -16,7 +16,7 @@ interface EditProductPageProps {
 }
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
-  const [product, { categories, brands, carModels }] = await Promise.all([
+  const [product, { categories, brands, carModels, materials, installations }] = await Promise.all([
     getProductByIdAction(params.id),
     getCategoriesAndBrandsAction(),
   ]);
@@ -32,6 +32,8 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         categories={categories}
         brands={brands}
         carModels={carModels}
+        materials={materials}
+        installations={installations}
         isEdit={true}
       />
     </div>

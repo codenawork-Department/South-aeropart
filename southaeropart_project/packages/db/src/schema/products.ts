@@ -64,20 +64,62 @@ export const carModels = pgTable("car_models", {
   slugIdx: index("car_models_slug_idx").on(table.slug),
 }));
 
+/**
+ * Materials (วัสดุผลิตชิ้นส่วน) — จัดการโดย Admin อย่างอิสระ
+ * e.g. "Pre-preg Carbon Fiber", "ABS Plastic", "Autoclave Dry Carbon", "FRP / Fiberglass"
+ */
+export const materials = pgTable("materials", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("materials_slug_idx").on(table.slug),
+  nameIdx: index("materials_name_idx").on(table.name),
+}));
+
+export const installations = pgTable("installations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("installations_slug_idx").on(table.slug),
+  nameIdx: index("installations_name_idx").on(table.name),
+}));
+
 export const products = pgTable("products", {
   id: uuid("id").defaultRandom().primaryKey(),
   sku: text("sku").notNull().unique(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description"),
+  shortDescription: text("short_description"),
   brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
   carModelId: uuid("car_model_id").references(() => carModels.id, { onDelete: "set null" }),
   categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+  materialId: uuid("material_id").references(() => materials.id, { onDelete: "set null" }),
+  installationId: uuid("installation_id").references(() => installations.id, { onDelete: "set null" }),
   price: numeric("price", { precision: 12, scale: 2 }).notNull(),
   compareAtPrice: numeric("compare_at_price", { precision: 12, scale: 2 }),
   stockQuantity: integer("stock_quantity").notNull().default(0),
   status: productStatusEnum("status").notNull().default("draft"),
+  isFeatured: boolean("is_featured").notNull().default(false),
   weightKg: numeric("weight_kg", { precision: 8, scale: 2 }),
+  installation: text("installation"),
+  // CFD Aerodynamic Telemetry Data
+  downforceN: numeric("downforce_n", { precision: 10, scale: 2 }),
+  dragN: numeric("drag_n", { precision: 10, scale: 2 }),
+  downforceBefore: numeric("downforce_before", { precision: 10, scale: 2 }),
+  downforceAfter: numeric("downforce_after", { precision: 10, scale: 2 }),
+  dragBefore: numeric("drag_before", { precision: 10, scale: 2 }),
+  dragAfter: numeric("drag_after", { precision: 10, scale: 2 }),
   features: jsonb("features").$type<ProductFeatureItem[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -86,7 +128,10 @@ export const products = pgTable("products", {
   categoryIdx: index("products_category_idx").on(table.categoryId),
   brandIdx: index("products_brand_idx").on(table.brandId),
   carModelIdx: index("products_car_model_idx").on(table.carModelId),
+  materialIdx: index("products_material_idx").on(table.materialId),
+  installationIdx: index("products_installation_idx").on(table.installationId),
   statusIdx: index("products_status_idx").on(table.status),
+  featuredIdx: index("products_featured_idx").on(table.isFeatured),
 }));
 
 export const productImages = pgTable("product_images", {
@@ -123,7 +168,12 @@ export type Brand = typeof brands.$inferSelect;
 export type NewBrand = typeof brands.$inferInsert;
 export type CarModel = typeof carModels.$inferSelect;
 export type NewCarModel = typeof carModels.$inferInsert;
+export type Material = typeof materials.$inferSelect;
+export type NewMaterial = typeof materials.$inferInsert;
+export type Installation = typeof installations.$inferSelect;
+export type NewInstallation = typeof installations.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type ProductImage = typeof productImages.$inferSelect;
+
 export type ProductCompatibility = typeof productCompatibility.$inferSelect;

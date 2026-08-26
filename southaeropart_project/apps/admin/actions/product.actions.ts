@@ -9,6 +9,8 @@ import {
   categories,
   brands,
   carModels,
+  materials,
+  installations,
   productCompatibility,
   eq,
   and,
@@ -64,6 +66,7 @@ const productInputSchema = z.object({
   name: z.string().min(1, "กรุณากรอกชื่อสินค้า").max(255).trim(),
   slug: z.string().optional(),
   description: z.string().optional().nullable(),
+  shortDescription: z.string().max(500).optional().nullable(),
   price: z
     .string()
     .min(1, "กรุณากรอกราคา")
@@ -75,14 +78,25 @@ const productInputSchema = z.object({
     .nullable(),
   stockQuantity: z.number().int().min(0, "จำนวนสต็อกต้องไม่ติดลบ").default(0),
   status: z.enum(["draft", "active", "archived", "out_of_stock"]).default("draft"),
+  isFeatured: z.boolean().default(false),
   weightKg: z
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบน้ำหนักไม่ถูกต้อง")
     .optional()
     .nullable(),
+  installation: z.string().max(500).optional().nullable(),
+  installationId: z.string().uuid("วิธีการติดตั้งไม่ถูกต้อง").optional().nullable(),
   categoryId: z.string().uuid("หมวดหมู่ไม่ถูกต้อง").optional().nullable(),
   brandId: z.string().uuid("แบรนด์ไม่ถูกต้อง").optional().nullable(),
   carModelId: z.string().uuid("รุ่นรถไม่ถูกต้อง").optional().nullable(),
+  materialId: z.string().uuid("วัสดุไม่ถูกต้อง").optional().nullable(),
+  // CFD Aerodynamic Telemetry
+  downforceN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+  dragN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+  downforceBefore: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+  downforceAfter: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+  dragBefore: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+  dragAfter: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
   images: z
     .array(imageItemSchema)
     .max(20, "สามารถเพิ่มรูปภาพสินค้าได้สูงสุดไม่เกิน 20 รูป")
@@ -117,7 +131,7 @@ function slugify(text: string): string {
  * Fetch all categories, brands, and car models for dropdown selectors
  */
 export async function getCategoriesAndBrandsAction() {
-  const [allCategories, allBrands, allModels] = await Promise.all([
+  const [allCategories, allBrands, allModels, allMaterials, allInstallations] = await Promise.all([
     db
       .select({
         id: categories.id,
@@ -151,9 +165,37 @@ export async function getCategoriesAndBrandsAction() {
       .from(carModels)
       .where(eq(carModels.isActive, true))
       .orderBy(asc(carModels.name)),
+
+    db
+      .select({
+        id: materials.id,
+        name: materials.name,
+        slug: materials.slug,
+        description: materials.description,
+      })
+      .from(materials)
+      .where(eq(materials.isActive, true))
+      .orderBy(asc(materials.name)),
+
+    db
+      .select({
+        id: installations.id,
+        name: installations.name,
+        slug: installations.slug,
+        description: installations.description,
+      })
+      .from(installations)
+      .where(eq(installations.isActive, true))
+      .orderBy(asc(installations.name)),
   ]);
 
-  return { categories: allCategories, brands: allBrands, carModels: allModels };
+  return {
+    categories: allCategories,
+    brands: allBrands,
+    carModels: allModels,
+    materials: allMaterials,
+    installations: allInstallations,
+  };
 }
 
 /**
@@ -294,7 +336,7 @@ export async function getProductByIdAction(id: string) {
 
   if (!product) return null;
 
-  const [images, compatibility, brand, carModel, category] = await Promise.all([
+  const [images, compatibility, brand, carModel, category, material, installationMethod] = await Promise.all([
     db
       .select()
       .from(productImages)
@@ -317,6 +359,12 @@ export async function getProductByIdAction(id: string) {
           .where(eq(categories.id, product.categoryId))
           .limit(1)
       : Promise.resolve([]),
+    product.materialId
+      ? db.select({ id: materials.id, name: materials.name, slug: materials.slug }).from(materials).where(eq(materials.id, product.materialId)).limit(1)
+      : Promise.resolve([]),
+    product.installationId
+      ? db.select({ id: installations.id, name: installations.name, slug: installations.slug }).from(installations).where(eq(installations.id, product.installationId)).limit(1)
+      : Promise.resolve([]),
   ]);
 
   return {
@@ -326,6 +374,8 @@ export async function getProductByIdAction(id: string) {
     brand: brand[0] || null,
     carModel: carModel[0] || null,
     category: category[0] || null,
+    material: material[0] || null,
+    installationMethod: installationMethod[0] || null,
   };
 }
 
@@ -443,14 +493,25 @@ export async function createProductAction(
         slug,
         name: data.name,
         description: data.description ?? null,
+        shortDescription: data.shortDescription ?? null,
         price: data.price,
         compareAtPrice: data.compareAtPrice ?? null,
         stockQuantity: data.stockQuantity,
         status: data.status,
+        isFeatured: data.isFeatured ?? false,
         weightKg: data.weightKg ?? null,
+        installation: data.installation ?? null,
+        installationId: data.installationId ?? null,
         categoryId: data.categoryId ?? null,
         brandId: data.brandId ?? null,
         carModelId: data.carModelId ?? null,
+        materialId: data.materialId ?? null,
+        downforceN: data.downforceN ?? null,
+        dragN: data.dragN ?? null,
+        downforceBefore: data.downforceBefore ?? null,
+        downforceAfter: data.downforceAfter ?? null,
+        dragBefore: data.dragBefore ?? null,
+        dragAfter: data.dragAfter ?? null,
         features: data.features || [],
       })
       .returning({ id: products.id });
@@ -710,14 +771,25 @@ export async function updateProductAction(
         slug: newSlug,
         name: data.name,
         description: data.description ?? null,
+        shortDescription: data.shortDescription ?? null,
         price: data.price,
         compareAtPrice: data.compareAtPrice ?? null,
         stockQuantity: data.stockQuantity,
         status: data.status,
+        isFeatured: data.isFeatured ?? false,
         weightKg: data.weightKg ?? null,
+        installation: data.installation ?? null,
+        installationId: data.installationId ?? null,
         categoryId: data.categoryId ?? null,
         brandId: data.brandId ?? null,
         carModelId: data.carModelId ?? null,
+        materialId: data.materialId ?? null,
+        downforceN: data.downforceN ?? null,
+        dragN: data.dragN ?? null,
+        downforceBefore: data.downforceBefore ?? null,
+        downforceAfter: data.downforceAfter ?? null,
+        dragBefore: data.dragBefore ?? null,
+        dragAfter: data.dragAfter ?? null,
         features: data.features || [],
         updatedAt: new Date(),
       })

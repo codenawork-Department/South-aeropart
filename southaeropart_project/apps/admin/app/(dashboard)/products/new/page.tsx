@@ -6,7 +6,7 @@ export const metadata = {
 };
 
 export default async function NewProductPage() {
-  const { categories, brands, carModels } = await getCategoriesAndBrandsAction();
+  const { categories, brands, carModels, materials, installations } = await getCategoriesAndBrandsAction();
 
   return (
     <div className="py-2">
@@ -14,6 +14,8 @@ export default async function NewProductPage() {
         categories={categories}
         brands={brands}
         carModels={carModels}
+        materials={materials}
+        installations={installations}
         isEdit={false}
       />
     </div>

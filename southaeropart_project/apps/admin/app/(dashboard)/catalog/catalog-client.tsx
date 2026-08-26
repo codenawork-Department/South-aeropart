@@ -16,6 +16,7 @@ import {
   Car,
   Tag,
   Shield,
+  Wrench,
   ExternalLink,
   ChevronRight,
   RefreshCw,
@@ -34,9 +35,17 @@ import {
   updateCategoryAction,
   deleteCategoryAction,
   seedInitialCatalogAction,
+  createMaterialAction,
+  updateMaterialAction,
+  deleteMaterialAction,
+  createInstallationAction,
+  updateInstallationAction,
+  deleteInstallationAction,
   type BrandInput,
   type CarModelInput,
   type CategoryInput,
+  type MaterialInput,
+  type InstallationInput,
 } from "@/actions/catalog.actions";
 
 interface BrandItem {
@@ -72,10 +81,34 @@ interface CategoryItem {
   productsCount: number;
 }
 
+interface MaterialItem {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  isActive: boolean;
+  productsCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface InstallationItem {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  isActive: boolean;
+  productsCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface CatalogClientProps {
   initialBrands: BrandItem[];
   initialCarModels: CarModelItem[];
   initialCategories: CategoryItem[];
+  initialMaterials: MaterialItem[];
+  initialInstallations: InstallationItem[];
   initialIcons?: IconData[];
 }
 
@@ -83,12 +116,16 @@ export function CatalogClient({
   initialBrands,
   initialCarModels,
   initialCategories,
+  initialMaterials,
+  initialInstallations,
   initialIcons = [],
 }: CatalogClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"brands" | "models" | "categories" | "icons">("brands");
+  const [activeTab, setActiveTab] = useState<"brands" | "models" | "categories" | "materials" | "installations" | "icons">("brands");
   const [isPending, startTransition] = useTransition();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [materials, setMaterials] = useState<MaterialItem[]>(initialMaterials);
+  const [installations, setInstallations] = useState<InstallationItem[]>(initialInstallations);
 
   // Search & Filter
   const [searchTerm, setSearchTerm] = useState("");
@@ -109,10 +146,24 @@ export function CatalogClient({
   });
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
-    type: "brand" | "model" | "category";
+    type: "brand" | "model" | "category" | "material" | "installation";
     id: string;
     name: string;
   } | null>(null);
+
+  // Material Modal State
+  const [materialModal, setMaterialModal] = useState<{ isOpen: boolean; item?: MaterialItem | null }>({
+    isOpen: false,
+    item: null,
+  });
+  const [materialForm, setMaterialForm] = useState<MaterialInput>({ name: "", description: "", isActive: true });
+
+  // Installation Modal State
+  const [installationModal, setInstallationModal] = useState<{ isOpen: boolean; item?: InstallationItem | null }>({
+    isOpen: false,
+    item: null,
+  });
+  const [installationForm, setInstallationForm] = useState<InstallationInput>({ name: "", description: "", isActive: true });
 
   // Form states for modals
   const [brandForm, setBrandForm] = useState<BrandInput>({ name: "", slug: "", logoUrl: "", isActive: true });
@@ -231,12 +282,83 @@ export function CatalogClient({
       if (deleteModal.type === "brand") res = await deleteBrandAction(deleteModal.id);
       else if (deleteModal.type === "model") res = await deleteCarModelAction(deleteModal.id);
       else if (deleteModal.type === "category") res = await deleteCategoryAction(deleteModal.id);
+      else if (deleteModal.type === "material") res = await deleteMaterialAction(deleteModal.id);
+      else if (deleteModal.type === "installation") res = await deleteInstallationAction(deleteModal.id);
 
       setDeleteModal(null);
       if (res?.success) {
         showToast(res.message || "ลบรายการสำเร็จ");
+        if (deleteModal.type === "material") {
+          setMaterials((prev) => prev.filter((m) => m.id !== deleteModal.id));
+        } else if (deleteModal.type === "installation") {
+          setInstallations((prev) => prev.filter((inst) => inst.id !== deleteModal.id));
+        }
       } else {
         alert(res?.message || "เกิดข้อผิดพลาดในการลบ");
+      }
+    });
+  };
+
+  // Material Submit
+  const handleMaterialSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      if (materialModal.item) {
+        const res = await updateMaterialAction(materialModal.item.id, materialForm);
+        if (res.success) {
+          setMaterials((prev) =>
+            prev.map((m) =>
+              m.id === materialModal.item!.id
+                ? { ...m, name: materialForm.name, description: materialForm.description ?? null, isActive: materialForm.isActive, updatedAt: new Date() }
+                : m
+            )
+          );
+          setMaterialModal({ isOpen: false, item: null });
+          showToast(res.message || "อัปเดตวัสดุสำเร็จ");
+        } else {
+          alert(res.message || "เกิดข้อผิดพลาด");
+        }
+      } else {
+        const res = await createMaterialAction(materialForm);
+        if (res.success) {
+          router.refresh();
+          setMaterialModal({ isOpen: false, item: null });
+          showToast(res.message || "เพิ่มวัสดุสำเร็จ");
+        } else {
+          alert(res.message || "เกิดข้อผิดพลาด");
+        }
+      }
+    });
+  };
+
+  // Installation Submit
+  const handleInstallationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      if (installationModal.item) {
+        const res = await updateInstallationAction(installationModal.item.id, installationForm);
+        if (res.success) {
+          setInstallations((prev) =>
+            prev.map((inst) =>
+              inst.id === installationModal.item!.id
+                ? { ...inst, name: installationForm.name, description: installationForm.description ?? null, isActive: installationForm.isActive, updatedAt: new Date() }
+                : inst
+            )
+          );
+          setInstallationModal({ isOpen: false, item: null });
+          showToast(res.message || "อัปเดตวิธีการติดตั้งสำเร็จ");
+        } else {
+          alert(res.message || "เกิดข้อผิดพลาด");
+        }
+      } else {
+        const res = await createInstallationAction(installationForm);
+        if (res.success) {
+          router.refresh();
+          setInstallationModal({ isOpen: false, item: null });
+          showToast(res.message || "เพิ่มวิธีการติดตั้งสำเร็จ");
+        } else {
+          alert(res.message || "เกิดข้อผิดพลาด");
+        }
       }
     });
   };
@@ -258,6 +380,14 @@ export function CatalogClient({
 
   const filteredCategories = initialCategories.filter(
     (c) => !searchTerm.trim() || c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.slug.includes(searchTerm.toLowerCase())
+  );
+
+  const filteredMaterials = materials.filter(
+    (m) => !searchTerm.trim() || m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredInstallations = installations.filter(
+    (inst) => !searchTerm.trim() || inst.name.toLowerCase().includes(searchTerm.toLowerCase()) || inst.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -294,7 +424,7 @@ export function CatalogClient({
             </button>
           )}
 
-          {activeTab !== "icons" && (
+          {activeTab !== "icons" && activeTab !== "materials" && activeTab !== "installations" && (
             <button
               onClick={() => {
                 if (activeTab === "brands") {
@@ -326,6 +456,30 @@ export function CatalogClient({
                   ? "เพิ่มโมเดลรถ"
                   : "เพิ่มหมวดหมู่ชิ้นส่วน"}
               </span>
+            </button>
+          )}
+          {activeTab === "materials" && (
+            <button
+              onClick={() => {
+                setMaterialForm({ name: "", description: "", isActive: true });
+                setMaterialModal({ isOpen: true, item: null });
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-md shadow-teal-950/40 transition-all cursor-pointer"
+            >
+              <Plus size={15} />
+              <span>เพิ่มวัสดุใหม่</span>
+            </button>
+          )}
+          {activeTab === "installations" && (
+            <button
+              onClick={() => {
+                setInstallationForm({ name: "", description: "", isActive: true });
+                setInstallationModal({ isOpen: true, item: null });
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold shadow-md shadow-orange-950/40 transition-all cursor-pointer"
+            >
+              <Plus size={15} />
+              <span>เพิ่มวิธีการติดตั้งใหม่</span>
             </button>
           )}
         </div>
@@ -424,6 +578,42 @@ export function CatalogClient({
 
         <button
           onClick={() => {
+            setActiveTab("materials");
+            setSearchTerm("");
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === "materials"
+              ? "bg-[#181818] text-teal-400 border-t border-x border-[#2A2A2A] shadow-md"
+              : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          <Shield size={15} />
+          <span>วัสดุผลิต (Materials)</span>
+          <span className="px-1.5 py-0.2 rounded-full bg-[#242424] text-[10px] text-gray-300 font-mono">
+            {materials.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab("installations");
+            setSearchTerm("");
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === "installations"
+              ? "bg-[#181818] text-orange-400 border-t border-x border-[#2A2A2A] shadow-md"
+              : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          <Wrench size={15} />
+          <span>วิธีการติดตั้ง (Installations)</span>
+          <span className="px-1.5 py-0.2 rounded-full bg-[#242424] text-[10px] text-gray-300 font-mono">
+            {installations.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => {
             setActiveTab("icons");
             setSearchTerm("");
           }}
@@ -441,7 +631,7 @@ export function CatalogClient({
         </button>
       </div>
 
-      {/* Filter Bar (Only for Brands, Models, Categories) */}
+      {/* Filter Bar (Only for Brands, Models, Categories, Materials, Installations) */}
       {activeTab !== "icons" && (
         <div className="bg-[#121212] border border-[#222222] rounded-xl p-3.5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="relative flex-1">
@@ -449,7 +639,15 @@ export function CatalogClient({
             <input
               type="text"
               placeholder={`ค้นหาใน ${
-                activeTab === "brands" ? "แบรนด์..." : activeTab === "models" ? "รุ่นรถ / รหัสตัวถัง..." : "หมวดหมู่ชิ้นส่วน..."
+                activeTab === "brands"
+                  ? "แบรนด์..."
+                  : activeTab === "models"
+                  ? "รุ่นรถ / รหัสตัวถัง..."
+                  : activeTab === "materials"
+                  ? "ชื่อวัสดุ / คำอธิบาย..."
+                  : activeTab === "installations"
+                  ? "วิธีการติดตั้ง / คำอธิบาย..."
+                  : "หมวดหมู่ชิ้นส่วน..."
               }`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -756,7 +954,167 @@ export function CatalogClient({
         </div>
       )}
 
-      {/* ─── TAB 4: ICONS LIBRARY ─── */}
+      {/* ─── TAB 4: MATERIALS ─── */}
+      {activeTab === "materials" && (
+        <div className="bg-[#121212] border border-[#222222] rounded-xl overflow-hidden shadow-lg">
+          {filteredMaterials.length === 0 ? (
+            <div className="p-12 text-center text-gray-400">
+              <Shield size={32} className="mx-auto text-gray-600 mb-2" />
+              <p className="text-sm font-semibold text-white">ยังไม่มีข้อมูลวัสดุในระบบ</p>
+              <p className="text-xs text-gray-500 mt-1">กดปุ่ม &quot;เพิ่มวัสดุใหม่&quot; ด้านบนเพื่อเพิ่มวัสดุแรก</p>
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#181818] border-b border-[#222222] text-gray-400 font-semibold uppercase">
+                <tr>
+                  <th className="py-3 px-4">ชื่อวัสดุ</th>
+                  <th className="py-3 px-4">คำอธิบาย</th>
+                  <th className="py-3 px-4 text-center">จำนวนสินค้าที่ใช้</th>
+                  <th className="py-3 px-4 text-center">สถานะ</th>
+                  <th className="py-3 px-4 text-right">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1D1D1D] text-gray-300">
+                {filteredMaterials.map((mat) => (
+                  <tr key={mat.id} className="hover:bg-[#161616] transition-colors">
+                    <td className="py-3 px-4 font-semibold text-white">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded bg-teal-950/60 border border-teal-800/40 flex items-center justify-center">
+                          <Shield size={12} className="text-teal-400" />
+                        </div>
+                        {mat.name}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-gray-400 max-w-xs truncate">
+                      {mat.description || <span className="text-gray-600 italic">—</span>}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="px-2 py-0.5 rounded bg-[#1F1F1F] text-gray-300 font-mono text-[11px]">
+                        {mat.productsCount} ชิ้น
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${mat.isActive ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/50" : "bg-[#222] text-gray-500 border border-[#2D2D2D]"}`}>
+                        {mat.isActive ? "ใช้งาน" : "ปิดใช้งาน"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => {
+                            setMaterialForm({ name: mat.name, description: mat.description ?? "", isActive: mat.isActive });
+                            setMaterialModal({ isOpen: true, item: mat });
+                          }}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#252525] transition-colors"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            setDeleteModal({
+                              isOpen: true,
+                              type: "material",
+                              id: mat.id,
+                              name: mat.name,
+                            })
+                          }
+                          disabled={mat.productsCount > 0}
+                          title={mat.productsCount > 0 ? `ไม่สามารถลบได้ มีสินค้า ${mat.productsCount} ชิ้นใช้วัสดุนี้อยู่` : "ลบวัสดุ"}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* ─── TAB 5: INSTALLATIONS ─── */}
+      {activeTab === "installations" && (
+        <div className="bg-[#121212] border border-[#222222] rounded-xl overflow-hidden shadow-lg">
+          {filteredInstallations.length === 0 ? (
+            <div className="p-12 text-center text-gray-400">
+              <Wrench size={32} className="mx-auto text-gray-600 mb-2" />
+              <p className="text-sm font-semibold text-white">ยังไม่มีข้อมูลวิธีการติดตั้งในระบบ</p>
+              <p className="text-xs text-gray-500 mt-1">กดปุ่ม &quot;เพิ่มวิธีการติดตั้งใหม่&quot; ด้านบนเพื่อเพิ่มวิธีการติดตั้งแรก</p>
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#181818] border-b border-[#222222] text-gray-400 font-semibold uppercase">
+                <tr>
+                  <th className="py-3 px-4">ชื่อวิธีการติดตั้ง</th>
+                  <th className="py-3 px-4">คำอธิบาย</th>
+                  <th className="py-3 px-4 text-center">จำนวนสินค้าที่ใช้</th>
+                  <th className="py-3 px-4 text-center">สถานะ</th>
+                  <th className="py-3 px-4 text-right">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1D1D1D] text-gray-300">
+                {filteredInstallations.map((inst) => (
+                  <tr key={inst.id} className="hover:bg-[#161616] transition-colors">
+                    <td className="py-3 px-4 font-semibold text-white">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded bg-orange-950/60 border border-orange-800/40 flex items-center justify-center">
+                          <Wrench size={12} className="text-orange-400" />
+                        </div>
+                        {inst.name}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-gray-400 max-w-xs truncate">
+                      {inst.description || <span className="text-gray-600 italic">—</span>}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="px-2 py-0.5 rounded bg-[#1F1F1F] text-gray-300 font-mono text-[11px]">
+                        {inst.productsCount} ชิ้น
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${inst.isActive ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/50" : "bg-[#222] text-gray-500 border border-[#2D2D2D]"}`}>
+                        {inst.isActive ? "ใช้งาน" : "ปิดใช้งาน"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => {
+                            setInstallationForm({ name: inst.name, description: inst.description ?? "", isActive: inst.isActive });
+                            setInstallationModal({ isOpen: true, item: inst });
+                          }}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#252525] transition-colors"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            setDeleteModal({
+                              isOpen: true,
+                              type: "installation",
+                              id: inst.id,
+                              name: inst.name,
+                            })
+                          }
+                          disabled={inst.productsCount > 0}
+                          title={inst.productsCount > 0 ? `ไม่สามารถลบได้ มีสินค้า ${inst.productsCount} ชิ้นใช้วิธีการติดตั้งนี้อยู่` : "ลบวิธีการติดตั้ง"}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* ─── TAB 6: ICONS LIBRARY ─── */}
       {activeTab === "icons" && (
         <IconsTab initialIcons={initialIcons} showToast={showToast} />
       )}
@@ -1050,6 +1408,152 @@ export function CatalogClient({
                 type="submit"
                 disabled={isPending}
                 className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow"
+              >
+                {isPending && <Loader2 size={13} className="animate-spin" />}
+                <span>บันทึก</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ─── MODAL: MATERIAL ADD/EDIT ─── */}
+      {materialModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <form
+            onSubmit={handleMaterialSubmit}
+            className="w-full max-w-md rounded-2xl bg-[#141414] border border-[#2D2D2D] p-6 space-y-4 shadow-2xl"
+          >
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Shield size={18} className="text-teal-500" />
+              <span>{materialModal.item ? "แก้ไขวัสดุ" : "เพิ่มวัสดุใหม่"}</span>
+            </h3>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1">
+                ชื่อวัสดุ <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={materialForm.name}
+                onChange={(e) => setMaterialForm({ ...materialForm, name: e.target.value })}
+                placeholder="เช่น Pre-preg Carbon Fiber, ABS Plastic"
+                className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2E2E2E] text-white placeholder-gray-500 text-xs focus:outline-none focus:border-teal-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1">
+                คำอธิบายวัสดุ <span className="text-gray-500">(ไม่บังคับ)</span>
+              </label>
+              <textarea
+                value={materialForm.description ?? ""}
+                onChange={(e) => setMaterialForm({ ...materialForm, description: e.target.value })}
+                placeholder="อธิบายคุณสมบัติและข้อดีของวัสดุนี้..."
+                rows={3}
+                className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2E2E2E] text-white placeholder-gray-500 text-xs focus:outline-none focus:border-teal-500 resize-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="matActive"
+                checked={materialForm.isActive}
+                onChange={(e) => setMaterialForm({ ...materialForm, isActive: e.target.checked })}
+                className="rounded bg-[#1A1A1A] border-[#2E2E2E] text-teal-600 focus:ring-0"
+              />
+              <label htmlFor="matActive" className="text-xs text-gray-300 cursor-pointer">
+                เปิดใช้งานวัสดุนี้ (แสดงให้เลือกในฟอร์มสินค้า)
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#222222]">
+              <button
+                type="button"
+                onClick={() => setMaterialModal({ isOpen: false, item: null })}
+                className="px-4 py-1.5 rounded-lg bg-[#202020] text-gray-300 text-xs font-semibold hover:bg-[#2A2A2A]"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow"
+              >
+                {isPending && <Loader2 size={13} className="animate-spin" />}
+                <span>บันทึก</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ─── MODAL: INSTALLATION ADD/EDIT ─── */}
+      {installationModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <form
+            onSubmit={handleInstallationSubmit}
+            className="w-full max-w-md rounded-2xl bg-[#141414] border border-[#2D2D2D] p-6 space-y-4 shadow-2xl"
+          >
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Wrench size={18} className="text-orange-500" />
+              <span>{installationModal.item ? "แก้ไขวิธีการติดตั้ง" : "เพิ่มวิธีการติดตั้งใหม่"}</span>
+            </h3>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1">
+                ชื่อวิธีการติดตั้ง <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={installationForm.name}
+                onChange={(e) => setInstallationForm({ ...installationForm, name: e.target.value })}
+                placeholder="เช่น 3M VHB Tape & Bolt-on Mounting, Direct Bolt-On"
+                className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2E2E2E] text-white placeholder-gray-500 text-xs focus:outline-none focus:border-orange-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1">
+                คำอธิบายวิธีการติดตั้ง <span className="text-gray-500">(ไม่บังคับ)</span>
+              </label>
+              <textarea
+                value={installationForm.description ?? ""}
+                onChange={(e) => setInstallationForm({ ...installationForm, description: e.target.value })}
+                placeholder="อธิบายขั้นตอนการติดตั้ง หรืออุปกรณ์ที่ต้องใช้..."
+                rows={3}
+                className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2E2E2E] text-white placeholder-gray-500 text-xs focus:outline-none focus:border-orange-500 resize-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="instActive"
+                checked={installationForm.isActive}
+                onChange={(e) => setInstallationForm({ ...installationForm, isActive: e.target.checked })}
+                className="rounded bg-[#1A1A1A] border-[#2E2E2E] text-orange-600 focus:ring-0"
+              />
+              <label htmlFor="instActive" className="text-xs text-gray-300 cursor-pointer">
+                เปิดใช้งานวิธีการติดตั้งนี้ (แสดงให้เลือกในฟอร์มสินค้า)
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#222222]">
+              <button
+                type="button"
+                onClick={() => setInstallationModal({ isOpen: false, item: null })}
+                className="px-4 py-1.5 rounded-lg bg-[#202020] text-gray-300 text-xs font-semibold hover:bg-[#2A2A2A]"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold shadow"
               >
                 {isPending && <Loader2 size={13} className="animate-spin" />}
                 <span>บันทึก</span>
