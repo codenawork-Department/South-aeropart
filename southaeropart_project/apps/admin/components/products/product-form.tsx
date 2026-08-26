@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -37,6 +37,12 @@ import {
   ChevronUp,
   ChevronDown,
   Zap,
+  Shield,
+  Star,
+  Wind,
+  Wrench,
+  ExternalLink,
+  X,
 } from "lucide-react";
 
 interface CategoryOption {
@@ -61,6 +67,20 @@ interface CarModelOption {
   generation?: string | null;
 }
 
+interface MaterialOption {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+}
+
+interface InstallationOption {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+}
+
 interface CompatibilityItem {
   make: string;
   model: string;
@@ -75,14 +95,25 @@ interface ProductFormProps {
     name: string;
     slug: string;
     description?: string | null;
+    shortDescription?: string | null;
     price: string;
     compareAtPrice?: string | null;
     stockQuantity: number;
     status: "draft" | "active" | "archived" | "out_of_stock";
+    isFeatured?: boolean | null;
     weightKg?: string | null;
+    installation?: string | null;
+    installationId?: string | null;
     categoryId?: string | null;
     brandId?: string | null;
     carModelId?: string | null;
+    materialId?: string | null;
+    downforceN?: string | null;
+    dragN?: string | null;
+    downforceBefore?: string | null;
+    downforceAfter?: string | null;
+    dragBefore?: string | null;
+    dragAfter?: string | null;
     images?: Array<{
       id: string;
       cloudinaryPublicId: string;
@@ -107,6 +138,8 @@ interface ProductFormProps {
   categories: CategoryOption[];
   brands: BrandOption[];
   carModels: CarModelOption[];
+  materials: MaterialOption[];
+  installations: InstallationOption[];
   isEdit?: boolean;
 }
 
@@ -115,6 +148,8 @@ export function ProductForm({
   categories,
   brands,
   carModels,
+  materials,
+  installations,
   isEdit = false,
 }: ProductFormProps) {
   const router = useRouter();
@@ -142,6 +177,38 @@ export function ProductForm({
   const [categoryId, setCategoryId] = useState(initialData?.categoryId || "");
   const [brandId, setBrandId] = useState(initialData?.brandId || "");
   const [carModelId, setCarModelId] = useState(initialData?.carModelId || "");
+
+  // New fields
+  const [shortDescription, setShortDescription] = useState(initialData?.shortDescription || "");
+  const [materialId, setMaterialId] = useState(initialData?.materialId || "");
+  const [installationId, setInstallationId] = useState(initialData?.installationId || "");
+  const [installation, setInstallation] = useState(initialData?.installation || "");
+  const [isFeatured, setIsFeatured] = useState(initialData?.isFeatured ?? false);
+  const [downforceN, setDownforceN] = useState(initialData?.downforceN || "");
+  const [dragN, setDragN] = useState(initialData?.dragN || "");
+  const [downforceBefore, setDownforceBefore] = useState(initialData?.downforceBefore || "");
+  const [downforceAfter, setDownforceAfter] = useState(initialData?.downforceAfter || "");
+  const [dragBefore, setDragBefore] = useState(initialData?.dragBefore || "");
+  const [dragAfter, setDragAfter] = useState(initialData?.dragAfter || "");
+
+  // Auto-dismiss notifications after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => {
+        setErrorMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
 
   // SKU Auto-generation & Helper States
   const [isGeneratingSku, setIsGeneratingSku] = useState(false);
@@ -377,19 +444,31 @@ export function ProductForm({
     setSuccessMessage(null);
     setFieldErrors({});
 
+    const selectedInst = installations.find((i) => i.id === installationId);
     const payload: ProductInput = {
       sku: sku.trim(),
       name: name.trim(),
       slug: slug.trim() || undefined,
       description: description.trim() || null,
+      shortDescription: shortDescription.trim() || null,
       price: price.trim(),
       compareAtPrice: compareAtPrice.trim() || null,
       stockQuantity: Number(stockQuantity),
       status,
+      isFeatured,
       weightKg: weightKg.trim() || null,
+      installation: selectedInst?.name || installation.trim() || null,
+      installationId: installationId || null,
       categoryId: categoryId || null,
       brandId: brandId || null,
       carModelId: carModelId || null,
+      materialId: materialId || null,
+      downforceN: downforceN.trim() || null,
+      dragN: dragN.trim() || null,
+      downforceBefore: downforceBefore.trim() || null,
+      downforceAfter: downforceAfter.trim() || null,
+      dragBefore: dragBefore.trim() || null,
+      dragAfter: dragAfter.trim() || null,
       images,
       compatibility: compatibility.filter((c) => c.make.trim() && c.model.trim()),
       features: features.filter((f) => f.title.trim() && f.description.trim()),
@@ -473,14 +552,28 @@ export function ProductForm({
         </div>
       </div>
 
-      {/* Notifications */}
+      {/* Floating Toast Notification for Success / Error */}
+      {successMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#141414]/95 border border-emerald-500/60 text-emerald-300 shadow-2xl backdrop-blur-md animate-fade-in text-xs font-semibold max-w-md">
+          <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
+          <span className="flex-1 leading-snug">{successMessage}</span>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="text-gray-400 hover:text-white p-0.5 rounded transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-red-950/40 border border-red-800/80 text-red-300 text-sm flex items-start gap-3 shadow-lg">
-          <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-400" />
-          <div>
-            <p className="font-semibold">{errorMessage}</p>
+        <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 px-4 py-3 rounded-xl bg-[#141414]/95 border border-red-500/60 text-red-300 shadow-2xl backdrop-blur-md animate-fade-in text-xs font-semibold max-w-md">
+          <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-400" />
+          <div className="flex-1">
+            <p>{errorMessage}</p>
             {Object.keys(fieldErrors).length > 0 && (
-              <ul className="mt-1.5 list-disc list-inside text-xs text-red-300/80 space-y-0.5">
+              <ul className="mt-1 list-disc list-inside text-[11px] text-red-300/80 space-y-0.5">
                 {Object.entries(fieldErrors).map(([field, errs]) => (
                   <li key={field}>
                     <span className="font-medium capitalize">{field}:</span> {errs.join(", ")}
@@ -489,13 +582,13 @@ export function ProductForm({
               </ul>
             )}
           </div>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/80 text-emerald-300 text-sm flex items-center gap-3 shadow-lg">
-          <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
-          <span>{successMessage}</span>
+          <button
+            type="button"
+            onClick={() => setErrorMessage(null)}
+            className="text-gray-400 hover:text-white p-0.5 rounded transition-colors"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
 
@@ -696,6 +789,246 @@ export function ProductForm({
                   placeholder="รายละเอียดวัสดุ การใช้งาน คุณสมบัติพิเศษ และการรับประกัน..."
                   className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5 flex items-center gap-1.5">
+                  <BookOpen size={13} className="text-blue-400" />
+                  คำอธิบายสั้น (Short Description)
+                  <span className="text-gray-500 font-normal">— แสดงผลใต้ชื่อสินค้าบนหน้าร้าน</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={shortDescription}
+                  onChange={(e) => setShortDescription(e.target.value)}
+                  placeholder="เช่น สปอยเลอร์หลังพรีเมียมคาร์บอนไฟเบอร์ จากลาย 3D CAD ตรงรุ่น 100%"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                />
+                <p className="text-[11px] text-gray-500 mt-1">1-2 ประโยค ใช้อธิบายสินค้าสั้นๆ สำหรับแสดงระหว่างสินค้า</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Material & Installation */}
+          <div className="bg-[#121212] border border-[#222222] rounded-2xl p-5 sm:p-6 space-y-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2 border-b border-[#1E1E1E] pb-3">
+              <Shield size={16} className="text-teal-500" />
+              วัสดุ & วิธีการติดตั้ง
+            </h2>
+
+            <div className="space-y-4">
+              {/* Material Dropdown */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5 flex items-center gap-1.5">
+                  <Shield size={13} className="text-teal-400" />
+                  วัสดุผลิต (Material)
+                </label>
+                {materials.length === 0 ? (
+                  <div className="p-3 rounded-lg bg-amber-950/20 border border-amber-800/40 text-xs text-amber-300 flex items-center gap-2">
+                    <Info size={14} className="shrink-0 text-amber-400" />
+                    <span>ยังไม่มีวัสดุในระบบ — </span>
+                    <Link href="/catalog" className="underline text-amber-300 hover:text-white inline-flex items-center gap-1">
+                      ไปเพิ่มวัสดุที่หน้า Catalog <ExternalLink size={11} />
+                    </Link>
+                  </div>
+                ) : (
+                  <select
+                    value={materialId}
+                    onChange={(e) => setMaterialId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs sm:text-sm focus:outline-none focus:border-teal-500 transition-colors"
+                  >
+                    <option value="">— ไม่ระบุวัสดุ —</option>
+                    {materials.map((mat) => (
+                      <option key={mat.id} value={mat.id}>
+                        {mat.name}{mat.description ? ` — ${mat.description.substring(0, 50)}...` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {materialId && (
+                  <p className="text-[11px] text-teal-400 mt-1">
+                    ✓ {materials.find((m) => m.id === materialId)?.name || ""}
+                  </p>
+                )}
+              </div>
+
+              {/* Installation Dropdown */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5 flex items-center gap-1.5">
+                  <Wrench size={13} className="text-orange-400" />
+                  วิธีการติดตั้ง (Installation)
+                </label>
+                {installations.length === 0 ? (
+                  <div className="p-3 rounded-lg bg-amber-950/20 border border-amber-800/40 text-xs text-amber-300 flex items-center gap-2">
+                    <Info size={14} className="shrink-0 text-amber-400" />
+                    <span>ยังไม่มีวิธีการติดตั้งในระบบ — </span>
+                    <Link href="/catalog" className="underline text-amber-300 hover:text-white inline-flex items-center gap-1">
+                      ไปเพิ่มวิธีการติดตั้งที่หน้า Catalog <ExternalLink size={11} />
+                    </Link>
+                  </div>
+                ) : (
+                  <select
+                    value={installationId}
+                    onChange={(e) => setInstallationId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs sm:text-sm focus:outline-none focus:border-orange-500 transition-colors"
+                  >
+                    <option value="">— ไม่ระบุวิธีการติดตั้ง —</option>
+                    {installations.map((inst) => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name}{inst.description ? ` — ${inst.description.substring(0, 50)}...` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {installationId && (
+                  <p className="text-[11px] text-orange-400 mt-1">
+                    ✓ {installations.find((i) => i.id === installationId)?.name || ""}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Section: CFD Aerodynamic Telemetry */}
+          <div className="bg-[#121212] border border-[#222222] rounded-2xl p-5 sm:p-6 space-y-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2 border-b border-[#1E1E1E] pb-3">
+              <Wind size={16} className="text-blue-400" />
+              ข้อมูลอากาศพลศาสตร์ (CFD Aerodynamic Telemetry)
+              <span className="text-[10px] font-normal text-gray-500 ml-1">(ไม่บังคับ)</span>
+            </h2>
+
+            {/* isFeatured Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#151515] border border-[#252525]">
+              <div className="flex items-center gap-2">
+                <Star size={14} className={isFeatured ? "text-amber-400" : "text-gray-500"} />
+                <span className="text-xs font-semibold text-gray-200">สินค้าแนะนำ (Featured Product)</span>
+                <span className="text-[11px] text-gray-500">— แสดงบนหน้าหลัก หรือส่วน Featured บนเว็บ</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFeatured(!isFeatured)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  isFeatured ? "bg-amber-500" : "bg-[#2D2D2D]"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform ${
+                    isFeatured ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Net Values Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                    แรงกดสุทธิ์ — Downforce N
+                    <span className="text-gray-500 font-normal ml-1">(N)</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={downforceN}
+                    onChange={(e) => setDownforceN(e.target.value)}
+                    placeholder="เช่น -285.50"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">ค่าติดลบ = กดลงพื้นถนน ค่าบวก = แรงยกขึ้น</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                    แรงต้านสุทธิ์ — Drag N
+                    <span className="text-gray-500 font-normal ml-1">(N)</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={dragN}
+                    onChange={(e) => setDragN(e.target.value)}
+                    placeholder="เช่น 12.30"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">ค่าแรงต้านสุทธิ์จาก CFD</p>
+                </div>
+              </div>
+
+              {/* Before / After Block */}
+              <div className="p-4 rounded-xl bg-[#151515] border border-[#252525] space-y-3">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <Zap size={13} className="text-blue-400" />
+                  ผลเปรียบเทียบ Before / After
+                </div>
+
+                {/* Downforce Before / After */}
+                <div>
+                  <p className="text-[11px] text-blue-300 font-semibold mb-2">Downforce (N)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] text-gray-500 mb-1">Before (ก่อนติดตั้ง)</label>
+                      <input
+                        type="number" step="0.01"
+                        value={downforceBefore}
+                        onChange={(e) => setDownforceBefore(e.target.value)}
+                        placeholder="เช่น -120.00"
+                        className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A] text-white placeholder-gray-600 text-xs focus:outline-none focus:border-blue-600 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-500 mb-1">After (หลังติดตั้ง)</label>
+                      <input
+                        type="number" step="0.01"
+                        value={downforceAfter}
+                        onChange={(e) => setDownforceAfter(e.target.value)}
+                        placeholder="เช่น -405.50"
+                        className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A] text-white placeholder-gray-600 text-xs focus:outline-none focus:border-blue-600 font-mono"
+                      />
+                    </div>
+                  </div>
+                  {downforceBefore && downforceAfter && (
+                    <p className="text-[11px] mt-1.5 font-semibold font-mono"
+                      style={{ color: (parseFloat(downforceAfter) - parseFloat(downforceBefore)) < 0 ? '#34d399' : '#f87171' }}
+                    >
+                      เปลี่ยนแปลง: {(parseFloat(downforceAfter) - parseFloat(downforceBefore)).toFixed(2)} N
+                      ({(parseFloat(downforceBefore) !== 0 ? (((parseFloat(downforceAfter) - parseFloat(downforceBefore)) / Math.abs(parseFloat(downforceBefore))) * 100).toFixed(1) : "0")}%)
+                    </p>
+                  )}
+                </div>
+
+                {/* Drag Before / After */}
+                <div>
+                  <p className="text-[11px] text-orange-300 font-semibold mb-2">Drag (N)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] text-gray-500 mb-1">Before (ก่อนติดตั้ง)</label>
+                      <input
+                        type="number" step="0.01"
+                        value={dragBefore}
+                        onChange={(e) => setDragBefore(e.target.value)}
+                        placeholder="เช่น 58.40"
+                        className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A] text-white placeholder-gray-600 text-xs focus:outline-none focus:border-orange-600 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-500 mb-1">After (หลังติดตั้ง)</label>
+                      <input
+                        type="number" step="0.01"
+                        value={dragAfter}
+                        onChange={(e) => setDragAfter(e.target.value)}
+                        placeholder="เช่น 70.70"
+                        className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A] text-white placeholder-gray-600 text-xs focus:outline-none focus:border-orange-600 font-mono"
+                      />
+                    </div>
+                  </div>
+                  {dragBefore && dragAfter && (
+                    <p className="text-[11px] mt-1.5 font-semibold font-mono"
+                      style={{ color: (parseFloat(dragAfter) - parseFloat(dragBefore)) < 0 ? '#34d399' : '#f87171' }}
+                    >
+                      เปลี่ยนแปลง: +{(parseFloat(dragAfter) - parseFloat(dragBefore)).toFixed(2)} N
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
