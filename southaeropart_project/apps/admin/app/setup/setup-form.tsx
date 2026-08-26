@@ -140,12 +140,12 @@ export function SetupForm() {
       <div className="glass-card w-full max-w-[480px] mx-auto p-6 sm:p-8 animate-in">
         {/* ─── Branding ─── */}
         <div className="text-center mb-6 sm:mb-7">
-          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] mb-3 sm:mb-4">
-            <KeyRound size={26} className="text-blue-500 sm:w-7 sm:h-7" />
+          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-red-600 via-red-700 to-neutral-900 border border-red-500/30 mb-3 sm:mb-4 shadow-xl shadow-red-950/50">
+            <KeyRound size={26} className="text-white sm:w-7 sm:h-7" />
           </div>
           <h1 className="brand-title brand-glow">SOUTH</h1>
           <p className="brand-subtitle">A E R O&ensp;P E R F O R M A N C E</p>
-          <p className="text-xs text-gray-500 mt-2 sm:mt-3 tracking-wide">
+          <p className="text-xs text-gray-400 mt-2 sm:mt-3 tracking-wide font-medium">
             Initial Setup — สร้าง Super Admin คนแรก
           </p>
         </div>
@@ -380,8 +380,8 @@ export function SetupForm() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                <ShieldCheck size={20} className="text-blue-400" />
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                <ShieldCheck size={20} className="text-red-400" />
               </div>
               <div>
                 <h3 className="font-bold text-sm text-white">ยืนยันการสร้าง Super Admin</h3>
@@ -395,15 +395,15 @@ export function SetupForm() {
               </p>
               <ul className="text-xs text-gray-300 space-y-1.5">
                 <li className="flex items-center gap-2">
-                  <Check size={12} className="text-blue-400 shrink-0" />
+                  <Check size={12} className="text-red-400 shrink-0" />
                   <span>จัดการสินค้า, คำสั่งซื้อ, รีวิว</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={12} className="text-blue-400 shrink-0" />
+                  <Check size={12} className="text-red-400 shrink-0" />
                   <span>สร้าง/ลบ Admin และ Staff</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={12} className="text-blue-400 shrink-0" />
+                  <Check size={12} className="text-red-400 shrink-0" />
                   <span>เข้าถึง Audit Logs ทั้งหมด</span>
                 </li>
               </ul>
