@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { loginAction, type AuthActionResult } from "@/actions/auth.actions";
 import {
   ShieldCheck,
@@ -54,7 +54,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isCapsLockOn, setIsCapsLockOn] = useState(false);
-  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   // Handle Caps Lock detection
   const handleKeyModifierCheck = (
@@ -203,7 +202,6 @@ export default function LoginPage() {
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
               />
               <input
-                ref={passwordInputRef}
                 id="login-password"
                 name="password"
                 type={showPassword ? "text" : "password"}
@@ -248,7 +246,7 @@ export default function LoginPage() {
             <span>South Aero Performance &bull; Admin Portal</span>
           </div>
           <p className="text-[0.62rem] text-gray-600 font-mono tracking-wider">
-            SECURED WITH BCRYPT + JWT SESSIONS &bull; v2.4.0
+            SECURED WITH BCRYPT + JWT SESSIONS
           </p>
         </div>
       </div>
