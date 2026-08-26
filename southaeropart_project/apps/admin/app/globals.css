@@ -17,9 +17,9 @@
   --accent-red-hover: #DC2626;
   --accent-red-dark: #991B1B;
   --accent-red-glow: rgba(229, 29, 36, 0.2);
-  --accent-blue: #E51D24;
-  --accent-blue-hover: #DC2626;
-  --accent-blue-glow: rgba(229, 29, 36, 0.2);
+  --accent-primary: #E51D24;
+  --accent-primary-hover: #DC2626;
+  --accent-primary-glow: rgba(229, 29, 36, 0.2);
   --success: #22C55E;
   --success-glow: rgba(34, 197, 94, 0.15);
   --error: #EF4444;
