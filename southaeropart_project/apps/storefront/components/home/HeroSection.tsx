@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { CarModelViewer } from "@/components/3d/CarModelViewer";
 
 export function HeroSection() {
   return (
@@ -39,42 +40,8 @@ export function HeroSection() {
 
         {/* Hero Vehicle Showcase Lineup */}
         <div className="relative max-w-5xl mx-auto">
-          {/* Main Hero Centerpiece Banner */}
-          <div className="relative aspect-[21/9] sm:aspect-[2.2/1] w-full rounded-sm overflow-hidden border border-[#222222] bg-[#0E0E0E] shadow-2xl shadow-black/90 group">
-            <Image
-              src="/images/FRONT.png"
-              alt="Honda Accord G9 Body Kit 02 by South Aero"
-              fill
-              priority
-              className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-700 ease-out"
-              sizes="(max-width: 1200px) 100vw, 1200px"
-            />
-
-            {/* Studio Floor Gradient & Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-black/30 pointer-events-none" />
-
-            {/* Badge Overlay */}
-            <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 flex flex-wrap items-center gap-2 md:gap-3">
-              <div className="telemetry-pill">
-                <span className="text-[var(--accent-red)] font-bold">AERO BUILD</span>
-                <span className="text-white font-bold">ACCORD G9 KIT 02</span>
-              </div>
-              <div className="telemetry-pill hidden sm:inline-flex">
-                <span className="text-[var(--success)] font-bold">+155 N</span>
-                <span className="text-[var(--text-secondary)]">DOWNFORCE</span>
-              </div>
-            </div>
-
-            {/* Explore Link */}
-            <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6">
-              <Link
-                href="/products/accord-g9-complete-body-kit-02"
-                className="btn-primary py-2 px-4 text-xs gap-2"
-              >
-                VIEW BUILD <ArrowRight size={14} />
-              </Link>
-            </div>
-          </div>
+          {/* Main Hero Centerpiece: Interactive 3D Vehicle Showcase */}
+          <CarModelViewer />
 
           {/* 3 Secondary Mini Showcase Cards below hero */}
           <div className="grid grid-cols-3 gap-3 md:gap-4 mt-3 md:mt-4">
