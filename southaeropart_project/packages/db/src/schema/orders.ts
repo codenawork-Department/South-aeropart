@@ -65,6 +65,23 @@ export const orderItems = pgTable("order_items", {
 }));
 
 /**
+ * Order Item Bundle Parts: Snapshots of individual aero parts sold as part of a bundle.
+ * Used for 2-dimensional sales analytics without double-counting revenue.
+ */
+export const orderItemBundleParts = pgTable("order_item_bundle_parts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderItemId: uuid("order_item_id").notNull().references(() => orderItems.id, { onDelete: "cascade" }),
+  childProductId: uuid("child_product_id").notNull().references(() => products.id),
+  childProductNameSnapshot: text("child_product_name_snapshot").notNull(),
+  unitPriceSnapshot: numeric("unit_price_snapshot", { precision: 12, scale: 2 }).notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  orderItemIdx: index("order_item_bundle_parts_item_idx").on(table.orderItemId),
+  childProductIdx: index("order_item_bundle_parts_child_product_idx").on(table.childProductId),
+}));
+
+/**
  * Append-only history of status transitions. Once more than one admin
  * touches orders, this is what support/dispute lookups actually need
  * ("who marked this as shipped, and when?") instead of only the
@@ -84,4 +101,6 @@ export const orderStatusHistory = pgTable("order_status_history", {
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type OrderItemBundlePart = typeof orderItemBundleParts.$inferSelect;
+export type NewOrderItemBundlePart = typeof orderItemBundleParts.$inferInsert;
 export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect;

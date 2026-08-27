@@ -5,6 +5,7 @@ export type MockProduct = {
   slug: string;
   name: string;
   brand: string;
+  productType?: "single" | "bundle";
   categorySlug: string;
   categoryName: string;
   price: string;
@@ -28,12 +29,25 @@ export type MockProduct = {
   downforceAfter?: number;
   dragBefore?: number;
   dragAfter?: number;
+  isCustomCfd?: boolean;
   images: string[];
   features: {
     title: string;
     description: string;
   }[];
   isFeatured?: boolean;
+  bundleItems?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    sku?: string;
+    price: string;
+    categoryName: string;
+    material?: string;
+    image?: string;
+    downforceN?: number;
+    dragN?: number;
+  }>;
 };
 
 export const MOCK_PRODUCTS: MockProduct[] = [
@@ -227,9 +241,10 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     slug: "accord-g9-complete-body-kit-02",
     name: "Accord G9 Complete Body Kit 02",
     brand: "South Aero",
+    productType: "bundle",
     categorySlug: "body-kits",
-    categoryName: "Body Kits",
-    price: "21990.00",
+    categoryName: "Aero Kits",
+    price: "22760.00",
     compareAtPrice: "24990.00",
     description:
       "The flagship South Aero Accord G9 Complete Aerodynamic Package 02. Includes Front Splitter Lip, Side Skirt Extensions, Rear Under Diffuser, and Rear Ducktail Spoiler. Complete CFD calibrated balance for true aerodynamic transformation.",
@@ -243,6 +258,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     weightKg: "9.5",
     downforceN: 445,
     dragN: -15,
+    isCustomCfd: true,
     downforceBefore: 50.0,
     downforceAfter: 495.0,
     dragBefore: 890.0,
@@ -254,14 +270,64 @@ export const MOCK_PRODUCTS: MockProduct[] = [
       "/images/G9 KIT2/07.png",
       "/images/G9 KIT2/08.png",
     ],
+    bundleItems: [
+      {
+        id: "2",
+        name: "Carbon Fiber Front Lip",
+        slug: "carbon-fiber-front-lip-accord-g9",
+        sku: "SA-ACC-G9-FLP-01",
+        price: "4590.00",
+        categoryName: "Front Lips",
+        material: "Pre-preg Carbon Fiber",
+        image: "/images/G9 KIT2/01.png",
+        downforceN: 110,
+        dragN: -2,
+      },
+      {
+        id: "3",
+        name: "Carbon Fiber Side Skirts",
+        slug: "carbon-fiber-side-skirts-accord-g9",
+        sku: "SA-ACC-G9-SSK-01",
+        price: "5190.00",
+        categoryName: "Side Skirts",
+        material: "Pre-preg Carbon Fiber",
+        image: "/images/G9 KIT2/03.png",
+        downforceN: 45,
+        dragN: -3,
+      },
+      {
+        id: "4",
+        name: "Carbon Fiber Rear Diffuser",
+        slug: "carbon-fiber-rear-diffuser-accord-g9",
+        sku: "SA-ACC-G9-RDF-01",
+        price: "6990.00",
+        categoryName: "Rear Diffusers",
+        material: "Pre-preg Carbon Fiber",
+        image: "/images/G9 KIT2/05.png",
+        downforceN: 135,
+        dragN: -6,
+      },
+      {
+        id: "1",
+        name: "Ducktail Spoiler",
+        slug: "ducktail-spoiler-accord-g9",
+        sku: "SA-ACC-G9-SPL-01",
+        price: "5990.00",
+        categoryName: "Spoilers",
+        material: "ABS Plastic / Carbon Fiber",
+        image: "/images/DETAIL g9/01.jpg",
+        downforceN: 155,
+        dragN: -4,
+      },
+    ],
     features: [
       {
         title: "Total Aero Balance",
         description: "Front-to-rear downforce distribution tuned 42% front / 58% rear for neutral high-speed handling.",
       },
       {
-        title: "Complete Package Discount",
-        description: "Save over 15% compared to purchasing individual aerodynamic parts separately.",
+        title: "Complete Package Integration",
+        description: "Engineered as a cohesive aerodynamic system with matching body lines and surface flow.",
       },
     ],
     isFeatured: true,

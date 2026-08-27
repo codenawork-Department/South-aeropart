@@ -7,6 +7,7 @@ import { useNavigation } from "@/components/layout/navigation-context";
 import {
   LayoutDashboard,
   Package,
+  Boxes,
   Layers,
   Sparkles,
   ShoppingCart,
@@ -80,9 +81,18 @@ export function AdminSidebar({
     },
     {
       label: "Products",
+      sublabel: "ชิ้นส่วนเดี่ยว (Single Parts)",
       href: "/products",
       icon: Package,
       badge: null,
+    },
+    {
+      label: "ชุดเซ็ต / Aero Kits",
+      sublabel: "Full Body Kits & Sets",
+      href: "/bundles",
+      icon: Boxes,
+      badge: "KIT",
+      badgeColor: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
     },
     {
       label: "แคตตาล็อก & หมวดหมู่",

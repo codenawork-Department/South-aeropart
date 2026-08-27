@@ -14,6 +14,10 @@ export const productStatusEnum = pgEnum("product_status", [
   "draft", "active", "archived", "out_of_stock",
 ]);
 
+export const productTypeEnum = pgEnum("product_type", [
+  "single", "bundle",
+]);
+
 /**
  * Hierarchical categories (self-referencing parent/child) for Aeropart categories
  * e.g. "Front Lip", "Ducktail Spoiler", "Rear Diffuser", "Side Skirts", "GT Wing", "Canards"
@@ -99,6 +103,7 @@ export const products = pgTable("products", {
   sku: text("sku").notNull().unique(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  productType: productTypeEnum("product_type").notNull().default("single"),
   description: text("description"),
   shortDescription: text("short_description"),
   brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
@@ -120,6 +125,10 @@ export const products = pgTable("products", {
   downforceAfter: numeric("downforce_after", { precision: 10, scale: 2 }),
   dragBefore: numeric("drag_before", { precision: 10, scale: 2 }),
   dragAfter: numeric("drag_after", { precision: 10, scale: 2 }),
+  // Custom CFD Override for Bundles
+  isCustomCfd: boolean("is_custom_cfd").notNull().default(false),
+  customDownforceN: numeric("custom_downforce_n", { precision: 10, scale: 2 }),
+  customDragN: numeric("custom_drag_n", { precision: 10, scale: 2 }),
   features: jsonb("features").$type<ProductFeatureItem[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -132,6 +141,7 @@ export const products = pgTable("products", {
   installationIdx: index("products_installation_idx").on(table.installationId),
   statusIdx: index("products_status_idx").on(table.status),
   featuredIdx: index("products_featured_idx").on(table.isFeatured),
+  productTypeIdx: index("products_type_idx").on(table.productType),
 }));
 
 export const productImages = pgTable("product_images", {
@@ -162,6 +172,21 @@ export const productCompatibility = pgTable("product_compatibility", {
   makeModelIdx: index("product_compat_make_model_idx").on(table.make, table.model),
 }));
 
+/**
+ * Product Bundle Items: Relation between a Bundle Product and its Child Aero Parts
+ */
+export const productBundleItems = pgTable("product_bundle_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  bundleProductId: uuid("bundle_product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  childProductId: uuid("child_product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  quantity: integer("quantity").notNull().default(1),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  bundleProductIdx: index("bundle_items_bundle_idx").on(table.bundleProductId),
+  childProductIdx: index("bundle_items_child_idx").on(table.childProductId),
+}));
+
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Brand = typeof brands.$inferSelect;
@@ -175,5 +200,6 @@ export type NewInstallation = typeof installations.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type ProductImage = typeof productImages.$inferSelect;
-
 export type ProductCompatibility = typeof productCompatibility.$inferSelect;
+export type ProductBundleItem = typeof productBundleItems.$inferSelect;
+export type NewProductBundleItem = typeof productBundleItems.$inferInsert;
