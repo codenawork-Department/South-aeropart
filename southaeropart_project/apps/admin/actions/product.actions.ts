@@ -161,6 +161,8 @@ export async function getCategoriesAndBrandsAction() {
         name: carModels.name,
         slug: carModels.slug,
         generation: carModels.generation,
+        yearFrom: carModels.yearFrom,
+        yearTo: carModels.yearTo,
       })
       .from(carModels)
       .where(eq(carModels.isActive, true))

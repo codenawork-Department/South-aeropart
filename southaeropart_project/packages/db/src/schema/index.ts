@@ -1,8 +1,8 @@
 import { relations } from "drizzle-orm";
 import { users, userLoginLogs } from "./users";
 import { adminUsers, adminSessions, adminAuditLogs } from "./admin";
-import { categories, brands, carModels, materials, installations, products, productImages, productCompatibility } from "./products";
-import { orders, orderItems, orderStatusHistory } from "./orders";
+import { categories, brands, carModels, materials, installations, products, productImages, productCompatibility, productBundleItems } from "./products";
+import { orders, orderItems, orderStatusHistory, orderItemBundleParts } from "./orders";
 import { reviews } from "./reviews";
 import { userInterests } from "./user-interests";
 
@@ -69,8 +69,23 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   installationMethod: one(installations, { fields: [products.installationId], references: [installations.id] }),
   images: many(productImages),
   compatibility: many(productCompatibility),
+  bundleItems: many(productBundleItems, { relationName: "bundleToItems" }),
+  partOfBundles: many(productBundleItems, { relationName: "childToBundles" }),
   reviews: many(reviews),
   interests: many(userInterests),
+}));
+
+export const productBundleItemsRelations = relations(productBundleItems, ({ one }) => ({
+  bundle: one(products, {
+    fields: [productBundleItems.bundleProductId],
+    references: [products.id],
+    relationName: "bundleToItems",
+  }),
+  childProduct: one(products, {
+    fields: [productBundleItems.childProductId],
+    references: [products.id],
+    relationName: "childToBundles",
+  }),
 }));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({
@@ -88,9 +103,15 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   statusHistory: many(orderStatusHistory),
 }));
 
-export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+export const orderItemsRelations = relations(orderItems, ({ one, many }) => ({
   order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
   product: one(products, { fields: [orderItems.productId], references: [products.id] }),
+  bundleParts: many(orderItemBundleParts),
+}));
+
+export const orderItemBundlePartsRelations = relations(orderItemBundleParts, ({ one }) => ({
+  orderItem: one(orderItems, { fields: [orderItemBundleParts.orderItemId], references: [orderItems.id] }),
+  childProduct: one(products, { fields: [orderItemBundleParts.childProductId], references: [products.id] }),
 }));
 
 export const orderStatusHistoryRelations = relations(orderStatusHistory, ({ one }) => ({

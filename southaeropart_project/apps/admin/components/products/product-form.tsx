@@ -65,6 +65,8 @@ interface CarModelOption {
   name: string;
   slug: string;
   generation?: string | null;
+  yearFrom?: number | null;
+  yearTo?: number | null;
 }
 
 interface MaterialOption {
@@ -398,18 +400,77 @@ export function ProductForm({
 
   // Vehicle Compatibility state
   const [compatibility, setCompatibility] = useState<CompatibilityItem[]>(
-    initialData?.compatibility?.map((c) => ({
-      make: c.make,
-      model: c.model,
-      yearFrom: c.yearFrom,
-      yearTo: c.yearTo,
-    })) || []
+    () => {
+      if (initialData?.compatibility && initialData.compatibility.length > 0) {
+        return initialData.compatibility.map((c) => ({
+          make: c.make,
+          model: c.model,
+          yearFrom: c.yearFrom,
+          yearTo: c.yearTo,
+        }));
+      }
+      // If brand and carModel were pre-selected, auto-initialize first compatibility row
+      if (initialData?.carModelId) {
+        const m = carModels.find((model) => model.id === initialData.carModelId);
+        const b = brands.find(
+          (brand) => brand.id === (m?.brandId || initialData.brandId)
+        );
+        if (m && b) {
+          return [
+            {
+              make: b.name,
+              model: m.name,
+              yearFrom: m.yearFrom || 2022,
+              yearTo: m.yearTo || 2025,
+            },
+          ];
+        }
+      }
+      return [];
+    }
   );
 
   const addCompatibilityRow = () => {
+    const selectedModelNames = new Set(
+      compatibility.map((c) => c.model.trim().toLowerCase())
+    );
+
+    // Try to find a model from DB that isn't selected yet
+    let targetBrand = brands.find((b) => b.id === brandId) || brands[0];
+    let candidateModel = carModels.find(
+      (m) =>
+        m.brandId === targetBrand?.id &&
+        !selectedModelNames.has(m.name.trim().toLowerCase())
+    );
+
+    // If all models in targetBrand are already selected, search other brands
+    if (!candidateModel) {
+      for (const b of brands) {
+        candidateModel = carModels.find(
+          (m) =>
+            m.brandId === b.id &&
+            !selectedModelNames.has(m.name.trim().toLowerCase())
+        );
+        if (candidateModel) {
+          targetBrand = b;
+          break;
+        }
+      }
+    }
+
+    if (!candidateModel) {
+      alert("ได้เลือกรุ่นรถที่มีอยู่ในฐานข้อมูลครบทุกรุ่นแล้ว ไม่สามารถเพิ่มซ้ำได้");
+      return;
+    }
+
     setCompatibility((prev) => [
       ...prev,
-      { make: selectedBrand?.name || "", model: selectedModel?.name || "", yearFrom: 2022, yearTo: 2025 },
+      {
+        make: targetBrand?.name || "",
+        model: candidateModel!.name,
+        yearFrom: candidateModel!.yearFrom || 2022,
+        yearTo: candidateModel!.yearTo || 2025,
+      },
     ]);
   };
 
@@ -427,13 +488,73 @@ export function ProductForm({
     );
   };
 
+  // Top Section Brand Change Handler (Auto-sync to compatibility[0])
   const handleBrandChange = (newBrandId: string) => {
     setBrandId(newBrandId);
-    // If selected model is not in new brand, reset model
-    if (carModelId) {
-      const model = carModels.find((m) => m.id === carModelId);
-      if (model && model.brandId !== newBrandId) {
-        setCarModelId("");
+    if (!newBrandId) {
+      setCarModelId("");
+      return;
+    }
+
+    const brandObj = brands.find((b) => b.id === newBrandId);
+    const modelsOfBrand = carModels.filter((m) => m.brandId === newBrandId);
+    const currentModelInNewBrand = modelsOfBrand.find((m) => m.id === carModelId);
+
+    if (currentModelInNewBrand) {
+      if (brandObj) {
+        setCompatibility((prev) => {
+          const newRow: CompatibilityItem = {
+            make: brandObj.name,
+            model: currentModelInNewBrand.name,
+            yearFrom: currentModelInNewBrand.yearFrom || 2022,
+            yearTo: currentModelInNewBrand.yearTo || 2025,
+          };
+          if (prev.length === 0) return [newRow];
+          return [newRow, ...prev.slice(1).filter((r) => r.model !== currentModelInNewBrand.name)];
+        });
+      }
+    } else if (modelsOfBrand.length > 0) {
+      const firstModel = modelsOfBrand[0];
+      setCarModelId(firstModel.id);
+      if (brandObj) {
+        setCompatibility((prev) => {
+          const newRow: CompatibilityItem = {
+            make: brandObj.name,
+            model: firstModel.name,
+            yearFrom: firstModel.yearFrom || 2022,
+            yearTo: firstModel.yearTo || 2025,
+          };
+          if (prev.length === 0) return [newRow];
+          return [newRow, ...prev.slice(1).filter((r) => r.model !== firstModel.name)];
+        });
+      }
+    } else {
+      setCarModelId("");
+    }
+  };
+
+  // Top Section Car Model Change Handler (Auto-sync to compatibility[0])
+  const handleCarModelChange = (newModelId: string) => {
+    setCarModelId(newModelId);
+    if (newModelId) {
+      const modelObj = carModels.find((m) => m.id === newModelId);
+      const brandObj = brands.find(
+        (b) => b.id === (modelObj?.brandId || brandId)
+      );
+      if (modelObj && brandObj) {
+        if (brandId !== brandObj.id) {
+          setBrandId(brandObj.id);
+        }
+        setCompatibility((prev) => {
+          const newRow: CompatibilityItem = {
+            make: brandObj.name,
+            model: modelObj.name,
+            yearFrom: modelObj.yearFrom || 2022,
+            yearTo: modelObj.yearTo || 2025,
+          };
+          if (prev.length === 0) return [newRow];
+          return [newRow, ...prev.slice(1).filter((r) => r.model !== modelObj.name)];
+        });
       }
     }
   };
@@ -1225,74 +1346,163 @@ export function ProductForm({
               </div>
             ) : (
               <div className="space-y-3">
-                {compatibility.map((row, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 p-3 rounded-xl bg-[#181818] border border-[#2A2A2A] items-center"
-                  >
-                    <div className="sm:col-span-4 min-w-0">
-                      <input
-                        type="text"
-                        placeholder="ยี่ห้อ เช่น Toyota"
-                        value={row.make}
-                        onChange={(e) =>
-                          updateCompatibilityRow(idx, "make", e.target.value)
-                        }
-                        className="w-full h-[36px] px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-w-0"
-                      />
+                {compatibility.map((row, idx) => {
+                  const matchingBrand = brands.find(
+                    (b) =>
+                      b.name.toLowerCase() === row.make.toLowerCase() ||
+                      b.slug.toLowerCase() === row.make.toLowerCase()
+                  );
+                  const brandModels = matchingBrand
+                    ? carModels.filter((m) => m.brandId === matchingBrand.id)
+                    : carModels;
+
+                  // Exclude models chosen in other rows to prevent duplicate car models
+                  const otherSelectedModelNames = compatibility
+                    .filter((_, i) => i !== idx)
+                    .map((r) => r.model.trim().toLowerCase());
+
+                  const selectableModels = brandModels.filter(
+                    (m) =>
+                      !otherSelectedModelNames.includes(m.name.trim().toLowerCase()) ||
+                      m.name.trim().toLowerCase() === row.model.trim().toLowerCase()
+                  );
+
+                  return (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 p-3 rounded-xl bg-[#181818] border border-[#2A2A2A] items-center"
+                    >
+                      {/* Brand Select (จาก DB) */}
+                      <div className="sm:col-span-4 min-w-0">
+                        <select
+                          value={matchingBrand ? matchingBrand.name : row.make}
+                          onChange={(e) => {
+                            const newBrandName = e.target.value;
+                            const newBrandObj = brands.find((b) => b.name === newBrandName);
+                            const modelsOfNewBrand = newBrandObj
+                              ? carModels.filter((m) => m.brandId === newBrandObj.id)
+                              : [];
+                            // Find first model of new brand that is not already selected in other rows
+                            const candidateModel =
+                              modelsOfNewBrand.find(
+                                (m) =>
+                                  !otherSelectedModelNames.includes(
+                                    m.name.trim().toLowerCase()
+                                  )
+                              ) || modelsOfNewBrand[0];
+
+                            setCompatibility((prev) =>
+                              prev.map((r, i) =>
+                                i === idx
+                                  ? {
+                                      ...r,
+                                      make: newBrandName,
+                                      model: candidateModel ? candidateModel.name : "",
+                                      yearFrom: candidateModel?.yearFrom || r.yearFrom || 2022,
+                                      yearTo: candidateModel?.yearTo || r.yearTo || 2025,
+                                    }
+                                  : r
+                              )
+                            );
+                          }}
+                          className="w-full h-[36px] px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500 min-w-0"
+                        >
+                          <option value="" disabled>-- เลือกยี่ห้อ (Brand) --</option>
+                          {brands.map((b) => (
+                            <option key={b.id} value={b.name}>
+                              {b.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Model Select (จาก DB ตามยี่ห้อที่เลือก ป้องกันเลือกรุ่นซ้ำ) */}
+                      <div className="sm:col-span-4 min-w-0">
+                        <select
+                          value={row.model}
+                          onChange={(e) => {
+                            const newModelName = e.target.value;
+                            const modelObj = carModels.find(
+                              (m) =>
+                                m.name === newModelName &&
+                                (!matchingBrand || m.brandId === matchingBrand.id)
+                            );
+
+                            setCompatibility((prev) =>
+                              prev.map((r, i) =>
+                                i === idx
+                                  ? {
+                                      ...r,
+                                      model: newModelName,
+                                      yearFrom: modelObj?.yearFrom || r.yearFrom,
+                                      yearTo: modelObj?.yearTo || r.yearTo,
+                                    }
+                                  : r
+                              )
+                            );
+                          }}
+                          className="w-full h-[36px] px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500 min-w-0"
+                        >
+                          <option value="" disabled>-- เลือกรุ่นรถ (Model) --</option>
+                          {selectableModels.length > 0 ? (
+                            selectableModels.map((m) => (
+                              <option key={m.id} value={m.name}>
+                                {m.name} {m.generation ? `(${m.generation})` : ""}
+                              </option>
+                            ))
+                          ) : (
+                            <option value="" disabled>-- รุ่นทั้งหมดของยี่ห้อนี้ถูกเลือกแล้ว --</option>
+                          )}
+                        </select>
+                      </div>
+
+                      {/* Years Range (Auto-fill จาก DB พร้อมให้แก้ไขได้) */}
+                      <div className="sm:col-span-3 min-w-0 flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          placeholder="ปีเริ่ม"
+                          value={row.yearFrom || ""}
+                          onChange={(e) =>
+                            updateCompatibilityRow(
+                              idx,
+                              "yearFrom",
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-full min-w-0 h-[36px] px-2 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs text-center font-mono focus:outline-none focus:border-red-500"
+                          title="ปีเริ่มต้น"
+                        />
+                        <span className="text-gray-500 text-xs shrink-0">-</span>
+                        <input
+                          type="number"
+                          placeholder="ปีสิ้นสุด"
+                          value={row.yearTo || ""}
+                          onChange={(e) =>
+                            updateCompatibilityRow(
+                              idx,
+                              "yearTo",
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-full min-w-0 h-[36px] px-2 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs text-center font-mono focus:outline-none focus:border-red-500"
+                          title="ปีสิ้นสุด"
+                        />
+                      </div>
+
+                      {/* Delete Button */}
+                      <div className="sm:col-span-1 flex justify-end shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => removeCompatibilityRow(idx)}
+                          className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer"
+                          title="ลบรายการนี้"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="sm:col-span-4 min-w-0">
-                      <input
-                        type="text"
-                        placeholder="รุ่น เช่น GR86"
-                        value={row.model}
-                        onChange={(e) =>
-                          updateCompatibilityRow(idx, "model", e.target.value)
-                        }
-                        className="w-full h-[36px] px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-w-0"
-                      />
-                    </div>
-                    <div className="sm:col-span-3 min-w-0 flex items-center gap-1.5">
-                      <input
-                        type="number"
-                        placeholder="ปีเริ่ม"
-                        value={row.yearFrom || ""}
-                        onChange={(e) =>
-                          updateCompatibilityRow(
-                            idx,
-                            "yearFrom",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full min-w-0 h-[36px] px-2 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs text-center font-mono focus:outline-none focus:border-red-500"
-                      />
-                      <span className="text-gray-500 text-xs shrink-0">-</span>
-                      <input
-                        type="number"
-                        placeholder="ปีสิ้นสุด"
-                        value={row.yearTo || ""}
-                        onChange={(e) =>
-                          updateCompatibilityRow(
-                            idx,
-                            "yearTo",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full min-w-0 h-[36px] px-2 py-1.5 rounded-lg bg-[#121212] border border-[#2D2D2D] text-white text-xs text-center font-mono focus:outline-none focus:border-red-500"
-                      />
-                    </div>
-                    <div className="sm:col-span-1 flex justify-end shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => removeCompatibilityRow(idx)}
-                        className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer"
-                        title="ลบรายการนี้"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1334,7 +1544,7 @@ export function ProductForm({
                 </label>
                 <select
                   value={carModelId}
-                  onChange={(e) => setCarModelId(e.target.value)}
+                  onChange={(e) => handleCarModelChange(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors"
                 >
                   <option value="">-- ไม่ระบุรุ่นรถเฉพาะ (All Models) --</option>

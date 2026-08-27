@@ -21,10 +21,12 @@ import {
   Zap,
   Check,
   X,
+  Boxes,
 } from "lucide-react";
 import { MOCK_PRODUCTS, MockProduct } from "@/lib/mock-data";
 import { useCart } from "@/components/providers/CartProvider";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
+import { KitIncludedParts } from "@/components/products/KitIncludedParts";
 
 function ProductDetailClient({ slug }: { slug: string }) {
   const product: MockProduct =
@@ -40,6 +42,8 @@ function ProductDetailClient({ slug }: { slug: string }) {
   const [addedAnimation, setAddedAnimation] = useState(false);
 
   const { addItem, openCart } = useCart();
+
+  const isBundle = product.productType === "bundle" || (product.bundleItems && product.bundleItems.length > 0);
 
   const totalImages = product.images.length;
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % totalImages);
@@ -192,9 +196,17 @@ function ProductDetailClient({ slug }: { slug: string }) {
 
             {/* Brand & Title */}
             <div>
-              <p className="font-heading text-xs font-bold tracking-[0.2em] text-[var(--accent-red)] uppercase">
-                {product.brand}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="font-heading text-xs font-bold tracking-[0.2em] text-[var(--accent-red)] uppercase">
+                  {product.brand}
+                </p>
+                {isBundle && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black tracking-widest uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    <Boxes size={12} />
+                    FULL AERO KIT
+                  </span>
+                )}
+              </div>
               <h1 className="heading-lg text-white mt-1 uppercase">
                 {product.name}
               </h1>
@@ -374,6 +386,16 @@ function ProductDetailClient({ slug }: { slug: string }) {
           </div>
         </div>
       </div>
+
+      {/* 2.5 Included Parts in Kit (If product is an Aero Kit / Bundle) */}
+      {isBundle && product.bundleItems && product.bundleItems.length > 0 && (
+        <div className="container-main pb-12">
+          <KitIncludedParts
+            items={product.bundleItems}
+            kitName={product.name}
+          />
+        </div>
+      )}
 
       {/* 3. Detailed Description & Specifications Section */}
       <div className="border-t border-[#1C1C1C] bg-[#0D0D0D]">
