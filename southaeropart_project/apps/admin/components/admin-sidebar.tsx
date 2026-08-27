@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Package,
   Layers,
+  Sparkles,
   ShoppingCart,
   Star,
   Activity,
@@ -68,6 +69,14 @@ export function AdminSidebar({
       href: "/",
       icon: LayoutDashboard,
       badge: null,
+    },
+    {
+      label: "Hero Showcase หน้าแรก",
+      sublabel: "Homepage 3D & 3 Cards",
+      href: "/homepage",
+      icon: Sparkles,
+      badge: "NEW",
+      badgeColor: "bg-red-500/20 text-red-400 border border-red-500/30",
     },
     {
       label: "Products",

@@ -23,28 +23,42 @@ const PRESET_POSITIONS: Record<CameraPreset, [number, number, number]> = {
   top: [0.05, 5.8, 0.05],
 };
 
-const DEFAULT_TARGET: [number, number, number] = [0, 0.68, 0];
+const DEFAULT_TARGET: [number, number, number] = [0, 0.59, 0];
 
 const PRESET_TARGETS: Record<CameraPreset, [number, number, number]> = {
-  hero: [0, 0.68, 0],
-  front: [0, 0.62, 0],
-  side: [0, 0.68, 0],
-  rear: [0, 0.68, 0],
-  top: [0, 0.5, 0],
+  hero: [0, 0.59, 0],
+  front: [0, 0.55, 0],
+  side: [0, 0.59, 0],
+  rear: [0, 0.59, 0],
+  top: [0, 0.45, 0],
 };
 
 interface MustangModelProps {
   onLoaded?: () => void;
 }
 
-function MustangModel({ onLoaded }: MustangModelProps) {
-  const { scene } = useGLTF("/models/ford_mustang_gt3.glb");
+function CarModel({ onLoaded }: MustangModelProps) {
+  const { scene, animations } = useGLTF("/models/ferrari_296_speciale_a.glb");
   const modelRef = useRef<THREE.Group>(null);
 
-  // Compute exact bounding box and align wheels to sit precisely on floor y = 0
-  // Crucially: DO NOT mutate or overwrite artist PBR materials (roughness, metalness, color)
+  // Compute exact bounding box, align wheels to sit precisely on floor y = 0, and fix materials
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
+
+    // 1. Ensure initial animation pose (e.g. door closed) is set cleanly
+    if (animations && animations.length > 0) {
+      const mixer = new THREE.AnimationMixer(clone);
+      animations.forEach((clip) => {
+        const action = mixer.clipAction(clip);
+        action.clampWhenFinished = true;
+        action.loop = THREE.LoopOnce;
+        action.play();
+        // Advance to final keyframe so doors and panels are in closed position
+        mixer.setTime(clip.duration);
+        mixer.update(0);
+      });
+    }
+
     const box = new THREE.Box3().setFromObject(clone);
     const center = box.getCenter(new THREE.Vector3());
 
@@ -54,24 +68,121 @@ function MustangModel({ onLoaded }: MustangModelProps) {
     clone.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        const meshName = mesh.name.toLowerCase();
+
+        // Detect glass / window meshes
+        const isWindowOrGlassMesh =
+          meshName.includes("window") ||
+          meshName.includes("glass") ||
+          meshName.includes("windshield");
 
         if (mesh.material) {
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           mats.forEach((mat) => {
-            if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              // Natural PBR environment reflection intensity
-              mat.envMapIntensity = 0.9;
+            const matName = (mat.name || "").toLowerCase();
+
+            if (
+              mat instanceof THREE.MeshStandardMaterial ||
+              mat instanceof THREE.MeshPhysicalMaterial
+            ) {
+              // 1. Windshield & Window Glass: Fix Blender opaque grey export to transparent tinted automotive glass
+              if (
+                matName.includes("glassmtl") ||
+                matName.includes("window") ||
+                isWindowOrGlassMesh
+              ) {
+                mat.transparent = true;
+                mat.opacity = 0.22;
+                mat.color.set("#111827"); // luxury subtle dark tint
+                mat.roughness = 0.05;
+                mat.metalness = 0.9;
+                mat.envMapIntensity = 1.2;
+                mat.depthWrite = false;
+              }
+              // 2. Red Glass (Taillight covers)
+              else if (matName.includes("glassred")) {
+                mat.transparent = true;
+                mat.opacity = 0.6;
+                mat.color.set("#d90429");
+                mat.roughness = 0.08;
+                mat.metalness = 0.3;
+                mat.depthWrite = false;
+              }
+              // 3. Headlights and Lens covers
+              else if (matName.includes("light") || meshName.includes("light")) {
+                mat.envMapIntensity = 0.95;
+                mat.roughness = 0.12;
+                mat.metalness = 0.1;
+                if (mat.emissive && mat.emissive.getHex() > 0) {
+                  mat.emissiveIntensity = Math.min(mat.emissiveIntensity, 2.5);
+                }
+              }
+              // 4. Carbon fiber aero parts (diffuser, splitters, side skirts)
+              else if (matName.includes("carbon")) {
+                mat.envMapIntensity = 0.8;
+                mat.roughness = 0.32;
+                mat.metalness = 0.15;
+              }
+              // 5. Rubber Tires & Matte Trim: Keep deep black, no plastic shine
+              else if (
+                matName.includes("plastic_black") ||
+                matName.includes("mat_568") ||
+                matName.includes("mat_571") ||
+                matName.includes("tire") ||
+                matName.includes("rubber") ||
+                meshName.includes("tire") ||
+                meshName.includes("wheel")
+              ) {
+                mat.envMapIntensity = 0.25;
+                mat.roughness = 0.8;
+                mat.metalness = 0.05;
+              }
+              // 6. Main Car Body Paint (Paint, Coloured, Base)
+              else if (
+                matName.includes("paint") ||
+                matName.includes("coloured") ||
+                matName.includes("base") ||
+                matName.includes("body")
+              ) {
+                mat.envMapIntensity = 0.88;
+                mat.roughness = 0.18;
+                mat.metalness = 0.15;
+              }
+              // 7. Chrome / Badges / Calipers / Wheels
+              else if (
+                matName.includes("badge") ||
+                matName.includes("caliper") ||
+                matName.includes("mirror") ||
+                matName.includes("plate")
+              ) {
+                mat.envMapIntensity = 0.95;
+                mat.metalness = 0.9;
+                mat.roughness = 0.15;
+              }
+              // 8. Cockpit Interior & Engine
+              else if (matName.includes("interior") || matName.includes("engine")) {
+                mat.envMapIntensity = 0.45;
+                mat.roughness = 0.55;
+              }
+              // 9. General parts
+              else {
+                mat.envMapIntensity = 0.65;
+                mat.roughness = 0.4;
+              }
+
               mat.needsUpdate = true;
             }
           });
         }
+
+        // Do not cast solid shadow from transparent windows into interior cabin
+        mesh.castShadow = !isWindowOrGlassMesh;
+        mesh.receiveShadow = true;
       }
     });
 
     return clone;
-  }, [scene]);
+  }, [scene, animations]);
 
   useEffect(() => {
     if (onLoaded) {
@@ -86,7 +197,7 @@ function MustangModel({ onLoaded }: MustangModelProps) {
   );
 }
 
-useGLTF.preload("/models/ford_mustang_gt3.glb");
+useGLTF.preload("/models/ferrari_296_speciale_a.glb");
 
 interface CameraControllerProps {
   preset: CameraPreset;
@@ -205,45 +316,46 @@ export function CarScene({
         }}
         shadows
       >
-        {/* Sketchfab-Grade Studio Environment Lighting */}
-        <Environment preset="studio" environmentIntensity={0.85} />
+        {/* Sketchfab-Grade Balanced Studio Environment Lighting */}
+        <Environment preset="studio" environmentIntensity={0.65} />
 
-        {/* Soft Ambient Fill */}
-        <ambientLight intensity={0.4} />
+        {/* Subtle Ambient Fill for Natural Shadow Depth */}
+        <ambientLight intensity={0.18} />
 
-        {/* Balanced Key Sunlight for Natural Highlights & Shadows */}
+        {/* Balanced Key Sunlight for Natural Highlights & Sharp Shadows */}
         <directionalLight
-          position={[5, 8, 5]}
-          intensity={1.2}
+          position={[5, 9, 5]}
+          intensity={0.95}
           castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
           shadow-camera-near={0.5}
-          shadow-camera-far={20}
-          shadow-camera-left={-5}
-          shadow-camera-right={5}
-          shadow-camera-top={5}
-          shadow-camera-bottom={-5}
-          shadow-bias={-0.0001}
+          shadow-camera-far={25}
+          shadow-camera-left={-6}
+          shadow-camera-right={6}
+          shadow-camera-top={6}
+          shadow-camera-bottom={-6}
+          shadow-bias={-0.00005}
+          shadow-normalBias={0.02}
         />
 
         {/* Soft Cool Fill from Opposite Side */}
-        <directionalLight position={[-5, 4, 3]} intensity={0.5} color="#e6f0ff" />
+        <directionalLight position={[-5, 4, 3]} intensity={0.3} color="#e8f0fe" />
 
         {/* Realistic Ground Floor Contact Shadows Under Tires at y = 0 */}
         <ContactShadows
           position={[0, 0, 0]}
-          opacity={0.85}
+          opacity={0.75}
           scale={10.5}
-          blur={1.4}
-          far={3.0}
+          blur={1.8}
+          far={2.5}
           resolution={1024}
           color="#000000"
         />
 
         <Suspense fallback={null}>
           {onProgress && <ProgressWatcher onProgress={onProgress} />}
-          <MustangModel onLoaded={onLoaded} />
+          <CarModel onLoaded={onLoaded} />
         </Suspense>
 
         <CameraController

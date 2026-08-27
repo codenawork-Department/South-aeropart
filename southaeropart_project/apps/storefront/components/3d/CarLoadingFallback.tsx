@@ -38,7 +38,7 @@ export function CarLoadingFallback({ progress }: CarLoadingFallbackProps) {
         </div>
 
         <h3 className="font-heading font-black text-sm md:text-base text-white tracking-wider uppercase">
-          LOADING MUSTANG GT3 AERO BUILD
+          LOADING FERRARI 296 SPECIALE A BUILD
         </h3>
 
         {/* Progress Bar & Numeric Indicator */}
