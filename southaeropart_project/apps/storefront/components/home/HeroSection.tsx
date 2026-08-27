@@ -1,11 +1,28 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Zap } from "lucide-react";
 import { CarModelViewer } from "@/components/3d/CarModelViewer";
+import { HeroCardData, getHomepageHeroCards } from "@/actions/homepage.actions";
 
-export function HeroSection() {
+interface HeroSectionProps {
+  initialCards?: HeroCardData[];
+}
+
+export function HeroSection({ initialCards }: HeroSectionProps) {
+  const [cards, setCards] = useState<HeroCardData[]>(initialCards || []);
+
+  useEffect(() => {
+    if (!initialCards || initialCards.length === 0) {
+      getHomepageHeroCards().then((data) => {
+        if (data && data.length > 0) {
+          setCards(data);
+        }
+      });
+    }
+  }, [initialCards]);
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#0A0A0A] via-[#101010] to-[#0A0A0A] border-b border-[#1A1A1A]">
       {/* Background Watermark & Atmosphere Light */}
@@ -43,46 +60,27 @@ export function HeroSection() {
           {/* Main Hero Centerpiece: Interactive 3D Vehicle Showcase */}
           <CarModelViewer />
 
-          {/* 3 Secondary Mini Showcase Cards below hero */}
+          {/* 3 Secondary Mini Showcase Cards below hero (Dynamic Cloudinary Assets from DB) */}
           <div className="grid grid-cols-3 gap-3 md:gap-4 mt-3 md:mt-4">
-            {[
-              {
-                title: "ACCORD G9 REAR",
-                tag: "DUCKTAIL & DIFFUSER",
-                image: "/images/BACK.png",
-                href: "/products/ducktail-spoiler-accord-g9",
-              },
-              {
-                title: "CIVIC FD TRACK",
-                tag: "AERO PACKAGE",
-                image: "/images/fd.png",
-                href: "/products/civic-fd-track-aero-package",
-              },
-              {
-                title: "CIVIC FE STREET",
-                tag: "MODERN STANCE",
-                image: "/images/fe.png",
-                href: "/products/civic-fe-street-performance-kit",
-              },
-            ].map((item) => (
+            {cards.map((item) => (
               <Link
-                key={item.title}
+                key={item.id || item.title}
                 href={item.href}
-                className="group relative aspect-[16/9] rounded-sm overflow-hidden border border-[#202020] hover:border-[var(--accent-red)] transition-all bg-[#121212]"
+                className="group relative aspect-[16/9] rounded-sm overflow-hidden border border-[#202020] hover:border-[var(--accent-red)] transition-all bg-[#121212] block shadow-lg hover:shadow-red-950/20"
               >
                 <Image
-                  src={item.image}
+                  src={item.imageUrl}
                   alt={item.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                   sizes="(max-width: 768px) 33vw, 300px"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-2 left-2 right-2">
-                  <p className="font-heading text-[0.65rem] md:text-xs font-bold text-white uppercase truncate group-hover:text-[var(--accent-red)] transition-colors">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
+                <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
+                  <p className="font-heading text-[0.65rem] md:text-xs font-bold text-white uppercase truncate group-hover:text-[var(--accent-red)] transition-colors drop-shadow-md">
                     {item.title}
                   </p>
-                  <p className="text-[0.55rem] md:text-[0.65rem] text-[var(--text-muted)] font-heading uppercase">
+                  <p className="text-[0.55rem] md:text-[0.65rem] text-[var(--text-muted)] font-heading uppercase truncate">
                     {item.tag}
                   </p>
                 </div>

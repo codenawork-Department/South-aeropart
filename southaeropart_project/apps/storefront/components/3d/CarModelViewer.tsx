@@ -95,7 +95,7 @@ export function CarModelViewer() {
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] animate-pulse" />
               3D LIVE AERO
             </span>
-            <span className="text-white font-bold tracking-wider">MUSTANG GT3</span>
+            <span className="text-white font-bold tracking-wider">FERRARI 296 SPECIALE A</span>
           </div>
 
           <div className="telemetry-pill hidden sm:inline-flex backdrop-blur-md bg-[#121212]/80 border-[#2A2A2A]">

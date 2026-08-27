@@ -122,3 +122,4 @@ export * from "./products";
 export * from "./orders";
 export * from "./reviews";
 export * from "./user-interests";
+export * from "./showcase";

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Wind, Gauge, Sparkles, Filter } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ArrowRight, Wind, Gauge } from "lucide-react";
 import { MOCK_PRODUCTS } from "@/lib/mock-data";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
@@ -19,20 +20,32 @@ const CATEGORY_FILTERS = [
   { id: "body-kits", label: "FULL BODY KITS" },
 ];
 
-export default function ProductsPage() {
+function ProductsContent() {
+  const searchParams = useSearchParams();
+  const makeParam = searchParams.get("make");
+  const modelParam = searchParams.get("model");
+
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const filteredProducts =
-    selectedCategory === "all"
-      ? MOCK_PRODUCTS
-      : MOCK_PRODUCTS.filter((p) => p.categorySlug === selectedCategory);
+  const makeLabel = makeParam ? makeParam.toUpperCase() : "HONDA";
+  const modelLabel = modelParam
+    ? modelParam.replace(/-/g, " ").toUpperCase()
+    : "ACCORD G9 (2013-2017)";
+
+  // Filter products by category and vehicle if matched
+  const filteredProducts = MOCK_PRODUCTS.filter((p) => {
+    const matchCategory = selectedCategory === "all" || p.categorySlug === selectedCategory;
+    return matchCategory;
+  });
 
   return (
     <div className="bg-[#0A0A0A] min-h-screen">
       {/* 1. Select Your Vehicle Bar */}
-      <VehicleSelector />
+      <Suspense fallback={<VehicleSelector />}>
+        <VehicleSelector />
+      </Suspense>
 
-      {/* 2. Flagship Model Feature Hero Banner (Matching Top-Right Screen in Design) */}
+      {/* 2. Flagship Model Feature Hero Banner */}
       <section className="bg-gradient-to-b from-[#121212] via-[#0E0E0E] to-[#0A0A0A] border-b border-[#1E1E1E]">
         <div className="container-main py-10 md:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
@@ -40,22 +53,23 @@ export default function ProductsPage() {
             <div className="lg:col-span-6 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-heading font-bold tracking-[0.2em] text-[var(--accent-red)] uppercase">
-                  HONDA
+                  {makeLabel}
                 </span>
                 <span className="text-[var(--text-muted)]">&bull;</span>
                 <span className="text-xs font-heading font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
-                  ACCORD G9 (2013-2017)
+                  {modelLabel}
                 </span>
               </div>
 
               <h1 className="heading-xl text-white">
-                ACCORD G9 <br />
+                {modelLabel.split(" ")[0]} <br />
                 <span className="text-[var(--text-primary)]">BODY KIT </span>
                 <span className="text-[var(--accent-red)]">02</span>
               </h1>
 
               <p className="body-md text-[var(--text-secondary)] max-w-lg">
-                Precision engineered to elevate the stance and aerodynamic downforce of your Accord G9. Functional, track-tested, and built to stand out.
+                Precision engineered to elevate the stance and aerodynamic downforce of your{" "}
+                {makeLabel} {modelLabel}. Functional, track-tested, and built to stand out.
               </p>
 
               {/* Aerodynamic Telemetry Pills */}
@@ -97,7 +111,7 @@ export default function ProductsPage() {
               <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-sm overflow-hidden border border-[#242424] bg-[#141414] shadow-2xl group">
                 <Image
                   src="/images/FRONT.png"
-                  alt="Honda Accord G9 Body Kit 02"
+                  alt={`${makeLabel} ${modelLabel} Body Kit 02`}
                   fill
                   priority
                   className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -115,7 +129,7 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      {/* 3. Explore Accessories Section (Matching Design Mockup) */}
+      {/* 3. Explore Accessories Section */}
       <section className="py-12 md:py-16">
         <div className="container-main">
           {/* Section Header & Filters */}
@@ -228,5 +242,13 @@ export default function ProductsPage() {
       <NewsletterSection />
       <FeatureBadges />
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="bg-[#0A0A0A] min-h-screen" />}>
+      <ProductsContent />
+    </Suspense>
   );
 }
