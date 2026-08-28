@@ -526,7 +526,14 @@ export async function createBundleAction(
 
   // 3. Resolve Folder & Upload Images
   const [modelRow] = await db
-    .select({ name: carModels.name, slug: carModels.slug, brandSlug: brands.slug })
+    .select({
+      name: carModels.name,
+      slug: carModels.slug,
+      brandSlug: brands.slug,
+      brandName: brands.name,
+      yearFrom: carModels.yearFrom,
+      yearTo: carModels.yearTo,
+    })
     .from(carModels)
     .leftJoin(brands, eq(carModels.brandId, brands.id))
     .where(eq(carModels.id, data.carModelId))
@@ -620,14 +627,14 @@ export async function createBundleAction(
       );
     }
 
-    // Add compatibility
+    // Add compatibility (use actual brand name and car model year range from DB)
     if (modelRow) {
       await db.insert(productCompatibility).values({
         productId: newBundle.id,
-        make: brandSlug,
+        make: modelRow.brandName || brandSlug,
         model: modelRow.name,
-        yearFrom: 2013,
-        yearTo: 2025,
+        yearFrom: modelRow.yearFrom || new Date().getFullYear() - 5,
+        yearTo: modelRow.yearTo || new Date().getFullYear(),
       });
     }
 
@@ -703,6 +710,12 @@ export async function updateBundleAction(
 
   if (childParts.length !== data.childProductIds.length) {
     return { success: false, message: "มีชิ้นส่วนบางชิ้นไม่พบในระบบ" };
+  }
+
+  // Validate: All child parts must be 'single' parts (prevent nesting bundles)
+  const nonSinglePart = childParts.find((p) => p.productType !== "single");
+  if (nonSinglePart) {
+    return { success: false, message: `ชิ้นส่วน '${nonSinglePart.name}' เป็นชุดเซ็ตอยู่แล้ว ไม่สามารถนำมาซ้อนในชุดเซ็ตได้` };
   }
 
   const wrongModelPart = childParts.find((p) => p.carModelId !== data.carModelId);
@@ -783,7 +796,14 @@ export async function updateBundleAction(
   }
 
   const [modelRow] = await db
-    .select({ name: carModels.name, slug: carModels.slug, brandSlug: brands.slug })
+    .select({
+      name: carModels.name,
+      slug: carModels.slug,
+      brandSlug: brands.slug,
+      brandName: brands.name,
+      yearFrom: carModels.yearFrom,
+      yearTo: carModels.yearTo,
+    })
     .from(carModels)
     .leftJoin(brands, eq(carModels.brandId, brands.id))
     .where(eq(carModels.id, data.carModelId))
@@ -862,6 +882,18 @@ export async function updateBundleAction(
         position: idx,
       }))
     );
+
+    // Sync compatibility (delete old + insert updated)
+    await db.delete(productCompatibility).where(eq(productCompatibility.productId, id));
+    if (modelRow) {
+      await db.insert(productCompatibility).values({
+        productId: id,
+        make: modelRow.brandName || brandSlug,
+        model: modelRow.name,
+        yearFrom: modelRow.yearFrom || new Date().getFullYear() - 5,
+        yearTo: modelRow.yearTo || new Date().getFullYear(),
+      });
+    }
 
     // Replace images
     await db.delete(productImages).where(eq(productImages.productId, id));
