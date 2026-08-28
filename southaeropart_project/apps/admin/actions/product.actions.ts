@@ -748,13 +748,6 @@ export async function updateProductAction(
       newSlug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
       if (!newSlug) newSlug = existingProduct.slug;
 
-      // Check slug uniqueness (excluding self)
-      const [slugConflict] = await db
-        .select({ id: products.id })
-        .from(products)
-        .where(and(eq(products.slug, newSlug), eq(products.id, productId)))
-        .limit(1);
-
       // If slug conflicts with another product, append timestamp
       const [anyConflict] = await db
         .select({ id: products.id })

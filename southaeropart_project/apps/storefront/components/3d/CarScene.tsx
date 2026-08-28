@@ -296,6 +296,13 @@ export function CarScene({
     }, 3800);
   };
 
+  // Cleanup idle timer on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, []);
+
   return (
     <div
       className="w-full h-full relative cursor-grab active:cursor-grabbing select-none"

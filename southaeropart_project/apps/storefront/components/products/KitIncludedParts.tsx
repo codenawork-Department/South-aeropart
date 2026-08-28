@@ -90,7 +90,7 @@ export function KitIncludedParts({ items, kitName }: KitIncludedPartsProps) {
                   <Package size={24} className="text-gray-600" />
                 )}
                 <span className="absolute top-1 left-1 bg-black/80 backdrop-blur-sm text-gray-300 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border border-white/10">
-                  0{index + 1}
+                  {String(index + 1).padStart(2, "0")}
                 </span>
               </div>
 
