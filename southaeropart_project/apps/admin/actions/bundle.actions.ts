@@ -489,6 +489,27 @@ export async function createBundleAction(
     slug = `kit-${data.sku.toLowerCase()}-${Date.now().toString(36)}`;
   }
 
+  // Check max 4 featured bundles limit if isFeatured is true
+  if (data.isFeatured) {
+    const [countRes] = await db
+      .select({ count: count() })
+      .from(products)
+      .where(
+        and(
+          eq(products.productType, "bundle"),
+          eq(products.isFeatured, true)
+        )
+      );
+
+    const currentCount = Number(countRes?.count || 0);
+    if (currentCount >= 4) {
+      return {
+        success: false,
+        message: "สามารถเลือกชุดเซ็ตแนะนำได้สูงสุด 4 ชุดเท่านั้น (ขณะนี้ครบ 4 ชุดแล้ว) กรุณายกเลิกชุดอื่นก่อน หรือปิดตัวเลือกแนะนำในหน้านี้",
+      };
+    }
+  }
+
   // Check unique SKU and Slug
   const existing = await db
     .select({ id: products.id, sku: products.sku, slug: products.slug })
@@ -709,6 +730,28 @@ export async function updateBundleAction(
 
   let slug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
 
+  // Check max 4 featured bundles limit if isFeatured is true (excluding current bundle)
+  if (data.isFeatured) {
+    const [countRes] = await db
+      .select({ count: count() })
+      .from(products)
+      .where(
+        and(
+          eq(products.productType, "bundle"),
+          eq(products.isFeatured, true),
+          sql`${products.id} != ${id}`
+        )
+      );
+
+    const currentCount = Number(countRes?.count || 0);
+    if (currentCount >= 4) {
+      return {
+        success: false,
+        message: "สามารถเลือกชุดเซ็ตแนะนำได้สูงสุด 4 ชุดเท่านั้น (ขณะนี้ครบ 4 ชุดแล้ว) กรุณายกเลิกชุดอื่นก่อน หรือปิดตัวเลือกแนะนำในหน้านี้",
+      };
+    }
+  }
+
   // Check unique SKU and Slug (excluding current bundle)
   const existing = await db
     .select({ id: products.id, sku: products.sku, slug: products.slug })
@@ -922,3 +965,130 @@ export async function deleteBundleAction(id: string): Promise<ActionResult> {
     };
   }
 }
+
+/**
+ * Toggle a bundle's featured status (Maximum 4 featured bundles allowed)
+ */
+export async function toggleBundleFeaturedAction(
+  bundleId: string,
+  isFeatured: boolean
+): Promise<ActionResult<{ isFeatured: boolean; count: number }>> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
+  try {
+    const [bundle] = await db
+      .select({ id: products.id, name: products.name, isFeatured: products.isFeatured })
+      .from(products)
+      .where(and(eq(products.id, bundleId), eq(products.productType, "bundle")))
+      .limit(1);
+
+    if (!bundle) {
+      return { success: false, message: "ไม่พบชุดเซ็ตนี้ในระบบ" };
+    }
+
+    if (isFeatured) {
+      // Check current featured bundles count (excluding this bundle)
+      const [countRes] = await db
+        .select({ count: count() })
+        .from(products)
+        .where(
+          and(
+            eq(products.productType, "bundle"),
+            eq(products.isFeatured, true),
+            sql`${products.id} != ${bundleId}`
+          )
+        );
+
+      const currentFeaturedCount = Number(countRes?.count || 0);
+
+      if (currentFeaturedCount >= 4) {
+        return {
+          success: false,
+          message: "สามารถเลือกชุดเซ็ตแนะนำได้สูงสุด 4 ชุดเท่านั้น (ขณะนี้เลือกครบ 4 ชุดแล้ว) กรุณายกเลิกชุดอื่นก่อนเปิดใช้งานชุดนี้",
+        };
+      }
+    }
+
+    // Update isFeatured
+    await db
+      .update(products)
+      .set({
+        isFeatured,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, bundleId));
+
+    // Get new total featured count
+    const [newCountRes] = await db
+      .select({ count: count() })
+      .from(products)
+      .where(
+        and(
+          eq(products.productType, "bundle"),
+          eq(products.isFeatured, true)
+        )
+      );
+
+    const totalFeatured = Number(newCountRes?.count || 0);
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: isFeatured ? "feature_bundle" : "unfeature_bundle",
+      entityId: bundleId,
+      entityType: "product",
+      metadata: {
+        name: bundle.name,
+        isFeatured,
+        totalFeatured,
+      },
+    });
+
+    revalidatePath("/bundles");
+    revalidatePath(`/bundles/${bundleId}`);
+    revalidatePath("/products");
+    revalidatePath("/");
+
+    return {
+      success: true,
+      message: isFeatured
+        ? `ตั้ง '${bundle.name}' เป็นเซ็ตแนะนำเรียบร้อยแล้ว (${totalFeatured}/4 ชุด)`
+        : `ยกเลิกเซ็ตแนะนำสำหรับ '${bundle.name}' แล้ว (${totalFeatured}/4 ชุด)`,
+      data: { isFeatured, count: totalFeatured },
+    };
+  } catch (error: any) {
+    console.error("Error toggling bundle featured:", error);
+    return {
+      success: false,
+      message: `เกิดข้อผิดพลาดในการเปลี่ยนสถานะเซ็ตแนะนำ: ${error?.message || "Internal Server Error"}`,
+    };
+  }
+}
+
+/**
+ * Get current count of featured bundles
+ */
+export async function getFeaturedBundlesCountAction(): Promise<{ count: number; max: number }> {
+  try {
+    const [countRes] = await db
+      .select({ count: count() })
+      .from(products)
+      .where(
+        and(
+          eq(products.productType, "bundle"),
+          eq(products.isFeatured, true)
+        )
+      );
+
+    return {
+      count: Number(countRes?.count || 0),
+      max: 4,
+    };
+  } catch (error) {
+    console.error("Error getting featured bundles count:", error);
+    return { count: 0, max: 4 };
+  }
+}
+

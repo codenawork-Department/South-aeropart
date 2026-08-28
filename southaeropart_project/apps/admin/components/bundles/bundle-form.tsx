@@ -25,6 +25,7 @@ import {
   Package,
   Wand2,
   Flame,
+  Star,
 } from "lucide-react";
 import {
   createBundleAction,
@@ -763,19 +764,30 @@ export function BundleForm({
               />
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isFeatured}
-                  onChange={(e) => setIsFeatured(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-10 h-5 bg-[#2A2A2A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--accent-red)]"></div>
-              </label>
-              <span className="text-xs font-medium text-gray-300">
-                ตั้งเป็นสินค้าแนะนำบนหน้าแรก (Featured on Homepage)
-              </span>
+            <div className="pt-2 p-3.5 bg-[#171410] border border-amber-500/20 rounded-lg space-y-2">
+              <div className="flex items-center gap-3">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isFeatured}
+                    onChange={(e) => setIsFeatured(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5 bg-[#2A2A2A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                </label>
+                <div className="flex items-center gap-2">
+                  <Star size={14} className={isFeatured ? "text-amber-400 fill-amber-400" : "text-gray-400"} />
+                  <span className="text-xs font-bold text-white">
+                    ตั้งเป็นชุดเซ็ตแนะนำบนหน้าแรก (Featured Bundle)
+                  </span>
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-extrabold">
+                    สูงสุด 4 ชุด
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-400 pl-13">
+                * ชุดเซ็ตที่เลือกเป็นเซ็ตแนะนำจะถูกดึงไปแสดงในส่วน Flagship Showcase บนหน้าแรกของ Storefront (จำกัดพร้อมกันไม่เกิน 4 ชุด)
+              </p>
             </div>
           </div>
 
