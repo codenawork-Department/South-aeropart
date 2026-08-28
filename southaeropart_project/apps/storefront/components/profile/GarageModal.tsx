@@ -1,0 +1,317 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { X, Car, Compass, Loader2, Sparkles } from "lucide-react";
+import { VehicleBrandData } from "@/actions/vehicle.actions";
+import { saveUserVehicle, SaveVehicleInput } from "@/actions/profile.actions";
+
+interface GarageModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  brands: VehicleBrandData[];
+  initialVehicle?: {
+    id: string;
+    brandId: string;
+    carModelId: string;
+    year: number | null;
+    subModel: string | null;
+    steeringOrientation: string;
+    plateNumber: string | null;
+    isDefault: boolean;
+  } | null;
+  onSuccess?: () => void;
+}
+
+export function GarageModal({
+  isOpen,
+  onClose,
+  brands,
+  initialVehicle,
+  onSuccess,
+}: GarageModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const [selectedBrandId, setSelectedBrandId] = useState<string>("");
+  const [selectedModelId, setSelectedModelId] = useState<string>("");
+  const [year, setYear] = useState<string>("");
+  const [subModel, setSubModel] = useState<string>("");
+  const [steeringOrientation, setSteeringOrientation] = useState<"RHD" | "LHD">("RHD");
+  const [plateNumber, setPlateNumber] = useState<string>("");
+  const [isDefault, setIsDefault] = useState<boolean>(false);
+
+  // Available models based on selected brand
+  const availableModels = useMemo(() => {
+    if (!selectedBrandId) return [];
+    const brand = brands.find((b) => b.id === selectedBrandId);
+    return brand?.models || [];
+  }, [selectedBrandId, brands]);
+
+  useEffect(() => {
+    if (initialVehicle) {
+      setSelectedBrandId(initialVehicle.brandId);
+      setSelectedModelId(initialVehicle.carModelId);
+      setYear(initialVehicle.year ? String(initialVehicle.year) : "");
+      setSubModel(initialVehicle.subModel || "");
+      setSteeringOrientation((initialVehicle.steeringOrientation as "RHD" | "LHD") || "RHD");
+      setPlateNumber(initialVehicle.plateNumber || "");
+      setIsDefault(Boolean(initialVehicle.isDefault));
+    } else {
+      const firstBrand = brands[0];
+      setSelectedBrandId(firstBrand ? firstBrand.id : "");
+      setSelectedModelId(firstBrand?.models[0] ? firstBrand.models[0].id : "");
+      setYear(String(new Date().getFullYear()));
+      setSubModel("");
+      setSteeringOrientation("RHD");
+      setPlateNumber("");
+      setIsDefault(false);
+    }
+    setErrorMsg(null);
+  }, [initialVehicle, isOpen, brands]);
+
+  // When brand changes, update model if current model is not in brand
+  const handleBrandChange = (brandId: string) => {
+    setSelectedBrandId(brandId);
+    const brand = brands.find((b) => b.id === brandId);
+    if (brand && brand.models.length > 0) {
+      setSelectedModelId(brand.models[0]?.id ?? "");
+    } else {
+      setSelectedModelId("");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBrandId || !selectedModelId) {
+      setErrorMsg("Please select both a car brand and model.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMsg(null);
+
+    const payload: SaveVehicleInput = {
+      id: initialVehicle?.id,
+      brandId: selectedBrandId,
+      carModelId: selectedModelId,
+      year: year ? parseInt(year, 10) : null,
+      subModel: subModel || null,
+      steeringOrientation,
+      plateNumber: plateNumber || null,
+      isDefault,
+    };
+
+    const res = await saveUserVehicle(payload);
+
+    setIsSubmitting(false);
+    if (res.success) {
+      onSuccess?.();
+      onClose();
+    } else {
+      setErrorMsg(res.error || "Failed to save vehicle to garage.");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-lg bg-[#141414] border border-[#2A2A2A] rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#222222] bg-[#181818]">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded bg-[var(--accent-red)]/10 text-[var(--accent-red)]">
+              <Car size={18} />
+            </div>
+            <h2 className="text-lg font-bold font-heading uppercase text-white tracking-wide">
+              {initialVehicle ? "Edit Vehicle" : "Add Car to My Garage"}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded text-[var(--text-muted)] hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto p-6 space-y-5">
+          {errorMsg && (
+            <div className="p-3.5 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {errorMsg}
+            </div>
+          )}
+
+          {/* Fitment Benefits Notice */}
+          <div className="flex items-start gap-3 p-3.5 bg-[var(--accent-red)]/5 border border-[var(--accent-red)]/20 rounded-md">
+            <Sparkles size={18} className="text-[var(--accent-red)] shrink-0 mt-0.5" />
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Adding your car helps South Aeropart verify exact <strong className="text-white">part fitment (ความเข้ากันได้ของชิ้นงาน)</strong> and filter parts engineered for your chassis.
+            </p>
+          </div>
+
+          {/* Car Brand */}
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+              Car Brand (ยี่ห้อรถยนต์) *
+            </label>
+            <select
+              required
+              value={selectedBrandId}
+              onChange={(e) => handleBrandChange(e.target.value)}
+              className="select-dark bg-[#1A1A1A] border-[#2A2A2A] text-white"
+            >
+              {brands.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Car Model */}
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+              Model / Chassis (รุ่นรถ / ตัวถัง) *
+            </label>
+            <select
+              required
+              value={selectedModelId}
+              onChange={(e) => setSelectedModelId(e.target.value)}
+              className="select-dark bg-[#1A1A1A] border-[#2A2A2A] text-white"
+            >
+              {availableModels.length === 0 ? (
+                <option value="">No models available for selected brand</option>
+              ) : (
+                availableModels.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.displayName} {m.yearRange ? `[${m.yearRange}]` : ""}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
+          {/* Year & SubModel/Trim */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+                Model Year (ปี ค.ศ.)
+              </label>
+              <input
+                type="number"
+                min="1970"
+                max={new Date().getFullYear() + 2}
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="e.g. 2024"
+                className="input-dark w-full bg-[#1A1A1A] border-[#2A2A2A] text-white font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+                Sub-model / Trim (รุ่นย่อย)
+              </label>
+              <input
+                type="text"
+                value={subModel}
+                onChange={(e) => setSubModel(e.target.value)}
+                placeholder="e.g. Type R FL5, GR, NISMO"
+                className="input-dark w-full bg-[#1A1A1A] border-[#2A2A2A] text-white"
+              />
+            </div>
+          </div>
+
+          {/* Steering Orientation (LHD vs RHD) */}
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+              Steering Orientation (ตำแหน่งพวงมาลัย) *
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setSteeringOrientation("RHD")}
+                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded text-sm font-medium border transition-all ${
+                  steeringOrientation === "RHD"
+                    ? "border-[var(--accent-red)] bg-[var(--accent-red)]/10 text-white"
+                    : "border-[#262626] bg-[#1A1A1A] text-[var(--text-secondary)] hover:text-white"
+                }`}
+              >
+                <Compass size={16} />
+                RHD (พวงมาลัยขวา - TH / JP / UK)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSteeringOrientation("LHD")}
+                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded text-sm font-medium border transition-all ${
+                  steeringOrientation === "LHD"
+                    ? "border-[var(--accent-red)] bg-[var(--accent-red)]/10 text-white"
+                    : "border-[#262626] bg-[#1A1A1A] text-[var(--text-secondary)] hover:text-white"
+                }`}
+              >
+                <Compass size={16} />
+                LHD (พวงมาลัยซ้าย - US / EU)
+              </button>
+            </div>
+          </div>
+
+          {/* Optional License Plate */}
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+              License Plate (ทะเบียนรถ - Optional)
+            </label>
+            <input
+              type="text"
+              value={plateNumber}
+              onChange={(e) => setPlateNumber(e.target.value)}
+              placeholder="e.g. 9กก 9999"
+              className="input-dark w-full bg-[#1A1A1A] border-[#2A2A2A] text-white"
+            />
+          </div>
+
+          {/* Set as Default Car */}
+          <div className="pt-1">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isDefault}
+                onChange={(e) => setIsDefault(e.target.checked)}
+                className="w-4 h-4 rounded bg-[#1A1A1A] border-[#333333] text-[var(--accent-red)] focus:ring-[var(--accent-red)]"
+              />
+              <span className="text-sm text-[var(--text-secondary)]">
+                Set as my primary vehicle (ตั้งเป็นรถคันหลักสำหรับเช็กพาร์ทตรงรุ่น)
+              </span>
+            </label>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#222222]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-outline text-xs px-5 py-2.5"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn-primary text-xs px-6 py-2.5"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Car"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
