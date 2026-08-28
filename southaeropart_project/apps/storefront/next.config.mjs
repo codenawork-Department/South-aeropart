@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@repo/ui", "@repo/db", "@repo/lib"],
+  transpilePackages: ["@repo/ui", "@repo/lib"],
   images: {
     remotePatterns: [
       {
@@ -10,6 +10,7 @@ const nextConfig = {
     ],
   },
   experimental: {
+    serverComponentsExternalPackages: ["@repo/db", "drizzle-orm", "@neondatabase/serverless"],
     serverActions: {
       bodySizeLimit: "25mb",
     },

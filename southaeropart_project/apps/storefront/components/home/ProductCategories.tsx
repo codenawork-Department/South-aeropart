@@ -1,37 +1,12 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { CATEGORY_TABS, PRODUCT_CATEGORIES } from "@/lib/mock-data";
+import { PRODUCT_CATEGORIES } from "@/lib/mock-data";
 
 export function ProductCategories() {
-  const [activeTab, setActiveTab] = useState("shop");
-
   return (
     <section className="py-12 md:py-16 bg-[#0A0A0A]">
       <div className="container-main">
-        {/* Navigation Tabs matching design mockup */}
-        <div className="flex items-center justify-center gap-6 sm:gap-10 md:gap-14 mb-8 md:mb-12 border-b border-[#1A1A1A] pb-3">
-          {CATEGORY_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`font-heading text-sm md:text-base font-extrabold tracking-[0.2em] uppercase pb-2 transition-all relative ${
-                activeTab === tab.id
-                  ? "text-white"
-                  : "text-[var(--text-muted)] hover:text-white"
-              }`}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <span className="absolute -bottom-3 left-0 right-0 h-0.5 bg-[var(--accent-red)] shadow-[0_0_8px_var(--accent-red)]" />
-              )}
-            </button>
-          ))}
-        </div>
-
         {/* 4 Product Category Cards Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {PRODUCT_CATEGORIES.map((category) => (

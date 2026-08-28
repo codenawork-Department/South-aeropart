@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { VehicleSelector } from "@/components/home/VehicleSelector";
 import { getVehicleSelectorData } from "@/actions/vehicle.actions";
 import { getHomepageHeroCards } from "@/actions/homepage.actions";
+import { getFeaturedBundles } from "@/actions/bundle.actions";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturedSlider } from "@/components/home/FeaturedSlider";
 import { ProductCategories } from "@/components/home/ProductCategories";
@@ -12,9 +13,10 @@ import { NewsletterSection } from "@/components/home/NewsletterSection";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [vehicleData, heroCards] = await Promise.all([
+  const [vehicleData, heroCards, featuredBundles] = await Promise.all([
     getVehicleSelectorData(),
     getHomepageHeroCards(),
+    getFeaturedBundles(),
   ]);
 
   return (
@@ -23,7 +25,7 @@ export default async function HomePage() {
         <VehicleSelector initialBrands={vehicleData} />
       </Suspense>
       <HeroSection initialCards={heroCards} />
-      <FeaturedSlider />
+      <FeaturedSlider initialBundles={featuredBundles} />
       <ProductCategories />
       <InfoSections />
       <FeatureBadges />

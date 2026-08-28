@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -11,18 +11,17 @@ import {
   Filter,
   Edit2,
   Trash2,
-  ExternalLink,
-  Layers,
   Image as ImageIcon,
   AlertTriangle,
   Loader2,
-  Tag,
   CheckCircle2,
   Wind,
-  ShieldCheck,
-  ChevronRight,
+  Star,
+  Sparkles,
+  AlertCircle,
+  X,
 } from "lucide-react";
-import { deleteBundleAction } from "@/actions/bundle.actions";
+import { deleteBundleAction, toggleBundleFeaturedAction } from "@/actions/bundle.actions";
 
 export interface BundleRow {
   id: string;
@@ -61,8 +60,10 @@ interface BundlesTableProps {
   carModels: Array<{ id: string; name: string; brandName?: string }>;
 }
 
+const MAX_FEATURED_BUNDLES = 4;
+
 export function BundlesTable({
-  bundles,
+  bundles: initialBundles,
   pagination,
   carModels,
 }: BundlesTableProps) {
@@ -70,25 +71,122 @@ export function BundlesTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [modelFilter, setModelFilter] = useState<string>("all");
+  const [onlyFeatured, setOnlyFeatured] = useState<boolean>(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [deleteModalBundle, setDeleteModalBundle] = useState<BundleRow | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const filteredBundles = bundles.filter((b) => {
-    const matchesSearch =
-      !searchTerm.trim() ||
-      b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.sku.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || b.status === statusFilter;
-
-    const matchesModel =
-      modelFilter === "all" || b.carModelName === modelFilter;
-
-    return matchesSearch && matchesStatus && matchesModel;
+  // Optimistic featured bundles state
+  const [featuredMap, setFeaturedMap] = useState<Record<string, boolean>>(() => {
+    const map: Record<string, boolean> = {};
+    initialBundles.forEach((b) => {
+      map[b.id] = b.isFeatured;
+    });
+    return map;
   });
+
+  const [isTogglingFeaturedId, setIsTogglingFeaturedId] = useState<string | null>(null);
+  const [toastNotification, setToastNotification] = useState<{
+    type: "success" | "error" | "warning";
+    message: string;
+  } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" | "warning" = "success") => {
+    setToastNotification({ message, type });
+    setTimeout(() => {
+      setToastNotification(null);
+    }, 3500);
+  };
+
+  // Sync state if props change
+  useMemo(() => {
+    const map: Record<string, boolean> = {};
+    initialBundles.forEach((b) => {
+      map[b.id] = b.isFeatured;
+    });
+    setFeaturedMap(map);
+  }, [initialBundles]);
+
+  // Compute current featured list and count
+  const featuredBundlesList = useMemo(() => {
+    return initialBundles.filter((b) => featuredMap[b.id]);
+  }, [initialBundles, featuredMap]);
+
+  const featuredCount = featuredBundlesList.length;
+
+  // Filter bundles
+  const filteredBundles = useMemo(() => {
+    return initialBundles.filter((b) => {
+      const isBundleFeatured = featuredMap[b.id];
+
+      const matchesSearch =
+        !searchTerm.trim() ||
+        b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.sku.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" || b.status === statusFilter;
+
+      const matchesModel =
+        modelFilter === "all" || b.carModelName === modelFilter;
+
+      const matchesFeatured = !onlyFeatured || isBundleFeatured;
+
+      return matchesSearch && matchesStatus && matchesModel && matchesFeatured;
+    });
+  }, [initialBundles, featuredMap, searchTerm, statusFilter, modelFilter, onlyFeatured]);
+
+  // Handle Toggle Featured
+  const handleToggleFeatured = async (bundle: BundleRow) => {
+    const currentlyFeatured = Boolean(featuredMap[bundle.id]);
+    const nextFeatured = !currentlyFeatured;
+
+    // Check limit if turning ON
+    if (nextFeatured && featuredCount >= MAX_FEATURED_BUNDLES) {
+      showToast(
+        `สามารถเลือกเซ็ทแนะนำได้สูงสุด ${MAX_FEATURED_BUNDLES} ชุดเท่านั้น (ขณะนี้ครบ 4 ชุดแล้ว) กรุณายกเลิกเซ็ทอื่นก่อน`,
+        "warning"
+      );
+      return;
+    }
+
+    // Optimistic UI update
+    setFeaturedMap((prev) => ({
+      ...prev,
+      [bundle.id]: nextFeatured,
+    }));
+    setIsTogglingFeaturedId(bundle.id);
+
+    try {
+      const res = await toggleBundleFeaturedAction(bundle.id, nextFeatured);
+      setIsTogglingFeaturedId(null);
+
+      if (res.success) {
+        showToast(
+          nextFeatured
+            ? `ตั้ง '${bundle.name}' เป็นเซ็ตแนะนำเรียบร้อยแล้ว (${res.data?.count ?? featuredCount + 1}/${MAX_FEATURED_BUNDLES} ชุด)`
+            : `ยกเลิกเซ็ตแนะนำสำหรับ '${bundle.name}' แล้ว (${res.data?.count ?? featuredCount - 1}/${MAX_FEATURED_BUNDLES} ชุด)`,
+          "success"
+        );
+        router.refresh();
+      } else {
+        // Revert optimistic update
+        setFeaturedMap((prev) => ({
+          ...prev,
+          [bundle.id]: currentlyFeatured,
+        }));
+        showToast(res.message || "ไม่สามารถเปลี่ยนสถานะเซ็ทแนะนำได้", "error");
+      }
+    } catch (err: any) {
+      setIsTogglingFeaturedId(null);
+      // Revert optimistic update
+      setFeaturedMap((prev) => ({
+        ...prev,
+        [bundle.id]: currentlyFeatured,
+      }));
+      showToast("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์", "error");
+    }
+  };
 
   const handleDelete = async (bundleId: string) => {
     setIsDeletingId(bundleId);
@@ -97,11 +195,10 @@ export function BundlesTable({
       setIsDeletingId(null);
       setDeleteModalBundle(null);
       if (res.success) {
-        setToastMessage("ลบชุดเซ็ตสำเร็จ");
+        showToast("ลบชุดเซ็ตสำเร็จ", "success");
         router.refresh();
-        setTimeout(() => setToastMessage(null), 3000);
       } else {
-        alert(res.message || "เกิดข้อผิดพลาดในการลบชุดเซ็ต");
+        showToast(res.message || "เกิดข้อผิดพลาดในการลบชุดเซ็ต", "error");
       }
     });
   };
@@ -142,10 +239,32 @@ export function BundlesTable({
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-[#181818] border border-emerald-500/40 text-emerald-400 rounded-lg shadow-xl shadow-black/80 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <CheckCircle2 size={18} className="text-emerald-400" />
-          <span className="text-sm font-medium">{toastMessage}</span>
+      {toastNotification && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-300 border ${
+            toastNotification.type === "success"
+              ? "bg-[#141d16] border-emerald-500/50 text-emerald-300"
+              : toastNotification.type === "warning"
+              ? "bg-[#231a10] border-amber-500/50 text-amber-300"
+              : "bg-[#221313] border-red-500/50 text-red-300"
+          }`}
+        >
+          {toastNotification.type === "success" && (
+            <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+          )}
+          {toastNotification.type === "warning" && (
+            <AlertTriangle size={18} className="text-amber-400 shrink-0" />
+          )}
+          {toastNotification.type === "error" && (
+            <AlertCircle size={18} className="text-red-400 shrink-0" />
+          )}
+          <span className="text-xs font-medium pr-2">{toastNotification.message}</span>
+          <button
+            onClick={() => setToastNotification(null)}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
 
@@ -176,6 +295,95 @@ export function BundlesTable({
             <Plus size={16} />
             <span>สร้างชุดเซ็ตใหม่</span>
           </Link>
+        </div>
+      </div>
+
+      {/* 🌟 Featured Bundles Quota Management Showcase Card */}
+      <div className="bg-gradient-to-r from-[#171410] via-[#141210] to-[#121212] border border-amber-500/30 rounded-xl p-5 shadow-lg relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Left info */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <Star size={13} className="fill-amber-400" />
+              </span>
+              <h2 className="text-sm font-bold text-white tracking-wide">
+                เซ็ทแนะนำบนหน้าร้าน (Storefront Featured Kits)
+              </h2>
+              <span
+                className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                  featuredCount === MAX_FEATURED_BUNDLES
+                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                    : "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                }`}
+              >
+                โควตา {featuredCount} / {MAX_FEATURED_BUNDLES} ชุด
+              </span>
+            </div>
+            <p className="text-xs text-gray-400">
+              ชุดเซ็ตที่เปิด ⭐ เซ็ทแนะนำ จะถูกนำไปแสดงเป็นไฮไลท์เด่นบนหน้าแรกของ Storefront (คลิกที่รูปดาว ⭐ ในตารางด้านล่างเพื่อเปิด/ปิด)
+            </p>
+          </div>
+
+          {/* Quick filter toggle button */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setOnlyFeatured(!onlyFeatured)}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                onlyFeatured
+                  ? "bg-amber-500 text-black border-amber-400 shadow-md shadow-amber-500/20"
+                  : "bg-[#1C1C1C] text-gray-300 border-[#2E2E2E] hover:text-white hover:border-amber-500/40"
+              }`}
+            >
+              <Sparkles size={14} className={onlyFeatured ? "text-black" : "text-amber-400"} />
+              <span>{onlyFeatured ? "แสดงชุดเซ็ตทั้งหมด" : `ดูเฉพาะเซ็ทแนะนำ (${featuredCount}/${MAX_FEATURED_BUNDLES})`}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Visual Slots Display */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-[#26211c]">
+          {[0, 1, 2, 3].map((slotIdx) => {
+            const featuredBundle = featuredBundlesList[slotIdx];
+
+            return (
+              <div
+                key={slotIdx}
+                className={`rounded-lg border p-2.5 flex items-center gap-3 transition-all ${
+                  featuredBundle
+                    ? "bg-[#1c1813] border-amber-500/40 shadow-sm"
+                    : "bg-[#141414]/60 border-dashed border-[#282828]"
+                }`}
+              >
+                <div
+                  className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${
+                    featuredBundle
+                      ? "bg-amber-500 text-black"
+                      : "bg-[#1F1F1F] text-gray-600 border border-[#2E2E2E]"
+                  }`}
+                >
+                  {slotIdx + 1}
+                </div>
+
+                {featuredBundle ? (
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-white truncate" title={featuredBundle.name}>
+                      {featuredBundle.name}
+                    </p>
+                    <p className="text-[10px] text-amber-400/80 font-mono truncate">
+                      {featuredBundle.carModelName || featuredBundle.sku}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-left">
+                    <p className="text-xs text-gray-500 font-medium">ช่องว่าง (Empty Slot)</p>
+                    <p className="text-[10px] text-gray-600">กด ⭐ เพื่อเลือก</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -243,15 +451,27 @@ export function BundlesTable({
               ไม่พบรายการชุดเซ็ตสินค้า
             </h3>
             <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-              ยังไม่มีชุดเซ็ตหรือไม่มีรายการที่ตรงกับเงื่อนไขการค้นหา สามารถกดปุ่ม &quot;สร้างชุดเซ็ตใหม่&quot; เพื่อเริ่มต้น
+              {onlyFeatured
+                ? "ขณะนี้ยังไม่ได้เลือกชุดเซ็ตแนะนำ หรือไม่มีชุดเซ็ตแนะนำที่ตรงกับคำค้นหา"
+                : "ยังไม่มีชุดเซ็ตหรือไม่มีรายการที่ตรงกับเงื่อนไขการค้นหา สามารถกดปุ่ม \"สร้างชุดเซ็ตใหม่\" เพื่อเริ่มต้น"}
             </p>
-            <Link
-              href="/bundles/new"
-              className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 text-xs font-semibold rounded-lg transition-colors"
-            >
-              <Plus size={14} />
-              สร้างชุดเซ็ตใหม่
-            </Link>
+            {onlyFeatured ? (
+              <button
+                type="button"
+                onClick={() => setOnlyFeatured(false)}
+                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 text-xs font-semibold rounded-lg transition-colors"
+              >
+                แสดงชุดเซ็ตทั้งหมด
+              </button>
+            ) : (
+              <Link
+                href="/bundles/new"
+                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 text-xs font-semibold rounded-lg transition-colors"
+              >
+                <Plus size={14} />
+                สร้างชุดเซ็ตใหม่
+              </Link>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -259,6 +479,7 @@ export function BundlesTable({
               <thead>
                 <tr className="border-b border-[#222222] bg-[#161616]/80 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                   <th className="py-3.5 px-4">ชุดเซ็ต / รหัส SKU</th>
+                  <th className="py-3.5 px-3 text-center">เซ็ทแนะนำ (Max 4)</th>
                   <th className="py-3.5 px-4">รุ่นรถยนต์ (Model)</th>
                   <th className="py-3.5 px-4">ชิ้นส่วนในเซ็ต (Parts Included)</th>
                   <th className="py-3.5 px-4">CFD Downforce รวม</th>
@@ -268,129 +489,171 @@ export function BundlesTable({
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1D1D1D]">
-                {filteredBundles.map((bundle) => (
-                  <tr
-                    key={bundle.id}
-                    className="hover:bg-[#181818]/60 transition-colors group"
-                  >
-                    {/* Kit Info & Image */}
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-14 h-14 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A] overflow-hidden shrink-0 flex items-center justify-center">
-                          {bundle.primaryImage ? (
-                            <Image
-                              src={bundle.primaryImage}
-                              alt={bundle.name}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <ImageIcon size={20} className="text-gray-600" />
-                          )}
-                          <span className="absolute bottom-0 right-0 bg-amber-500 text-black text-[9px] font-black px-1 rounded-tl">
-                            KIT
-                          </span>
-                        </div>
-                        <div>
-                          <Link
-                            href={`/bundles/${bundle.id}`}
-                            className="font-semibold text-white hover:text-amber-400 transition-colors line-clamp-1 flex items-center gap-1.5"
-                          >
-                            {bundle.name}
-                            {bundle.isFeatured && (
-                              <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.2 rounded border border-red-500/30 font-bold">
-                                FEATURED
-                              </span>
+                {filteredBundles.map((bundle) => {
+                  const isFeatured = Boolean(featuredMap[bundle.id]);
+                  const isToggling = isTogglingFeaturedId === bundle.id;
+
+                  return (
+                    <tr
+                      key={bundle.id}
+                      className={`hover:bg-[#181818]/60 transition-colors group ${
+                        isFeatured ? "bg-amber-500/[0.02]" : ""
+                      }`}
+                    >
+                      {/* Kit Info & Image */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-14 h-14 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A] overflow-hidden shrink-0 flex items-center justify-center">
+                            {bundle.primaryImage ? (
+                              <Image
+                                src={bundle.primaryImage}
+                                alt={bundle.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <ImageIcon size={20} className="text-gray-600" />
                             )}
-                          </Link>
-                          <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500 font-mono">
-                            <span>SKU: {bundle.sku}</span>
+                            <span className="absolute bottom-0 right-0 bg-amber-500 text-black text-[9px] font-black px-1 rounded-tl">
+                              KIT
+                            </span>
+                          </div>
+                          <div>
+                            <Link
+                              href={`/bundles/${bundle.id}`}
+                              className="font-semibold text-white hover:text-amber-400 transition-colors line-clamp-1 flex items-center gap-1.5"
+                            >
+                              {bundle.name}
+                              {isFeatured && (
+                                <span className="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded border border-amber-500/40 font-extrabold flex items-center gap-0.5">
+                                  <Star size={9} className="fill-amber-400" /> FEATURED
+                                </span>
+                              )}
+                            </Link>
+                            <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500 font-mono">
+                              <span>SKU: {bundle.sku}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Car Model */}
-                    <td className="py-4 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <span className="px-2 py-1 rounded bg-[#1C1C1C] border border-[#2C2C2C] text-xs font-semibold text-gray-300">
-                          {bundle.brandName} {bundle.carModelName}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Included Parts */}
-                    <td className="py-4 px-4">
-                      <div className="space-y-1 max-w-xs">
-                        <div className="flex items-center gap-1.5">
-                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[11px] font-bold border border-amber-500/20">
-                            {bundle.childPartsCount} ชิ้นส่วน
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {bundle.childParts.map((part) => (
-                            <span
-                              key={part.id}
-                              className="inline-block px-1.5 py-0.5 rounded bg-[#1A1A1A] text-gray-400 text-[10px] border border-[#282828] truncate max-w-[140px]"
-                              title={`${part.categoryName}: ${part.name} (฿${Number(part.price).toLocaleString()})`}
-                            >
-                              {part.categoryName}: {part.name}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* CFD Downforce */}
-                    <td className="py-4 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <Wind size={14} className="text-[var(--accent-red)]" />
-                        <span className="font-mono text-xs text-white font-bold">
-                          +{bundle.effectiveDownforce} N
-                        </span>
-                        {bundle.isCustomCfd && (
-                          <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 rounded">
-                            CUSTOM
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Dynamic Price */}
-                    <td className="py-4 px-4 text-right whitespace-nowrap">
-                      <div className="font-mono font-bold text-white text-base">
-                        ฿{Number(bundle.price).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
-                      </div>
-                      <div className="text-[10px] text-gray-500">คำนวณจากผลรวมชิ้นย่อย</div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="py-4 px-4 text-center whitespace-nowrap">
-                      {statusBadge(bundle.status)}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-4 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          href={`/bundles/${bundle.id}`}
-                          className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222222] rounded-lg transition-colors"
-                          title="แก้ไขชุดเซ็ต"
-                        >
-                          <Edit2 size={15} />
-                        </Link>
+                      {/* ⭐ 1-Click Toggle Featured Column */}
+                      <td className="py-4 px-3 text-center whitespace-nowrap">
                         <button
                           type="button"
-                          onClick={() => setDeleteModalBundle(bundle)}
-                          className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                          title="ลบชุดเซ็ต"
+                          onClick={() => handleToggleFeatured(bundle)}
+                          disabled={isToggling}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                            isFeatured
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 shadow-sm"
+                              : "bg-[#181818] text-gray-400 border border-[#2A2A2A] hover:text-white hover:border-amber-500/40 hover:bg-[#202020]"
+                          }`}
+                          title={
+                            isFeatured
+                              ? "คลิกเพื่อยกเลิกเซ็ทแนะนำ"
+                              : `คลิกเพื่อตั้งเป็นเซ็ทแนะนำ (${featuredCount}/${MAX_FEATURED_BUNDLES})`
+                          }
                         >
-                          <Trash2 size={15} />
+                          {isToggling ? (
+                            <Loader2 size={13} className="animate-spin text-amber-400" />
+                          ) : (
+                            <Star
+                              size={13}
+                              className={
+                                isFeatured
+                                  ? "text-amber-400 fill-amber-400"
+                                  : "text-gray-500 group-hover:text-amber-400"
+                              }
+                            />
+                          )}
+                          <span className="text-[11px]">
+                            {isFeatured ? "แนะนำอยู่" : "ตั้งแนะนำ"}
+                          </span>
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      {/* Car Model */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2 py-1 rounded bg-[#1C1C1C] border border-[#2C2C2C] text-xs font-semibold text-gray-300">
+                            {bundle.brandName} {bundle.carModelName}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Included Parts */}
+                      <td className="py-4 px-4">
+                        <div className="space-y-1 max-w-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[11px] font-bold border border-amber-500/20">
+                              {bundle.childPartsCount} ชิ้นส่วน
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {bundle.childParts.map((part) => (
+                              <span
+                                key={part.id}
+                                className="inline-block px-1.5 py-0.5 rounded bg-[#1A1A1A] text-gray-400 text-[10px] border border-[#282828] truncate max-w-[140px]"
+                                title={`${part.categoryName}: ${part.name} (฿${Number(part.price).toLocaleString()})`}
+                              >
+                                {part.categoryName}: {part.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* CFD Downforce */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <Wind size={14} className="text-[var(--accent-red)]" />
+                          <span className="font-mono text-xs text-white font-bold">
+                            +{bundle.effectiveDownforce} N
+                          </span>
+                          {bundle.isCustomCfd && (
+                            <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 rounded">
+                              CUSTOM
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Dynamic Price */}
+                      <td className="py-4 px-4 text-right whitespace-nowrap">
+                        <div className="font-mono font-bold text-white text-base">
+                          ฿{Number(bundle.price).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-[10px] text-gray-500">คำนวณจากผลรวมชิ้นย่อย</div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-4 px-4 text-center whitespace-nowrap">
+                        {statusBadge(bundle.status)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-4 px-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/bundles/${bundle.id}`}
+                            className="p-1.5 text-gray-400 hover:text-white hover:bg-[#222222] rounded-lg transition-colors"
+                            title="แก้ไขชุดเซ็ต"
+                          >
+                            <Edit2 size={15} />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteModalBundle(bundle)}
+                            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="ลบชุดเซ็ต"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

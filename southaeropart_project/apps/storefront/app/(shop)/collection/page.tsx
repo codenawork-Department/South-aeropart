@@ -1,85 +1,14 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Wind, Gauge, Check, Sparkles, Layers } from "lucide-react";
+import { ArrowRight, Wind, Gauge, Check, Layers, Sparkles } from "lucide-react";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
+import { getFeaturedBundles } from "@/actions/bundle.actions";
 
-const FLAGSHIP_COLLECTIONS = [
-  {
-    id: "accord-g9",
-    name: "ACCORD G9 BODY KIT 02",
-    tagline: "FLAGSHIP EXECUTIVE MOTORSPORT TRANSFORMATION",
-    description:
-      "The benchmark for Japanese executive sports styling. Full 4-piece aerodynamic kit engineered using 3D laser surface scan data to ensure race-grade fitment and real-world downforce gains.",
-    image: "/images/FRONT.png",
-    downforce: "+155 N",
-    drag: "-4 N",
-    pieces: [
-      "Carbon Fiber Front Splitter Lip",
-      "Aerodynamic Side Skirt Extensions",
-      "Multi-Channel Rear Under Diffuser",
-      "Integrated Trunk Ducktail Spoiler",
-    ],
-    price: "฿21,990 THB",
-    link: "/products/accord-g9-complete-body-kit-02",
-  },
-  {
-    id: "civic-fd",
-    name: "CIVIC FD TRACK EDITION",
-    tagline: "CIRCUIT PROVEN TIME-ATTACK AERO",
-    description:
-      "Engineered for the legendary Civic FD chassis. Features wide front splitter with integrated brake duct channels and high-expansion rear underbody strakes.",
-    image: "/images/fd.png",
-    downforce: "+380 N",
-    drag: "-10 N",
-    pieces: [
-      "Track Front Air Dam Splitter",
-      "Vented Side Step Extensions",
-      "Rear Time-Attack Diffuser",
-      "Rear Low-Drag Gurney Flap",
-    ],
-    price: "฿18,990 THB",
-    link: "/products/civic-fd-track-aero-package",
-  },
-  {
-    id: "civic-fe",
-    name: "CIVIC FE STREET PERFORMANCE",
-    tagline: "NEXT-GEN CLEAN OEM+ AERO",
-    description:
-      "Designed specifically for the 11th Gen Civic FE platform. Sharp bodylines that accentuate the wider stance while reducing highway aerodynamic drag.",
-    image: "/images/fe.png",
-    downforce: "+320 N",
-    drag: "-12 N",
-    pieces: [
-      "Modern Front Spoiler Lip",
-      "Sleek Side Air Dam Extensions",
-      "Rear Bumper Lower Diffuser",
-      "Trunk Decklid Spoiler",
-    ],
-    price: "฿19,990 THB",
-    link: "/products/civic-fe-street-performance-kit",
-  },
-  {
-    id: "civic-fl5",
-    name: "CIVIC TYPE R FL5 CLUBSPORT",
-    tagline: "HIGH-DOWNFORCE MOTORSPORT PACKAGE",
-    description:
-      "Swan-neck adjustable GT rear wing and high-speed carbon dive planes designed to maximize track stability and high-speed braking confidence.",
-    image: "/images/civic-r.jpg",
-    downforce: "+520 N",
-    drag: "+18 N",
-    pieces: [
-      "Swan-Neck Dry Carbon Rear Wing",
-      "Front Bumper Carbon Dive Planes",
-      "Underbody Flow Guides",
-    ],
-    price: "฿16,990 THB",
-    link: "/products/civic-type-r-clubsport-wing",
-  },
-];
+export const revalidate = 60;
 
-export default function CollectionPage() {
+export default async function CollectionPage() {
+  const featuredBundles = await getFeaturedBundles();
+
   return (
     <div className="bg-[#0A0A0A] min-h-screen">
       {/* 1. Collection Hero Header */}
@@ -100,7 +29,7 @@ export default function CollectionPage() {
       {/* 2. Flagship Kits Showcase */}
       <section className="py-12 md:py-20">
         <div className="container-main space-y-12 md:space-y-16">
-          {FLAGSHIP_COLLECTIONS.map((kit, index) => {
+          {featuredBundles.map((kit, index) => {
             const isEven = index % 2 === 0;
             return (
               <div
@@ -116,24 +45,26 @@ export default function CollectionPage() {
                   >
                     <div className="relative aspect-[16/10] w-full rounded-sm overflow-hidden border border-[#262626] bg-[#161616]">
                       <Image
-                        src={kit.image}
+                        src={kit.primaryImage}
                         alt={kit.name}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                         sizes="(max-width: 1024px) 100vw, 600px"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                      
+                      {/* Telemetry badges */}
                       <div className="absolute bottom-3 left-3 flex gap-2">
                         <div className="telemetry-pill text-xs">
                           <Wind size={14} className="text-[var(--success)]" />
                           <span className="text-[var(--success)] font-bold">
-                            {kit.downforce}
+                            {kit.downforceBadge}
                           </span>
                         </div>
                         <div className="telemetry-pill text-xs">
                           <Gauge size={14} className="text-[var(--accent-red)]" />
                           <span className="text-[var(--accent-red)] font-bold">
-                            {kit.drag}
+                            {kit.dragBadge}
                           </span>
                         </div>
                       </div>
@@ -182,12 +113,12 @@ export default function CollectionPage() {
                           PACKAGE STARTING AT
                         </span>
                         <p className="font-heading text-xl font-bold text-white">
-                          {kit.price}
+                          {kit.formattedPrice}
                         </p>
                       </div>
 
                       <Link
-                        href={kit.link}
+                        href={kit.link || `/products/${kit.slug}`}
                         className="btn-primary gap-2 text-xs py-2.5 px-5"
                       >
                         EXPLORE BUILD <ArrowRight size={14} />
