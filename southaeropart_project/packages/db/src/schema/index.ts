@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { users, userLoginLogs } from "./users";
+import { users, userLoginLogs, userAddresses, userVehicles } from "./users";
 import { adminUsers, adminSessions, adminAuditLogs } from "./admin";
 import { categories, brands, carModels, materials, installations, products, productImages, productCompatibility, productBundleItems } from "./products";
 import { orders, orderItems, orderStatusHistory, orderItemBundleParts } from "./orders";
@@ -11,6 +11,18 @@ export const usersRelations = relations(users, ({ many }) => ({
   reviews: many(reviews),
   interests: many(userInterests),
   loginLogs: many(userLoginLogs),
+  addresses: many(userAddresses),
+  vehicles: many(userVehicles),
+}));
+
+export const userAddressesRelations = relations(userAddresses, ({ one }) => ({
+  user: one(users, { fields: [userAddresses.userId], references: [users.id] }),
+}));
+
+export const userVehiclesRelations = relations(userVehicles, ({ one }) => ({
+  user: one(users, { fields: [userVehicles.userId], references: [users.id] }),
+  brand: one(brands, { fields: [userVehicles.brandId], references: [brands.id] }),
+  carModel: one(carModels, { fields: [userVehicles.carModelId], references: [carModels.id] }),
 }));
 
 export const userLoginLogsRelations = relations(userLoginLogs, ({ one }) => ({
