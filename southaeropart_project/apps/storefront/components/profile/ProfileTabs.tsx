@@ -16,11 +16,15 @@ import {
   Lock,
   Globe,
   Coins,
-  Compass,
   Building2,
   Loader2,
   AlertCircle,
   Check,
+  FileText,
+  Eye,
+  ScrollText,
+  Database,
+  CheckCircle2,
 } from "lucide-react";
 import { User as DbUser, UserAddress } from "@repo/db";
 import { VehicleBrandData } from "@/actions/vehicle.actions";
@@ -35,6 +39,9 @@ import {
 } from "@/actions/profile.actions";
 import { AddressModal } from "./AddressModal";
 import { GarageModal } from "./GarageModal";
+import { PdpaTermsModal } from "./PdpaTermsModal";
+import { ProfileHeader } from "./ProfileHeader";
+import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";
 
 interface ProfileTabsProps {
   user: DbUser;
@@ -46,8 +53,6 @@ interface ProfileTabsProps {
     carModelId: string;
     year: number | null;
     subModel: string | null;
-    steeringOrientation: string;
-    plateNumber: string | null;
     isDefault: boolean;
     createdAt: Date;
     brandName: string;
@@ -73,20 +78,20 @@ export function ProfileTabs({
   // Personal Info form states
   const [fullName, setFullName] = useState(user.fullName || "");
   const [phone, setPhone] = useState(user.phone || "");
-  const [language, setLanguage] = useState<"th" | "en" | "ja">(
-    (user.metadata?.preferences?.language as "th" | "en" | "ja") || "th"
+  const [language, setLanguage] = useState<ProfileLanguage>(
+    (user.metadata?.preferences?.language as ProfileLanguage) || "th"
   );
   const [currency, setCurrency] = useState<"THB" | "USD" | "EUR" | "JPY" | "SGD">(
     (user.metadata?.preferences?.currency as "THB" | "USD" | "EUR" | "JPY" | "SGD") || "THB"
-  );
-  const [defaultSteering, setDefaultSteering] = useState<"RHD" | "LHD">(
-    (user.metadata?.preferences?.defaultSteering as "RHD" | "LHD") || "RHD"
   );
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [profileFeedback, setProfileFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  // Active translation dictionary
+  const t = PROFILE_TRANSLATIONS[language] || PROFILE_TRANSLATIONS.th;
 
   // Privacy Consents form states
   const [marketingEmail, setMarketingEmail] = useState(
@@ -114,6 +119,8 @@ export function ProfileTabs({
   const [isGarageModalOpen, setIsGarageModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<any>(null);
 
+  const [isPdpaTermsModalOpen, setIsPdpaTermsModalOpen] = useState(false);
+
   // Handle Save Personal Profile
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,14 +132,13 @@ export function ProfileTabs({
       phone,
       language,
       currency,
-      defaultSteering,
     });
 
     setIsUpdatingProfile(false);
     if (res.success) {
       setProfileFeedback({
         type: "success",
-        message: "Profile preferences updated successfully!",
+        message: t.personalTab.saveSuccess,
       });
       setTimeout(() => setProfileFeedback(null), 4000);
     } else {
@@ -159,7 +165,7 @@ export function ProfileTabs({
     if (res.success) {
       setConsentFeedback({
         type: "success",
-        message: "Privacy & Consent settings updated in accordance with PDPA!",
+        message: t.privacyTab.consentsUpdated,
       });
       setTimeout(() => setConsentFeedback(null), 4000);
     } else {
@@ -184,7 +190,7 @@ export function ProfileTabs({
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute(
         "download",
-        `south-aeropart-my-data-${new Date().toISOString().slice(0, 10)}.json`
+        `south-aeropart-my-data-${language}-${new Date().toISOString().slice(0, 10)}.json`
       );
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
@@ -198,41 +204,45 @@ export function ProfileTabs({
   const billingAddresses = addresses.filter((a) => a.type === "billing");
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* Left Column: Navigation Tabs */}
-      <div className="lg:col-span-3">
-        <div className="bg-[#111111] border border-[#222222] rounded-lg p-2 space-y-1 sticky top-24">
+    <div className="space-y-8">
+      {/* Profile Summary Header with Live Language Sync */}
+      <ProfileHeader
+        user={user}
+        addressCount={addresses.length}
+        vehicleCount={vehicles.length}
+        language={language}
+      />
+
+      {/* Tabs Header & Language Quick Selector */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#222222] pb-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
           <button
             onClick={() => setActiveTab("personal")}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-md text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-md text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
               activeTab === "personal"
                 ? "bg-[var(--accent-red)] text-white shadow-lg shadow-[var(--accent-red)]/20"
-                : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                : "text-[var(--text-secondary)] hover:text-white hover:bg-[#1A1A1A]"
             }`}
           >
-            <div className="flex items-center gap-3">
-              <User size={18} />
-              <span>Personal & Region</span>
-            </div>
+            <User size={15} />
+            {t.tabs.personal}
           </button>
 
           <button
             onClick={() => setActiveTab("garage")}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-md text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-md text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
               activeTab === "garage"
                 ? "bg-[var(--accent-red)] text-white shadow-lg shadow-[var(--accent-red)]/20"
-                : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                : "text-[var(--text-secondary)] hover:text-white hover:bg-[#1A1A1A]"
             }`}
           >
-            <div className="flex items-center gap-3">
-              <Car size={18} />
-              <span>My Garage</span>
-            </div>
+            <Car size={15} />
+            {t.tabs.garage}
             <span
-              className={`text-xs px-2 py-0.5 rounded-full ${
+              className={`px-1.5 py-0.2 rounded text-[0.65rem] font-bold ${
                 activeTab === "garage"
-                  ? "bg-black/30 text-white font-bold"
-                  : "bg-[#222222] text-[var(--text-muted)]"
+                  ? "bg-black/30 text-white"
+                  : "bg-[#252525] text-[var(--text-muted)]"
               }`}
             >
               {vehicles.length}
@@ -241,21 +251,19 @@ export function ProfileTabs({
 
           <button
             onClick={() => setActiveTab("addresses")}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-md text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-md text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
               activeTab === "addresses"
                 ? "bg-[var(--accent-red)] text-white shadow-lg shadow-[var(--accent-red)]/20"
-                : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                : "text-[var(--text-secondary)] hover:text-white hover:bg-[#1A1A1A]"
             }`}
           >
-            <div className="flex items-center gap-3">
-              <MapPin size={18} />
-              <span>Addresses & Tax</span>
-            </div>
+            <MapPin size={15} />
+            {t.tabs.addresses}
             <span
-              className={`text-xs px-2 py-0.5 rounded-full ${
+              className={`px-1.5 py-0.2 rounded text-[0.65rem] font-bold ${
                 activeTab === "addresses"
-                  ? "bg-black/30 text-white font-bold"
-                  : "bg-[#222222] text-[var(--text-muted)]"
+                  ? "bg-black/30 text-white"
+                  : "bg-[#252525] text-[var(--text-muted)]"
               }`}
             >
               {addresses.length}
@@ -264,32 +272,59 @@ export function ProfileTabs({
 
           <button
             onClick={() => setActiveTab("privacy")}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-md text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-md text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
               activeTab === "privacy"
                 ? "bg-[var(--accent-red)] text-white shadow-lg shadow-[var(--accent-red)]/20"
-                : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                : "text-[var(--text-secondary)] hover:text-white hover:bg-[#1A1A1A]"
             }`}
           >
-            <div className="flex items-center gap-3">
-              <Shield size={18} />
-              <span>Privacy & PDPA</span>
-            </div>
+            <Shield size={15} />
+            {t.tabs.privacy}
+          </button>
+        </div>
+
+        {/* Quick Language Switcher Buttons */}
+        <div className="flex items-center gap-1.5 bg-[#141414] border border-[#262626] rounded-md p-1 self-start sm:self-auto">
+          <Globe size={14} className="text-[var(--accent-red)] ml-1.5 mr-1 hidden sm:inline" />
+          <button
+            type="button"
+            onClick={() => setLanguage("th")}
+            className={`px-2.5 py-1 rounded text-[0.7rem] font-bold tracking-wider transition-all ${
+              language === "th"
+                ? "bg-[var(--accent-red)] text-white shadow-sm"
+                : "text-[var(--text-muted)] hover:text-white hover:bg-white/5"
+            }`}
+          >
+            ไทย (TH)
+          </button>
+          <button
+            type="button"
+            onClick={() => setLanguage("en")}
+            className={`px-2.5 py-1 rounded text-[0.7rem] font-bold tracking-wider transition-all ${
+              language === "en"
+                ? "bg-[var(--accent-red)] text-white shadow-sm"
+                : "text-[var(--text-muted)] hover:text-white hover:bg-white/5"
+            }`}
+          >
+            EN
           </button>
         </div>
       </div>
 
-      {/* Right Column: Tab Content Panels */}
-      <div className="lg:col-span-9">
-        {/* TAB 1: PERSONAL & PREFERENCES */}
+      {/* Tab Panels */}
+      <div>
+        {/* =========================================================================
+            TAB 1: PERSONAL INFO & PREFERENCES
+           ========================================================================= */}
         {activeTab === "personal" && (
-          <div className="bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 space-y-6">
+          <div className="bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 space-y-8 animate-fade-in">
             <div className="border-b border-[#222222] pb-4">
               <h2 className="text-lg md:text-xl font-bold font-heading uppercase text-white tracking-wide flex items-center gap-2">
                 <User size={20} className="text-[var(--accent-red)]" />
-                Personal Information & Regional Preferences
+                {t.personalTab.sectionTitle}
               </h2>
               <p className="text-xs text-[var(--text-secondary)] mt-1">
-                Manage your public profile, contact details, and display preferences.
+                {t.personalTab.sectionSubtitle}
               </p>
             </div>
 
@@ -311,76 +346,77 @@ export function ProfileTabs({
             )}
 
             <form onSubmit={handleSaveProfile} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Full Name */}
                 <div>
                   <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
-                    Full Name (ชื่อ - นามสกุล)
+                    {t.personalTab.name}
                   </label>
                   <input
                     type="text"
-                    required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your Full Name"
+                    placeholder="e.g. Kenji Takahashi"
                     className="input-dark w-full bg-[#181818] border-[#2A2A2A] text-white"
                   />
                 </div>
 
+                {/* Email (Readonly - managed via Clerk) */}
                 <div>
                   <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
-                    Email Address (อีเมล)
+                    {t.personalTab.email}
                   </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      disabled
-                      value={user.email}
-                      className="input-dark w-full bg-[#141414] border-[#242424] text-[var(--text-muted)] cursor-not-allowed"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.65rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      Clerk Auth
-                    </span>
-                  </div>
+                  <input
+                    type="email"
+                    disabled
+                    value={user.email}
+                    className="input-dark w-full bg-[#151515] border-[#222222] text-[var(--text-muted)] cursor-not-allowed"
+                  />
+                  <p className="text-[0.7rem] text-[var(--text-muted)] mt-1.5">
+                    {t.personalTab.emailNotice}
+                  </p>
                 </div>
 
+                {/* Phone */}
                 <div>
                   <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
-                    Contact Phone (เบอร์โทรติดต่อ)
+                    {t.personalTab.phone}
                   </label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+66 81 234 5678"
+                    placeholder={t.personalTab.phonePlaceholder}
                     className="input-dark w-full bg-[#181818] border-[#2A2A2A] text-white font-mono"
                   />
                 </div>
 
+                {/* Language Preference */}
                 <div>
                   <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <Globe size={14} className="text-[var(--accent-red)]" />
-                    Preferred Language (ภาษาที่แสดงผล)
+                    {t.personalTab.language}
                   </label>
                   <select
                     value={language}
-                    onChange={(e) => setLanguage(e.target.value as any)}
+                    onChange={(e) => setLanguage(e.target.value as ProfileLanguage)}
                     className="select-dark bg-[#181818] border-[#2A2A2A] text-white"
                   >
-                    <option value="th">ภาษาไทย (TH)</option>
-                    <option value="en">English (EN)</option>
-                    <option value="ja">日本語 (JA)</option>
+                    <option value="th">ภาษาไทย (TH - Thailand PDPA)</option>
+                    <option value="en">English (EN - Global / GDPR)</option>
                   </select>
                 </div>
 
-                <div>
+                {/* Currency Preference */}
+                <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <Coins size={14} className="text-[var(--accent-red)]" />
-                    Display Currency (สกุลเงินแสดงผล)
+                    {t.personalTab.currency}
                   </label>
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as any)}
-                    className="select-dark bg-[#181818] border-[#2A2A2A] text-white"
+                    className="select-dark bg-[#181818] border-[#2A2A2A] text-white max-w-md"
                   >
                     <option value="THB">THB (฿ - Thai Baht)</option>
                     <option value="USD">USD ($ - US Dollar)</option>
@@ -389,23 +425,8 @@ export function ProfileTabs({
                     <option value="SGD">SGD (S$ - Singapore Dollar)</option>
                   </select>
                   <p className="text-[0.7rem] text-[var(--text-muted)] mt-1.5">
-                    * Display conversion for reference. Checkout processed in store primary currency.
+                    {t.personalTab.currencyNotice}
                   </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <Compass size={14} className="text-[var(--accent-red)]" />
-                    Default Steering Preference (ตำแหน่งพวงมาลัย)
-                  </label>
-                  <select
-                    value={defaultSteering}
-                    onChange={(e) => setDefaultSteering(e.target.value as any)}
-                    className="select-dark bg-[#181818] border-[#2A2A2A] text-white"
-                  >
-                    <option value="RHD">RHD (Right-Hand Drive - พวงมาลัยขวา)</option>
-                    <option value="LHD">LHD (Left-Hand Drive - พวงมาลัยซ้าย)</option>
-                  </select>
                 </div>
               </div>
 
@@ -418,32 +439,45 @@ export function ProfileTabs({
                   {isUpdatingProfile ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Saving Preferences...
+                      {t.personalTab.saving}
                     </>
                   ) : (
-                    "Save Changes"
+                    t.personalTab.saveChanges
                   )}
                 </button>
               </div>
             </form>
+
+            {/* Clerk Security Card */}
+            <div className="p-4 bg-[#141414] border border-[#222222] rounded-lg flex items-start gap-3">
+              <Lock size={18} className="text-[var(--accent-red)] shrink-0 mt-0.5" />
+              <div className="text-xs text-[var(--text-muted)] space-y-1">
+                <p className="font-semibold text-white">
+                  {t.personalTab.accountSecurity}
+                </p>
+                <p>{t.personalTab.authManagedBy}</p>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* TAB 2: MY GARAGE */}
+        {/* =========================================================================
+            TAB 2: MY GARAGE
+           ========================================================================= */}
         {activeTab === "garage" && (
-          <div className="bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 space-y-6">
+          <div className="bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 space-y-6 animate-fade-in">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#222222] pb-4">
               <div>
                 <h2 className="text-lg md:text-xl font-bold font-heading uppercase text-white tracking-wide flex items-center gap-2">
                   <Car size={20} className="text-[var(--accent-red)]" />
-                  My Garage (โรงรถของฉัน)
+                  {t.garageTab.title}
                 </h2>
                 <p className="text-xs text-[var(--text-secondary)] mt-1">
-                  Save your vehicle models to check aeropart compatibility and receive fitment alerts.
+                  {t.garageTab.subtitle}
                 </p>
               </div>
-
               <button
+                type="button"
                 onClick={() => {
                   setEditingVehicle(null);
                   setIsGarageModalOpen(true);
@@ -451,30 +485,29 @@ export function ProfileTabs({
                 className="btn-primary text-xs px-4 py-2.5 flex items-center gap-2 shrink-0"
               >
                 <Plus size={16} />
-                Add Vehicle
+                {t.garageTab.addVehicle}
               </button>
             </div>
 
+            {/* Garage Vehicles List */}
             {vehicles.length === 0 ? (
-              <div className="text-center py-12 px-4 border border-dashed border-[#2A2A2A] rounded-lg bg-[#141414]">
-                <div className="w-16 h-16 rounded-full bg-[var(--accent-red)]/10 text-[var(--accent-red)] flex items-center justify-center mx-auto mb-4">
-                  <Car size={32} />
+              <div className="text-center py-16 px-4 border border-dashed border-[#262626] rounded-lg">
+                <div className="w-16 h-16 rounded-full bg-[#181818] border border-[#282828] flex items-center justify-center mx-auto mb-4 text-[var(--text-muted)]">
+                  <Car size={28} />
                 </div>
-                <h3 className="text-base font-bold font-heading uppercase text-white">
-                  Your Garage is Empty
+                <h3 className="text-base font-bold font-heading uppercase text-white mb-1">
+                  {t.garageTab.emptyTitle}
                 </h3>
-                <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto mt-1 mb-6">
-                  Add your car brand, model, and year to ensure every aerodynamic part you view matches your exact chassis.
+                <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto mb-6">
+                  {t.garageTab.emptyDesc}
                 </p>
                 <button
-                  onClick={() => {
-                    setEditingVehicle(null);
-                    setIsGarageModalOpen(true);
-                  }}
-                  className="btn-outline text-xs px-5 py-2.5"
+                  type="button"
+                  onClick={() => setIsGarageModalOpen(true)}
+                  className="btn-primary text-xs px-5 py-2.5 inline-flex items-center gap-2"
                 >
-                  <Plus size={14} />
-                  Add First Vehicle
+                  <Plus size={15} />
+                  {t.garageTab.addFirst}
                 </button>
               </div>
             ) : (
@@ -484,47 +517,46 @@ export function ProfileTabs({
                     key={v.id}
                     className={`relative p-5 rounded-lg border transition-all ${
                       v.isDefault
-                        ? "border-[var(--accent-red)] bg-gradient-to-br from-[#1A1A1A] to-[#141414] shadow-lg shadow-[var(--accent-red)]/5"
-                        : "border-[#242424] bg-[#161616] hover:border-[#333333]"
+                        ? "bg-[#181818] border-[var(--accent-red)]/60 shadow-lg shadow-[var(--accent-red)]/5"
+                        : "bg-[#141414] border-[#242424] hover:border-[#303030]"
                     }`}
                   >
-                    {/* Default Badge */}
+                    {/* Primary Vehicle Badge */}
                     {v.isDefault && (
-                      <span className="absolute top-3 right-3 flex items-center gap-1 text-[0.65rem] font-bold font-heading uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--accent-red)] text-white">
-                        <Star size={11} className="fill-white" />
-                        Primary Car
+                      <span className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--accent-red)] text-white">
+                        <Star size={10} className="fill-current" />
+                        {t.garageTab.primaryCar}
                       </span>
                     )}
 
                     <div className="flex items-start gap-4">
-                      {/* Brand Logo or Icon */}
-                      <div className="w-12 h-12 rounded bg-[#202020] border border-[#2E2E2E] flex items-center justify-center p-2 shrink-0">
+                      {/* Brand Logo */}
+                      <div className="w-12 h-12 rounded bg-[#1F1F1F] border border-[#2A2A2A] p-2 flex items-center justify-center shrink-0">
                         {v.brandLogoUrl ? (
                           <Image
                             src={v.brandLogoUrl}
                             alt={v.brandName}
-                            width={40}
-                            height={40}
+                            width={36}
+                            height={36}
                             className="max-h-full max-w-full object-contain filter invert opacity-90"
-                            unoptimized
                           />
                         ) : (
-                          <Car size={24} className="text-[var(--text-secondary)]" />
+                          <Car size={20} className="text-[var(--text-secondary)]" />
                         )}
                       </div>
 
-                      <div className="flex-1 pr-16">
-                        <span className="text-[0.7rem] font-bold font-heading tracking-widest text-[var(--accent-red)] uppercase">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-[var(--accent-red)] uppercase tracking-wider">
                           {v.brandName}
-                        </span>
-                        <h4 className="text-base font-bold text-white leading-snug">
+                        </p>
+                        <h4 className="text-base font-bold font-heading text-white truncate mt-0.5">
                           {v.modelName} {v.generation ? `(${v.generation})` : ""}
                         </h4>
 
                         <div className="flex items-center gap-2 mt-2 text-xs text-[var(--text-secondary)] flex-wrap">
                           {v.year && (
                             <span className="px-2 py-0.5 rounded bg-[#222222] border border-[#303030]">
-                              Year {v.year}
+                              {t.garageTab.year} {v.year}
                             </span>
                           )}
                           {v.subModel && (
@@ -532,16 +564,7 @@ export function ProfileTabs({
                               {v.subModel}
                             </span>
                           )}
-                          <span className="px-2 py-0.5 rounded bg-[var(--accent-red)]/10 text-[var(--accent-red)] border border-[var(--accent-red)]/20 font-mono font-semibold">
-                            {v.steeringOrientation}
-                          </span>
                         </div>
-
-                        {v.plateNumber && (
-                          <p className="text-xs text-[var(--text-muted)] mt-2 font-mono">
-                            Plate: {v.plateNumber}
-                          </p>
-                        )}
                       </div>
                     </div>
 
@@ -550,14 +573,15 @@ export function ProfileTabs({
                       {!v.isDefault ? (
                         <button
                           onClick={() => setDefaultVehicle(v.id)}
-                          className="text-xs text-[var(--text-secondary)] hover:text-white flex items-center gap-1.5 transition-colors"
+                          className="text-xs text-[var(--text-muted)] hover:text-white flex items-center gap-1.5 transition-colors"
                         >
-                          <CheckCircle size={14} />
-                          Set as Primary
+                          <Star size={13} />
+                          {t.garageTab.setPrimary}
                         </button>
                       ) : (
-                        <span className="text-xs text-emerald-400 flex items-center gap-1">
-                          <Check size={14} /> Active Fitment Filter
+                        <span className="text-[0.7rem] text-emerald-400 font-medium flex items-center gap-1">
+                          <CheckCircle2 size={13} />
+                          {t.garageTab.activeFilter}
                         </span>
                       )}
 
@@ -568,20 +592,20 @@ export function ProfileTabs({
                             setIsGarageModalOpen(true);
                           }}
                           className="p-1.5 rounded text-[var(--text-muted)] hover:text-white hover:bg-white/5 transition-colors"
-                          title="Edit vehicle"
+                          title={t.garageTab.edit}
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={15} />
                         </button>
                         <button
                           onClick={async () => {
-                            if (confirm("Remove this vehicle from your garage?")) {
+                            if (confirm(t.garageTab.deleteConfirm)) {
                               await deleteUserVehicle(v.id);
                             }
                           }}
                           className="p-1.5 rounded text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                          title="Delete vehicle"
+                          title={t.garageTab.delete}
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </div>
@@ -592,94 +616,96 @@ export function ProfileTabs({
           </div>
         )}
 
-        {/* TAB 3: ADDRESS BOOK & TAX */}
+        {/* =========================================================================
+            TAB 3: ADDRESSES & TAX / BILLING
+           ========================================================================= */}
         {activeTab === "addresses" && (
-          <div className="bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 space-y-8">
-            {/* Header */}
+          <div className="bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 space-y-8 animate-fade-in">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#222222] pb-4">
               <div>
                 <h2 className="text-lg md:text-xl font-bold font-heading uppercase text-white tracking-wide flex items-center gap-2">
                   <MapPin size={20} className="text-[var(--accent-red)]" />
-                  Address Book & Tax Invoicing
+                  {t.addressTab.title}
                 </h2>
                 <p className="text-xs text-[var(--text-secondary)] mt-1">
-                  Manage multiple shipping destinations and verified corporate tax invoice profiles.
+                  {t.addressTab.subtitle}
                 </p>
               </div>
-
-              <button
-                onClick={() => {
-                  setEditingAddress(null);
-                  setIsAddressModalOpen(true);
-                }}
-                className="btn-primary text-xs px-4 py-2.5 flex items-center gap-2 shrink-0"
-              >
-                <Plus size={16} />
-                Add Address
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingAddress(null);
+                    setIsAddressModalOpen(true);
+                  }}
+                  className="btn-primary text-xs px-4 py-2.5 flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  {t.addressTab.addShipping}
+                </button>
+              </div>
             </div>
 
-            {/* Shipping Addresses Section */}
-            <div>
-              <h3 className="text-xs font-bold font-heading uppercase tracking-wider text-[var(--accent-red)] mb-4 flex items-center gap-2">
-                <MapPin size={15} />
-                Shipping Addresses (ที่อยู่จัดส่งพัสดุ)
+            {/* Section A: Shipping Addresses */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold font-heading uppercase text-white tracking-wider flex items-center gap-2">
+                <MapPin size={16} className="text-[var(--accent-red)]" />
+                {t.addressTab.shippingTitle}
               </h3>
 
               {shippingAddresses.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-[#2A2A2A] rounded-lg bg-[#141414]">
-                  <p className="text-xs text-[var(--text-secondary)]">No shipping addresses saved yet.</p>
+                <div className="p-6 rounded-lg bg-[#141414] border border-[#222222] text-center text-xs text-[var(--text-muted)]">
+                  {t.addressTab.shippingEmpty}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {shippingAddresses.map((addr) => (
                     <div
                       key={addr.id}
-                      className={`relative p-5 rounded-lg border flex flex-col justify-between ${
+                      className={`relative p-5 rounded-lg border transition-all ${
                         addr.isDefault
-                          ? "border-[var(--accent-red)] bg-[#171717]"
-                          : "border-[#242424] bg-[#141414]"
+                          ? "bg-[#181818] border-[var(--accent-red)]/60"
+                          : "bg-[#141414] border-[#242424]"
                       }`}
                     >
                       {addr.isDefault && (
-                        <span className="absolute top-3 right-3 text-[0.65rem] font-bold font-heading uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--accent-red)] text-white">
-                          Default Shipping
+                        <span className="absolute top-3 right-3 px-2 py-0.5 rounded text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--accent-red)] text-white">
+                          {t.addressTab.defaultBadge}
                         </span>
                       )}
 
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-white">{addr.recipientName}</h4>
-                          <span className="text-xs px-1.5 py-0.2 rounded bg-[#242424] text-[var(--text-secondary)] font-mono">
-                            {addr.country}
-                          </span>
-                        </div>
-                        <p className="text-xs text-[var(--text-muted)] font-mono mt-0.5">
-                          {addr.phoneCountryCode} {addr.phone}
-                        </p>
+                      <h4 className="text-sm font-bold text-white mb-1">
+                        {addr.recipientName}
+                      </h4>
+                      <p className="text-xs text-[var(--text-secondary)] mb-2 font-mono">
+                        {addr.phoneCountryCode} {addr.phone}
+                      </p>
 
-                        <p className="text-xs text-[var(--text-secondary)] mt-3 leading-relaxed">
-                          {addr.line1}
-                          {addr.line2 ? `, ${addr.line2}` : ""}
-                          <br />
-                          {addr.country === "TH"
-                            ? `${addr.subDistrict ? `ต.${addr.subDistrict} ` : ""}${addr.district ? `อ.${addr.district} ` : ""}${addr.province ? `จ.${addr.province} ` : ""}${addr.postalCode}`
-                            : `${addr.city ? `${addr.city}, ` : ""}${addr.stateOrProvince ? `${addr.stateOrProvince} ` : ""}${addr.postalCode}`}
-                        </p>
-                      </div>
+                      <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                        {addr.line1}
+                        {addr.line2 ? `, ${addr.line2}` : ""}
+                        {addr.subDistrict ? `, ต.${addr.subDistrict}` : ""}
+                        {addr.district ? `, อ.${addr.district}` : ""}
+                        {addr.city ? `, ${addr.city}` : ""}
+                        {addr.province ? `, จ.${addr.province}` : ""}
+                        {addr.stateOrProvince ? `, ${addr.stateOrProvince}` : ""}
+                        {` ${addr.postalCode}, ${addr.country}`}
+                      </p>
 
-                      {/* Actions */}
-                      <div className="flex items-center justify-between border-t border-[#242424] pt-3 mt-4">
+                      <div className="flex items-center justify-between border-t border-[#262626] pt-3 mt-4">
                         {!addr.isDefault ? (
                           <button
-                            onClick={() => setDefaultAddress(addr.id, "shipping")}
-                            className="text-xs text-[var(--text-secondary)] hover:text-white flex items-center gap-1 transition-colors"
+                            onClick={() => setDefaultAddress(addr.id, addr.type as "shipping" | "billing")}
+                            className="text-xs text-[var(--text-muted)] hover:text-white flex items-center gap-1.5 transition-colors"
                           >
-                            <CheckCircle size={13} />
-                            Set as Default
+                            <Check size={13} />
+                            {t.addressTab.setDefault}
                           </button>
                         ) : (
-                          <span className="text-xs text-emerald-400">Primary Destination</span>
+                          <span className="text-[0.7rem] text-emerald-400 font-medium flex items-center gap-1">
+                            <CheckCircle2 size={13} />
+                            {t.addressTab.defaultBadge}
+                          </span>
                         )}
 
                         <div className="flex items-center gap-2">
@@ -688,19 +714,21 @@ export function ProfileTabs({
                               setEditingAddress(addr);
                               setIsAddressModalOpen(true);
                             }}
-                            className="p-1.5 text-[var(--text-muted)] hover:text-white"
+                            className="p-1.5 rounded text-[var(--text-muted)] hover:text-white hover:bg-white/5 transition-colors"
+                            title={t.addressTab.edit}
                           >
-                            <Edit2 size={14} />
+                            <Edit2 size={15} />
                           </button>
                           <button
                             onClick={async () => {
-                              if (confirm("Delete this address?")) {
+                              if (confirm(t.addressTab.deleteConfirm)) {
                                 await deleteUserAddress(addr.id);
                               }
                             }}
-                            className="p-1.5 text-[var(--text-muted)] hover:text-red-400"
+                            className="p-1.5 rounded text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title={t.addressTab.delete}
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </div>
@@ -710,95 +738,78 @@ export function ProfileTabs({
               )}
             </div>
 
-            {/* Billing / Tax Profiles Section */}
-            <div className="border-t border-[#222222] pt-6">
-              <h3 className="text-xs font-bold font-heading uppercase tracking-wider text-[var(--accent-red)] mb-4 flex items-center gap-2">
-                <Building2 size={15} />
-                Tax Invoice & Billing Profiles (ข้อมูลออกใบกำกับภาษี)
-              </h3>
+            {/* Section B: Tax / Invoicing Profiles */}
+            <div className="space-y-4 pt-4 border-t border-[#222222]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold font-heading uppercase text-white tracking-wider flex items-center gap-2">
+                  <Building2 size={16} className="text-[var(--accent-red)]" />
+                  {t.addressTab.billingTitle}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingAddress({ type: "billing" } as any);
+                    setIsAddressModalOpen(true);
+                  }}
+                  className="text-xs text-[var(--accent-red)] hover:underline flex items-center gap-1 font-semibold"
+                >
+                  <Plus size={14} />
+                  {t.addressTab.addBilling}
+                </button>
+              </div>
 
               {billingAddresses.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-[#2A2A2A] rounded-lg bg-[#141414]">
-                  <p className="text-xs text-[var(--text-secondary)]">No tax invoice profiles saved yet.</p>
+                <div className="p-6 rounded-lg bg-[#141414] border border-[#222222] text-center text-xs text-[var(--text-muted)]">
+                  {t.addressTab.billingEmpty}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {billingAddresses.map((addr) => (
                     <div
                       key={addr.id}
-                      className={`relative p-5 rounded-lg border flex flex-col justify-between ${
-                        addr.isDefault
-                          ? "border-[var(--accent-red)] bg-[#171717]"
-                          : "border-[#242424] bg-[#141414]"
-                      }`}
+                      className="p-5 rounded-lg bg-[#141414] border border-[#262626]"
                     >
-                      {addr.isDefault && (
-                        <span className="absolute top-3 right-3 text-[0.65rem] font-bold font-heading uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--accent-red)] text-white">
-                          Default Tax Profile
-                        </span>
-                      )}
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-white">
-                            {addr.companyName || addr.recipientName}
-                          </h4>
-                          <span className="text-xs px-1.5 py-0.2 rounded bg-[#242424] text-[var(--text-secondary)] font-mono">
-                            {addr.country}
-                          </span>
-                        </div>
-
-                        {addr.taxId && (
-                          <p className="text-xs text-amber-400 font-mono mt-1">
-                            Tax ID: {addr.taxId} {addr.branch ? `(Branch: ${addr.branch})` : ""}
-                          </p>
-                        )}
-
-                        <p className="text-xs text-[var(--text-secondary)] mt-2 leading-relaxed">
-                          {addr.line1}
-                          {addr.line2 ? `, ${addr.line2}` : ""}
-                          <br />
-                          {addr.country === "TH"
-                            ? `${addr.subDistrict ? `ต.${addr.subDistrict} ` : ""}${addr.district ? `อ.${addr.district} ` : ""}${addr.province ? `จ.${addr.province} ` : ""}${addr.postalCode}`
-                            : `${addr.city ? `${addr.city}, ` : ""}${addr.stateOrProvince ? `${addr.stateOrProvince} ` : ""}${addr.postalCode}`}
+                      <h4 className="text-sm font-bold text-white mb-1">
+                        {addr.companyName || addr.recipientName}
+                      </h4>
+                      {addr.taxId && (
+                        <p className="text-xs text-[var(--accent-red)] font-mono font-semibold mb-1">
+                          {t.addressTab.taxId}: {addr.taxId}{" "}
+                          {addr.branch ? `(${t.addressTab.branch}: ${addr.branch})` : ""}
                         </p>
-                      </div>
+                      )}
+                      <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                        {addr.line1}
+                        {addr.line2 ? `, ${addr.line2}` : ""}
+                        {addr.subDistrict ? `, ต.${addr.subDistrict}` : ""}
+                        {addr.district ? `, อ.${addr.district}` : ""}
+                        {addr.city ? `, ${addr.city}` : ""}
+                        {addr.province ? `, จ.${addr.province}` : ""}
+                        {` ${addr.postalCode}, ${addr.country}`}
+                      </p>
 
-                      {/* Actions */}
-                      <div className="flex items-center justify-between border-t border-[#242424] pt-3 mt-4">
-                        {!addr.isDefault ? (
-                          <button
-                            onClick={() => setDefaultAddress(addr.id, "billing")}
-                            className="text-xs text-[var(--text-secondary)] hover:text-white flex items-center gap-1 transition-colors"
-                          >
-                            <CheckCircle size={13} />
-                            Set as Default
-                          </button>
-                        ) : (
-                          <span className="text-xs text-emerald-400">Primary Tax Profile</span>
-                        )}
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingAddress(addr);
-                              setIsAddressModalOpen(true);
-                            }}
-                            className="p-1.5 text-[var(--text-muted)] hover:text-white"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (confirm("Delete this tax invoice profile?")) {
-                                await deleteUserAddress(addr.id);
-                              }
-                            }}
-                            className="p-1.5 text-[var(--text-muted)] hover:text-red-400"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                      <div className="flex items-center justify-end gap-2 border-t border-[#262626] pt-3 mt-4">
+                        <button
+                          onClick={() => {
+                            setEditingAddress(addr);
+                            setIsAddressModalOpen(true);
+                          }}
+                          className="p-1.5 rounded text-[var(--text-muted)] hover:text-white hover:bg-white/5 transition-colors"
+                          title={t.addressTab.edit}
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm(t.addressTab.deleteConfirm)) {
+                              await deleteUserAddress(addr.id);
+                            }
+                          }}
+                          className="p-1.5 rounded text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          title={t.addressTab.delete}
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -808,17 +819,111 @@ export function ProfileTabs({
           </div>
         )}
 
-        {/* TAB 4: PRIVACY, CONSENT & SECURITY */}
+        {/* =========================================================================
+            TAB 4: PRIVACY, CONSENT & SECURITY (TAILORED PER COUNTRY LAWS)
+           ========================================================================= */}
         {activeTab === "privacy" && (
-          <div className="bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 space-y-8">
-            <div className="border-b border-[#222222] pb-4">
-              <h2 className="text-lg md:text-xl font-bold font-heading uppercase text-white tracking-wide flex items-center gap-2">
-                <Shield size={20} className="text-[var(--accent-red)]" />
-                Privacy & Data Protection (PDPA & GDPR)
-              </h2>
-              <p className="text-xs text-[var(--text-secondary)] mt-1">
-                We strictly adhere to Thailand&apos;s Personal Data Protection Act (PDPA) and global privacy standards.
-              </p>
+          <div className="bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 space-y-8 animate-fade-in">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#222222] pb-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg md:text-xl font-bold font-heading uppercase text-white tracking-wide flex items-center gap-2">
+                    <Shield size={20} className="text-[var(--accent-red)]" />
+                    {t.privacyTab.title}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[0.68rem] font-bold bg-[var(--accent-red)]/10 text-[var(--accent-red)] border border-[var(--accent-red)]/20 uppercase tracking-wider">
+                    {t.privacyTab.lawBadge}
+                  </span>
+                  <span className="text-xs text-[var(--text-secondary)]">
+                    {t.privacyTab.subtitle}
+                  </span>
+                </div>
+              </div>
+
+              {/* View Terms & Policy Button */}
+              <button
+                type="button"
+                onClick={() => setIsPdpaTermsModalOpen(true)}
+                className="btn-outline text-xs px-4 py-2.5 flex items-center gap-2 text-white border-[var(--accent-red)]/40 hover:bg-[var(--accent-red)]/10 hover:border-[var(--accent-red)] shrink-0 transition-all shadow-md"
+              >
+                <ScrollText size={15} className="text-[var(--accent-red)]" />
+                <span>{t.privacyTab.viewTermsBtn}</span>
+              </button>
+            </div>
+
+            {/* Data Collection Transparency Overview */}
+            <div className="p-4 rounded-lg bg-[#151515] border border-[#242424] space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Database size={15} className="text-[var(--accent-red)]" />
+                  {t.privacyTab.dataMatrixTitle}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsPdpaTermsModalOpen(true)}
+                  className="text-xs text-[var(--accent-red)] hover:underline flex items-center gap-1 font-semibold"
+                >
+                  <Eye size={13} /> {t.privacyTab.viewFullMatrix}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+                <div className="p-2.5 bg-[#1A1A1A] border border-[#262626] rounded text-xs space-y-1">
+                  <p className="font-bold text-white flex items-center gap-1.5">
+                    <CheckCircle2 size={13} className="text-emerald-400" /> {t.privacyTab.category1Title}
+                  </p>
+                  <p className="text-[var(--text-muted)] text-[0.7rem]">
+                    {t.privacyTab.category1Desc}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-[#1A1A1A] border border-[#262626] rounded text-xs space-y-1">
+                  <p className="font-bold text-white flex items-center gap-1.5">
+                    <CheckCircle2 size={13} className="text-emerald-400" /> {t.privacyTab.category2Title}
+                  </p>
+                  <p className="text-[var(--text-muted)] text-[0.7rem]">
+                    {t.privacyTab.category2Desc}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-[#1A1A1A] border border-[#262626] rounded text-xs space-y-1">
+                  <p className="font-bold text-white flex items-center gap-1.5">
+                    <CheckCircle2 size={13} className="text-emerald-400" /> {t.privacyTab.category3Title}
+                  </p>
+                  <p className="text-[var(--text-muted)] text-[0.7rem]">
+                    {t.privacyTab.category3Desc}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-[#1A1A1A] border border-[#262626] rounded text-xs space-y-1">
+                  <p className="font-bold text-white flex items-center gap-1.5">
+                    <CheckCircle2 size={13} className="text-emerald-400" /> {t.privacyTab.category4Title}
+                  </p>
+                  <p className="text-[var(--text-muted)] text-[0.7rem]">
+                    {t.privacyTab.category4Desc}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-[#1A1A1A] border border-[#262626] rounded text-xs space-y-1">
+                  <p className="font-bold text-white flex items-center gap-1.5">
+                    <CheckCircle2 size={13} className="text-emerald-400" /> {t.privacyTab.category5Title}
+                  </p>
+                  <p className="text-[var(--text-muted)] text-[0.7rem]">
+                    {t.privacyTab.category5Desc}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-[#1A1A1A] border border-[#262626] rounded text-xs space-y-1">
+                  <p className="font-bold text-white flex items-center gap-1.5">
+                    <CheckCircle2 size={13} className="text-emerald-400" /> {t.privacyTab.category6Title}
+                  </p>
+                  <p className="text-[var(--text-muted)] text-[0.7rem]">
+                    {t.privacyTab.category6Desc}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {consentFeedback && (
@@ -845,10 +950,10 @@ export function ProfileTabs({
                 <div className="p-4 bg-[#161616] border border-[#242424] rounded-lg flex items-start justify-between gap-4">
                   <div>
                     <h4 className="text-sm font-bold text-white">
-                      Marketing & Product Launch Newsletters (Email)
+                      {t.privacyTab.consentEmail}
                     </h4>
                     <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                      Receive early-bird notifications on new aerodynamic body kits, carbon fiber drops, and seasonal discounts.
+                      {t.privacyTab.consentEmailDesc}
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
@@ -866,10 +971,10 @@ export function ProfileTabs({
                 <div className="p-4 bg-[#161616] border border-[#242424] rounded-lg flex items-start justify-between gap-4">
                   <div>
                     <h4 className="text-sm font-bold text-white">
-                      SMS Notifications & Flash Sale Alerts
+                      {t.privacyTab.consentSms}
                     </h4>
                     <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                      Receive high-priority SMS alerts for limited production batches and tracking updates.
+                      {t.privacyTab.consentSmsDesc}
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
@@ -887,10 +992,10 @@ export function ProfileTabs({
                 <div className="p-4 bg-[#161616] border border-[#242424] rounded-lg flex items-start justify-between gap-4">
                   <div>
                     <h4 className="text-sm font-bold text-white">
-                      Personalized Aero Fitment Analytics
+                      {t.privacyTab.consentAnalytics}
                     </h4>
                     <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                      Allow South Aeropart to analyze browsing preferences and garage cars to tailor aero suggestions.
+                      {t.privacyTab.consentAnalyticsDesc}
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
@@ -914,10 +1019,10 @@ export function ProfileTabs({
                   {isUpdatingConsents ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Saving Preferences...
+                      {t.privacyTab.savingConsents}
                     </>
                   ) : (
-                    "Save Privacy Preferences"
+                    t.privacyTab.saveConsents
                   )}
                 </button>
               </div>
@@ -929,10 +1034,10 @@ export function ProfileTabs({
                 <div>
                   <h4 className="text-sm font-bold text-white flex items-center gap-2">
                     <Download size={16} className="text-[var(--accent-red)]" />
-                    Download Personal Data Archive (Right to Data Portability)
+                    {t.privacyTab.exportTitle}
                   </h4>
                   <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xl">
-                    Download an exported JSON copy of all personal details, saved garage vehicles, addresses, and consent audit trails associated with your account.
+                    {t.privacyTab.exportDesc}
                   </p>
                 </div>
                 <button
@@ -943,12 +1048,12 @@ export function ProfileTabs({
                   {isExportingData ? (
                     <>
                       <Loader2 size={14} className="animate-spin" />
-                      Generating JSON...
+                      {t.privacyTab.exportingBtn}
                     </>
                   ) : (
                     <>
                       <Download size={14} />
-                      Export Data (JSON)
+                      {t.privacyTab.exportBtn}
                     </>
                   )}
                 </button>
@@ -957,11 +1062,11 @@ export function ProfileTabs({
 
             {/* Security & Clerk Notice */}
             <div className="p-4 bg-[#141414] border border-[#222222] rounded-lg text-xs text-[var(--text-muted)] flex items-start gap-3">
-              <Lock size={18} className="text-[var(--text-secondary)] shrink-0 mt-0.5" />
+              <Lock size={18} className="text-[var(--accent-red)] shrink-0 mt-0.5" />
               <div>
-                <p className="text-[var(--text-secondary)] font-medium">Authentication & Passwords</p>
+                <p className="text-white font-medium">{t.privacyTab.authNoticeTitle}</p>
                 <p className="mt-0.5">
-                  Your credentials and OAuth logins (Google/Apple) are securely managed and encrypted via Clerk Authentication. No plain passwords or payment card details are stored on South Aeropart application databases.
+                  {t.privacyTab.authNoticeDesc}
                 </p>
               </div>
             </div>
@@ -969,7 +1074,7 @@ export function ProfileTabs({
         )}
       </div>
 
-      {/* MODALS */}
+      {/* MODALS WITH ACTIVE LANGUAGE SYNC */}
       <AddressModal
         isOpen={isAddressModalOpen}
         onClose={() => {
@@ -977,6 +1082,7 @@ export function ProfileTabs({
           setEditingAddress(null);
         }}
         initialAddress={editingAddress}
+        language={language}
       />
 
       <GarageModal
@@ -987,6 +1093,13 @@ export function ProfileTabs({
         }}
         brands={brands}
         initialVehicle={editingVehicle}
+        language={language}
+      />
+
+      <PdpaTermsModal
+        isOpen={isPdpaTermsModalOpen}
+        onClose={() => setIsPdpaTermsModalOpen(false)}
+        language={language}
       />
     </div>
   );

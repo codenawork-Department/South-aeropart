@@ -30,6 +30,7 @@ import {
   renameImage,
 } from "@repo/lib/cloudinary";
 import { validateSession, logAuditEvent } from "@/lib/auth";
+import { notifyStorefrontCatalogChange } from "@/lib/realtime-notifier";
 
 // ─── Types & Schemas ──────────────────────────────────────────────────────────
 
@@ -654,6 +655,7 @@ export async function createBundleAction(
     revalidatePath("/bundles");
     revalidatePath("/products");
     revalidatePath("/");
+    notifyStorefrontCatalogChange("bundle.created", { id: newBundle.id });
 
     return {
       success: true,
@@ -926,6 +928,7 @@ export async function updateBundleAction(
     revalidatePath(`/bundles/${id}`);
     revalidatePath("/products");
     revalidatePath("/");
+    notifyStorefrontCatalogChange("bundle.updated", { id });
 
     return {
       success: true,
@@ -984,6 +987,7 @@ export async function deleteBundleAction(id: string): Promise<ActionResult> {
 
     revalidatePath("/bundles");
     revalidatePath("/products");
+    notifyStorefrontCatalogChange("bundle.deleted", { id });
 
     return {
       success: true,
@@ -1082,6 +1086,7 @@ export async function toggleBundleFeaturedAction(
     revalidatePath(`/bundles/${bundleId}`);
     revalidatePath("/products");
     revalidatePath("/");
+    notifyStorefrontCatalogChange("bundle.featured_toggled", { id: bundleId, isFeatured });
 
     return {
       success: true,
@@ -1123,4 +1128,75 @@ export async function getFeaturedBundlesCountAction(): Promise<{ count: number; 
     return { count: 0, max: 4 };
   }
 }
+
+/**
+ * Quick update status for bundles from the table list
+ */
+export async function updateBundleStatusAction(
+  bundleId: string,
+  status: "draft" | "active" | "archived" | "out_of_stock"
+): Promise<ActionResult<{ status: string }>> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
+  try {
+    const [bundle] = await db
+      .select({ id: products.id, name: products.name, status: products.status })
+      .from(products)
+      .where(and(eq(products.id, bundleId), eq(products.productType, "bundle")))
+      .limit(1);
+
+    if (!bundle) {
+      return { success: false, message: "ไม่พบชุดเซ็ตในระบบ" };
+    }
+
+    await db
+      .update(products)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, bundleId));
+
+    const statusLabels: Record<string, string> = {
+      active: "วางขาย (Active)",
+      draft: "ร่าง (Draft)",
+      out_of_stock: "สินค้าหมด (Out of Stock)",
+      archived: "เก็บเข้ากรุ (Archived)",
+    };
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "bundle.status_changed",
+      entityId: bundleId,
+      entityType: "product",
+      metadata: {
+        name: bundle.name,
+        previousStatus: bundle.status,
+        newStatus: status,
+      },
+    });
+
+    revalidatePath("/bundles");
+    revalidatePath(`/bundles/${bundleId}`);
+    revalidatePath("/products");
+    revalidatePath("/");
+    notifyStorefrontCatalogChange("bundle.status_changed", { id: bundleId, status });
+
+    return {
+      success: true,
+      message: `เปลี่ยนสถานะชุดเซ็ต '${bundle.name}' เป็น "${statusLabels[status] || status}" สำเร็จ`,
+      data: { status },
+    };
+  } catch (error: any) {
+    console.error("Error updating bundle status:", error);
+    return {
+      success: false,
+      message: error?.message || "เกิดข้อผิดพลาดในการเปลี่ยนสถานะชุดเซ็ต",
+    };
+  }
+}
+
 

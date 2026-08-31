@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -18,8 +18,14 @@ import {
   Loader2,
   Tag,
   CheckCircle2,
+  Star,
+  ChevronDown,
 } from "lucide-react";
-import { deleteProductAction } from "@/actions/product.actions";
+import {
+  deleteProductAction,
+  toggleProductFeaturedAction,
+  updateProductStatusAction,
+} from "@/actions/product.actions";
 
 interface ProductRow {
   id: string;
@@ -30,6 +36,7 @@ interface ProductRow {
   compareAtPrice?: string | null;
   stockQuantity: number;
   status: "draft" | "active" | "archived" | "out_of_stock";
+  isFeatured: boolean;
   categoryName?: string | null;
   brandName?: string | null;
   primaryImage?: {
@@ -63,6 +70,7 @@ export function ProductsTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [onlyFeatured, setOnlyFeatured] = useState<boolean>(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [deleteModalProduct, setDeleteModalProduct] = useState<ProductRow | null>(
     null
@@ -70,21 +78,130 @@ export function ProductsTable({
   const [isPending, startTransition] = useTransition();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Optimistic featured state
+  const [featuredMap, setFeaturedMap] = useState<Record<string, boolean>>(() => {
+    const map: Record<string, boolean> = {};
+    products.forEach((p) => {
+      map[p.id] = p.isFeatured;
+    });
+    return map;
+  });
+  const [isTogglingFeaturedId, setIsTogglingFeaturedId] = useState<string | null>(null);
+
+  // Optimistic status state
+  const [statusMap, setStatusMap] = useState<Record<string, ProductRow["status"]>>(() => {
+    const map: Record<string, ProductRow["status"]> = {};
+    products.forEach((p) => {
+      map[p.id] = p.status;
+    });
+    return map;
+  });
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+
+  // Sync state if products prop changes
+  useMemo(() => {
+    const fMap: Record<string, boolean> = {};
+    const sMap: Record<string, ProductRow["status"]> = {};
+    products.forEach((p) => {
+      fMap[p.id] = p.isFeatured;
+      sMap[p.id] = p.status;
+    });
+    setFeaturedMap(fMap);
+    setStatusMap(sMap);
+  }, [products]);
+
   // Client-side filtering for fast UI response
   const filteredProducts = products.filter((p) => {
+    const isFeatured = Boolean(featuredMap[p.id]);
+    const currentStatus = statusMap[p.id] ?? p.status;
+
+    if (onlyFeatured && !isFeatured) return false;
+
     const matchesSearch =
       !searchTerm.trim() ||
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.sku.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "all" || p.status === statusFilter;
+      statusFilter === "all" || currentStatus === statusFilter;
 
     const matchesCategory =
       categoryFilter === "all" || p.categoryName === categoryFilter;
 
     return matchesSearch && matchesStatus && matchesCategory;
   });
+
+  const handleToggleFeatured = async (product: ProductRow) => {
+    const currentlyFeatured = Boolean(featuredMap[product.id]);
+    const nextFeatured = !currentlyFeatured;
+
+    // Optimistic UI update
+    setFeaturedMap((prev) => ({
+      ...prev,
+      [product.id]: nextFeatured,
+    }));
+    setIsTogglingFeaturedId(product.id);
+
+    try {
+      const res = await toggleProductFeaturedAction(product.id, nextFeatured);
+      setIsTogglingFeaturedId(null);
+
+      if (res.success) {
+        setToastMessage(
+          nextFeatured
+            ? `ตั้ง '${product.name}' เป็นสินค้าแนะนำเรียบร้อยแล้ว`
+            : `ยกเลิกสินค้าแนะนำสำหรับ '${product.name}' แล้ว`
+        );
+        router.refresh();
+        setTimeout(() => setToastMessage(null), 3500);
+      } else {
+        // Revert optimistic update
+        setFeaturedMap((prev) => ({
+          ...prev,
+          [product.id]: currentlyFeatured,
+        }));
+        alert(res.message || "ไม่สามารถเปลี่ยนสถานะสินค้าแนะนำได้");
+      }
+    } catch {
+      setIsTogglingFeaturedId(null);
+      setFeaturedMap((prev) => ({
+        ...prev,
+        [product.id]: currentlyFeatured,
+      }));
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+    }
+  };
+
+  const handleStatusChange = async (
+    product: ProductRow,
+    newStatus: ProductRow["status"]
+  ) => {
+    const previousStatus = statusMap[product.id] ?? product.status;
+    if (newStatus === previousStatus) return;
+
+    // Optimistic update
+    setStatusMap((prev) => ({ ...prev, [product.id]: newStatus }));
+    setUpdatingStatusId(product.id);
+
+    try {
+      const res = await updateProductStatusAction(product.id, newStatus);
+      setUpdatingStatusId(null);
+
+      if (res.success) {
+        setToastMessage(res.message || "เปลี่ยนสถานะสินค้าสำเร็จ");
+        router.refresh();
+        setTimeout(() => setToastMessage(null), 3000);
+      } else {
+        // Revert
+        setStatusMap((prev) => ({ ...prev, [product.id]: previousStatus }));
+        alert(res.message || "ไม่สามารถเปลี่ยนสถานะสินค้าได้");
+      }
+    } catch {
+      setUpdatingStatusId(null);
+      setStatusMap((prev) => ({ ...prev, [product.id]: previousStatus }));
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+    }
+  };
 
   const handleDelete = async (productId: string) => {
     setIsDeletingId(productId);
@@ -102,35 +219,63 @@ export function ProductsTable({
     });
   };
 
-  const getStatusBadge = (status: ProductRow["status"]) => {
-    switch (status) {
-      case "active":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
-            วางขาย (Active)
-          </span>
-        );
-      case "draft":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-zinc-800/80 text-zinc-300 border border-zinc-700">
-            ร่าง (Draft)
-          </span>
-        );
-      case "out_of_stock":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-950/60 text-amber-400 border border-amber-800/60">
-            สินค้าหมด
-          </span>
-        );
-      case "archived":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-900 text-gray-400 border border-gray-800">
-            เก็บเข้ากรุ
-          </span>
-        );
-      default:
-        return null;
+  const renderStatusSelector = (product: ProductRow) => {
+    const currentStatus = statusMap[product.id] ?? product.status;
+    const isUpdating = updatingStatusId === product.id;
+
+    const getStatusConfig = (st: ProductRow["status"]) => {
+      switch (st) {
+        case "active":
+          return {
+            dotColor: "bg-emerald-400",
+            className: "bg-emerald-950/70 text-emerald-300 border-emerald-700/70 hover:border-emerald-500",
+          };
+        case "draft":
+          return {
+            dotColor: "bg-zinc-400",
+            className: "bg-zinc-800/80 text-zinc-300 border-zinc-700 hover:border-zinc-500",
+          };
+        case "out_of_stock":
+          return {
+            dotColor: "bg-amber-400",
+            className: "bg-amber-950/70 text-amber-300 border-amber-700/70 hover:border-amber-500",
+          };
+        case "archived":
+          return {
+            dotColor: "bg-gray-400",
+            className: "bg-gray-900 text-gray-400 border-gray-800 hover:border-gray-600",
+          };
+      }
+    };
+
+    const config = getStatusConfig(currentStatus);
+
+    if (isUpdating) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-zinc-900 border border-zinc-700 text-zinc-300">
+          <Loader2 size={11} className="animate-spin text-amber-400" />
+          <span>กำลังบันทึก...</span>
+        </span>
+      );
     }
+
+    return (
+      <div className="relative inline-flex items-center group">
+        <select
+          value={currentStatus}
+          onChange={(e) => handleStatusChange(product, e.target.value as ProductRow["status"])}
+          className={`appearance-none pl-6 pr-6 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-500 ${config.className}`}
+          title="คลิกเพื่อเปลี่ยนสถานะสินค้าทันที"
+        >
+          <option value="active" className="bg-[#181818] text-emerald-400 py-1">● วางขาย (Active)</option>
+          <option value="draft" className="bg-[#181818] text-zinc-300 py-1">● ร่าง (Draft)</option>
+          <option value="out_of_stock" className="bg-[#181818] text-amber-400 py-1">● สินค้าหมด (Out of Stock)</option>
+          <option value="archived" className="bg-[#181818] text-gray-400 py-1">● เก็บเข้ากรุ (Archived)</option>
+        </select>
+        <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${config.dotColor}`} />
+        <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-current opacity-60 group-hover:opacity-100 transition-opacity" />
+      </div>
+    );
   };
 
   return (
@@ -181,11 +326,28 @@ export function ProductsTable({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Featured Only Filter Toggle */}
+          <button
+            type="button"
+            onClick={() => setOnlyFeatured(!onlyFeatured)}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+              onlyFeatured
+                ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm shadow-amber-950/40"
+                : "bg-[#181818] border-[#2D2D2D] text-gray-400 hover:text-white hover:border-gray-600"
+            }`}
+          >
+            <Star
+              size={14}
+              className={onlyFeatured ? "text-amber-400 fill-amber-400" : "text-gray-400"}
+            />
+            <span>เฉพาะสินค้าแนะนำ</span>
+          </button>
+
           {/* Status Filter */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500 transition-colors"
+            className="px-3 py-2 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500 transition-colors cursor-pointer"
           >
             <option value="all">ทุกสถานะ</option>
             <option value="active">วางขาย (Active)</option>
@@ -198,7 +360,7 @@ export function ProductsTable({
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500 transition-colors"
+            className="px-3 py-2 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white text-xs focus:outline-none focus:border-red-500 transition-colors cursor-pointer"
           >
             <option value="all">ทุกหมวดหมู่</option>
             {categories.map((c) => (
@@ -242,16 +404,24 @@ export function ProductsTable({
                   <th className="py-3 px-4 text-right">ราคา</th>
                   <th className="py-3 px-4 text-center">สต็อก</th>
                   <th className="py-3 px-4 text-center">สถานะ</th>
+                  <th className="py-3 px-4 text-center">สินค้าแนะนำ</th>
                   <th className="py-3 px-4 text-right">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1D1D1D] text-gray-300">
                 {filteredProducts.map((product) => {
                   const hasImage = Boolean(product.primaryImage?.secureUrl);
+                  const isFeatured = Boolean(featuredMap[product.id]);
+                  const isToggling = isTogglingFeaturedId === product.id;
+
                   return (
                     <tr
                       key={product.id}
-                      className="hover:bg-[#161616] transition-colors"
+                      className={`transition-colors ${
+                        isFeatured
+                          ? "bg-amber-500/[0.03] hover:bg-amber-500/[0.06]"
+                          : "hover:bg-[#161616]"
+                      }`}
                     >
                       {/* Image Thumbnail */}
                       <td className="py-3 px-4">
@@ -278,10 +448,17 @@ export function ProductsTable({
 
                       {/* Name and SKU */}
                       <td className="py-3 px-4 max-w-xs">
-                        <div className="font-semibold text-white truncate hover:text-red-400 transition-colors">
-                          <Link href={`/products/${product.id}/edit`}>
-                            {product.name}
-                          </Link>
+                        <div className="flex items-center gap-1.5">
+                          <div className="font-semibold text-white truncate hover:text-red-400 transition-colors">
+                            <Link href={`/products/${product.id}/edit`}>
+                              {product.name}
+                            </Link>
+                          </div>
+                          {isFeatured && (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold">
+                              แนะนำ
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="font-mono text-[11px] text-red-400 bg-red-950/40 px-1.5 py-0.2 rounded border border-red-900/40">
@@ -329,7 +506,38 @@ export function ProductsTable({
 
                       {/* Status */}
                       <td className="py-3 px-4 text-center">
-                        {getStatusBadge(product.status)}
+                        {renderStatusSelector(product)}
+                      </td>
+
+                      {/* Featured Quick Toggle */}
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFeatured(product)}
+                          disabled={isToggling}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            isFeatured
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
+                              : "bg-zinc-800/60 text-zinc-400 border border-zinc-700 hover:text-white hover:border-zinc-500"
+                          }`}
+                          title={isFeatured ? "คลิกเพื่อยกเลิกสินค้าแนะนำ" : "คลิกเพื่อตั้งเป็นสินค้าแนะนำหน้าแรก"}
+                        >
+                          {isToggling ? (
+                            <Loader2 size={13} className="animate-spin text-amber-400" />
+                          ) : (
+                            <Star
+                              size={13}
+                              className={
+                                isFeatured
+                                  ? "text-amber-400 fill-amber-400"
+                                  : "text-zinc-400"
+                              }
+                            />
+                          )}
+                          <span className="text-[10px]">
+                            {isFeatured ? "แนะนำ" : "ตั้งแนะนำ"}
+                          </span>
+                        </button>
                       </td>
 
                       {/* Actions */}

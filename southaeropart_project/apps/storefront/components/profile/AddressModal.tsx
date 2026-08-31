@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { X, MapPin, Building2, Check, Loader2, Globe } from "lucide-react";
 import { UserAddress } from "@repo/db";
 import { saveUserAddress, SaveAddressInput } from "@/actions/profile.actions";
+import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";
 
 interface AddressModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialAddress?: UserAddress | null;
   onSuccess?: () => void;
+  language?: ProfileLanguage;
 }
 
 const COUNTRY_OPTIONS = [
@@ -30,9 +32,12 @@ export function AddressModal({
   onClose,
   initialAddress,
   onSuccess,
+  language = "th",
 }: AddressModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const t = PROFILE_TRANSLATIONS[language]?.addressTab || PROFILE_TRANSLATIONS.th.addressTab;
 
   const [type, setType] = useState<"shipping" | "billing">("shipping");
   const [country, setCountry] = useState<string>("TH");
@@ -73,8 +78,8 @@ export function AddressModal({
       setIsDefault(Boolean(initialAddress.isDefault));
     } else {
       setType("shipping");
-      setCountry("TH");
-      setPhoneCountryCode("+66");
+      setCountry(language === "en" ? "US" : "TH");
+      setPhoneCountryCode(language === "en" ? "+1" : "+66");
       setRecipientName("");
       setPhone("");
       setLine1("");
@@ -91,7 +96,7 @@ export function AddressModal({
       setIsDefault(false);
     }
     setErrorMsg(null);
-  }, [initialAddress, isOpen]);
+  }, [initialAddress, isOpen, language]);
 
   const handleCountryChange = (newCountry: string) => {
     setCountry(newCountry);
@@ -142,6 +147,14 @@ export function AddressModal({
     }
   };
 
+  const modalTitle = initialAddress
+    ? type === "shipping"
+      ? t.modalEditShipping
+      : t.modalEditBilling
+    : type === "shipping"
+      ? t.modalAddShipping
+      : t.modalAddBilling;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-2xl bg-[#141414] border border-[#2A2A2A] rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
@@ -152,7 +165,7 @@ export function AddressModal({
               {type === "shipping" ? <MapPin size={18} /> : <Building2 size={18} />}
             </div>
             <h2 className="text-lg font-bold font-heading uppercase text-white tracking-wide">
-              {initialAddress ? "Edit Address" : "Add New Address"}
+              {modalTitle}
             </h2>
           </div>
           <button
@@ -174,7 +187,7 @@ export function AddressModal({
           {/* Address Type Switcher */}
           <div>
             <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
-              Address Purpose
+              {language === "th" ? "ประเภทที่อยู่" : "Address Purpose"}
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -187,7 +200,7 @@ export function AddressModal({
                 }`}
               >
                 <MapPin size={16} />
-                Shipping (จัดส่งพัสดุ)
+                {t.addShipping}
               </button>
               <button
                 type="button"
@@ -199,7 +212,7 @@ export function AddressModal({
                 }`}
               >
                 <Building2 size={16} />
-                Tax Invoice / Billing (ใบกำกับภาษี)
+                {t.addBilling}
               </button>
             </div>
           </div>
@@ -207,7 +220,7 @@ export function AddressModal({
           {/* Country Selector */}
           <div>
             <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-              Country / Region (ประเทศ)
+              {t.countryLabel}
             </label>
             <div className="relative">
               <select
@@ -229,12 +242,12 @@ export function AddressModal({
             <div className="p-4 bg-[#181818] border border-[#262626] rounded-md space-y-4">
               <div className="text-xs font-bold font-heading uppercase tracking-wider text-[var(--accent-red)] flex items-center gap-1.5">
                 <Building2 size={14} />
-                Tax & Legal Entity Details (ข้อมูลผู้เสียภาษี)
+                {language === "th" ? "ข้อมูลผู้เสียภาษีและนิติบุคคล" : "Tax & Legal Entity Details"}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
-                    Company / Taxpayer Legal Name (ชื่อบริษัท / ชื่อผู้เสียภาษี) *
+                    {t.companyNameLabel} *
                   </label>
                   <input
                     type="text"
@@ -247,7 +260,7 @@ export function AddressModal({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
-                    Tax ID / VAT Registration No. *
+                    {t.taxIdLabel} *
                   </label>
                   <input
                     type="text"
@@ -255,18 +268,18 @@ export function AddressModal({
                     value={taxId}
                     onChange={(e) => setTaxId(e.target.value)}
                     placeholder={isThai ? "13-digit Tax ID" : "Tax/VAT No."}
-                    className="input-dark w-full bg-[#1F1F1F] border-[#2E2E2E] text-white"
+                    className="input-dark w-full bg-[#1F1F1F] border-[#2E2E2E] text-white font-mono"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
-                    Branch (สาขา - e.g. สำนักงานใหญ่ / 00000)
+                    {t.branchLabel}
                   </label>
                   <input
                     type="text"
                     value={branch}
                     onChange={(e) => setBranch(e.target.value)}
-                    placeholder="Head Office (สำนักงานใหญ่)"
+                    placeholder={isThai ? "สำนักงานใหญ่ / 00000" : "Head Office"}
                     className="input-dark w-full bg-[#1F1F1F] border-[#2E2E2E] text-white"
                   />
                 </div>
@@ -278,7 +291,7 @@ export function AddressModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-                Recipient Name (ชื่อผู้รับ) *
+                {t.recipientName}
               </label>
               <input
                 type="text"
@@ -291,7 +304,7 @@ export function AddressModal({
             </div>
             <div>
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-                Phone Number (เบอร์ติดต่อ) *
+                {t.phoneLabel}
               </label>
               <div className="flex gap-2">
                 <input
@@ -317,7 +330,7 @@ export function AddressModal({
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-                Address Line 1 (บ้านเลขที่ / ถนน / อาคาร) *
+                {t.line1Label}
               </label>
               <input
                 type="text"
@@ -331,7 +344,7 @@ export function AddressModal({
 
             <div>
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-                Address Line 2 (หมู่บ้าน / ชั้น / ห้อง - Optional)
+                {t.line2Label}
               </label>
               <input
                 type="text"
@@ -348,7 +361,7 @@ export function AddressModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                  ตำบล / แขวง *
+                  {t.subDistrictLabel} *
                 </label>
                 <input
                   type="text"
@@ -361,7 +374,7 @@ export function AddressModal({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                  อำเภอ / เขต *
+                  {t.districtLabel} *
                 </label>
                 <input
                   type="text"
@@ -374,7 +387,7 @@ export function AddressModal({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                  จังหวัด *
+                  {t.provinceLabel} *
                 </label>
                 <input
                   type="text"
@@ -387,7 +400,7 @@ export function AddressModal({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                  รหัสไปรษณีย์ *
+                  {t.postalCodeLabel}
                 </label>
                 <input
                   type="text"
@@ -403,7 +416,7 @@ export function AddressModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                  City / Town *
+                  {t.cityLabel}
                 </label>
                 <input
                   type="text"
@@ -416,20 +429,20 @@ export function AddressModal({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                  State / Province / Region *
+                  {t.stateLabel}
                 </label>
                 <input
                   type="text"
                   required
                   value={stateOrProvince}
                   onChange={(e) => setStateOrProvince(e.target.value)}
-                  placeholder="e.g. California, Kanto"
+                  placeholder="e.g. California, Tokyo-to"
                   className="input-dark w-full bg-[#1A1A1A] border-[#2A2A2A] text-white"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                  Postal / ZIP Code *
+                  {t.postalCodeLabel}
                 </label>
                 <input
                   type="text"
@@ -453,7 +466,7 @@ export function AddressModal({
                 className="w-4 h-4 rounded bg-[#1A1A1A] border-[#333333] text-[var(--accent-red)] focus:ring-[var(--accent-red)]"
               />
               <span className="text-sm text-[var(--text-secondary)]">
-                Set as default {type === "shipping" ? "shipping" : "billing"} address (ตั้งเป็นที่อยู่หลัก)
+                {t.setDefaultAddressCheckbox}
               </span>
             </label>
           </div>
@@ -466,7 +479,7 @@ export function AddressModal({
               className="btn-outline text-xs px-5 py-2.5"
               disabled={isSubmitting}
             >
-              Cancel
+              {t.cancel}
             </button>
             <button
               type="submit"
@@ -476,10 +489,10 @@ export function AddressModal({
               {isSubmitting ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Saving...
+                  {t.savingAddress}
                 </>
               ) : (
-                "Save Address"
+                t.saveAddress
               )}
             </button>
           </div>

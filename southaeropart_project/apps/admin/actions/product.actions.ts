@@ -34,6 +34,7 @@ import {
   CATEGORY_CODE_MAP,
   getCodeFromSlug,
 } from "@/lib/sku-helper";
+import { notifyStorefrontCatalogChange } from "@/lib/realtime-notifier";
 
 // ─── Types & Schemas ──────────────────────────────────────────────────────────
 
@@ -216,13 +217,18 @@ export async function getProductsAction(params?: {
   const limit = Math.min(100, Math.max(1, params?.limit || 20));
   const offset = (page - 1) * limit;
 
-  const conditions = [];
+  const conditions = [eq(products.productType, "single")];
 
   if (params?.search?.trim()) {
     const q = `%${params.search.trim()}%`;
-    conditions.push(
-      or(ilike(products.name, q), ilike(products.sku, q), ilike(products.slug, q))
+    const searchCondition = or(
+      ilike(products.name, q),
+      ilike(products.sku, q),
+      ilike(products.slug, q)
     );
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
   }
 
   if (
@@ -268,6 +274,7 @@ export async function getProductsAction(params?: {
       compareAtPrice: products.compareAtPrice,
       stockQuantity: products.stockQuantity,
       status: products.status,
+      isFeatured: products.isFeatured,
       weightKg: products.weightKg,
       createdAt: products.createdAt,
       updatedAt: products.updatedAt,
@@ -559,6 +566,7 @@ export async function createProductAction(
     });
 
     revalidatePath("/products");
+    notifyStorefrontCatalogChange("product.created", { id: newProduct.id });
     return {
       success: true,
       message: "สร้างสินค้าใหม่พร้อมจัดเก็บรูปภาพตามหมวดหมู่สำเร็จ",
@@ -818,6 +826,7 @@ export async function updateProductAction(
 
     revalidatePath("/products");
     revalidatePath(`/products/${productId}/edit`);
+    notifyStorefrontCatalogChange("product.updated", { id: productId });
 
     return { success: true, message: "อัปเดตข้อมูลสินค้าสำเร็จ" };
   } catch (error) {
@@ -881,6 +890,7 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
     });
 
     revalidatePath("/products");
+    notifyStorefrontCatalogChange("product.deleted", { id: productId });
     return { success: true, message: "ลบสินค้าและรูปภาพสำเร็จ" };
   } catch (error) {
     console.error("[DeleteProductAction] Error:", error);
@@ -1049,4 +1059,157 @@ export async function checkSkuAvailabilityAction(
     return { isAvailable: true, message: "" };
   }
 }
+
+/**
+ * Toggle featured status for single product (สินค้าแนะนำ)
+ */
+export async function toggleProductFeaturedAction(
+  productId: string,
+  isFeatured: boolean
+): Promise<ActionResult<{ isFeatured: boolean; count: number }>> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
+  try {
+    const [product] = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        productType: products.productType,
+        isFeatured: products.isFeatured,
+      })
+      .from(products)
+      .where(and(eq(products.id, productId), eq(products.productType, "single")))
+      .limit(1);
+
+    if (!product) {
+      return { success: false, message: "ไม่พบสินค้าเดี่ยวนี้ในระบบ หรือสินค้านี้เป็นประเภทชุดเซ็ต" };
+    }
+
+    // Update isFeatured
+    await db
+      .update(products)
+      .set({
+        isFeatured,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, productId));
+
+    // Get current total featured single products count
+    const [countRes] = await db
+      .select({ count: count() })
+      .from(products)
+      .where(
+        and(
+          eq(products.productType, "single"),
+          eq(products.isFeatured, true)
+        )
+      );
+
+    const totalFeatured = Number(countRes?.count || 0);
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: isFeatured ? "feature_product" : "unfeature_product",
+      entityId: productId,
+      entityType: "product",
+      metadata: {
+        name: product.name,
+        isFeatured,
+        totalFeatured,
+      },
+    });
+
+    revalidatePath("/products");
+    revalidatePath(`/products/${productId}/edit`);
+    revalidatePath("/");
+    notifyStorefrontCatalogChange("product.featured_toggled", { id: productId, isFeatured });
+
+    return {
+      success: true,
+      message: isFeatured
+        ? `ตั้ง '${product.name}' เป็นสินค้าแนะนำเรียบร้อยแล้ว (รวมแนะนำ ${totalFeatured} ชิ้น)`
+        : `ยกเลิกสินค้าแนะนำสำหรับ '${product.name}' แล้ว (คงเหลือแนะนำ ${totalFeatured} ชิ้น)`,
+      data: { isFeatured, count: totalFeatured },
+    };
+  } catch (error: any) {
+    console.error("Error toggling product featured:", error);
+    return {
+      success: false,
+      message: error?.message || "เกิดข้อผิดพลาดในการเปลี่ยนสถานะสินค้าแนะนำ",
+    };
+  }
+}
+
+/**
+ * Quick update status for single products from the table list
+ */
+export async function updateProductStatusAction(
+  productId: string,
+  status: "draft" | "active" | "archived" | "out_of_stock"
+): Promise<ActionResult<{ status: string }>> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
+  try {
+    const [product] = await db
+      .select({ id: products.id, name: products.name, status: products.status })
+      .from(products)
+      .where(and(eq(products.id, productId), eq(products.productType, "single")))
+      .limit(1);
+
+    if (!product) {
+      return { success: false, message: "ไม่พบสินค้าในระบบ" };
+    }
+
+    await db
+      .update(products)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, productId));
+
+    const statusLabels: Record<string, string> = {
+      active: "วางขาย (Active)",
+      draft: "ร่าง (Draft)",
+      out_of_stock: "สินค้าหมด (Out of Stock)",
+      archived: "เก็บเข้ากรุ (Archived)",
+    };
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "product.status_changed",
+      entityId: productId,
+      entityType: "product",
+      metadata: {
+        name: product.name,
+        previousStatus: product.status,
+        newStatus: status,
+      },
+    });
+
+    revalidatePath("/products");
+    revalidatePath(`/products/${productId}/edit`);
+    revalidatePath("/");
+    notifyStorefrontCatalogChange("product.status_changed", { id: productId, status });
+
+    return {
+      success: true,
+      message: `เปลี่ยนสถานะ '${product.name}' เป็น "${statusLabels[status] || status}" สำเร็จ`,
+      data: { status },
+    };
+  } catch (error: any) {
+    console.error("Error updating product status:", error);
+    return {
+      success: false,
+      message: error?.message || "เกิดข้อผิดพลาดในการเปลี่ยนสถานะสินค้า",
+    };
+  }
+}
+
 

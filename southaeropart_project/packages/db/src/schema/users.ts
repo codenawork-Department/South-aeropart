@@ -2,9 +2,8 @@ import { pgTable, text, timestamp, jsonb, boolean, uuid, integer, index } from "
 import { brands, carModels } from "./products";
 
 export interface UserPreferences {
-  language?: "th" | "en" | "ja" | string;
+  language?: "th" | "en" | string;
   currency?: "THB" | "USD" | "EUR" | "JPY" | "SGD" | string;
-  defaultSteering?: "RHD" | "LHD" | null;
 }
 
 export interface UserPrivacyConsents {
@@ -75,8 +74,8 @@ export const userAddresses = pgTable("user_addresses", {
 
 /**
  * Customer Garage (My Garage / โรงรถของฉัน).
- * Links customer with specific car models, steering orientation (RHD/LHD),
- * and model year to enable compatibility filters and market analytics.
+ * Links customer with specific car models and model year
+ * to enable compatibility filters and market analytics.
  */
 export const userVehicles = pgTable("user_vehicles", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -91,8 +90,6 @@ export const userVehicles = pgTable("user_vehicles", {
     .references(() => carModels.id, { onDelete: "cascade" }),
   year: integer("year"),
   subModel: text("sub_model"), // e.g. "Type R FL5", "GR Sport", "NISMO"
-  steeringOrientation: text("steering_orientation").notNull().default("RHD"), // "RHD" | "LHD"
-  plateNumber: text("plate_number"),
   isDefault: boolean("is_default").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

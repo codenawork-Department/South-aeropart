@@ -40,7 +40,7 @@ async function run() {
   await sql`CREATE INDEX IF NOT EXISTS "user_addresses_user_idx" ON "user_addresses" ("user_id");`;
   console.log("✓ user_addresses indexes created.");
 
-  // 3. Create user_vehicles table
+  // 3. Create or update user_vehicles table
   await sql`
     CREATE TABLE IF NOT EXISTS "user_vehicles" (
       "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -49,14 +49,20 @@ async function run() {
       "car_model_id" uuid NOT NULL REFERENCES "car_models"("id") ON DELETE CASCADE,
       "year" integer,
       "sub_model" text,
-      "steering_orientation" text DEFAULT 'RHD' NOT NULL,
-      "plate_number" text,
       "is_default" boolean DEFAULT false NOT NULL,
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
       "updated_at" timestamp with time zone DEFAULT now() NOT NULL
     );
   `;
   console.log("✓ user_vehicles table created or already exists.");
+
+  // Drop columns steering_orientation and plate_number if they still exist
+  await sql`
+    ALTER TABLE "user_vehicles"
+    DROP COLUMN IF EXISTS "steering_orientation",
+    DROP COLUMN IF EXISTS "plate_number";
+  `;
+  console.log("✓ steering_orientation and plate_number columns dropped from user_vehicles.");
 
   // 4. Index on user_vehicles
   await sql`CREATE INDEX IF NOT EXISTS "user_vehicles_user_idx" ON "user_vehicles" ("user_id");`;

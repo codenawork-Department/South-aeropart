@@ -25,9 +25,8 @@ import {
 const updateProfileSchema = z.object({
   fullName: z.string().trim().min(1, "Name is required").max(100).optional(),
   phone: z.string().trim().max(30).optional().nullable(),
-  language: z.enum(["th", "en", "ja"]).optional(),
+  language: z.enum(["th", "en"]).optional(),
   currency: z.enum(["THB", "USD", "EUR", "JPY", "SGD"]).optional(),
-  defaultSteering: z.enum(["RHD", "LHD"]).optional().nullable(),
 });
 
 const privacyConsentsSchema = z.object({
@@ -63,8 +62,6 @@ const saveVehicleSchema = z.object({
   carModelId: z.string().uuid("Invalid car model"),
   year: z.number().int().min(1970).max(new Date().getFullYear() + 2).optional().nullable(),
   subModel: z.string().trim().max(100).optional().nullable(),
-  steeringOrientation: z.enum(["RHD", "LHD"]).default("RHD"),
-  plateNumber: z.string().trim().max(50).optional().nullable(),
   isDefault: z.boolean().default(false),
 });
 
@@ -134,8 +131,6 @@ export async function getUserProfile() {
         carModelId: userVehicles.carModelId,
         year: userVehicles.year,
         subModel: userVehicles.subModel,
-        steeringOrientation: userVehicles.steeringOrientation,
-        plateNumber: userVehicles.plateNumber,
         isDefault: userVehicles.isDefault,
         createdAt: userVehicles.createdAt,
         brandName: brands.name,
@@ -191,7 +186,6 @@ export async function updateUserProfile(input: z.infer<typeof updateProfileSchem
         ...existingPreferences,
         ...(parsed.data.language ? { language: parsed.data.language } : {}),
         ...(parsed.data.currency ? { currency: parsed.data.currency } : {}),
-        ...(parsed.data.defaultSteering !== undefined ? { defaultSteering: parsed.data.defaultSteering } : {}),
       },
     };
 
@@ -458,8 +452,6 @@ export async function saveUserVehicle(input: SaveVehicleInput) {
           carModelId: data.carModelId,
           year: data.year ?? null,
           subModel: data.subModel ?? null,
-          steeringOrientation: data.steeringOrientation,
-          plateNumber: data.plateNumber ?? null,
           isDefault: data.isDefault,
           updatedAt: new Date(),
         })
@@ -477,8 +469,6 @@ export async function saveUserVehicle(input: SaveVehicleInput) {
         carModelId: data.carModelId,
         year: data.year ?? null,
         subModel: data.subModel ?? null,
-        steeringOrientation: data.steeringOrientation,
-        plateNumber: data.plateNumber ?? null,
         isDefault: data.isDefault,
       });
     }
@@ -577,7 +567,6 @@ export async function exportUserData() {
           id: userVehicles.id,
           year: userVehicles.year,
           subModel: userVehicles.subModel,
-          steeringOrientation: userVehicles.steeringOrientation,
           isDefault: userVehicles.isDefault,
           brandName: brands.name,
           modelName: carModels.name,

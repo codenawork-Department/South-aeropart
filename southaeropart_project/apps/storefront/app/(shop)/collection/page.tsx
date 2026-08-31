@@ -1,13 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Wind, Gauge, Check, Layers, Sparkles } from "lucide-react";
+import { ArrowRight, Wind, Gauge, Check, Layers, PackageX } from "lucide-react";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
-import { getFeaturedBundles } from "@/actions/bundle.actions";
+import { getActiveBundles } from "@/actions/bundle.actions";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function CollectionPage() {
-  const featuredBundles = await getFeaturedBundles();
+  const activeBundles = await getActiveBundles();
 
   return (
     <div className="bg-[#0A0A0A] min-h-screen">
@@ -29,7 +29,28 @@ export default async function CollectionPage() {
       {/* 2. Flagship Kits Showcase */}
       <section className="py-12 md:py-20">
         <div className="container-main space-y-12 md:space-y-16">
-          {featuredBundles.map((kit, index) => {
+          {activeBundles.length === 0 ? (
+            <div className="card p-10 md:p-16 bg-[#121212] border border-[#222222] text-center max-w-xl mx-auto rounded-sm shadow-2xl space-y-4 my-8">
+              <div className="w-14 h-14 rounded-full bg-[#181818] border border-[#2A2A2A] text-[var(--accent-red)] mx-auto flex items-center justify-center">
+                <Layers size={24} />
+              </div>
+              <h2 className="heading-md text-white">
+                ขณะนี้ยังไม่มีชุดเซ็ตที่เปิดวางจำหน่าย
+              </h2>
+              <p className="body-sm text-[var(--text-secondary)] max-w-md mx-auto">
+                ทีมงานกำลังจัดเตรียมชุดแต่งและแพ็กเกจใหม่ กรุณาแวะกลับมาดูในภายหลัง หรือเลือกชมชิ้นส่วนอะไหล่ทั้งหมดได้ที่หน้าสินค้า
+              </p>
+              <div className="pt-2">
+                <Link
+                  href="/products"
+                  className="btn-primary gap-2 text-xs py-2.5 px-6 inline-flex"
+                >
+                  เลือกชมสินค้าทั้งหมด <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          ) : (
+            activeBundles.map((kit, index) => {
             const isEven = index % 2 === 0;
             return (
               <div
@@ -128,7 +149,7 @@ export default async function CollectionPage() {
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
       </section>
 

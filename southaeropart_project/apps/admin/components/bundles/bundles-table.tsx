@@ -20,8 +20,13 @@ import {
   Sparkles,
   AlertCircle,
   X,
+  ChevronDown,
 } from "lucide-react";
-import { deleteBundleAction, toggleBundleFeaturedAction } from "@/actions/bundle.actions";
+import {
+  deleteBundleAction,
+  toggleBundleFeaturedAction,
+  updateBundleStatusAction,
+} from "@/actions/bundle.actions";
 
 export interface BundleRow {
   id: string;
@@ -85,6 +90,16 @@ export function BundlesTable({
     return map;
   });
 
+  // Optimistic status state
+  const [statusMap, setStatusMap] = useState<Record<string, BundleRow["status"]>>(() => {
+    const map: Record<string, BundleRow["status"]> = {};
+    initialBundles.forEach((b) => {
+      map[b.id] = b.status;
+    });
+    return map;
+  });
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+
   const [isTogglingFeaturedId, setIsTogglingFeaturedId] = useState<string | null>(null);
   const [toastNotification, setToastNotification] = useState<{
     type: "success" | "error" | "warning";
@@ -100,11 +115,14 @@ export function BundlesTable({
 
   // Sync state if props change
   useMemo(() => {
-    const map: Record<string, boolean> = {};
+    const fMap: Record<string, boolean> = {};
+    const sMap: Record<string, BundleRow["status"]> = {};
     initialBundles.forEach((b) => {
-      map[b.id] = b.isFeatured;
+      fMap[b.id] = b.isFeatured;
+      sMap[b.id] = b.status;
     });
-    setFeaturedMap(map);
+    setFeaturedMap(fMap);
+    setStatusMap(sMap);
   }, [initialBundles]);
 
   // Compute current featured list and count
@@ -118,6 +136,7 @@ export function BundlesTable({
   const filteredBundles = useMemo(() => {
     return initialBundles.filter((b) => {
       const isBundleFeatured = featuredMap[b.id];
+      const currentStatus = statusMap[b.id] ?? b.status;
 
       const matchesSearch =
         !searchTerm.trim() ||
@@ -125,7 +144,7 @@ export function BundlesTable({
         b.sku.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
-        statusFilter === "all" || b.status === statusFilter;
+        statusFilter === "all" || currentStatus === statusFilter;
 
       const matchesModel =
         modelFilter === "all" || b.carModelName === modelFilter;
@@ -134,7 +153,38 @@ export function BundlesTable({
 
       return matchesSearch && matchesStatus && matchesModel && matchesFeatured;
     });
-  }, [initialBundles, featuredMap, searchTerm, statusFilter, modelFilter, onlyFeatured]);
+  }, [initialBundles, featuredMap, statusMap, searchTerm, statusFilter, modelFilter, onlyFeatured]);
+
+  // Handle Quick Status Change
+  const handleStatusChange = async (
+    bundle: BundleRow,
+    newStatus: BundleRow["status"]
+  ) => {
+    const previousStatus = statusMap[bundle.id] ?? bundle.status;
+    if (newStatus === previousStatus) return;
+
+    // Optimistic update
+    setStatusMap((prev) => ({ ...prev, [bundle.id]: newStatus }));
+    setUpdatingStatusId(bundle.id);
+
+    try {
+      const res = await updateBundleStatusAction(bundle.id, newStatus);
+      setUpdatingStatusId(null);
+
+      if (res.success) {
+        showToast(res.message || "เปลี่ยนสถานะชุดเซ็ตสำเร็จ", "success");
+        router.refresh();
+      } else {
+        // Revert
+        setStatusMap((prev) => ({ ...prev, [bundle.id]: previousStatus }));
+        showToast(res.message || "ไม่สามารถเปลี่ยนสถานะชุดเซ็ตได้", "error");
+      }
+    } catch {
+      setUpdatingStatusId(null);
+      setStatusMap((prev) => ({ ...prev, [bundle.id]: previousStatus }));
+      showToast("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์", "error");
+    }
+  };
 
   // Handle Toggle Featured
   const handleToggleFeatured = async (bundle: BundleRow) => {
@@ -144,7 +194,7 @@ export function BundlesTable({
     // Check limit if turning ON
     if (nextFeatured && featuredCount >= MAX_FEATURED_BUNDLES) {
       showToast(
-        `สามารถเลือกเซ็ทแนะนำได้สูงสุด ${MAX_FEATURED_BUNDLES} ชุดเท่านั้น (ขณะนี้ครบ 4 ชุดแล้ว) กรุณายกเลิกเซ็ทอื่นก่อน`,
+        `สามารถเลือกชุดเซ็ตแนะนำได้สูงสุด ${MAX_FEATURED_BUNDLES} ชุดเท่านั้น กรุณายกเลิกชุดอื่นก่อน`,
         "warning"
       );
       return;
@@ -164,8 +214,8 @@ export function BundlesTable({
       if (res.success) {
         showToast(
           nextFeatured
-            ? `ตั้ง '${bundle.name}' เป็นเซ็ตแนะนำเรียบร้อยแล้ว (${res.data?.count ?? featuredCount + 1}/${MAX_FEATURED_BUNDLES} ชุด)`
-            : `ยกเลิกเซ็ตแนะนำสำหรับ '${bundle.name}' แล้ว (${res.data?.count ?? featuredCount - 1}/${MAX_FEATURED_BUNDLES} ชุด)`,
+            ? `ตั้ง '${bundle.name}' เป็นชุดเซ็ตแนะนำเรียบร้อยแล้ว`
+            : `ยกเลิกเซ็ตแนะนำสำหรับ '${bundle.name}' แล้ว`,
           "success"
         );
         router.refresh();
@@ -175,7 +225,7 @@ export function BundlesTable({
           ...prev,
           [bundle.id]: currentlyFeatured,
         }));
-        showToast(res.message || "ไม่สามารถเปลี่ยนสถานะเซ็ทแนะนำได้", "error");
+        showToast(res.message || "ไม่สามารถเปลี่ยนสถานะเซ็ตแนะนำได้", "error");
       }
     } catch (err: any) {
       setIsTogglingFeaturedId(null);
@@ -203,37 +253,63 @@ export function BundlesTable({
     });
   };
 
-  const statusBadge = (status: BundleRow["status"]) => {
-    switch (status) {
-      case "active":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            วางขายอยู่ (Active)
-          </span>
-        );
-      case "draft":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
-            ฉบับร่าง (Draft)
-          </span>
-        );
-      case "out_of_stock":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
-            สินค้าหมด
-          </span>
-        );
-      case "archived":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-500/10 text-gray-400 border border-gray-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-            เก็บถาวร
-          </span>
-        );
+  const renderStatusSelector = (bundle: BundleRow) => {
+    const currentStatus = statusMap[bundle.id] ?? bundle.status;
+    const isUpdating = updatingStatusId === bundle.id;
+
+    const getStatusConfig = (st: BundleRow["status"]) => {
+      switch (st) {
+        case "active":
+          return {
+            dotColor: "bg-emerald-400",
+            className: "bg-emerald-950/70 text-emerald-300 border-emerald-700/70 hover:border-emerald-500",
+          };
+        case "draft":
+          return {
+            dotColor: "bg-zinc-400",
+            className: "bg-zinc-800/80 text-zinc-300 border-zinc-700 hover:border-zinc-500",
+          };
+        case "out_of_stock":
+          return {
+            dotColor: "bg-amber-400",
+            className: "bg-amber-950/70 text-amber-300 border-amber-700/70 hover:border-amber-500",
+          };
+        case "archived":
+          return {
+            dotColor: "bg-gray-400",
+            className: "bg-gray-900 text-gray-400 border-gray-800 hover:border-gray-600",
+          };
+      }
+    };
+
+    const config = getStatusConfig(currentStatus);
+
+    if (isUpdating) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-zinc-900 border border-zinc-700 text-zinc-300">
+          <Loader2 size={11} className="animate-spin text-amber-400" />
+          <span>กำลังบันทึก...</span>
+        </span>
+      );
     }
+
+    return (
+      <div className="relative inline-flex items-center group">
+        <select
+          value={currentStatus}
+          onChange={(e) => handleStatusChange(bundle, e.target.value as BundleRow["status"])}
+          className={`appearance-none pl-6 pr-6 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-500 ${config.className}`}
+          title="คลิกเพื่อเปลี่ยนสถานะชุดเซ็ตทันที"
+        >
+          <option value="active" className="bg-[#181818] text-emerald-400 py-1">● วางขาย (Active)</option>
+          <option value="draft" className="bg-[#181818] text-zinc-300 py-1">● ร่าง (Draft)</option>
+          <option value="out_of_stock" className="bg-[#181818] text-amber-400 py-1">● สินค้าหมด (Out of Stock)</option>
+          <option value="archived" className="bg-[#181818] text-gray-400 py-1">● เก็บเข้ากรุ (Archived)</option>
+        </select>
+        <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${config.dotColor}`} />
+        <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-current opacity-60 group-hover:opacity-100 transition-opacity" />
+      </div>
+    );
   };
 
   return (
@@ -628,7 +704,7 @@ export function BundlesTable({
 
                       {/* Status */}
                       <td className="py-4 px-4 text-center whitespace-nowrap">
-                        {statusBadge(bundle.status)}
+                        {renderStatusSelector(bundle)}
                       </td>
 
                       {/* Actions */}
