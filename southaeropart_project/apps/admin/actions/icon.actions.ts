@@ -11,6 +11,7 @@ import {
   asc,
   ilike,
   or,
+  sql,
 } from "@repo/db";
 import { validateSession, logAuditEvent } from "@/lib/auth";
 import { uploadImage } from "@repo/lib";
@@ -59,6 +60,11 @@ export async function getIconsAction(filter?: {
   type?: string;
   onlyActive?: boolean;
 }): Promise<ActionResult<Array<typeof icons.$inferSelect>>> {
+  const session = await validateSession();
+  if (!session) {
+    return { success: false, message: "กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
   try {
     const conditions = [];
 
@@ -437,27 +443,27 @@ export async function seedInitialIconsAction(): Promise<ActionResult<{ insertedC
   ];
 
   try {
-    let insertedCount = 0;
+    const iconSlugs = INITIAL_ICONS.map((i) => i.slug);
+    const existing = await db
+      .select({ slug: icons.slug })
+      .from(icons)
+      .where(sql`${icons.slug} = ANY(${iconSlugs})`);
+    const existingSlugSet = new Set(existing.map((e) => e.slug));
 
-    for (const item of INITIAL_ICONS) {
-      const existing = await db
-        .select({ id: icons.id })
-        .from(icons)
-        .where(eq(icons.slug, item.slug))
-        .limit(1);
-
-      if (existing.length === 0) {
-        await db.insert(icons).values({
+    const toInsert = INITIAL_ICONS.filter((item) => !existingSlugSet.has(item.slug));
+    if (toInsert.length > 0) {
+      await db.insert(icons).values(
+        toInsert.map((item) => ({
           name: item.name,
           slug: item.slug,
           category: item.category,
           type: item.type,
           lucideName: item.lucideName,
           isActive: true,
-        });
-        insertedCount++;
-      }
+        }))
+      );
     }
+    const insertedCount = toInsert.length;
 
     await logAuditEvent({
       adminId: session.id,

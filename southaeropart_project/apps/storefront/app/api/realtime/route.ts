@@ -74,8 +74,27 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/realtime
  * - Called by Admin server actions when products/bundles/visibility change
+ * - Protected by a shared secret to prevent unauthorised cache busting / SSE spam
  */
 export async function POST(request: NextRequest) {
+  // ── Auth: shared-secret validation ──────────────────────────────────────
+  const secret = process.env.REALTIME_SECRET;
+  if (!secret) {
+    // Refuse requests when the secret env var is not configured — fail secure.
+    return NextResponse.json(
+      { success: false, error: "Realtime endpoint is not configured" },
+      { status: 503 }
+    );
+  }
+  const providedSecret = request.headers.get("x-realtime-secret");
+  if (!providedSecret || providedSecret !== secret) {
+    return NextResponse.json(
+      { success: false, error: "Forbidden" },
+      { status: 403 }
+    );
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   try {
     const body = await request.json().catch(() => ({}));
     const action = body?.action || "catalog_update";

@@ -132,6 +132,17 @@ function slugify(text: string): string {
  * Fetch all categories, brands, and car models for dropdown selectors
  */
 export async function getCategoriesAndBrandsAction() {
+  const admin = await validateSession();
+  if (!admin) {
+    return {
+      categories: [],
+      brands: [],
+      carModels: [],
+      materials: [],
+      installations: [],
+    };
+  }
+
   const [allCategories, allBrands, allModels, allMaterials, allInstallations] = await Promise.all([
     db
       .select({
@@ -213,6 +224,19 @@ export async function getProductsAction(params?: {
   page?: number;
   limit?: number;
 }) {
+  const admin = await validateSession();
+  if (!admin) {
+    return {
+      items: [],
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+      },
+    };
+  }
+
   const page = Math.max(1, params?.page || 1);
   const limit = Math.min(100, Math.max(1, params?.limit || 20));
   const offset = (page - 1) * limit;
@@ -337,6 +361,9 @@ export async function getProductsAction(params?: {
  * Get product by ID with all relations, images, compatibility items, and carModel
  */
 export async function getProductByIdAction(id: string) {
+  const admin = await validateSession();
+  if (!admin) return null;
+
   const [product] = await db
     .select()
     .from(products)
@@ -1088,14 +1115,14 @@ export async function toggleProductFeaturedAction(
       return { success: false, message: "ไม่พบสินค้าเดี่ยวนี้ในระบบ หรือสินค้านี้เป็นประเภทชุดเซ็ต" };
     }
 
-    // Update isFeatured
+    // Update isFeatured — filter on productType to prevent cross-type mutation
     await db
       .update(products)
       .set({
         isFeatured,
         updatedAt: new Date(),
       })
-      .where(eq(products.id, productId));
+      .where(and(eq(products.id, productId), eq(products.productType, "single")));
 
     // Get current total featured single products count
     const [countRes] = await db
@@ -1172,7 +1199,7 @@ export async function updateProductStatusAction(
         status,
         updatedAt: new Date(),
       })
-      .where(eq(products.id, productId));
+      .where(and(eq(products.id, productId), eq(products.productType, "single")));
 
     const statusLabels: Record<string, string> = {
       active: "วางขาย (Active)",
