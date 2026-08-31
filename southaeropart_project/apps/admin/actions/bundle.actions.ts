@@ -94,6 +94,15 @@ function slugify(text: string): string {
  * Get single parts available for a specific Car Model, grouped by Category
  */
 export async function getAvailablePartsForModelAction(carModelId: string) {
+  const admin = await validateSession();
+  if (!admin) {
+    return {
+      success: false,
+      parts: [],
+      message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ",
+    };
+  }
+
   try {
     const parts = await db
       .select({
@@ -176,6 +185,14 @@ export async function getBundlesAction(params?: {
   status?: string;
   carModelId?: string;
 }) {
+  const admin = await validateSession();
+  if (!admin) {
+    return {
+      items: [],
+      pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
+    };
+  }
+
   const page = Math.max(1, params?.page || 1);
   const limit = Math.min(100, Math.max(1, params?.limit || 20));
   const offset = (page - 1) * limit;
@@ -327,6 +344,11 @@ export async function getBundlesAction(params?: {
  * Get detailed bundle info by ID for editing
  */
 export async function getBundleDetailAction(id: string) {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
   try {
     const [bundle] = await db
       .select({
@@ -1158,7 +1180,7 @@ export async function updateBundleStatusAction(
         status,
         updatedAt: new Date(),
       })
-      .where(eq(products.id, bundleId));
+      .where(and(eq(products.id, bundleId), eq(products.productType, "bundle")));
 
     const statusLabels: Record<string, string> = {
       active: "วางขาย (Active)",

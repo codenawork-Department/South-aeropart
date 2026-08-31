@@ -37,7 +37,13 @@ export interface ActionResult<T = unknown> {
  * ดึงข้อมูล Hero Cards ทั้งหมด พร้อมข้อมูลแบรนด์และรุ่นรถยนต์สำหรับแสดงผลในหน้า Admin
  */
 export async function getHeroCardsAdminAction() {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, cards: [], brands: [], models: [] };
+  }
+
   try {
+
     const [cardRows, brandRows, modelRows] = await Promise.all([
       db
         .select({

@@ -72,6 +72,18 @@ export async function verifySessionToken(
   }
 }
 
+import { createHash, timingSafeEqual, randomUUID } from "node:crypto";
+
+function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function verifyTokenHash(token: string, storedHash: string): boolean {
+  const computed = hashToken(token);
+  if (computed.length !== storedHash.length) return false;
+  return timingSafeEqual(Buffer.from(computed), Buffer.from(storedHash));
+}
+
 // ─── Session CRUD ───
 
 /**
@@ -84,29 +96,24 @@ export async function createSession(
   ipAddress?: string,
   userAgent?: string
 ): Promise<string> {
+  const sessionId = randomUUID();
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
 
-  // Create session row first to get the ID
-  const [session] = await db
+  // Sign a JWT containing the session ID
+  const token = await signSessionToken(sessionId);
+  const tokenHash = hashToken(token);
+
+  // Create session row with final token hash in a single query
+  await db
     .insert(adminSessions)
     .values({
+      id: sessionId,
       adminId,
-      tokenHash: "pending", // placeholder, updated below
+      tokenHash,
       ipAddress: ipAddress ?? null,
       userAgent: userAgent ?? null,
       expiresAt,
-    })
-    .returning({ id: adminSessions.id });
-
-  // Sign a JWT containing the session ID
-  const token = await signSessionToken(session.id);
-
-  // Store a hash of the token so we can verify it server-side
-  const tokenHash = await hash(token, 10);
-  await db
-    .update(adminSessions)
-    .set({ tokenHash })
-    .where(eq(adminSessions.id, session.id));
+    });
 
   // Set the HTTP-only, secure cookie
   const cookieStore = await cookies();
@@ -118,7 +125,7 @@ export async function createSession(
     maxAge: SESSION_DURATION_MS / 1000,
   });
 
-  return session.id;
+  return sessionId;
 }
 
 /**
@@ -133,33 +140,34 @@ export async function validateSession(): Promise<AdminUser | null> {
   const sessionId = await verifySessionToken(token);
   if (!sessionId) return null;
 
-  // Look up the session — must not be revoked and not expired
-  const [session] = await db
-    .select()
+  // Single query join: fetch valid session and active admin user together
+  const [row] = await db
+    .select({
+      session: adminSessions,
+      admin: adminUsers,
+    })
     .from(adminSessions)
+    .innerJoin(adminUsers, eq(adminUsers.id, adminSessions.adminId))
     .where(
       and(
         eq(adminSessions.id, sessionId),
         isNull(adminSessions.revokedAt),
-        gt(adminSessions.expiresAt, new Date())
+        gt(adminSessions.expiresAt, new Date()),
+        eq(adminUsers.isActive, true)
       )
     )
     .limit(1);
 
-  if (!session) return null;
+  if (!row) return null;
 
-  // Verify the token matches the stored hash (prevents session ID forgery)
-  const isTokenValid = await compare(token, session.tokenHash);
+  // Verify token hash (supports SHA-256 and legacy bcrypt)
+  const isTokenValid = row.session.tokenHash.startsWith("$2")
+    ? await compare(token, row.session.tokenHash)
+    : verifyTokenHash(token, row.session.tokenHash);
+
   if (!isTokenValid) return null;
 
-  // Fetch the admin user — must be active
-  const [admin] = await db
-    .select()
-    .from(adminUsers)
-    .where(and(eq(adminUsers.id, session.adminId), eq(adminUsers.isActive, true)))
-    .limit(1);
-
-  return admin ?? null;
+  return row.admin;
 }
 
 /**

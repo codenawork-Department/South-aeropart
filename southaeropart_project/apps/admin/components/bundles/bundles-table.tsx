@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -114,7 +114,7 @@ export function BundlesTable({
   };
 
   // Sync state if props change
-  useMemo(() => {
+  useEffect(() => {
     const fMap: Record<string, boolean> = {};
     const sMap: Record<string, BundleRow["status"]> = {};
     initialBundles.forEach((b) => {
@@ -301,10 +301,10 @@ export function BundlesTable({
           className={`appearance-none pl-6 pr-6 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-500 ${config.className}`}
           title="คลิกเพื่อเปลี่ยนสถานะชุดเซ็ตทันที"
         >
-          <option value="active" className="bg-[#181818] text-emerald-400 py-1">● วางขาย (Active)</option>
-          <option value="draft" className="bg-[#181818] text-zinc-300 py-1">● ร่าง (Draft)</option>
-          <option value="out_of_stock" className="bg-[#181818] text-amber-400 py-1">● สินค้าหมด (Out of Stock)</option>
-          <option value="archived" className="bg-[#181818] text-gray-400 py-1">● เก็บเข้ากรุ (Archived)</option>
+          <option value="active" className="bg-[#181818] text-emerald-400 py-1">วางขาย (Active)</option>
+          <option value="draft" className="bg-[#181818] text-zinc-300 py-1">ร่าง (Draft)</option>
+          <option value="out_of_stock" className="bg-[#181818] text-amber-400 py-1">สินค้าหมด (Out of Stock)</option>
+          <option value="archived" className="bg-[#181818] text-gray-400 py-1">เก็บเข้ากรุ (Archived)</option>
         </select>
         <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${config.dotColor}`} />
         <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-current opacity-60 group-hover:opacity-100 transition-opacity" />

@@ -101,7 +101,7 @@ export async function loginAction(
     await logAuditEvent({
       adminId: null,
       action: "admin.login_failed",
-      metadata: { reason: "email_not_found", email },
+      metadata: { reason: "email_not_found" },
     });
     return { success: false, error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
   }

@@ -87,6 +87,9 @@ export interface CatalogActionResult<T = unknown> {
 // ─── Car Brands Actions ───────────────────────────────────────────────────────
 
 export async function getBrandsAction() {
+  const admin = await validateSession();
+  if (!admin) return [];
+
   const brandRows = await db
     .select({
       id: brands.id,
@@ -99,7 +102,7 @@ export async function getBrandsAction() {
     .from(brands)
     .orderBy(asc(brands.name));
 
-  // Get model counts and product counts per brand
+  // Get model counts and product counts per brand — single query each, no N+1
   const [modelCounts, productCounts] = await Promise.all([
     db
       .select({
@@ -243,6 +246,9 @@ export async function deleteBrandAction(id: string): Promise<CatalogActionResult
 // ─── Car Models Actions ───────────────────────────────────────────────────────
 
 export async function getCarModelsAction(brandId?: string) {
+  const admin = await validateSession();
+  if (!admin) return [];
+
   const query = db
     .select({
       id: carModels.id,
@@ -263,7 +269,7 @@ export async function getCarModelsAction(brandId?: string) {
 
   const modelRows = brandId ? await query.where(eq(carModels.brandId, brandId)) : await query;
 
-  // Get products count per car model
+  // Get products count per car model — single aggregation, no N+1
   const productCounts = await db
     .select({
       carModelId: products.carModelId,
@@ -409,6 +415,9 @@ export async function deleteCarModelAction(id: string): Promise<CatalogActionRes
 // ─── Aeropart Categories Actions ──────────────────────────────────────────────
 
 export async function getCategoriesAction() {
+  const admin = await validateSession();
+  if (!admin) return [];
+
   const categoryRows = await db
     .select({
       id: categories.id,
@@ -422,7 +431,7 @@ export async function getCategoriesAction() {
     .from(categories)
     .orderBy(asc(categories.position), asc(categories.name));
 
-  // Get products count per category
+  // Get products count per category — single aggregation, no N+1
   const productCounts = await db
     .select({
       categoryId: products.categoryId,
@@ -559,7 +568,7 @@ export async function seedInitialCatalogAction(): Promise<CatalogActionResult> {
   if (!admin) return { success: false, message: "Unauthorized" };
 
   try {
-    // 1. Aeropart Categories
+    // 1. Aeropart Categories — batch check instead of per-slug N+1
     const defaultCategories = [
       { name: "Ducktail Spoiler", slug: "ducktail-spoiler", position: 1 },
       { name: "Front Lip Spoiler", slug: "front-lip", position: 2 },
@@ -573,16 +582,18 @@ export async function seedInitialCatalogAction(): Promise<CatalogActionResult> {
       { name: "Carbon Mirror Covers", slug: "mirror-covers", position: 10 },
     ];
 
-    for (const cat of defaultCategories) {
-      const [existing] = await db.select().from(categories).where(eq(categories.slug, cat.slug)).limit(1);
-      if (!existing) {
-        await db.insert(categories).values({
-          name: cat.name,
-          slug: cat.slug,
-          position: cat.position,
-          isActive: true,
-        });
-      }
+    const catSlugs = defaultCategories.map((c) => c.slug);
+    const existingCats = await db
+      .select({ slug: categories.slug })
+      .from(categories)
+      .where(sql`${categories.slug} = ANY(${catSlugs})`);
+    const existingCatSlugs = new Set(existingCats.map((c) => c.slug));
+
+    const catsToInsert = defaultCategories.filter((c) => !existingCatSlugs.has(c.slug));
+    if (catsToInsert.length > 0) {
+      await db.insert(categories).values(
+        catsToInsert.map((c) => ({ name: c.name, slug: c.slug, position: c.position, isActive: true }))
+      );
     }
 
     // 2. Car Brands & Iconic Models
@@ -646,38 +657,46 @@ export async function seedInitialCatalogAction(): Promise<CatalogActionResult> {
       },
     ];
 
+    // Batch-fetch all existing brands in one query
+    const brandSlugs = brandModelData.map((b) => b.brand.slug);
+    const existingBrands = await db
+      .select()
+      .from(brands)
+      .where(sql`${brands.slug} = ANY(${brandSlugs})`);
+    const brandMap = new Map(existingBrands.map((b) => [b.slug, b]));
+
     for (const item of brandModelData) {
-      let [brand] = await db.select().from(brands).where(eq(brands.slug, item.brand.slug)).limit(1);
+      let brand = brandMap.get(item.brand.slug);
       if (!brand) {
         const [inserted] = await db
           .insert(brands)
-          .values({
-            name: item.brand.name,
-            slug: item.brand.slug,
-            isActive: true,
-          })
+          .values({ name: item.brand.name, slug: item.brand.slug, isActive: true })
           .returning();
         brand = inserted;
+        brandMap.set(brand.slug, brand);
       }
 
-      for (const m of item.models) {
-        const [existingModel] = await db
-          .select()
-          .from(carModels)
-          .where(and(eq(carModels.brandId, brand.id), eq(carModels.slug, m.slug)))
-          .limit(1);
+      // Batch-fetch existing models for this brand in one query
+      const modelSlugs = item.models.map((m) => m.slug);
+      const existingModels = await db
+        .select({ slug: carModels.slug })
+        .from(carModels)
+        .where(and(eq(carModels.brandId, brand.id), sql`${carModels.slug} = ANY(${modelSlugs})`));
+      const existingModelSlugs = new Set(existingModels.map((m) => m.slug));
 
-        if (!existingModel) {
-          await db.insert(carModels).values({
-            brandId: brand.id,
+      const modelsToInsert = item.models.filter((m) => !existingModelSlugs.has(m.slug));
+      if (modelsToInsert.length > 0) {
+        await db.insert(carModels).values(
+          modelsToInsert.map((m) => ({
+            brandId: brand!.id,
             name: m.name,
             slug: m.slug,
             generation: m.generation || null,
             yearFrom: m.yearFrom || null,
             yearTo: m.yearTo || null,
             isActive: true,
-          });
-        }
+          }))
+        );
       }
     }
 
@@ -695,7 +714,11 @@ export async function seedInitialCatalogAction(): Promise<CatalogActionResult> {
 
 // ─── Material Actions ─────────────────────────────────────────────────────────
 
+
 export async function getMaterialsAction() {
+  const admin = await validateSession();
+  if (!admin) return [];
+
   const rows = await db
     .select({
       id: materials.id,
@@ -709,18 +732,19 @@ export async function getMaterialsAction() {
     .from(materials)
     .orderBy(asc(materials.name));
 
-  // เพิ่มจำนวนสินค้าที่ใช้วัสดุนี้
-  const withCounts = await Promise.all(
-    rows.map(async (mat) => {
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(products)
-        .where(eq(products.materialId, mat.id));
-      return { ...mat, productsCount: Number(total) };
-    })
+  // Batch count — single query instead of N+1 per material
+  const productCounts = await db
+    .select({ materialId: products.materialId, total: count() })
+    .from(products)
+    .groupBy(products.materialId);
+
+  const countMap = new Map(
+    productCounts
+      .filter((r): r is { materialId: string; total: number } => Boolean(r.materialId))
+      .map((r) => [r.materialId, Number(r.total)])
   );
 
-  return withCounts;
+  return rows.map((mat) => ({ ...mat, productsCount: countMap.get(mat.id) ?? 0 }));
 }
 
 export async function createMaterialAction(
@@ -892,6 +916,9 @@ export async function deleteMaterialAction(id: string): Promise<CatalogActionRes
 // ─── Installation Actions ───────────────────────────────────────────────────
 
 export async function getInstallationsAction() {
+  const admin = await validateSession();
+  if (!admin) return [];
+
   const rows = await db
     .select({
       id: installations.id,
@@ -905,18 +932,19 @@ export async function getInstallationsAction() {
     .from(installations)
     .orderBy(asc(installations.name));
 
-  // นับจำนวนสินค้าที่ใช้วิธีการติดตั้งนี้
-  const withCounts = await Promise.all(
-    rows.map(async (inst) => {
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(products)
-        .where(eq(products.installationId, inst.id));
-      return { ...inst, productsCount: Number(total) };
-    })
+  // Batch count — single query instead of N+1 per installation
+  const productCounts = await db
+    .select({ installationId: products.installationId, total: count() })
+    .from(products)
+    .groupBy(products.installationId);
+
+  const countMap = new Map(
+    productCounts
+      .filter((r): r is { installationId: string; total: number } => Boolean(r.installationId))
+      .map((r) => [r.installationId, Number(r.total)])
   );
 
-  return withCounts;
+  return rows.map((inst) => ({ ...inst, productsCount: countMap.get(inst.id) ?? 0 }));
 }
 
 export async function createInstallationAction(

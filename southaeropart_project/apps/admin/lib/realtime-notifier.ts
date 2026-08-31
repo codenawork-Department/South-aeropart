@@ -10,6 +10,12 @@ export async function notifyStorefrontCatalogChange(action: string, payload?: Re
       process.env.STOREFRONT_URL ||
       "http://localhost:3000";
 
+    const secret = process.env.REALTIME_SECRET;
+    if (!secret) {
+      // Skip notification when the shared secret is not configured — fail safe.
+      return;
+    }
+
     // Non-blocking fetch with short timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -18,6 +24,7 @@ export async function notifyStorefrontCatalogChange(action: string, payload?: Re
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-realtime-secret": secret,
       },
       body: JSON.stringify({
         action,
@@ -35,3 +42,4 @@ export async function notifyStorefrontCatalogChange(action: string, payload?: Re
     // Fail-safe
   }
 }
+
