@@ -1,0 +1,4 @@
+{
+  "name": "south-aero-mcp",
+  "description": "MCP Servers configuration for South Aero Parts Platform (PostgreSQL, Puppeteer, Fetch, Memory, GitHub)"
+}
