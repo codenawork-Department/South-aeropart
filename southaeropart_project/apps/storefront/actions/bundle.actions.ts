@@ -228,14 +228,15 @@ export async function getFeaturedBundles(): Promise<FeaturedBundleData[]> {
       .where(
         and(
           eq(products.productType, "bundle"),
-          eq(products.isFeatured, true)
+          eq(products.isFeatured, true),
+          eq(products.status, "active")
         )
       )
       .orderBy(desc(products.updatedAt), desc(products.createdAt))
       .limit(4);
 
     if (!rawBundles || rawBundles.length === 0) {
-      return FALLBACK_FEATURED_BUNDLES;
+      return [];
     }
 
     const bundleIds = rawBundles.map((b) => b.id);
@@ -392,7 +393,206 @@ export async function getFeaturedBundles(): Promise<FeaturedBundleData[]> {
     return result;
   } catch (error) {
     console.error("[getFeaturedBundles] Error fetching featured bundles from DB:", error);
-    return FALLBACK_FEATURED_BUNDLES;
+    return [];
+  }
+}
+
+/**
+ * ดึงข้อมูลชุดเซ็ตทั้งหมดที่สถานะพร้อมขาย (status = 'active') สำหรับหน้า Collection (/collection)
+ * เรียงตามลำดับล่าสุดที่อัปเดต/สร้าง
+ */
+export async function getActiveBundles(): Promise<FeaturedBundleData[]> {
+  try {
+    const rawBundles = await db
+      .select({
+        id: products.id,
+        sku: products.sku,
+        slug: products.slug,
+        name: products.name,
+        description: products.description,
+        shortDescription: products.shortDescription,
+        price: products.price,
+        compareAtPrice: products.compareAtPrice,
+        status: products.status,
+        isFeatured: products.isFeatured,
+        isCustomCfd: products.isCustomCfd,
+        downforceN: products.downforceN,
+        customDownforceN: products.customDownforceN,
+        dragN: products.dragN,
+        customDragN: products.customDragN,
+        downforceBefore: products.downforceBefore,
+        downforceAfter: products.downforceAfter,
+        dragBefore: products.dragBefore,
+        dragAfter: products.dragAfter,
+        brandId: products.brandId,
+        brandName: brands.name,
+        brandSlug: brands.slug,
+        carModelId: products.carModelId,
+        carModelName: carModels.name,
+        carModelGen: carModels.generation,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+      })
+      .from(products)
+      .leftJoin(brands, eq(products.brandId, brands.id))
+      .leftJoin(carModels, eq(products.carModelId, carModels.id))
+      .where(
+        and(
+          eq(products.productType, "bundle"),
+          eq(products.status, "active")
+        )
+      )
+      .orderBy(desc(products.updatedAt), desc(products.createdAt));
+
+    if (!rawBundles || rawBundles.length === 0) {
+      return [];
+    }
+
+    const bundleIds = rawBundles.map((b) => b.id);
+
+    const [imagesRows, childRows] = await Promise.all([
+      db
+        .select({
+          productId: productImages.productId,
+          secureUrl: productImages.secureUrl,
+          position: productImages.position,
+          isPrimary: productImages.isPrimary,
+        })
+        .from(productImages)
+        .where(inArray(productImages.productId, bundleIds))
+        .orderBy(asc(productImages.position)),
+
+      db
+        .select({
+          bundleProductId: productBundleItems.bundleProductId,
+          childProductId: productBundleItems.childProductId,
+          position: productBundleItems.position,
+          childName: products.name,
+          childSlug: products.slug,
+          childSku: products.sku,
+          childPrice: products.price,
+          childDownforce: products.downforceN,
+          childDrag: products.dragN,
+          categoryName: categories.name,
+          categorySlug: categories.slug,
+        })
+        .from(productBundleItems)
+        .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(inArray(productBundleItems.bundleProductId, bundleIds))
+        .orderBy(asc(productBundleItems.position)),
+    ]);
+
+    const imagesMap: Record<string, string[]> = {};
+    const primaryImageMap: Record<string, string> = {};
+
+    imagesRows.forEach((img) => {
+      if (!imagesMap[img.productId]) {
+        imagesMap[img.productId] = [];
+      }
+      imagesMap[img.productId].push(img.secureUrl);
+      if (img.isPrimary || !primaryImageMap[img.productId]) {
+        primaryImageMap[img.productId] = img.secureUrl;
+      }
+    });
+
+    const childPartsMap: Record<string, FeaturedBundleItem[]> = {};
+
+    childRows.forEach((item) => {
+      if (!childPartsMap[item.bundleProductId]) {
+        childPartsMap[item.bundleProductId] = [];
+      }
+      childPartsMap[item.bundleProductId].push({
+        id: item.childProductId,
+        name: item.childName,
+        slug: item.childSlug,
+        sku: item.childSku,
+        price: item.childPrice,
+        categoryName: item.categoryName || "Aero Part",
+        downforceN: item.childDownforce ? Number(item.childDownforce) : undefined,
+        dragN: item.childDrag ? Number(item.childDrag) : undefined,
+      });
+    });
+
+    return rawBundles.map((b) => {
+      const childParts = childPartsMap[b.id] || [];
+      const imagesList = imagesMap[b.id] || [];
+      const primaryImage = primaryImageMap[b.id] || imagesList[0] || "/images/FRONT.png";
+
+      const dynamicSum = childParts.reduce((acc, part) => acc + Number(part.price || 0), 0);
+      const effectivePriceNum = dynamicSum > 0 ? dynamicSum : Number(b.price || 0);
+      const effectivePriceStr = effectivePriceNum.toFixed(2);
+      const formattedPrice = `฿${effectivePriceNum.toLocaleString("th-TH", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })} THB`;
+
+      const effectiveDownforce =
+        b.isCustomCfd && b.customDownforceN ? Number(b.customDownforceN) : Number(b.downforceN || 0);
+      const effectiveDrag =
+        b.isCustomCfd && b.customDragN ? Number(b.customDragN) : Number(b.dragN || 0);
+
+      const downforceBadge = `${effectiveDownforce >= 0 ? "+" : ""}${effectiveDownforce} N`;
+      const dragBadge = `${effectiveDrag > 0 ? "+" : ""}${effectiveDrag} N`;
+
+      const pieces = childParts.map((p) => `${p.categoryName}: ${p.name}`);
+
+      const slides: FeaturedBundleSlide[] =
+        imagesList.length > 0
+          ? imagesList.map((imgUrl, idx) => ({
+              id: `${b.id}-slide-${idx}`,
+              title: `${b.name} — View 0${idx + 1}`,
+              image: imgUrl,
+              caption: b.shortDescription || `${b.brandName || ""} ${b.carModelName || ""} Complete Aerodynamic Kit`,
+            }))
+          : [
+              {
+                id: `${b.id}-default-1`,
+                title: `${b.name} — Front View`,
+                image: primaryImage,
+                caption: b.shortDescription || "Precision-engineered aerodynamic transformation.",
+              },
+            ];
+
+      const tagline =
+        b.shortDescription ||
+        `FLAGSHIP ${b.brandName ? b.brandName.toUpperCase() : ""} ${b.carModelName ? b.carModelName.toUpperCase() : ""} PERFORMANCE BUILD`;
+
+      return {
+        id: b.id,
+        name: b.name,
+        slug: b.slug,
+        sku: b.sku,
+        tagline,
+        description:
+          b.description ||
+          `Precision engineered to elevate the stance and aerodynamic downforce of your ${b.brandName || ""} ${b.carModelName || ""}. Functional, track-tested, and built to stand out.`,
+        brandName: b.brandName || "South Aero",
+        carModelName: b.carModelName || "Aero Spec",
+        carModelGen: b.carModelGen || null,
+        price: effectivePriceStr,
+        formattedPrice,
+        downforceBadge,
+        dragBadge,
+        downforceN: effectiveDownforce,
+        dragN: effectiveDrag,
+        downforceBefore: b.downforceBefore ? Number(b.downforceBefore) : undefined,
+        downforceAfter: b.downforceAfter ? Number(b.downforceAfter) : undefined,
+        dragBefore: b.dragBefore ? Number(b.dragBefore) : undefined,
+        dragAfter: b.dragAfter ? Number(b.dragAfter) : undefined,
+        isCustomCfd: b.isCustomCfd,
+        primaryImage,
+        images: imagesList.length > 0 ? imagesList : [primaryImage],
+        slides,
+        pieces: pieces.length > 0 ? pieces : ["Full Aerodynamic Kit Package"],
+        bundleItems: childParts,
+        designer: "South Aero Design Lab",
+        link: `/products/${b.slug}`,
+      };
+    });
+  } catch (error) {
+    console.error("[getActiveBundles] Error fetching active bundles from DB:", error);
+    return [];
   }
 }
 

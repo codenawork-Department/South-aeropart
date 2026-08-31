@@ -3,7 +3,7 @@ import { getProductBySlug } from "@/actions/bundle.actions";
 import { ProductDetailClient } from "@/components/products/ProductDetailClient";
 import { MOCK_PRODUCTS } from "@/lib/mock-data";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function ProductDetailPage({
   params,

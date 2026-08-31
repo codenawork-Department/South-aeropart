@@ -172,10 +172,10 @@ graph TD
 การตั้งค่า MCP ทั้งหมดถูกวางไว้ในตำแหน่งมาตรฐานของโปรเจกต์:
 
 1. **Workspace Plugin Config (Antigravity Discovery)**:
-   - Path: [`.agents/plugins/south-aero-mcp/mcp_config.json`](file:///c:/Users/sirac/Downloads/southaeropart_project/southaeropart_project/.agents/plugins/south-aero-mcp/mcp_config.json)
-   - Manifest: [`.agents/plugins/south-aero-mcp/plugin.json`](file:///c:/Users/sirac/Downloads/southaeropart_project/southaeropart_project/.agents/plugins/south-aero-mcp/plugin.json)
+   - Path: [`.agents/plugins/south-aero-mcp/mcp_config.json`](file:///c:/Users/thana/south_aero_project/South-aeropart/southaeropart_project/.agents/plugins/south-aero-mcp/mcp_config.json)
+   - Manifest: [`.agents/plugins/south-aero-mcp/plugin.json`](file:///c:/Users/thana/south_aero_project/South-aeropart/southaeropart_project/.agents/plugins/south-aero-mcp/plugin.json)
 2. **VS Code / IDE Configuration**:
-   - Path: [`.vscode/mcp.json`](file:///c:/Users/sirac/Downloads/southaeropart_project/southaeropart_project/.vscode/mcp.json)
+   - Path: [`.vscode/mcp.json`](file:///c:/Users/thana/south_aero_project/South-aeropart/southaeropart_project/.vscode/mcp.json)
 
 ---
 

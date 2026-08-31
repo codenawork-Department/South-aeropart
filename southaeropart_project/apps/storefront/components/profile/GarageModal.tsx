@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { X, Car, Compass, Loader2, Sparkles } from "lucide-react";
+import { X, Car, Loader2, Sparkles } from "lucide-react";
 import { VehicleBrandData } from "@/actions/vehicle.actions";
 import { saveUserVehicle, SaveVehicleInput } from "@/actions/profile.actions";
+import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";
 
 interface GarageModalProps {
   isOpen: boolean;
@@ -15,11 +16,10 @@ interface GarageModalProps {
     carModelId: string;
     year: number | null;
     subModel: string | null;
-    steeringOrientation: string;
-    plateNumber: string | null;
     isDefault: boolean;
   } | null;
   onSuccess?: () => void;
+  language?: ProfileLanguage;
 }
 
 export function GarageModal({
@@ -28,16 +28,17 @@ export function GarageModal({
   brands,
   initialVehicle,
   onSuccess,
+  language = "th",
 }: GarageModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const t = PROFILE_TRANSLATIONS[language]?.garageTab || PROFILE_TRANSLATIONS.th.garageTab;
 
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const [selectedModelId, setSelectedModelId] = useState<string>("");
   const [year, setYear] = useState<string>("");
   const [subModel, setSubModel] = useState<string>("");
-  const [steeringOrientation, setSteeringOrientation] = useState<"RHD" | "LHD">("RHD");
-  const [plateNumber, setPlateNumber] = useState<string>("");
   const [isDefault, setIsDefault] = useState<boolean>(false);
 
   // Available models based on selected brand
@@ -53,8 +54,6 @@ export function GarageModal({
       setSelectedModelId(initialVehicle.carModelId);
       setYear(initialVehicle.year ? String(initialVehicle.year) : "");
       setSubModel(initialVehicle.subModel || "");
-      setSteeringOrientation((initialVehicle.steeringOrientation as "RHD" | "LHD") || "RHD");
-      setPlateNumber(initialVehicle.plateNumber || "");
       setIsDefault(Boolean(initialVehicle.isDefault));
     } else {
       const firstBrand = brands[0];
@@ -62,8 +61,6 @@ export function GarageModal({
       setSelectedModelId(firstBrand?.models[0] ? firstBrand.models[0].id : "");
       setYear(String(new Date().getFullYear()));
       setSubModel("");
-      setSteeringOrientation("RHD");
-      setPlateNumber("");
       setIsDefault(false);
     }
     setErrorMsg(null);
@@ -85,7 +82,7 @@ export function GarageModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBrandId || !selectedModelId) {
-      setErrorMsg("Please select both a car brand and model.");
+      setErrorMsg(t.validationError);
       return;
     }
 
@@ -98,8 +95,6 @@ export function GarageModal({
       carModelId: selectedModelId,
       year: year ? parseInt(year, 10) : null,
       subModel: subModel || null,
-      steeringOrientation,
-      plateNumber: plateNumber || null,
       isDefault,
     };
 
@@ -124,7 +119,7 @@ export function GarageModal({
               <Car size={18} />
             </div>
             <h2 className="text-lg font-bold font-heading uppercase text-white tracking-wide">
-              {initialVehicle ? "Edit Vehicle" : "Add Car to My Garage"}
+              {initialVehicle ? t.modalEditTitle : t.modalAddTitle}
             </h2>
           </div>
           <button
@@ -147,14 +142,14 @@ export function GarageModal({
           <div className="flex items-start gap-3 p-3.5 bg-[var(--accent-red)]/5 border border-[var(--accent-red)]/20 rounded-md">
             <Sparkles size={18} className="text-[var(--accent-red)] shrink-0 mt-0.5" />
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              Adding your car helps South Aeropart verify exact <strong className="text-white">part fitment (ความเข้ากันได้ของชิ้นงาน)</strong> and filter parts engineered for your chassis.
+              {t.fitmentNotice}
             </p>
           </div>
 
           {/* Car Brand */}
           <div>
             <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-              Car Brand (ยี่ห้อรถยนต์) *
+              {t.brandLabel}
             </label>
             <select
               required
@@ -173,7 +168,7 @@ export function GarageModal({
           {/* Car Model */}
           <div>
             <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-              Model / Chassis (รุ่นรถ / ตัวถัง) *
+              {t.modelLabel}
             </label>
             <select
               required
@@ -182,7 +177,7 @@ export function GarageModal({
               className="select-dark bg-[#1A1A1A] border-[#2A2A2A] text-white"
             >
               {availableModels.length === 0 ? (
-                <option value="">No models available for selected brand</option>
+                <option value="">{t.noModels}</option>
               ) : (
                 availableModels.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -197,7 +192,7 @@ export function GarageModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-                Model Year (ปี ค.ศ.)
+                {t.yearLabel}
               </label>
               <input
                 type="number"
@@ -211,7 +206,7 @@ export function GarageModal({
             </div>
             <div>
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-                Sub-model / Trim (รุ่นย่อย)
+                {t.subModelLabel}
               </label>
               <input
                 type="text"
@@ -221,53 +216,6 @@ export function GarageModal({
                 className="input-dark w-full bg-[#1A1A1A] border-[#2A2A2A] text-white"
               />
             </div>
-          </div>
-
-          {/* Steering Orientation (LHD vs RHD) */}
-          <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
-              Steering Orientation (ตำแหน่งพวงมาลัย) *
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setSteeringOrientation("RHD")}
-                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded text-sm font-medium border transition-all ${
-                  steeringOrientation === "RHD"
-                    ? "border-[var(--accent-red)] bg-[var(--accent-red)]/10 text-white"
-                    : "border-[#262626] bg-[#1A1A1A] text-[var(--text-secondary)] hover:text-white"
-                }`}
-              >
-                <Compass size={16} />
-                RHD (พวงมาลัยขวา - TH / JP / UK)
-              </button>
-              <button
-                type="button"
-                onClick={() => setSteeringOrientation("LHD")}
-                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded text-sm font-medium border transition-all ${
-                  steeringOrientation === "LHD"
-                    ? "border-[var(--accent-red)] bg-[var(--accent-red)]/10 text-white"
-                    : "border-[#262626] bg-[#1A1A1A] text-[var(--text-secondary)] hover:text-white"
-                }`}
-              >
-                <Compass size={16} />
-                LHD (พวงมาลัยซ้าย - US / EU)
-              </button>
-            </div>
-          </div>
-
-          {/* Optional License Plate */}
-          <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
-              License Plate (ทะเบียนรถ - Optional)
-            </label>
-            <input
-              type="text"
-              value={plateNumber}
-              onChange={(e) => setPlateNumber(e.target.value)}
-              placeholder="e.g. 9กก 9999"
-              className="input-dark w-full bg-[#1A1A1A] border-[#2A2A2A] text-white"
-            />
           </div>
 
           {/* Set as Default Car */}
@@ -280,7 +228,7 @@ export function GarageModal({
                 className="w-4 h-4 rounded bg-[#1A1A1A] border-[#333333] text-[var(--accent-red)] focus:ring-[var(--accent-red)]"
               />
               <span className="text-sm text-[var(--text-secondary)]">
-                Set as my primary vehicle (ตั้งเป็นรถคันหลักสำหรับเช็กพาร์ทตรงรุ่น)
+                {t.setPrimaryCheckbox}
               </span>
             </label>
           </div>
@@ -293,7 +241,7 @@ export function GarageModal({
               className="btn-outline text-xs px-5 py-2.5"
               disabled={isSubmitting}
             >
-              Cancel
+              {t.cancel}
             </button>
             <button
               type="submit"
@@ -303,10 +251,10 @@ export function GarageModal({
               {isSubmitting ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Saving...
+                  {t.savingCar}
                 </>
               ) : (
-                "Save Car"
+                t.saveCar
               )}
             </button>
           </div>

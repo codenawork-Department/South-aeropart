@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getUserProfile } from "@/actions/profile.actions";
 import { getVehicleSelectorData } from "@/actions/vehicle.actions";
-import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 
 export const metadata: Metadata = {
@@ -47,24 +46,7 @@ export default async function ProfilePage() {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] pt-24 md:pt-28 pb-20">
       <div className="container-main">
-        {/* Page Breadcrumb / Title */}
-        <div className="mb-6">
-          <span className="text-[0.7rem] font-bold font-heading uppercase tracking-[0.25em] text-[var(--accent-red)]">
-            Customer Dashboard
-          </span>
-          <h1 className="text-2xl md:text-4xl font-extrabold font-heading uppercase tracking-wide text-white mt-0.5">
-            My Account & Profile
-          </h1>
-        </div>
-
-        {/* Profile Summary Header */}
-        <ProfileHeader
-          user={user}
-          addressCount={addresses.length}
-          vehicleCount={vehicles.length}
-        />
-
-        {/* Main Tabs Navigation & Panels */}
+        {/* Main Profile Component with Dynamic Language Sync & Modals */}
         <ProfileTabs
           user={user}
           addresses={addresses}

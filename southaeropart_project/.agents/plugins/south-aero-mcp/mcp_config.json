@@ -20,12 +20,10 @@
       ]
     },
     "fetch": {
-      "command": "cmd.exe",
+      "command": "python",
       "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-fetch"
+        "-m",
+        "mcp_server_fetch"
       ]
     },
     "memory": {

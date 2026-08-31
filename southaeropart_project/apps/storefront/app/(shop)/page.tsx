@@ -3,21 +3,24 @@ import { VehicleSelector } from "@/components/home/VehicleSelector";
 import { getVehicleSelectorData } from "@/actions/vehicle.actions";
 import { getHomepageHeroCards } from "@/actions/homepage.actions";
 import { getFeaturedBundles } from "@/actions/bundle.actions";
+import { getFeaturedProducts } from "@/actions/product.actions";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturedSlider } from "@/components/home/FeaturedSlider";
-import { ProductCategories } from "@/components/home/ProductCategories";
+import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
 import { InfoSections } from "@/components/home/InfoSections";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [vehicleData, heroCards, featuredBundles] = await Promise.all([
-    getVehicleSelectorData(),
-    getHomepageHeroCards(),
-    getFeaturedBundles(),
-  ]);
+  const [vehicleData, heroCards, featuredBundles, featuredProducts] =
+    await Promise.all([
+      getVehicleSelectorData(),
+      getHomepageHeroCards(),
+      getFeaturedBundles(),
+      getFeaturedProducts(),
+    ]);
 
   return (
     <>
@@ -26,7 +29,7 @@ export default async function HomePage() {
       </Suspense>
       <HeroSection initialCards={heroCards} />
       <FeaturedSlider initialBundles={featuredBundles} />
-      <ProductCategories />
+      <FeaturedProductsSection initialProducts={featuredProducts} />
       <InfoSections />
       <FeatureBadges />
       <NewsletterSection />

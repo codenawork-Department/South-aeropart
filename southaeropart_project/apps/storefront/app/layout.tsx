@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Oswald } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AuthSessionTracker } from "@/components/auth/AuthSessionTracker";
+import { RealtimeLiveProvider } from "@/components/providers/RealtimeLiveProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,7 +43,7 @@ export default function RootLayout({
       <html lang="en" className={`${inter.variable} ${oswald.variable}`}>
         <body className="min-h-screen flex flex-col">
           <AuthSessionTracker />
-          {children}
+          <RealtimeLiveProvider>{children}</RealtimeLiveProvider>
         </body>
       </html>
     </ClerkProvider>
