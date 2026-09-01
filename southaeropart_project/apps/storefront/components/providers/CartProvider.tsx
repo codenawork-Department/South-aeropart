@@ -1,7 +1,14 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type { MockProduct, CartItem } from "@/lib/mock-data";
+import type { CartableProduct } from "@/components/products/AddToCartButton";
+
+export type CartItem = {
+  id: string;
+  product: CartableProduct;
+  quantity: number;
+  variant: string;
+};
 
 type CartContextType = {
   items: CartItem[];
@@ -11,7 +18,7 @@ type CartContextType = {
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
-  addItem: (product: MockProduct, variant?: string) => void;
+  addItem: (product: CartableProduct, variant?: string) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -27,7 +34,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const closeCart = useCallback(() => setIsOpen(false), []);
   const toggleCart = useCallback(() => setIsOpen((prev) => !prev), []);
 
-  const addItem = useCallback((product: MockProduct, variant = "Gloss Black") => {
+  const addItem = useCallback((product: CartableProduct, variant = "Gloss Black") => {
     setItems((prev) => {
       const existing = prev.find(
         (item) => item.product.id === product.id && item.variant === variant
@@ -101,3 +108,4 @@ export function useCart() {
   }
   return context;
 }
+

@@ -11,11 +11,15 @@ import {
   categories,
   brands,
   carModels,
+  orders,
+  orderItems,
   eq,
   and,
+  or,
   desc,
   asc,
   inArray,
+  sql,
 } from "@repo/db";
 import { MockProduct, MOCK_PRODUCTS } from "@/lib/mock-data";
 
@@ -69,121 +73,310 @@ export interface FeaturedBundleData {
   link: string;
 }
 
+// ---------------------------------------------------------------------------
+// VehicleBundleData & getFeaturedBundleForVehicle (Products Page Hero)
+// ---------------------------------------------------------------------------
+
+export interface VehicleBundleItem {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  price: string;
+  categoryName: string;
+  image?: string;
+  downforceN?: number;
+  dragN?: number;
+}
+
+export interface VehicleBundleData {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  tagline: string;
+  description: string;
+  shortDescription?: string | null;
+  price: string;
+  compareAtPrice?: string | null;
+  formattedPrice: string;
+  badgeType: "top_seller" | "featured" | "latest";
+  badgeLabel: string;
+  brandName: string;
+  brandSlug: string;
+  carModelName: string;
+  carModelSlug: string;
+  carModelGen?: string | null;
+  downforceN: number;
+  dragN: number;
+  downforceBefore?: number;
+  downforceAfter?: number;
+  dragBefore?: number;
+  dragAfter?: number;
+  isCustomCfd: boolean;
+  primaryImage: string;
+  images: string[];
+  pieces: string[];
+  bundleItems: VehicleBundleItem[];
+  totalSales: number;
+}
+
 /**
- * Fallback mock data when DB has no featured bundles configured yet
+ * ดึงชุดเซ็ตเด่นสำหรับรถรุ่นที่เลือก (Brand & Model) จากฐานข้อมูล
+ * พร้อม Fallback Priority Waterfall:
+ * 1. Top Seller: ยอดขายสูงสุด (total_sales > 0 / completed orders)
+ * 2. Featured by Admin: is_featured = true เรียงตาม created_at DESC
+ * 3. Latest Created: ชุดแต่งล่าสุดที่เพิ่มเข้ามา (created_at DESC)
+ * หากไม่มีชุดแต่งสำหรับรุ่นรถนั้น จะส่งกลับ null (ไม่แสดง mock ใดๆ)
  */
-const FALLBACK_FEATURED_BUNDLES: FeaturedBundleData[] = [
-  {
-    id: "fallback-accord-g9",
-    name: "ACCORD G9 BODY KIT 02",
-    slug: "accord-g9-complete-body-kit-02",
-    sku: "KIT-ACCO-STAGE2-01",
-    tagline: "FLAGSHIP EXECUTIVE MOTORSPORT TRANSFORMATION",
-    description:
-      "The benchmark for Japanese executive sports styling. Full 4-piece aerodynamic kit engineered using 3D laser surface scan data to ensure race-grade fitment and real-world downforce gains.",
-    brandName: "Honda",
-    carModelName: "Accord G9",
-    carModelGen: "2013-2017",
-    price: "22760.00",
-    formattedPrice: "฿22,760 THB",
-    downforceBadge: "+155 N",
-    dragBadge: "-4 N",
-    downforceN: 155,
-    dragN: -4,
-    downforceBefore: 50.0,
-    downforceAfter: 205.0,
-    dragBefore: 890.0,
-    dragAfter: 886.0,
-    isCustomCfd: true,
-    primaryImage: "/images/FRONT.png",
-    images: [
-      "/images/FRONT.png",
-      "/images/BACK.png",
-      "/images/AS.png",
-      "/images/G9 KIT2/07.png",
-    ],
-    slides: [
-      {
-        id: 1,
-        title: "Accord G9 Body Kit 02 — Front 3/4 Stance",
-        image: "/images/FRONT.png",
-        caption: "Sculpted front splitter and aerodynamically balanced profile.",
-      },
-      {
-        id: 2,
-        title: "Accord G9 Body Kit 02 — Rear Profile & Ducktail",
-        image: "/images/BACK.png",
-        caption: "High-downforce ducktail spoiler and multi-fin rear diffuser.",
-      },
-      {
-        id: 3,
-        title: "Accord G9 Body Kit 02 — Side Aerodynamic Flow",
-        image: "/images/AS.png",
-        caption: "Ground-effect side skirts with integrated flow channels.",
-      },
-      {
-        id: 4,
-        title: "Accord G9 Body Kit 02 — Track Fitment",
-        image: "/images/AS.png",
-        caption: "Tested at speed for structural rigidity and drag reduction.",
-      },
-    ],
-    pieces: [
-      "Front Lip: Carbon Fiber Front Splitter Lip",
-      "Side Skirts: Aerodynamic Side Skirt Extensions",
-      "Rear Diffuser: Multi-Channel Rear Under Diffuser",
-      "Ducktail Spoiler: Integrated Trunk Ducktail Spoiler",
-    ],
-    bundleItems: [
-      {
-        id: "p1",
-        name: "Carbon Fiber Front Lip",
-        slug: "carbon-fiber-front-lip-accord-g9",
-        sku: "SA-ACC-G9-FLP-01",
-        price: "4590.00",
-        categoryName: "Front Lips",
-        image: "/images/G9 KIT2/01.png",
-        downforceN: 110,
-        dragN: -2,
-      },
-      {
-        id: "p2",
-        name: "Carbon Fiber Side Skirts",
-        slug: "carbon-fiber-side-skirts-accord-g9",
-        sku: "SA-ACC-G9-SSK-01",
-        price: "5190.00",
-        categoryName: "Side Skirts",
-        image: "/images/G9 KIT2/03.png",
-        downforceN: 45,
-        dragN: -3,
-      },
-      {
-        id: "p3",
-        name: "Carbon Fiber Rear Diffuser",
-        slug: "carbon-fiber-rear-diffuser-accord-g9",
-        sku: "SA-ACC-G9-RDF-01",
-        price: "6990.00",
-        categoryName: "Rear Diffusers",
-        image: "/images/G9 KIT2/05.png",
-        downforceN: 135,
-        dragN: -6,
-      },
-      {
-        id: "p4",
-        name: "Ducktail Spoiler",
-        slug: "ducktail-spoiler-accord-g9",
-        sku: "SA-ACC-G9-SPL-01",
-        price: "5990.00",
-        categoryName: "Spoilers",
-        image: "/images/DETAIL g9/01.jpg",
-        downforceN: 155,
-        dragN: -4,
-      },
-    ],
-    designer: "South Aero Design Lab",
-    link: "/products/accord-g9-complete-body-kit-02",
-  },
-];
+export async function getFeaturedBundleForVehicle(
+  brandSlug?: string,
+  modelSlug?: string
+): Promise<VehicleBundleData | null> {
+  try {
+    const conditions: ReturnType<typeof eq>[] = [
+      eq(products.productType, "bundle"),
+      eq(products.status, "active"),
+    ];
+
+    if (brandSlug) {
+      conditions.push(eq(brands.slug, brandSlug));
+    }
+
+    if (modelSlug) {
+      conditions.push(eq(carModels.slug, modelSlug));
+    }
+
+    // 1. ค้นหาชุดเซ็ตที่สถานะ active สำหรับรถรุ่นที่เลือก
+    const rawBundles = await db
+      .select({
+        id: products.id,
+        sku: products.sku,
+        slug: products.slug,
+        name: products.name,
+        description: products.description,
+        shortDescription: products.shortDescription,
+        price: products.price,
+        compareAtPrice: products.compareAtPrice,
+        status: products.status,
+        isFeatured: products.isFeatured,
+        isCustomCfd: products.isCustomCfd,
+        downforceN: products.downforceN,
+        customDownforceN: products.customDownforceN,
+        dragN: products.dragN,
+        customDragN: products.customDragN,
+        downforceBefore: products.downforceBefore,
+        downforceAfter: products.downforceAfter,
+        dragBefore: products.dragBefore,
+        dragAfter: products.dragAfter,
+        brandName: brands.name,
+        brandSlug: brands.slug,
+        carModelName: carModels.name,
+        carModelSlug: carModels.slug,
+        carModelGen: carModels.generation,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+      })
+      .from(products)
+      .leftJoin(brands, eq(products.brandId, brands.id))
+      .leftJoin(carModels, eq(products.carModelId, carModels.id))
+      .where(and(...conditions));
+
+    if (!rawBundles || rawBundles.length === 0) {
+      return null;
+    }
+
+    const bundleIds = rawBundles.map((b) => b.id);
+
+    // 2. คำนวณยอดขายสะสม (total_sales) จากออเดอร์ที่ชำระเงินสำเร็จ
+    const salesRows = await db
+      .select({
+        productId: orderItems.productId,
+        totalSales: sql<number>`COALESCE(SUM(${orderItems.quantity}), 0)`.as("total_sales"),
+      })
+      .from(orderItems)
+      .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .where(
+        and(
+          inArray(orderItems.productId, bundleIds),
+          or(
+            eq(orders.paymentStatus, "paid"),
+            inArray(orders.status, ["paid", "processing", "shipped", "delivered"])
+          )
+        )
+      )
+      .groupBy(orderItems.productId);
+
+    const salesMap = new Map<string, number>();
+    salesRows.forEach((row) => {
+      salesMap.set(row.productId, Number(row.totalSales || 0));
+    });
+
+    // 3. Fallback Priority Waterfall:
+    // Priority 1: Top Seller (total_sales > 0, highest sales)
+    const bundlesWithSales = rawBundles
+      .map((b) => ({ ...b, totalSales: salesMap.get(b.id) || 0 }))
+      .filter((b) => b.totalSales > 0)
+      .sort((a, b) => b.totalSales - a.totalSales || b.createdAt.getTime() - a.createdAt.getTime());
+
+    let selectedBundle: (typeof rawBundles)[0] & { totalSales: number };
+    let badgeType: "top_seller" | "featured" | "latest";
+    let badgeLabel: string;
+
+    if (bundlesWithSales.length > 0) {
+      selectedBundle = bundlesWithSales[0];
+      badgeType = "top_seller";
+      badgeLabel = "Top Seller";
+    } else {
+      // Priority 2: Featured by Admin (is_featured = true, latest created)
+      const featuredBundles = rawBundles
+        .map((b) => ({ ...b, totalSales: 0 }))
+        .filter((b) => b.isFeatured)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+      if (featuredBundles.length > 0) {
+        selectedBundle = featuredBundles[0];
+        badgeType = "featured";
+        badgeLabel = "Featured Kit";
+      } else {
+        // Priority 3: Latest Created (createdAt DESC)
+        const latestBundles = rawBundles
+          .map((b) => ({ ...b, totalSales: 0 }))
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+        selectedBundle = latestBundles[0];
+        badgeType = "latest";
+        badgeLabel = "Complete Package";
+      }
+    }
+
+    // 4. ดึงรูปภาพและชิ้นส่วนย่อยของชุดเซ็ตที่ถูกเลือก
+    const [imagesRows, childRows] = await Promise.all([
+      db
+        .select({
+          secureUrl: productImages.secureUrl,
+          isPrimary: productImages.isPrimary,
+          position: productImages.position,
+        })
+        .from(productImages)
+        .where(eq(productImages.productId, selectedBundle.id))
+        .orderBy(asc(productImages.position)),
+
+      db
+        .select({
+          id: products.id,
+          name: products.name,
+          slug: products.slug,
+          sku: products.sku,
+          price: products.price,
+          downforceN: products.downforceN,
+          dragN: products.dragN,
+          categoryName: categories.name,
+        })
+        .from(productBundleItems)
+        .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(eq(productBundleItems.bundleProductId, selectedBundle.id))
+        .orderBy(asc(productBundleItems.position)),
+    ]);
+
+    // ดึงรูปภาพชิ้นส่วนย่อย (ถ้ามี)
+    const childIds = childRows.map((c) => c.id);
+    const childImagesMap = new Map<string, string>();
+    if (childIds.length > 0) {
+      const childImgs = await db
+        .select({
+          productId: productImages.productId,
+          secureUrl: productImages.secureUrl,
+          isPrimary: productImages.isPrimary,
+        })
+        .from(productImages)
+        .where(inArray(productImages.productId, childIds))
+        .orderBy(desc(productImages.isPrimary), asc(productImages.position));
+
+      childImgs.forEach((ci) => {
+        if (!childImagesMap.has(ci.productId)) {
+          childImagesMap.set(ci.productId, ci.secureUrl);
+        }
+      });
+    }
+
+    const imagesList = imagesRows.map((img) => img.secureUrl);
+    const primaryImgRow = imagesRows.find((img) => img.isPrimary) || imagesRows[0];
+    const primaryImage = primaryImgRow?.secureUrl || imagesList[0] || "/images/FRONT.png";
+
+    const bundleItems: VehicleBundleItem[] = childRows.map((item) => ({
+      id: item.id,
+      name: item.name,
+      slug: item.slug,
+      sku: item.sku,
+      price: item.price,
+      categoryName: item.categoryName || "Aero Part",
+      image: childImagesMap.get(item.id),
+      downforceN: item.downforceN ? Number(item.downforceN) : undefined,
+      dragN: item.dragN ? Number(item.dragN) : undefined,
+    }));
+
+    // Dynamic price calculation
+    const dynamicSum = bundleItems.reduce((acc, part) => acc + Number(part.price || 0), 0);
+    const effectivePriceNum = dynamicSum > 0 ? dynamicSum : Number(selectedBundle.price || 0);
+    const effectivePriceStr = effectivePriceNum.toFixed(2);
+    const formattedPrice = `฿${effectivePriceNum.toLocaleString("th-TH", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })} THB`;
+
+    const effectiveDownforce =
+      selectedBundle.isCustomCfd && selectedBundle.customDownforceN
+        ? Number(selectedBundle.customDownforceN)
+        : Number(selectedBundle.downforceN || 0);
+    const effectiveDrag =
+      selectedBundle.isCustomCfd && selectedBundle.customDragN
+        ? Number(selectedBundle.customDragN)
+        : Number(selectedBundle.dragN || 0);
+
+    const pieces = bundleItems.map((p) => `${p.categoryName}: ${p.name}`);
+
+    return {
+      id: selectedBundle.id,
+      name: selectedBundle.name,
+      slug: selectedBundle.slug,
+      sku: selectedBundle.sku,
+      tagline:
+        selectedBundle.shortDescription ||
+        `FLAGSHIP ${selectedBundle.brandName ? selectedBundle.brandName.toUpperCase() : ""} ${selectedBundle.carModelName ? selectedBundle.carModelName.toUpperCase() : ""} PERFORMANCE BUILD`,
+      description:
+        selectedBundle.description ||
+        `Precision engineered to elevate the stance and aerodynamic downforce of your ${selectedBundle.brandName || ""} ${selectedBundle.carModelName || ""}. Functional, track-tested, and built to stand out.`,
+      shortDescription: selectedBundle.shortDescription,
+      price: effectivePriceStr,
+      compareAtPrice: selectedBundle.compareAtPrice,
+      formattedPrice,
+      badgeType,
+      badgeLabel,
+      brandName: selectedBundle.brandName || "South Aero",
+      brandSlug: selectedBundle.brandSlug || "",
+      carModelName: selectedBundle.carModelName || "Aero Spec",
+      carModelSlug: selectedBundle.carModelSlug || "",
+      carModelGen: selectedBundle.carModelGen || null,
+      downforceN: effectiveDownforce,
+      dragN: effectiveDrag,
+      downforceBefore: selectedBundle.downforceBefore ? Number(selectedBundle.downforceBefore) : undefined,
+      downforceAfter: selectedBundle.downforceAfter ? Number(selectedBundle.downforceAfter) : undefined,
+      dragBefore: selectedBundle.dragBefore ? Number(selectedBundle.dragBefore) : undefined,
+      dragAfter: selectedBundle.dragAfter ? Number(selectedBundle.dragAfter) : undefined,
+      isCustomCfd: selectedBundle.isCustomCfd,
+      primaryImage,
+      images: imagesList.length > 0 ? imagesList : [primaryImage],
+      pieces: pieces.length > 0 ? pieces : ["Full Aerodynamic Kit Package"],
+      bundleItems,
+      totalSales: selectedBundle.totalSales,
+    };
+  } catch (error) {
+    console.error("[getFeaturedBundleForVehicle] Error querying featured bundle:", error);
+    return null;
+  }
+}
 
 /**
  * ดึงชุดเซ็ตแนะนำสูงสุด 4 ชุด (Featured Bundles) จาก Database

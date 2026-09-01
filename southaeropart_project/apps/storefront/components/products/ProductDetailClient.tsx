@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,21 +24,55 @@ import {
   Check,
   X,
   Boxes,
+  Loader2,
 } from "lucide-react";
 import { MockProduct } from "@/lib/mock-data";
 import { useCart } from "@/components/providers/CartProvider";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { KitIncludedParts } from "@/components/products/KitIncludedParts";
+import { toggleWishlist, checkIsWishlisted } from "@/actions/wishlist.actions";
 
 export function ProductDetailClient({ product }: { product: MockProduct }) {
+  const { isSignedIn } = useUser();
+  const router = useRouter();
+
   const [currentImage, setCurrentImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedFinish, setSelectedFinish] = useState(
     product.finishOptions?.[0] || product.finish
   );
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [addedAnimation, setAddedAnimation] = useState(false);
+
+  // Sync initial wishlist status when user is signed in
+  useEffect(() => {
+    if (isSignedIn && product?.id) {
+      checkIsWishlisted(product.id).then((res) => {
+        setIsWishlisted(res.isWishlisted);
+      });
+    }
+  }, [isSignedIn, product?.id]);
+
+
+  const handleToggleWishlist = async () => {
+    if (!isSignedIn) {
+      router.push(`/sign-in?redirectUrl=/products/${product.slug}`);
+      return;
+    }
+    setWishlistLoading(true);
+    try {
+      const res = await toggleWishlist(product.id);
+      if (res.success) {
+        setIsWishlisted(res.isWishlisted);
+      }
+    } catch (err) {
+      console.error("Failed to toggle wishlist:", err);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   const { addItem, openCart } = useCart();
 
@@ -301,19 +337,29 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 </button>
 
                 <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`btn-outline w-full justify-center gap-2 py-3 text-xs ${
+                  onClick={handleToggleWishlist}
+                  disabled={wishlistLoading}
+                  className={`btn-outline w-full justify-center gap-2 py-3 text-xs transition-all ${
                     isWishlisted
                       ? "border-[var(--accent-red)] text-[var(--accent-red)] bg-[var(--accent-red)]/10"
-                      : ""
+                      : "hover:border-white/30"
                   }`}
                   id="add-to-wishlist"
                 >
-                  {isWishlisted ? "SAVED IN WISHLIST" : "ADD TO WISHLIST"}
-                  <Heart
-                    size={16}
-                    className={isWishlisted ? "fill-current" : ""}
-                  />
+                  {wishlistLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>UPDATING...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{isWishlisted ? "SAVED IN WISHLIST" : "ADD TO WISHLIST"}</span>
+                      <Heart
+                        size={16}
+                        className={isWishlisted ? "fill-current text-[var(--accent-red)]" : ""}
+                      />
+                    </>
+                  )}
                 </button>
               </div>
             </div>

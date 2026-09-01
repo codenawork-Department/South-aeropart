@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { Menu, Search, ShoppingCart, X, LogOut, User as UserIcon, Package, ChevronDown } from "lucide-react";
+import { Menu, Search, ShoppingCart, X, LogOut, User as UserIcon, Package, ChevronDown, Heart } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
 import { CartSidebar } from "./CartSidebar";
 import { MobileMenu } from "./MobileMenu";
@@ -154,6 +154,14 @@ export function Navbar() {
                             My Profile
                           </Link>
                           <Link
+                            href="/wishlist"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
+                          >
+                            <Heart size={16} />
+                            My Wishlist
+                          </Link>
+                          <Link
                             href="/orders"
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
@@ -190,6 +198,17 @@ export function Navbar() {
                 )}
               </>
             )}
+
+            {/* Wishlist Link */}
+            <Link
+              href="/wishlist"
+              id="wishlist-nav-link"
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-colors flex items-center"
+              aria-label="Wishlist"
+              title="My Wishlist"
+            >
+              <Heart size={20} />
+            </Link>
 
             {/* Cart Button with Count Badge */}
             <button

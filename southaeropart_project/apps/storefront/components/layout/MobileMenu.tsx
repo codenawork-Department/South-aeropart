@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, User, Search, ArrowRight } from "lucide-react";
+import { X, User, Search, ArrowRight, Heart } from "lucide-react";
 
 type MobileMenuProps = {
   isOpen: boolean;
@@ -75,6 +75,14 @@ export function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
 
         {/* Bottom User / Account Row */}
         <div className="p-4 border-t border-[#202020] bg-[#0A0A0A] space-y-2">
+          <Link
+            href="/wishlist"
+            onClick={onClose}
+            className="flex items-center gap-3 py-2.5 px-4 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white rounded hover:bg-white/5 transition-colors"
+          >
+            <Heart size={16} />
+            <span>MY WISHLIST</span>
+          </Link>
           <Link
             href="/sign-in"
             onClick={onClose}

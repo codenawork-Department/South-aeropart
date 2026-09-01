@@ -474,6 +474,8 @@ export async function saveUserVehicle(input: SaveVehicleInput) {
     }
 
     revalidatePath("/profile");
+    revalidatePath("/");
+    revalidatePath("/products");
     return { success: true, error: null };
   } catch (error) {
     console.error("[saveUserVehicle] Error:", error);
@@ -501,6 +503,8 @@ export async function deleteUserVehicle(vehicleId: string) {
       );
 
     revalidatePath("/profile");
+    revalidatePath("/");
+    revalidatePath("/products");
     return { success: true, error: null };
   } catch (error) {
     console.error("[deleteUserVehicle] Error:", error);

@@ -3,14 +3,29 @@
 import { useState } from "react";
 import { ShoppingCart, Check } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
-import type { MockProduct } from "@/lib/mock-data";
+
+/**
+ * Minimal product shape required by AddToCartButton.
+ * Compatible with both MockProduct and ShopProductItem from the database.
+ */
+export interface CartableProduct {
+  id: string;
+  slug: string;
+  name: string;
+  price: string;
+  primaryImage?: string;
+  images?: string[];
+  finish?: string;
+  brandName?: string | null;
+  brand?: string;
+}
 
 export function AddToCartButton({
   product,
   showText = false,
   variant,
 }: {
-  product: MockProduct;
+  product: CartableProduct;
   showText?: boolean;
   variant?: string;
 }) {
@@ -20,7 +35,7 @@ export function AddToCartButton({
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem(product, variant || product.finish);
+    addItem(product, variant || product.finish || "Gloss Black");
     setAdded(true);
     openCart();
     setTimeout(() => setAdded(false), 1500);
@@ -61,3 +76,4 @@ export function AddToCartButton({
     </button>
   );
 }
+
