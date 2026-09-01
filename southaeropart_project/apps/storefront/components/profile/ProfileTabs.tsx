@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   User,
@@ -81,6 +81,30 @@ export function ProfileTabs({
   const [language, setLanguage] = useState<ProfileLanguage>(
     (user.metadata?.preferences?.language as ProfileLanguage) || "th"
   );
+
+  // Sync language changes across app via cookie and localStorage
+  const handleSetLanguage = (newLang: ProfileLanguage) => {
+    setLanguage(newLang);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("south_aero_lang", newLang);
+        document.cookie = `south_aero_lang=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
+
+  useEffect(() => {
+    const activeLang = (user.metadata?.preferences?.language as ProfileLanguage) || "th";
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("south_aero_lang", activeLang);
+        document.cookie = `south_aero_lang=${activeLang}; path=/; max-age=31536000; SameSite=Lax`;
+      } catch (e) {}
+    }
+  }, [user.metadata?.preferences?.language]);
+
   const [currency, setCurrency] = useState<"THB" | "USD" | "EUR" | "JPY" | "SGD">(
     (user.metadata?.preferences?.currency as "THB" | "USD" | "EUR" | "JPY" | "SGD") || "THB"
   );
@@ -288,7 +312,7 @@ export function ProfileTabs({
           <Globe size={14} className="text-[var(--accent-red)] ml-1.5 mr-1 hidden sm:inline" />
           <button
             type="button"
-            onClick={() => setLanguage("th")}
+            onClick={() => handleSetLanguage("th")}
             className={`px-2.5 py-1 rounded text-[0.7rem] font-bold tracking-wider transition-all ${
               language === "th"
                 ? "bg-[var(--accent-red)] text-white shadow-sm"
@@ -299,7 +323,7 @@ export function ProfileTabs({
           </button>
           <button
             type="button"
-            onClick={() => setLanguage("en")}
+            onClick={() => handleSetLanguage("en")}
             className={`px-2.5 py-1 rounded text-[0.7rem] font-bold tracking-wider transition-all ${
               language === "en"
                 ? "bg-[var(--accent-red)] text-white shadow-sm"
@@ -399,7 +423,7 @@ export function ProfileTabs({
                   </label>
                   <select
                     value={language}
-                    onChange={(e) => setLanguage(e.target.value as ProfileLanguage)}
+                    onChange={(e) => handleSetLanguage(e.target.value as ProfileLanguage)}
                     className="select-dark bg-[#181818] border-[#2A2A2A] text-white"
                   >
                     <option value="th">ภาษาไทย (TH - Thailand PDPA)</option>
