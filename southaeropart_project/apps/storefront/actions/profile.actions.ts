@@ -208,6 +208,32 @@ export async function updateUserProfile(input: z.infer<typeof updateProfileSchem
 }
 
 /**
+ * Retrieve user's language preference from profile metadata.
+ * Defaults to "th" if unauthenticated or not configured.
+ */
+export async function getUserLanguagePreference(): Promise<"th" | "en"> {
+  try {
+    const { userId } = auth();
+    if (!userId) return "th";
+
+    const [userRow] = await db
+      .select({ metadata: users.metadata })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const lang = userRow?.metadata?.preferences?.language;
+    if (lang === "en" || lang === "th") {
+      return lang;
+    }
+    return "th";
+  } catch (err) {
+    console.error("[getUserLanguagePreference] Error:", err);
+    return "th";
+  }
+}
+
+/**
  * Update PDPA / GDPR Privacy Consents.
  */
 export async function updatePrivacyConsents(input: z.infer<typeof privacyConsentsSchema>) {

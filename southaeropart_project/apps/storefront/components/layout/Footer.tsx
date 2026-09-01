@@ -19,6 +19,7 @@ const FOOTER_LINKS = {
     title: "COMPANY",
     links: [
       { label: "About Us", href: "/about" },
+      { label: "Aerodynamics Guide", href: "/aerodynamics" },
       { label: "Collection", href: "/collection" },
       { label: "Gallery", href: "/gallery" },
       { label: "Contact", href: "/about" },

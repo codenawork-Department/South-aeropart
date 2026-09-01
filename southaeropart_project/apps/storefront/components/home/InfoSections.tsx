@@ -47,7 +47,7 @@ export function InfoSections() {
 
             <div className="mt-6 pt-4 border-t border-[#202020] flex items-center justify-between">
               <Link
-                href="/about"
+                href="/aerodynamics"
                 className="btn-outline gap-2 text-xs py-2.5 px-4"
                 id="learn-aero"
               >
