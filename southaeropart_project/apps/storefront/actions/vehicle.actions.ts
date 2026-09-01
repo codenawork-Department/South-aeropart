@@ -1,6 +1,8 @@
 "use server";
 
-import { db, brands, carModels, eq, asc } from "@repo/db";
+import { unstable_noStore as noStore } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
+import { db, brands, carModels, userVehicles, eq, asc, desc } from "@repo/db";
 
 export interface VehicleModelData {
   id: string;
@@ -20,6 +22,20 @@ export interface VehicleBrandData {
   slug: string;
   logoUrl: string | null;
   models: VehicleModelData[];
+}
+
+export interface UserGarageVehicle {
+  id: string;
+  brandId: string;
+  brandName: string;
+  brandSlug: string;
+  carModelId: string;
+  carModelName: string;
+  carModelSlug: string;
+  carModelGen: string | null;
+  year: number | null;
+  subModel: string | null;
+  isDefault: boolean;
 }
 
 function formatModelDisplay(model: {
@@ -51,6 +67,7 @@ function formatModelDisplay(model: {
  * ดึงข้อมูลแบรนด์และรุ่นรถยนต์ที่เปิดใช้งาน (isActive = true) ทั้งหมดจากฐานข้อมูล
  */
 export async function getVehicleSelectorData(): Promise<VehicleBrandData[]> {
+  noStore();
   try {
     const [brandRows, modelRows] = await Promise.all([
       db
@@ -115,6 +132,44 @@ export async function getVehicleSelectorData(): Promise<VehicleBrandData[]> {
     return result;
   } catch (error) {
     console.error("[getVehicleSelectorData] Failed to fetch vehicle data:", error);
+    return [];
+  }
+}
+
+/**
+ * ดึงข้อมูลรถยนต์ที่บันทึกไว้ในโรงรถ (My Garage) ของผู้ใช้งานปัจจุบัน
+ */
+export async function getUserGarageVehicles(): Promise<UserGarageVehicle[]> {
+  noStore();
+  try {
+    const { userId } = auth();
+    if (!userId) {
+      return [];
+    }
+
+    const rows = await db
+      .select({
+        id: userVehicles.id,
+        brandId: userVehicles.brandId,
+        carModelId: userVehicles.carModelId,
+        year: userVehicles.year,
+        subModel: userVehicles.subModel,
+        isDefault: userVehicles.isDefault,
+        brandName: brands.name,
+        brandSlug: brands.slug,
+        carModelName: carModels.name,
+        carModelSlug: carModels.slug,
+        carModelGen: carModels.generation,
+      })
+      .from(userVehicles)
+      .innerJoin(brands, eq(userVehicles.brandId, brands.id))
+      .innerJoin(carModels, eq(userVehicles.carModelId, carModels.id))
+      .where(eq(userVehicles.userId, userId))
+      .orderBy(desc(userVehicles.isDefault), desc(userVehicles.createdAt));
+
+    return rows;
+  } catch (error) {
+    console.error("[getUserGarageVehicles] Error fetching user garage vehicles:", error);
     return [];
   }
 }

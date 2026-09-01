@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import { VehicleSelector } from "@/components/home/VehicleSelector";
-import { getVehicleSelectorData } from "@/actions/vehicle.actions";
+import {
+  getVehicleSelectorData,
+  getUserGarageVehicles,
+} from "@/actions/vehicle.actions";
 import { getHomepageHeroCards } from "@/actions/homepage.actions";
 import { getFeaturedBundles } from "@/actions/bundle.actions";
 import { getFeaturedProducts } from "@/actions/product.actions";
@@ -14,9 +17,10 @@ import { NewsletterSection } from "@/components/home/NewsletterSection";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [vehicleData, heroCards, featuredBundles, featuredProducts] =
+  const [vehicleData, garageVehicles, heroCards, featuredBundles, featuredProducts] =
     await Promise.all([
       getVehicleSelectorData(),
+      getUserGarageVehicles(),
       getHomepageHeroCards(),
       getFeaturedBundles(),
       getFeaturedProducts(),
@@ -24,8 +28,18 @@ export default async function HomePage() {
 
   return (
     <>
-      <Suspense fallback={<VehicleSelector initialBrands={vehicleData} />}>
-        <VehicleSelector initialBrands={vehicleData} />
+      <Suspense
+        fallback={
+          <VehicleSelector
+            initialBrands={vehicleData}
+            initialGarageVehicles={garageVehicles}
+          />
+        }
+      >
+        <VehicleSelector
+          initialBrands={vehicleData}
+          initialGarageVehicles={garageVehicles}
+        />
       </Suspense>
       <HeroSection initialCards={heroCards} />
       <FeaturedSlider initialBundles={featuredBundles} />

@@ -5,6 +5,8 @@ import { getUserProfile } from "@/actions/profile.actions";
 import { getVehicleSelectorData } from "@/actions/vehicle.actions";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "My Profile | South Aeropart",
   description:
