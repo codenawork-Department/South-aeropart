@@ -81,6 +81,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.0
         version: 10.5.4(postcss@8.5.26)
+      dotenv:
+        specifier: ^16.4.0
+        version: 16.6.1
       eslint:
         specifier: ^8.57.0
         version: 8.57.1
@@ -169,6 +172,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.0
         version: 10.5.4(postcss@8.5.26)
+      dotenv:
+        specifier: ^16.4.0
+        version: 16.6.1
       eslint:
         specifier: ^8.57.0
         version: 8.57.1

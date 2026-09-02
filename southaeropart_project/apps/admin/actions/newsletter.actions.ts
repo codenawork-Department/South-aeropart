@@ -1,5 +1,7 @@
 "use server";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import {
@@ -134,7 +136,9 @@ export async function getSubscribersListAction(params?: {
     const conditions = [];
 
     if (search) {
-      conditions.push(ilike(newsletterSubscribers.email, `%${search}%`));
+      // Escape SQL LIKE wildcards to prevent pattern injection
+      const escapedSearch = search.replace(/[%_\\]/g, "\\$&");
+      conditions.push(ilike(newsletterSubscribers.email, `%${escapedSearch}%`));
     }
 
     if (source && source !== "all") {
@@ -201,11 +205,11 @@ export async function exportSubscribersCsvAction(): Promise<ActionResult<string>
 
     const csvHeader = "Email,Status,Source,Customer Name,Subscribed Date\n";
     const csvRows = rows.map((r) => {
-      const email = `"${r.email}"`;
+      const email = sanitizeCsvField(r.email);
       const status = r.status ? "Subscribed" : "Unsubscribed";
-      const source = `"${r.source}"`;
-      const name = `"${r.userName || "Guest"}"`;
-      const date = `"${new Date(r.subscribedAt).toISOString().split("T")[0]}"`;
+      const source = sanitizeCsvField(r.source);
+      const name = sanitizeCsvField(r.userName || "Guest");
+      const date = sanitizeCsvField(new Date(r.subscribedAt).toISOString().split("T")[0]);
       return `${email},${status},${source},${name},${date}`;
     });
 
@@ -245,6 +249,10 @@ export async function getCampaignsListAction() {
 export async function getCampaignDetailAction(id: string) {
   const admin = await validateSession();
   if (!admin) {
+    return { success: false, campaign: null };
+  }
+
+  if (!id || !UUID_REGEX.test(id)) {
     return { success: false, campaign: null };
   }
 
@@ -288,6 +296,9 @@ export async function saveCampaignDraftAction(data: {
     }
 
     if (data.id) {
+      if (!UUID_REGEX.test(data.id)) {
+        return { success: false, error: "รหัสแคมเปญไม่ถูกต้อง" };
+      }
       // Update existing
       const [updated] = await db
         .update(newsletterCampaigns)
@@ -349,11 +360,20 @@ export async function sendCampaignBroadcastAction(data: {
   }
 
   try {
+    if (data.id && !UUID_REGEX.test(data.id)) {
+      return { success: false, error: "รหัสแคมเปญไม่ถูกต้อง" };
+    }
+
     const storefrontUrl = process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000";
 
     // 1. If Test Email mode
     if (data.testEmail) {
       const testEmail = data.testEmail.trim().toLowerCase();
+      // Validate test email format
+      const emailCheck = z.string().email().safeParse(testEmail);
+      if (!emailCheck.success) {
+        return { success: false, error: "รูปแบบอีเมลทดสอบไม่ถูกต้อง" };
+      }
       const testHtml = data.contentHtml.replace(/\{\{UNSUBSCRIBE_URL\}\}/g, `${storefrontUrl}/profile`);
 
       const sendResult = await sendEmail({
@@ -493,6 +513,10 @@ export async function deleteCampaignAction(id: string): Promise<ActionResult> {
     return { success: false, error: "Unauthorized" };
   }
 
+  if (!id || !UUID_REGEX.test(id)) {
+    return { success: false, error: "รหัสแคมเปญไม่ถูกต้อง" };
+  }
+
   try {
     await db.delete(newsletterCampaigns).where(eq(newsletterCampaigns.id, id));
     revalidatePath("/newsletters");
@@ -501,4 +525,18 @@ export async function deleteCampaignAction(id: string): Promise<ActionResult> {
     console.error("[deleteCampaignAction] Error:", error);
     return { success: false, error: "เกิดข้อผิดพลาดในการลบ" };
   }
+}
+
+/**
+ * Sanitize a string field for CSV export to prevent formula injection.
+ * Prefixes dangerous characters with a single quote so spreadsheet apps
+ * treat the cell as plain text instead of evaluating it as a formula.
+ */
+function sanitizeCsvField(value: string): string {
+  let safe = value.replace(/"/g, '""'); // escape inner quotes
+  // Prefix formula-triggering characters to neutralize them
+  if (/^[=+\-@\t\r]/.test(safe)) {
+    safe = "'" + safe;
+  }
+  return `"${safe}"`;
 }
