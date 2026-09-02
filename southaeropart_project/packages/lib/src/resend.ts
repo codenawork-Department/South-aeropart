@@ -82,9 +82,9 @@ export async function sendBatchEmails(
   if (!resend) {
     console.warn("[RESEND] RESEND_API_KEY is missing. Batch send simulated.");
     return {
-      successCount: recipients.length,
-      failedCount: 0,
-      errors: ["RESEND_API_KEY is not configured in .env (Simulated)"],
+      successCount: 0,
+      failedCount: recipients.length,
+      errors: ["RESEND_API_KEY is not configured in .env (Simulated — no emails were actually sent)"],
     };
   }
 

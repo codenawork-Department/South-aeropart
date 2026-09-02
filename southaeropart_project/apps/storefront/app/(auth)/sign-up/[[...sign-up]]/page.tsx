@@ -146,7 +146,7 @@ export default function SignUpPage() {
         setIsVerifying(false);
       }
     },
-    [isLoaded, signUp, setActive, verificationCode, router]
+    [isLoaded, signUp, setActive, verificationCode, router, email, firstName, lastName, subscribeNewsletter]
   );
 
   if (!isLoaded) {

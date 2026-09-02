@@ -80,6 +80,7 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   emailIdx: index("newsletter_subscribers_email_idx").on(table.email),
   userIdx: index("newsletter_subscribers_user_idx").on(table.userId),
   isSubscribedIdx: index("newsletter_subscribers_is_subscribed_idx").on(table.isSubscribed),
+  unsubscribeTokenIdx: index("newsletter_subscribers_unsub_token_idx").on(table.unsubscribeToken),
 }));
 
 /**
