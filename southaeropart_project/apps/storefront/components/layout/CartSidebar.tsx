@@ -174,11 +174,19 @@ export function CartSidebar() {
               >
                 CHECK OUT <ArrowRight size={16} />
               </Link>
+              <Link
+                href="/cart"
+                onClick={closeCart}
+                id="view-cart-btn"
+                className="btn-outline w-full justify-center gap-2 py-3 text-xs tracking-wider"
+              >
+                VIEW CART
+              </Link>
               <button
                 onClick={closeCart}
-                className="btn-outline w-full justify-center gap-2 py-3"
+                className="w-full text-center py-2 text-xs text-[var(--text-muted)] hover:text-white transition-colors"
               >
-                CONTINUE SHOPPING <ArrowRight size={16} />
+                CONTINUE SHOPPING
               </button>
             </div>
 
