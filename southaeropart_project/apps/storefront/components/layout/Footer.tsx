@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Facebook, Instagram, Youtube, Music2, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Facebook, Instagram, Youtube, Music2, CheckCircle2, ShieldCheck, Loader2, Zap, Mail } from "lucide-react";
+import {
+  subscribeNewsletterAction,
+  getSubscriptionStatusAction,
+  SubscriptionStatusResult,
+} from "@/actions/newsletter.actions";
 
 const FOOTER_LINKS = {
   shop: {
@@ -46,11 +51,61 @@ const SOCIAL_LINKS = [
 export function Footer() {
   const [subscribed, setSubscribed] = useState(false);
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [status, setStatus] = useState<SubscriptionStatusResult>({
+    isLoggedIn: false,
+    isSubscribed: false,
+    userEmail: null,
+  });
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  useEffect(() => {
+    getSubscriptionStatusAction().then((res) => {
+      setStatus(res);
+    });
+  }, []);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
+    if (!email.trim()) return;
+
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const res = await subscribeNewsletterAction({
+        email: email.trim(),
+        source: "footer",
+      });
+      if (res.success) {
+        setSubscribed(true);
+        setStatus((prev) => ({ ...prev, isSubscribed: true }));
+      } else {
+        setErrorMessage(res.error || "เกิดข้อผิดพลาด");
+      }
+    } catch {
+      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOneClickSubscribe = async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const res = await subscribeNewsletterAction({
+        source: "1click_banner",
+      });
+      if (res.success) {
+        setSubscribed(true);
+        setStatus((prev) => ({ ...prev, isSubscribed: true }));
+      } else {
+        setErrorMessage(res.error || "เกิดข้อผิดพลาด");
+      }
+    } catch {
+      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -150,47 +205,82 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Newsletter Strip */}
-      <div className="bg-[#111111] border-t border-[#1C1C1C]">
-        <div className="container-main py-6 md:py-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-heading text-base font-bold tracking-wider uppercase text-white">
-                JOIN THE MOVEMENT
-              </h3>
-              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                Subscribe to receive the latest updates, event releases, and exclusive aerodynamics releases.
-              </p>
-            </div>
-
-            {subscribed ? (
-              <div className="flex items-center gap-2 text-xs text-[var(--success)] font-heading font-semibold tracking-wider">
-                <CheckCircle2 size={16} />
-                THANK YOU FOR SUBSCRIBING!
+      {/* Newsletter Strip (Smart Visibility: Hides if logged in and already subscribed) */}
+      {!status.isSubscribed || subscribed ? (
+        <div className="bg-[#111111] border-t border-[#1C1C1C]">
+          <div className="container-main py-6 md:py-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-heading text-base font-bold tracking-wider uppercase text-white">
+                  JOIN THE MOVEMENT
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                  ติดตามข่าวสารการเปิดตัวชุดแต่งใหม่ และรายงานผลทดสอบ CFD Aerodynamics ล่าสุด
+                </p>
               </div>
-            ) : (
-              <form onSubmit={handleSubscribe} className="flex w-full md:w-auto gap-0">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email..."
-                  className="input-dark flex-1 md:w-72 rounded-none text-xs"
-                  id="footer-newsletter-email"
-                />
-                <button
-                  type="submit"
-                  className="btn-primary rounded-none whitespace-nowrap text-xs py-2 px-5"
-                  id="footer-newsletter-subscribe"
-                >
-                  SUBSCRIBE
-                </button>
-              </form>
+
+              {subscribed ? (
+                <div className="flex items-center gap-2 text-xs text-emerald-400 font-heading font-semibold tracking-wider p-2 rounded bg-emerald-950/40 border border-emerald-800/40 animate-fade-in">
+                  <CheckCircle2 size={16} />
+                  THANK YOU FOR SUBSCRIBING!
+                </div>
+              ) : status.isLoggedIn ? (
+                <div className="flex items-center gap-2.5">
+                  {status.userEmail && (
+                    <span className="text-xs text-[var(--text-secondary)] font-mono hidden sm:inline-block">
+                      {status.userEmail}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleOneClickSubscribe}
+                    disabled={isLoading}
+                    className="btn-primary rounded-none whitespace-nowrap text-xs py-2 px-5 flex items-center gap-1.5 disabled:opacity-50"
+                    id="footer-1click-subscribe"
+                  >
+                    {isLoading ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <>
+                        <Zap size={13} className="fill-current" />
+                        <span>SUBSCRIBE 1-CLICK</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubscribe} className="flex w-full md:w-auto gap-0">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email..."
+                    className="input-dark flex-1 md:w-72 rounded-none text-xs"
+                    id="footer-newsletter-email"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="btn-primary rounded-none whitespace-nowrap text-xs py-2 px-5 flex items-center gap-1.5 disabled:opacity-50"
+                    id="footer-newsletter-subscribe"
+                  >
+                    {isLoading ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <span>SUBSCRIBE</span>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+            {errorMessage && (
+              <p className="text-xs text-red-400 mt-2">{errorMessage}</p>
             )}
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Copyright Line */}
       <div className="border-t border-[#1A1A1A] bg-[#070707]">
