@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Menu,
   X,
+  Mail,
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
 
@@ -112,6 +113,14 @@ export function AdminSidebar({
       href: "/reviews",
       icon: Star,
       badge: null,
+    },
+    {
+      label: "ข่าวสาร & จดหมายข่าว",
+      sublabel: "Subscribers & Email Drops",
+      href: "/newsletters",
+      icon: Mail,
+      badge: "NEW",
+      badgeColor: "bg-red-500/20 text-red-400 border border-red-500/30",
     },
     {
       label: "สถานะบริการ & โควต้า",

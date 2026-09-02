@@ -16,6 +16,7 @@ import {
   UserMetadata,
   userLoginLogs,
   orders,
+  newsletterSubscribers,
 } from "@repo/db";
 
 /* =========================================================================
@@ -269,7 +270,39 @@ export async function updatePrivacyConsents(input: z.infer<typeof privacyConsent
       })
       .where(eq(users.id, userId));
 
+    // Sync with newsletter_subscribers
+    if (currentUserRow?.email) {
+      const email = currentUserRow.email.toLowerCase();
+      const [sub] = await db
+        .select()
+        .from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.email, email))
+        .limit(1);
+
+      if (sub) {
+        await db
+          .update(newsletterSubscribers)
+          .set({
+            isSubscribed: parsed.data.marketingEmail,
+            source: "profile",
+            userId,
+            unsubscribedAt: parsed.data.marketingEmail ? null : new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(newsletterSubscribers.id, sub.id));
+      } else if (parsed.data.marketingEmail) {
+        await db.insert(newsletterSubscribers).values({
+          email,
+          userId,
+          isSubscribed: true,
+          source: "profile",
+          subscribedAt: new Date(),
+        });
+      }
+    }
+
     revalidatePath("/profile");
+    revalidatePath("/");
     return { success: true, error: null };
   } catch (error) {
     console.error("[updatePrivacyConsents] Error:", error);

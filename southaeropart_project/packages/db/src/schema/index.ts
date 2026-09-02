@@ -148,6 +148,16 @@ export const userInterestsRelations = relations(userInterests, ({ one }) => ({
   product: one(products, { fields: [userInterests.productId], references: [products.id] }),
 }));
 
+import { newsletterSubscribers, newsletterCampaigns } from "./newsletter";
+
+export const newsletterSubscribersRelations = relations(newsletterSubscribers, ({ one }) => ({
+  user: one(users, { fields: [newsletterSubscribers.userId], references: [users.id] }),
+}));
+
+export const newsletterCampaignsRelations = relations(newsletterCampaigns, ({ one }) => ({
+  createdByAdmin: one(adminUsers, { fields: [newsletterCampaigns.createdByAdminId], references: [adminUsers.id] }),
+}));
+
 export * from "./icons";
 export * from "./users";
 export * from "./admin";
@@ -156,3 +166,4 @@ export * from "./orders";
 export * from "./reviews";
 export * from "./user-interests";
 export * from "./showcase";
+export * from "./newsletter";

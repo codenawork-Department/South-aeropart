@@ -7,7 +7,8 @@ import Link from "next/link";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { recordLoginAction } from "@/actions/auth-audit.actions";
-import { Eye, EyeOff, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
+import { subscribeNewsletterAction } from "@/actions/newsletter.actions";
+import { Eye, EyeOff, AlertCircle, Loader2, ArrowLeft, Mail } from "lucide-react";
 
 export default function SignUpPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -19,6 +20,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [subscribeNewsletter, setSubscribeNewsletter] = useState(true);
   const [error, setError] = useState("");
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -114,6 +116,18 @@ export default function SignUpPage() {
             fullName: [firstName, lastName].filter(Boolean).join(" "),
             loginMethod: "email_password",
           });
+
+          // If newsletter opt-in is checked, subscribe user
+          if (subscribeNewsletter) {
+            try {
+              await subscribeNewsletterAction({
+                email,
+                source: "signup",
+              });
+            } catch (subErr) {
+              console.error("Auto subscribe error during signup:", subErr);
+            }
+          }
 
           router.push("/");
         } else {
@@ -400,6 +414,23 @@ export default function SignUpPage() {
                       )}
                     </button>
                   </div>
+                </div>
+
+                {/* Newsletter Opt-in Checkbox */}
+                <div className="flex items-start gap-2.5 p-3 rounded bg-[#141414] border border-[#242424] hover:border-[#333333] transition-colors">
+                  <input
+                    type="checkbox"
+                    id="sign-up-newsletter"
+                    checked={subscribeNewsletter}
+                    onChange={(e) => setSubscribeNewsletter(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded bg-[#1C1C1C] border-[#383838] text-[var(--accent-red)] focus:ring-[var(--accent-red)] focus:ring-offset-0 cursor-pointer accent-[var(--accent-red)]"
+                  />
+                  <label
+                    htmlFor="sign-up-newsletter"
+                    className="text-xs text-[var(--text-secondary)] leading-snug cursor-pointer select-none"
+                  >
+                    <span className="font-semibold text-white">รับข่าวสารการเปิดตัวชุดแต่งใหม่</span> และรายงานผลทดสอบ CFD Aerodynamics ล่าสุดทางอีเมล
+                  </label>
                 </div>
 
                 {/* Submit */}
