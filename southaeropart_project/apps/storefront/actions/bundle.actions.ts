@@ -26,10 +26,12 @@ import { MockProduct, MOCK_PRODUCTS } from "@/lib/mock-data";
 export interface FeaturedBundleItem {
   id: string;
   name: string;
+  nameEn?: string | null;
   slug: string;
   sku: string;
   price: string;
   categoryName: string;
+  categoryNameEn?: string | null;
   material?: string;
   image?: string;
   downforceN?: number;
@@ -46,10 +48,14 @@ export interface FeaturedBundleSlide {
 export interface FeaturedBundleData {
   id: string;
   name: string;
+  nameEn?: string | null;
   slug: string;
   sku: string;
   tagline: string;
   description: string;
+  descriptionEn?: string | null;
+  shortDescription?: string | null;
+  shortDescriptionEn?: string | null;
   brandName: string;
   carModelName: string;
   carModelGen?: string | null;
@@ -391,8 +397,11 @@ export async function getFeaturedBundles(): Promise<FeaturedBundleData[]> {
         sku: products.sku,
         slug: products.slug,
         name: products.name,
+        nameEn: products.nameEn,
         description: products.description,
+        descriptionEn: products.descriptionEn,
         shortDescription: products.shortDescription,
+        shortDescriptionEn: products.shortDescriptionEn,
         price: products.price,
         compareAtPrice: products.compareAtPrice,
         status: products.status,
@@ -453,12 +462,14 @@ export async function getFeaturedBundles(): Promise<FeaturedBundleData[]> {
           childProductId: productBundleItems.childProductId,
           position: productBundleItems.position,
           childName: products.name,
+          childNameEn: products.nameEn,
           childSlug: products.slug,
           childSku: products.sku,
           childPrice: products.price,
           childDownforce: products.downforceN,
           childDrag: products.dragN,
           categoryName: categories.name,
+          categoryNameEn: categories.nameEn,
           categorySlug: categories.slug,
         })
         .from(productBundleItems)
@@ -492,10 +503,12 @@ export async function getFeaturedBundles(): Promise<FeaturedBundleData[]> {
       childPartsMap[item.bundleProductId].push({
         id: item.childProductId,
         name: item.childName,
+        nameEn: item.childNameEn,
         slug: item.childSlug,
         sku: item.childSku,
         price: item.childPrice,
         categoryName: item.categoryName || "Aero Part",
+        categoryNameEn: item.categoryNameEn,
         downforceN: item.childDownforce ? Number(item.childDownforce) : undefined,
         dragN: item.childDrag ? Number(item.childDrag) : undefined,
       });
@@ -553,12 +566,16 @@ export async function getFeaturedBundles(): Promise<FeaturedBundleData[]> {
       return {
         id: b.id,
         name: b.name,
+        nameEn: b.nameEn,
         slug: b.slug,
         sku: b.sku,
         tagline,
         description:
           b.description ||
           `Precision engineered to elevate the stance and aerodynamic downforce of your ${b.brandName || ""} ${b.carModelName || ""}. Functional, track-tested, and built to stand out.`,
+        descriptionEn: b.descriptionEn,
+        shortDescription: b.shortDescription,
+        shortDescriptionEn: b.shortDescriptionEn,
         brandName: b.brandName || "South Aero",
         carModelName: b.carModelName || "Aero Spec",
         carModelGen: b.carModelGen || null,
@@ -602,8 +619,11 @@ export async function getActiveBundles(): Promise<FeaturedBundleData[]> {
         sku: products.sku,
         slug: products.slug,
         name: products.name,
+        nameEn: products.nameEn,
         description: products.description,
+        descriptionEn: products.descriptionEn,
         shortDescription: products.shortDescription,
+        shortDescriptionEn: products.shortDescriptionEn,
         price: products.price,
         compareAtPrice: products.compareAtPrice,
         status: products.status,
@@ -661,12 +681,14 @@ export async function getActiveBundles(): Promise<FeaturedBundleData[]> {
           childProductId: productBundleItems.childProductId,
           position: productBundleItems.position,
           childName: products.name,
+          childNameEn: products.nameEn,
           childSlug: products.slug,
           childSku: products.sku,
           childPrice: products.price,
           childDownforce: products.downforceN,
           childDrag: products.dragN,
           categoryName: categories.name,
+          categoryNameEn: categories.nameEn,
           categorySlug: categories.slug,
         })
         .from(productBundleItems)
@@ -698,10 +720,12 @@ export async function getActiveBundles(): Promise<FeaturedBundleData[]> {
       childPartsMap[item.bundleProductId].push({
         id: item.childProductId,
         name: item.childName,
+        nameEn: item.childNameEn,
         slug: item.childSlug,
         sku: item.childSku,
         price: item.childPrice,
         categoryName: item.categoryName || "Aero Part",
+        categoryNameEn: item.categoryNameEn,
         downforceN: item.childDownforce ? Number(item.childDownforce) : undefined,
         dragN: item.childDrag ? Number(item.childDrag) : undefined,
       });
@@ -754,12 +778,16 @@ export async function getActiveBundles(): Promise<FeaturedBundleData[]> {
       return {
         id: b.id,
         name: b.name,
+        nameEn: b.nameEn,
         slug: b.slug,
         sku: b.sku,
         tagline,
         description:
           b.description ||
           `Precision engineered to elevate the stance and aerodynamic downforce of your ${b.brandName || ""} ${b.carModelName || ""}. Functional, track-tested, and built to stand out.`,
+        descriptionEn: b.descriptionEn,
+        shortDescription: b.shortDescription,
+        shortDescriptionEn: b.shortDescriptionEn,
         brandName: b.brandName || "South Aero",
         carModelName: b.carModelName || "Aero Spec",
         carModelGen: b.carModelGen || null,
@@ -800,9 +828,12 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
         sku: products.sku,
         slug: products.slug,
         name: products.name,
+        nameEn: products.nameEn,
         productType: products.productType,
         description: products.description,
+        descriptionEn: products.descriptionEn,
         shortDescription: products.shortDescription,
+        shortDescriptionEn: products.shortDescriptionEn,
         price: products.price,
         compareAtPrice: products.compareAtPrice,
         stockQuantity: products.stockQuantity,
@@ -828,8 +859,11 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
         carModelYearTo: carModels.yearTo,
         materialId: products.materialId,
         materialName: materials.name,
+        materialNameEn: materials.nameEn,
         installationId: products.installationId,
         installationName: installations.name,
+        installationNameEn: installations.nameEn,
+        installationEn: products.installationEn,
         features: products.features,
       })
       .from(products)
@@ -931,6 +965,7 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
       id: row.id,
       slug: row.slug,
       name: row.name,
+      nameEn: row.nameEn || null,
       brand: row.brandName || "South Aero",
       productType: row.productType as "single" | "bundle",
       categorySlug: row.productType === "bundle" ? "body-kits" : "aeroparts",
@@ -938,12 +973,16 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
       price: dynamicPrice,
       compareAtPrice: row.compareAtPrice || undefined,
       description: row.description || "",
+      descriptionEn: row.descriptionEn || null,
       shortDescription: row.shortDescription || "",
+      shortDescriptionEn: row.shortDescriptionEn || null,
       compatibility,
       material: row.materialName || "Pre-preg Carbon Fiber / High-Impact ABS",
+      materialEn: row.materialNameEn || null,
       finish: "Gloss Black / Carbon Weave",
       finishOptions: ["Gloss Black", "Carbon Fiber Weave", "Matte Black"],
-      installation: row.installationName || "Bolt-on under-chassis mount",
+      installation: row.installationName || row.installationEn || "Bolt-on under-chassis mount",
+      installationEn: row.installationNameEn || row.installationEn || null,
       weightKg: row.weightKg || "8.5",
       downforceN: effectiveDownforce,
       dragN: effectiveDrag,
@@ -953,12 +992,21 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
       dragAfter: row.dragAfter ? Number(row.dragAfter) : undefined,
       isCustomCfd: row.isCustomCfd,
       images: imageUrls.length > 0 ? imageUrls : ["/images/FRONT.png"],
-      features: (row.features as any) || [
-        {
-          title: "Total Aero Balance",
-          description: "Engineered as a cohesive aerodynamic system with matching body lines and surface flow.",
-        },
-      ],
+      features: Array.isArray(row.features) && row.features.length > 0
+        ? (row.features as any[]).map((f) => ({
+            title: f.title || "",
+            titleEn: f.titleEn || null,
+            description: f.description || "",
+            descriptionEn: f.descriptionEn || null,
+          }))
+        : [
+            {
+              title: "Total Aero Balance",
+              titleEn: "Total Aero Balance",
+              description: "Engineered as a cohesive aerodynamic system with matching body lines and surface flow.",
+              descriptionEn: "Engineered as a cohesive aerodynamic system with matching body lines and surface flow.",
+            },
+          ],
       isFeatured: row.isFeatured,
       bundleItems: childItems.map((c) => ({
         id: c.id,

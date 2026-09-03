@@ -27,11 +27,13 @@ import { z } from "zod";
 export interface FeaturedProductItem {
   id: string;
   name: string;
+  nameEn?: string | null;
   slug: string;
   sku: string;
   brandName?: string | null;
   carModelName?: string | null;
   categoryName?: string | null;
+  categoryNameEn?: string | null;
   categorySlug?: string | null;
   price: string;
   compareAtPrice?: string | null;
@@ -47,10 +49,12 @@ export interface ShopProductItem {
   slug: string;
   sku: string;
   name: string;
+  nameEn?: string | null;
   productType: "single" | "bundle";
   brandName: string;
   carModelName: string | null;
   categoryName: string;
+  categoryNameEn?: string | null;
   categorySlug: string | null;
   materialName: string | null;
   price: string;
@@ -74,6 +78,7 @@ export interface ActiveCategory {
   id: string;
   slug: string;
   name: string;
+  nameEn?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,7 +99,7 @@ const shopProductsInputSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(12),
 });
 
-export type ShopProductsInput = z.infer<typeof shopProductsInputSchema>;
+export type ShopProductsInput = z.input<typeof shopProductsInputSchema>;
 
 // ---------------------------------------------------------------------------
 // getActiveCategories — dynamic filter pills
@@ -107,6 +112,7 @@ export async function getActiveCategories(): Promise<ActiveCategory[]> {
         id: categories.id,
         slug: categories.slug,
         name: categories.name,
+        nameEn: categories.nameEn,
       })
       .from(categories)
       .where(eq(categories.isActive, true))
@@ -152,14 +158,20 @@ export async function getShopProducts(
       conditions.push(eq(carModels.slug, modelSlug));
     }
 
-    // Search (case-insensitive against name + sku + short description)
+    // Search (case-insensitive against name + nameEn + sku + short description + brand + car model + category)
     if (search && search.trim().length > 0) {
       const term = `%${search.trim()}%`;
       conditions.push(
         or(
           ilike(products.name, term),
+          ilike(products.nameEn, term),
           ilike(products.sku, term),
-          ilike(products.shortDescription, term)
+          ilike(products.shortDescription, term),
+          ilike(products.shortDescriptionEn, term),
+          ilike(brands.name, term),
+          ilike(carModels.name, term),
+          ilike(categories.name, term),
+          ilike(categories.nameEn, term)
         )!
       );
     }
@@ -200,6 +212,7 @@ export async function getShopProducts(
         sku: products.sku,
         slug: products.slug,
         name: products.name,
+        nameEn: products.nameEn,
         productType: products.productType,
         price: products.price,
         compareAtPrice: products.compareAtPrice,
@@ -210,6 +223,7 @@ export async function getShopProducts(
         brandName: brands.name,
         carModelName: carModels.name,
         categoryName: categories.name,
+        categoryNameEn: categories.nameEn,
         categorySlug: categories.slug,
         materialName: materials.name,
       })
@@ -254,10 +268,12 @@ export async function getShopProducts(
       slug: p.slug,
       sku: p.sku,
       name: p.name,
+      nameEn: p.nameEn,
       productType: p.productType,
       brandName: p.brandName || "South Aero",
       carModelName: p.carModelName,
       categoryName: p.categoryName || "Aeropart",
+      categoryNameEn: p.categoryNameEn,
       categorySlug: p.categorySlug,
       materialName: p.materialName,
       price: p.price,
@@ -297,6 +313,7 @@ export async function getFeaturedProducts(): Promise<FeaturedProductItem[]> {
         sku: products.sku,
         slug: products.slug,
         name: products.name,
+        nameEn: products.nameEn,
         productType: products.productType,
         price: products.price,
         compareAtPrice: products.compareAtPrice,
@@ -307,6 +324,7 @@ export async function getFeaturedProducts(): Promise<FeaturedProductItem[]> {
         brandName: brands.name,
         carModelName: carModels.name,
         categoryName: categories.name,
+        categoryNameEn: categories.nameEn,
         categorySlug: categories.slug,
         createdAt: products.createdAt,
         updatedAt: products.updatedAt,
@@ -347,11 +365,13 @@ export async function getFeaturedProducts(): Promise<FeaturedProductItem[]> {
         return {
           id: p.id,
           name: p.name,
+          nameEn: p.nameEn,
           slug: p.slug,
           sku: p.sku,
           brandName: p.brandName || "South Aero",
           carModelName: p.carModelName,
           categoryName: p.categoryName || "Aeropart",
+          categoryNameEn: p.categoryNameEn,
           categorySlug: p.categorySlug,
           price: p.price,
           compareAtPrice: p.compareAtPrice,
@@ -367,6 +387,34 @@ export async function getFeaturedProducts(): Promise<FeaturedProductItem[]> {
   } catch (error) {
     console.error("[getFeaturedProducts] Error fetching from DB:", error);
     return [];
+  }
+}
+
+export interface QuickSearchResult {
+  products: ShopProductItem[];
+  total: number;
+}
+
+export async function quickSearchAction(query: string): Promise<QuickSearchResult> {
+  const trimmed = (query || "").trim();
+  if (trimmed.length < 1) {
+    return { products: [], total: 0 };
+  }
+  try {
+    const res = await getShopProducts({
+      search: trimmed,
+      pageSize: 5,
+      page: 1,
+      sortBy: "newest",
+      sortDir: "desc",
+    });
+    return {
+      products: res.products,
+      total: res.total,
+    };
+  } catch (error) {
+    console.error("[quickSearchAction] Error:", error);
+    return { products: [], total: 0 };
   }
 }
 

@@ -19,6 +19,7 @@ import {
   UserGarageVehicle,
 } from "@/actions/vehicle.actions";
 import { SearchableCombobox, ComboboxOption } from "./SearchableCombobox";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface VehicleSelectorProps {
   initialBrands?: VehicleBrandData[];
@@ -32,6 +33,7 @@ export function VehicleSelector({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { lang } = useLanguage();
 
   const [brands, setBrands] = useState<VehicleBrandData[]>(initialBrands || []);
   const [garageVehicles, setGarageVehicles] = useState<UserGarageVehicle[]>(
@@ -220,11 +222,13 @@ export function VehicleSelector({
             </div>
             <div>
               <h2 className="font-heading text-xs md:text-sm font-black tracking-wider uppercase text-white flex items-center gap-2">
-                SELECT YOUR VEHICLE
+                {lang === "en" ? "SELECT YOUR VEHICLE" : "เลือกรุ่นรถของคุณ"}
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] shadow-[0_0_8px_rgba(229,29,36,0.8)] animate-pulse" />
               </h2>
               <p className="text-[0.65rem] text-zinc-400 font-sans">
-                ค้นหาชุดแต่งและชิ้นส่วนแอโร่ที่ตรงรุ่นสำหรับรถของคุณ
+                {lang === "en"
+                  ? "Find aerodynamic parts engineered specifically for your vehicle"
+                  : "ค้นหาชุดแต่งและชิ้นส่วนแอโร่ที่ตรงรุ่นสำหรับรถของคุณ"}
               </p>
             </div>
           </div>
@@ -233,7 +237,7 @@ export function VehicleSelector({
           {garageVehicles.length > 0 && (
             <div className="flex items-center gap-2 self-start sm:self-center" ref={garageDropdownRef}>
               <span className="text-[0.62rem] font-heading font-semibold uppercase tracking-wider text-zinc-400 hidden lg:inline">
-                รถของคุณ:
+                {lang === "en" ? "Your Garage:" : "รถของคุณ:"}
               </span>
 
               {garageVehicles.length === 1 ? (
@@ -284,7 +288,7 @@ export function VehicleSelector({
                     }`}
                   >
                     <Car size={13} className="text-[var(--accent-red)]" />
-                    <span>รถในโรงรถ ({garageVehicles.length} คัน)</span>
+                    <span>{lang === "en" ? `Garage (${garageVehicles.length})` : `รถในโรงรถ (${garageVehicles.length} คัน)`}</span>
                     <ChevronDown
                       size={13}
                       className={`text-zinc-400 transition-transform ${isGarageOpen ? "rotate-180 text-[var(--accent-red)]" : ""}`}
@@ -294,7 +298,7 @@ export function VehicleSelector({
                   {isGarageOpen && (
                     <div className="absolute right-0 top-full mt-1.5 w-64 bg-zinc-900 border border-zinc-800 rounded-sm shadow-2xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100">
                       <div className="px-3 py-2 bg-zinc-950 border-b border-zinc-800 text-[0.62rem] font-heading font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
-                        <span>เลือกรถจากโรงรถของคุณ</span>
+                        <span>{lang === "en" ? "Select vehicle from your garage" : "เลือกรถจากโรงรถของคุณ"}</span>
                         <Sparkles size={11} className="text-[var(--accent-red)]" />
                       </div>
                       <div className="max-h-56 overflow-y-auto py-1 custom-scrollbar">
@@ -388,12 +392,12 @@ export function VehicleSelector({
               {isPending ? (
                 <>
                   <Loader2 size={13} className="animate-spin" />
-                  LOADING...
+                  {lang === "en" ? "LOADING..." : "กำลังโหลด..."}
                 </>
               ) : (
                 <>
                   <Search size={13} />
-                  VIEW PRODUCTS
+                  {lang === "en" ? "VIEW PRODUCTS" : "ดูสินค้า"}
                   <ArrowRight size={13} />
                 </>
               )}
@@ -408,14 +412,14 @@ export function VehicleSelector({
           <div className="mt-3 pt-2.5 border-t border-zinc-900 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-[0.68rem] text-zinc-400 font-sans">
-                กำลังแสดงผลสำหรับ:
+                {lang === "en" ? "Showing results for:" : "กำลังแสดงผลสำหรับ:"}
               </span>
               <button
                 type="button"
                 onClick={handleReset}
                 disabled={isPending}
                 className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-red-600/60 text-[0.68rem] font-heading font-bold text-white uppercase tracking-wide transition-all cursor-pointer shadow-sm"
-                title="คลิกเพื่อล้างตัวกรองนี้"
+                title={lang === "en" ? "Click to clear filter" : "คลิกเพื่อล้างตัวกรองนี้"}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] group-hover:scale-125 transition-transform" />
                 <span>
@@ -433,10 +437,9 @@ export function VehicleSelector({
               onClick={handleReset}
               disabled={isPending}
               className="inline-flex items-center gap-1.5 text-[0.68rem] font-heading font-bold uppercase tracking-wider text-zinc-400 hover:text-[var(--accent-red)] transition-colors cursor-pointer py-1"
-              title="ล้างตัวกรองและแสดงสินค้าของรถทุกรุ่น"
             >
               <RotateCcw size={11} />
-              <span>ล้างตัวกรอง (ดูสินค้าทุกรุ่น)</span>
+              <span>{lang === "en" ? "RESET FILTER" : "ล้างตัวกรอง (ดูสินค้าทุกรุ่น)"}</span>
             </button>
           </div>
         )}

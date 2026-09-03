@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { getUserLanguagePreference } from "@/actions/profile.actions";
 import { AerodynamicsGuideClient } from "@/components/aerodynamics/AerodynamicsGuideClient";
 import { AeroLanguage } from "@/data/aerodynamics-content";
+import { sanitizeLanguage, LANGUAGE_COOKIE_NAME, DEFAULT_LANGUAGE } from "@/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -26,27 +27,24 @@ export const metadata: Metadata = {
 };
 
 export default async function AerodynamicsPage() {
-  let lang: AeroLanguage = "th";
+  let lang: AeroLanguage = DEFAULT_LANGUAGE as AeroLanguage;
 
   // 1. Check if user is authenticated and has a saved profile language
   const { userId } = auth();
   if (userId) {
     try {
       const profileLang = await getUserLanguagePreference();
-      if (profileLang === "en" || profileLang === "th") {
-        lang = profileLang;
-      }
+      lang = sanitizeLanguage(profileLang) as AeroLanguage;
     } catch {
       // fallback
     }
   } else {
-    // 2. Fallback to cookie if unauthenticated
+    // 2. Fallback to cookie if unauthenticated — sanitized against injection
     const cookieStore = cookies();
-    const cookieLang = cookieStore.get("south_aero_lang")?.value;
-    if (cookieLang === "en" || cookieLang === "th") {
-      lang = cookieLang;
-    }
+    const cookieLang = cookieStore.get(LANGUAGE_COOKIE_NAME)?.value;
+    lang = sanitizeLanguage(cookieLang) as AeroLanguage;
   }
 
   return <AerodynamicsGuideClient initialLanguage={lang} />;
 }
+

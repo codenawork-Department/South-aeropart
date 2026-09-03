@@ -27,6 +27,7 @@ import {
   Maximize2,
   TrendingUp,
 } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import {
   AeroLanguage,
   AERODYNAMICS_TELEMETRY_STATS,
@@ -49,27 +50,19 @@ export function AerodynamicsGuideClient({ initialLanguage }: AerodynamicsGuideCl
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [activePhenomenon, setActivePhenomenon] = useState<"porpoising" | "aeroacoustics">("porpoising");
 
-  // Sync language with localStorage if user previously switched it on client
+  // Sync language with global LanguageProvider
+  const { lang: globalLang, setLanguage: setGlobalLang } = useLanguage();
+
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("south_aero_lang") as AeroLanguage;
-      if (stored === "th" || stored === "en") {
-        setLang(stored);
-      }
-    } catch {
-      // ignore
+    if (globalLang && (globalLang === "th" || globalLang === "en") && globalLang !== lang) {
+      setLang(globalLang);
     }
-  }, []);
+  }, [globalLang, lang]);
 
   // Language switch handler
   const handleToggleLanguage = (newLang: AeroLanguage) => {
     setLang(newLang);
-    try {
-      localStorage.setItem("south_aero_lang", newLang);
-      document.cookie = `south_aero_lang=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
-    } catch {
-      // ignore
-    }
+    setGlobalLang(newLang);
   };
 
   // ══════════════════════════════════════════════════════════

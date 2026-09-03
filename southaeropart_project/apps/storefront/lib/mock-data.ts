@@ -4,6 +4,7 @@ export type MockProduct = {
   id: string;
   slug: string;
   name: string;
+  nameEn?: string | null;
   brand: string;
   productType?: "single" | "bundle";
   categorySlug: string;
@@ -11,7 +12,9 @@ export type MockProduct = {
   price: string;
   compareAtPrice?: string;
   description: string;
+  descriptionEn?: string | null;
   shortDescription: string;
+  shortDescriptionEn?: string | null;
   compatibility: {
     make: string;
     model: string;
@@ -19,9 +22,11 @@ export type MockProduct = {
     yearTo: number;
   }[];
   material: string;
+  materialEn?: string | null;
   finish: string;
   finishOptions: string[];
   installation: string;
+  installationEn?: string | null;
   weightKg: string;
   downforceN?: number;
   dragN?: number;
@@ -33,7 +38,9 @@ export type MockProduct = {
   images: string[];
   features: {
     title: string;
+    titleEn?: string | null;
     description: string;
+    descriptionEn?: string | null;
   }[];
   isFeatured?: boolean;
   bundleItems?: Array<{

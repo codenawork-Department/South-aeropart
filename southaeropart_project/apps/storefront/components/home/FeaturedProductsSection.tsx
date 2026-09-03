@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Wind } from "lucide-react";
 import { FeaturedProductItem } from "@/actions/product.actions";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { getLocalizedField } from "@/lib/i18n-helpers";
 
 interface FeaturedProductsSectionProps {
   initialProducts: FeaturedProductItem[];
@@ -10,6 +14,8 @@ interface FeaturedProductsSectionProps {
 export function FeaturedProductsSection({
   initialProducts,
 }: FeaturedProductsSectionProps) {
+  const { t, lang } = useLanguage();
+
   if (!initialProducts || initialProducts.length === 0) {
     return null;
   }
@@ -23,14 +29,15 @@ export function FeaturedProductsSection({
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2 h-2 rounded-full bg-[var(--accent-red)] animate-pulse" />
               <span className="text-[0.65rem] font-heading font-bold tracking-[0.2em] text-[var(--accent-red)] uppercase">
-                RECOMMENDED PARTS
+                {t.home.recommendedBadge}
               </span>
             </div>
             <h2 className="heading-lg text-white">
-              FEATURED <span className="text-[var(--accent-red)]">PARTS</span>
+              {t.home.featuredPartsTitle}{" "}
+              <span className="text-[var(--accent-red)]">{t.home.featuredPartsHighlight}</span>
             </h2>
             <p className="text-xs text-[var(--text-muted)] mt-1 font-heading uppercase tracking-wider">
-              High-performance aerodynamic components engineered for precision fitment
+              {t.home.featuredPartsSubtitle}
             </p>
           </div>
 
@@ -38,7 +45,7 @@ export function FeaturedProductsSection({
             href="/products"
             className="hidden sm:inline-flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-white transition-colors font-heading font-semibold tracking-widest uppercase group"
           >
-            VIEW ALL PRODUCTS
+            {t.home.viewAllProducts}
             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-[var(--accent-red)]" />
           </Link>
         </div>
@@ -50,10 +57,13 @@ export function FeaturedProductsSection({
               Boolean(product.compareAtPrice) &&
               Number(product.compareAtPrice) > Number(product.price);
 
+            const localizedName = getLocalizedField(product.name, product.nameEn, lang);
+            const localizedCat = lang === "en" && product.categoryNameEn ? product.categoryNameEn : product.categoryName;
+
             const displayCategory =
               product.carModelName
                 ? `${product.brandName} • ${product.carModelName}`
-                : product.categoryName || product.brandName || "AEROPARTS";
+                : localizedCat || product.brandName || "AEROPARTS";
 
             return (
               <Link
@@ -65,7 +75,7 @@ export function FeaturedProductsSection({
                 <div className="aspect-square relative overflow-hidden bg-[#161616]">
                   <Image
                     src={product.primaryImage}
-                    alt={product.name}
+                    alt={localizedName}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                     sizes="(max-width: 768px) 50vw, 25vw"
@@ -76,7 +86,7 @@ export function FeaturedProductsSection({
                   {hasDiscount && (
                     <div className="absolute top-2.5 left-2.5">
                       <span className="bg-[var(--accent-red)] text-white text-[0.6rem] font-heading font-extrabold uppercase px-2 py-0.5 rounded-sm shadow-md">
-                        SPECIAL
+                        {t.home.special}
                       </span>
                     </div>
                   )}
@@ -99,7 +109,7 @@ export function FeaturedProductsSection({
                       {displayCategory}
                     </p>
                     <h3 className="font-heading text-xs md:text-sm font-bold tracking-[0.08em] uppercase text-white group-hover:text-[var(--accent-red)] transition-colors line-clamp-1 mt-0.5">
-                      {product.name}
+                      {localizedName}
                     </h3>
                   </div>
 
@@ -131,7 +141,7 @@ export function FeaturedProductsSection({
             href="/products"
             className="inline-flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-white transition-colors font-heading font-semibold tracking-widest uppercase group"
           >
-            VIEW ALL PRODUCTS
+            {t.home.viewAllProducts}
             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-[var(--accent-red)]" />
           </Link>
         </div>

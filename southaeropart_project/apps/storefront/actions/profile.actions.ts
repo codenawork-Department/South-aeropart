@@ -215,7 +215,7 @@ export async function updateUserProfile(input: z.infer<typeof updateProfileSchem
 export async function getUserLanguagePreference(): Promise<"th" | "en"> {
   try {
     const { userId } = auth();
-    if (!userId) return "th";
+    if (!userId) return "en";
 
     const [userRow] = await db
       .select({ metadata: users.metadata })
@@ -224,13 +224,57 @@ export async function getUserLanguagePreference(): Promise<"th" | "en"> {
       .limit(1);
 
     const lang = userRow?.metadata?.preferences?.language;
+    // Validate against supported set — never trust DB values blindly
     if (lang === "en" || lang === "th") {
       return lang;
     }
-    return "th";
+    return "en";
   } catch (err) {
     console.error("[getUserLanguagePreference] Error:", err);
-    return "th";
+    return "en";
+  }
+}
+
+/**
+ * Quick update for user's language preference from the global switcher.
+ * Runs in the background if the user is authenticated.
+ */
+export async function updateUserLanguagePreference(newLang: "th" | "en"): Promise<{ success: boolean }> {
+  try {
+    // Validate the incoming language value — server actions are public endpoints
+    const langSchema = z.enum(["th", "en"]);
+    const parsed = langSchema.safeParse(newLang);
+    if (!parsed.success) return { success: false };
+    const validatedLang = parsed.data;
+
+    const { userId } = auth();
+    if (!userId) return { success: false };
+
+    const [currentUserRow] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const existingMetadata: UserMetadata = currentUserRow?.metadata || {};
+    const existingPreferences = existingMetadata.preferences || {};
+
+    const updatedMetadata: UserMetadata = {
+      ...existingMetadata,
+      preferences: {
+        ...existingPreferences,
+        language: validatedLang,
+      },
+    };
+
+    await db
+      .update(users)
+      .set({
+        metadata: updatedMetadata,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    revalidatePath("/profile");
+    return { success: true };
+  } catch (error) {
+    console.error("[updateUserLanguagePreference] Error:", error);
+    return { success: false };
   }
 }
 

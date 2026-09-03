@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X, User, Search, ArrowRight, Heart } from "lucide-react";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 type MobileMenuProps = {
   isOpen: boolean;
   onClose: () => void;
   links: { href: string; label: string; match: (pathname: string) => boolean }[];
+  onOpenSearch?: () => void;
 };
 
-export function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
+export function MobileMenu({ isOpen, onClose, links, onOpenSearch }: MobileMenuProps) {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   if (!isOpen) return null;
 
@@ -51,6 +55,23 @@ export function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
           </button>
         </div>
 
+        {/* Mobile Quick Search Button */}
+        {onOpenSearch && (
+          <div className="p-3 border-b border-[#1E1E1E] bg-[#121212]/50">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenSearch();
+              }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded bg-[#161616] border border-[#262626] text-xs text-[var(--text-secondary)] hover:text-white hover:border-[var(--accent-red)] transition-all font-heading tracking-wider"
+            >
+              <Search size={14} className="text-[var(--accent-red)]" />
+              <span>{t.common.searchPlaceholder}</span>
+            </button>
+          </div>
+        )}
+
         {/* Nav Links */}
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto" aria-label="Mobile navigation">
           {links.map((link) => {
@@ -73,6 +94,11 @@ export function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
           })}
         </nav>
 
+        {/* Mobile Language Switcher */}
+        <div className="p-3 border-t border-[#1E1E1E] bg-[#0C0C0C]">
+          <LanguageSwitcher variant="mobile" />
+        </div>
+
         {/* Bottom User / Account Row */}
         <div className="p-4 border-t border-[#202020] bg-[#0A0A0A] space-y-2">
           <Link
@@ -81,7 +107,7 @@ export function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
             className="flex items-center gap-3 py-2.5 px-4 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white rounded hover:bg-white/5 transition-colors"
           >
             <Heart size={16} />
-            <span>MY WISHLIST</span>
+            <span>{t.common.myWishlist}</span>
           </Link>
           <Link
             href="/sign-in"
@@ -89,7 +115,7 @@ export function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
             className="flex items-center gap-3 py-2.5 px-4 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white rounded hover:bg-white/5 transition-colors"
           >
             <User size={16} />
-            <span>ACCOUNT &bull; SIGN IN</span>
+            <span>{t.common.signIn}</span>
           </Link>
         </div>
       </div>

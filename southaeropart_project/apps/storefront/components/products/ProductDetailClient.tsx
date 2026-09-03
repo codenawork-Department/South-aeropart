@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { MockProduct } from "@/lib/mock-data";
 import { useCart } from "@/components/providers/CartProvider";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { getLocalizedField } from "@/lib/i18n-helpers";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { KitIncludedParts } from "@/components/products/KitIncludedParts";
 import { toggleWishlist, checkIsWishlisted } from "@/actions/wishlist.actions";
@@ -35,6 +37,13 @@ import { toggleWishlist, checkIsWishlisted } from "@/actions/wishlist.actions";
 export function ProductDetailClient({ product }: { product: MockProduct }) {
   const { isSignedIn } = useUser();
   const router = useRouter();
+  const { t, lang } = useLanguage();
+
+  const localizedName = getLocalizedField(product.name, product.nameEn, lang);
+  const localizedDescription = getLocalizedField(product.description, product.descriptionEn, lang);
+  const localizedShortDescription = getLocalizedField(product.shortDescription, product.shortDescriptionEn, lang);
+  const localizedMaterial = getLocalizedField(product.material, product.materialEn, lang);
+  const localizedInstallation = getLocalizedField(product.installation, product.installationEn, lang);
 
   const [currentImage, setCurrentImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -133,7 +142,7 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
           </li>
           <li className="text-[var(--text-muted)]">&gt;</li>
           <li className="text-[var(--accent-red)] uppercase truncate max-w-[200px] sm:max-w-none">
-            {product.name}
+            {localizedName}
           </li>
         </ol>
       </nav>
@@ -245,13 +254,13 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 )}
               </div>
               <h1 className="heading-lg text-white mt-1 uppercase">
-                {product.name}
+                {localizedName}
               </h1>
             </div>
 
             {/* Short Description */}
             <p className="body-md text-[var(--text-secondary)]">
-              {product.shortDescription}
+              {localizedShortDescription}
             </p>
 
             {/* Configuration Form & Actions */}
@@ -259,7 +268,7 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
               {/* Price Row */}
               <div className="flex items-center justify-between py-3 border-y border-[#202020]">
                 <span className="font-heading text-xs font-bold tracking-wider uppercase text-[var(--text-secondary)]">
-                  PRICE
+                  {t.product.price}
                 </span>
                 <div className="text-right">
                   <span className="font-heading text-2xl font-bold text-white">
@@ -327,11 +336,11 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 >
                   {addedAnimation ? (
                     <>
-                      <Check size={18} /> ADDED TO CART!
+                      <Check size={18} /> {lang === "en" ? "ADDED TO CART!" : "เพิ่มลงตะกร้าแล้ว!"}
                     </>
                   ) : (
                     <>
-                      ADD TO CART <ShoppingCart size={18} />
+                      {t.product.addToCart} <ShoppingCart size={18} />
                     </>
                   )}
                 </button>
@@ -456,23 +465,23 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
             <div className="lg:col-span-7">
               <h2 className="heading-md text-white uppercase">
                 TRANSFORM YOUR {compatibility?.model || "VEHICLE"} WITH THE
-                SOUTH AERO {product.name.toUpperCase()}
+                SOUTH AERO {localizedName.toUpperCase()}
               </h2>
               <div className="w-10 h-0.5 bg-[var(--accent-red)] mt-3 mb-5" />
 
               <p className="body-md text-[var(--text-secondary)] leading-relaxed">
-                {product.description}
+                {localizedDescription}
               </p>
 
               {/* Specifications Table */}
               <div className="mt-8 border-t border-[#242424]">
                 {[
-                  { label: "MATERIAL", value: product.material },
+                  { label: t.product.material, value: localizedMaterial },
                   { label: "FINISH", value: product.finish },
-                  { label: "INSTALLATION", value: product.installation },
-                  { label: "WEIGHT", value: `${product.weightKg} kg` },
+                  { label: t.product.installation, value: localizedInstallation },
+                  { label: t.product.weight, value: `${product.weightKg} kg` },
                   {
-                    label: "COMPATIBILITY",
+                    label: t.product.compatibleVehicles,
                     value: compatibility
                       ? `${compatibility.make} ${compatibility.model} (${compatibility.yearFrom}-${compatibility.yearTo})`
                       : "Universal / Model Specific",
@@ -501,11 +510,13 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
             {/* Right: Key Features List */}
             <div className="lg:col-span-5">
               <h2 className="heading-md text-white uppercase mb-6">
-                KEY FEATURES
+                {t.product.features}
               </h2>
               <div className="space-y-5">
                 {product.features.map((feature, i) => {
                   const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
+                  const featTitle = getLocalizedField(feature.title, feature.titleEn, lang);
+                  const featDesc = getLocalizedField(feature.description, feature.descriptionEn, lang);
                   return (
                     <div
                       key={feature.title}
@@ -516,10 +527,10 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                       </div>
                       <div>
                         <h3 className="font-heading text-xs md:text-sm font-bold tracking-wider uppercase text-white">
-                          {feature.title}
+                          {featTitle}
                         </h3>
                         <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
-                          {feature.description}
+                          {featDesc}
                         </p>
                       </div>
                     </div>

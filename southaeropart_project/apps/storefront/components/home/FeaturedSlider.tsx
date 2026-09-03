@@ -14,6 +14,8 @@ import {
   Check,
 } from "lucide-react";
 import { FeaturedBundleData } from "@/actions/bundle.actions";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { getLocalizedField } from "@/lib/i18n-helpers";
 
 interface FeaturedSliderProps {
   initialBundles?: FeaturedBundleData[];
@@ -21,6 +23,7 @@ interface FeaturedSliderProps {
 
 export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
   const bundles = initialBundles.length > 0 ? initialBundles : [];
+  const { t, lang } = useLanguage();
 
   const [activeBundleIdx, setActiveBundleIdx] = useState(0);
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
@@ -73,10 +76,16 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
     setCurrentSlideIdx((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  // Format Name: Highlight last word (e.g. 02, Stage 1, etc.) in red
-  const nameParts = activeBundle.name.split(" ");
+  // Format Name: Highlight last word in red using localized name
+  const localizedName = getLocalizedField(activeBundle.name, activeBundle.nameEn, lang);
+  const localizedDescription = getLocalizedField(activeBundle.description, activeBundle.descriptionEn, lang);
+  const localizedTagline = lang === "en"
+    ? (activeBundle.shortDescriptionEn || `DESIGNED FOR ${activeBundle.carModelName}. ENGINEERED FOR PERFORMANCE.`)
+    : (activeBundle.shortDescription || activeBundle.tagline || `ออกแบบมาสำหรับ ${activeBundle.carModelName} เพื่อสมรรถนะที่แท้จริง`);
+
+  const nameParts = localizedName.split(" ");
   const lastPart = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
-  const firstParts = nameParts.length > 1 ? nameParts.slice(0, -1).join(" ") : activeBundle.name;
+  const firstParts = nameParts.length > 1 ? nameParts.slice(0, -1).join(" ") : localizedName;
 
   const partsCount = activeBundle.bundleItems?.length || 4;
   const yearRangeText = activeBundle.carModelGen
@@ -94,25 +103,24 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
             {/* 1. Header & Title */}
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#1A0E0E] border border-[#3A1818] rounded text-[0.65rem] font-heading font-bold tracking-widest text-[#FF3333] uppercase mb-4">
-                FLAGSHIP AERODYNAMIC BUILD
+                {t.home.flagshipBadge}
               </div>
 
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-extrabold tracking-tight text-white uppercase leading-[1.08]">
                 {firstParts} <br className="hidden sm:inline" />
                 {lastPart ? (
                   <>
-                    {nameParts.length > 2 ? "" : ""}
                     <span className="text-[#FF2B2B]">{lastPart}</span>
                   </>
                 ) : null}
               </h2>
 
               <p className="font-heading text-xs uppercase tracking-widest text-gray-400 mt-2.5 font-semibold">
-                {activeBundle.tagline || `DESIGNED FOR ${activeBundle.carModelName}. ENGINEERED FOR PERFORMANCE.`}
+                {localizedTagline}
               </p>
 
               <p className="text-xs sm:text-sm text-gray-300 mt-3 leading-relaxed">
-                {activeBundle.description}
+                {localizedDescription}
               </p>
             </div>
 
@@ -122,7 +130,7 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
               <div>
                 <div className="flex items-center gap-1.5 text-[0.65rem] font-heading font-semibold text-gray-400 uppercase tracking-wider">
                   <ArrowDown size={13} className="text-emerald-400" />
-                  <span>DOWNFORCE</span>
+                  <span>{t.home.downforce}</span>
                 </div>
                 <div className="text-lg sm:text-xl font-heading font-black text-emerald-400 mt-0.5">
                   {activeBundle.downforceBadge}
@@ -133,7 +141,7 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
               <div>
                 <div className="flex items-center gap-1.5 text-[0.65rem] font-heading font-semibold text-gray-400 uppercase tracking-wider">
                   <Gauge size={13} className="text-[#FF3333]" />
-                  <span>DRAG COEFFICIENT</span>
+                  <span>{t.home.drag}</span>
                 </div>
                 <div className="text-lg sm:text-xl font-heading font-black text-[#FF3333] mt-0.5">
                   {activeBundle.dragBadge}
@@ -144,7 +152,7 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
               <div className="border-t border-[#1C1C1C] pt-3">
                 <div className="flex items-center gap-1.5 text-[0.65rem] font-heading font-semibold text-gray-400 uppercase tracking-wider">
                   <Layers size={13} className="text-gray-400" />
-                  <span>MATERIAL</span>
+                  <span>{t.home.material}</span>
                 </div>
                 <div className="text-sm sm:text-base font-heading font-bold text-white mt-0.5">
                   Carbon / ABS
@@ -155,10 +163,10 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
               <div className="border-t border-[#1C1C1C] pt-3">
                 <div className="flex items-center gap-1.5 text-[0.65rem] font-heading font-semibold text-gray-400 uppercase tracking-wider">
                   <Box size={13} className="text-gray-400" />
-                  <span>PARTS INCLUDED</span>
+                  <span>{t.home.partsIncluded}</span>
                 </div>
                 <div className="text-sm sm:text-base font-heading font-bold text-white mt-0.5">
-                  {partsCount} pieces
+                  {partsCount} {t.home.pieces}
                 </div>
               </div>
             </div>
@@ -186,14 +194,14 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#E5252A] hover:bg-[#c91e23] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all shadow-lg shadow-[#E5252A]/20"
                 id="explore-bodykit"
               >
-                EXPLORE BUILD <ArrowRight size={15} />
+                {t.home.exploreBuild} <ArrowRight size={15} />
               </Link>
 
               <Link
                 href={activeBundle.link || `/products/${activeBundle.slug}`}
                 className="inline-flex items-center justify-center px-5 py-3 bg-[#141414] hover:bg-[#1C1C1C] border border-[#2A2A2A] hover:border-[#444] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all"
               >
-                VIEW ALL {partsCount} PARTS
+                {t.home.viewAllParts.replace("{count}", String(partsCount))}
               </Link>
             </div>
 
@@ -226,7 +234,7 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
 
               <div className="text-right">
                 <span className="text-[9px] font-heading font-semibold tracking-widest text-gray-500 block uppercase">
-                  DESIGN BY
+                  {t.home.designBy}
                 </span>
                 <span className="text-[11px] font-heading font-bold tracking-wider text-gray-300 uppercase">
                   {activeBundle.designer || "SOUTH AERO DESIGN LAB"}

@@ -44,31 +44,44 @@ const imageItemSchema = z.object({
   isDeleted: z.boolean().optional(),
 });
 
-const bundleInputSchema = z.object({
-  sku: z.string().min(1, "กรุณากรอกรหัสชุดเซ็ต (SKU)").max(100).trim(),
-  name: z.string().min(1, "กรุณากรอกชื่อชุดเซ็ต").max(255).trim(),
-  slug: z.string().optional(),
-  description: z.string().optional().nullable(),
-  shortDescription: z.string().max(500).optional().nullable(),
-  brandId: z.string().uuid("กรุณาเลือกแบรนด์รถ"),
-  carModelId: z.string().uuid("กรุณาเลือกรุ่นรถ"),
-  materialId: z.string().uuid("วัสดุไม่ถูกต้อง").optional().nullable(),
-  installationId: z.string().uuid("วิธีการติดตั้งไม่ถูกต้อง").optional().nullable(),
-  status: z.enum(["draft", "active", "archived", "out_of_stock"]).default("active"),
-  isFeatured: z.boolean().default(false),
-  // CFD Aerodynamic Telemetry (Override)
-  isCustomCfd: z.boolean().default(false),
-  customDownforceN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-  customDragN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-  // Child Parts in Bundle (Min 2 parts)
-  childProductIds: z
-    .array(z.string().uuid("รหัสชิ้นส่วนไม่ถูกต้อง"))
-    .min(2, "ชุดเซ็ตต้องประกอบด้วยชิ้นส่วนอย่างน้อย 2 ชิ้น"),
-  images: z
-    .array(imageItemSchema)
-    .max(20, "สามารถเพิ่มรูปภาพสินค้าได้สูงสุดไม่เกิน 20 รูป")
-    .default([]),
-});
+const bundleInputSchema = z
+  .object({
+    sku: z.string().min(1, "กรุณากรอกรหัสชุดเซ็ต (SKU)").max(100).trim(),
+    name: z.string().max(255).optional().nullable(),
+    nameEn: z.string().max(255).optional().nullable(),
+    slug: z.string().optional(),
+    description: z.string().optional().nullable(),
+    descriptionEn: z.string().optional().nullable(),
+    shortDescription: z.string().max(500).optional().nullable(),
+    shortDescriptionEn: z.string().max(500).optional().nullable(),
+    brandId: z.string().uuid("กรุณาเลือกแบรนด์รถ"),
+    carModelId: z.string().uuid("กรุณาเลือกรุ่นรถ"),
+    materialId: z.string().uuid("วัสดุไม่ถูกต้อง").optional().nullable(),
+    installationId: z.string().uuid("วิธีการติดตั้งไม่ถูกต้อง").optional().nullable(),
+    status: z.enum(["draft", "active", "archived", "out_of_stock"]).default("active"),
+    isFeatured: z.boolean().default(false),
+    // CFD Aerodynamic Telemetry (Override)
+    isCustomCfd: z.boolean().default(false),
+    customDownforceN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+    customDragN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+    // Child Parts in Bundle (Min 2 parts)
+    childProductIds: z
+      .array(z.string().uuid("รหัสชิ้นส่วนไม่ถูกต้อง"))
+      .min(2, "ชุดเซ็ตต้องประกอบด้วยชิ้นส่วนอย่างน้อย 2 ชิ้น"),
+    images: z
+      .array(imageItemSchema)
+      .max(20, "สามารถเพิ่มรูปภาพสินค้าได้สูงสุดไม่เกิน 20 รูป")
+      .default([]),
+  })
+  .refine(
+    (data) =>
+      (data.nameEn && data.nameEn.trim().length > 0) ||
+      (data.name && data.name.trim().length > 0),
+    {
+      message: "กรุณากรอกชื่อชุดเซ็ต (Kit Name)",
+      path: ["nameEn"],
+    }
+  );
 
 export type BundleInput = z.infer<typeof bundleInputSchema>;
 
@@ -108,6 +121,7 @@ export async function getAvailablePartsForModelAction(carModelId: string) {
       .select({
         id: products.id,
         name: products.name,
+        nameEn: products.nameEn,
         sku: products.sku,
         slug: products.slug,
         price: products.price,
@@ -119,6 +133,7 @@ export async function getAvailablePartsForModelAction(carModelId: string) {
         weightKg: products.weightKg,
         categoryId: products.categoryId,
         categoryName: categories.name,
+        categoryNameEn: categories.nameEn,
         categorySlug: categories.slug,
         materialId: products.materialId,
         materialName: materials.name,
@@ -202,7 +217,7 @@ export async function getBundlesAction(params?: {
   if (params?.search?.trim()) {
     const term = `%${params.search.trim()}%`;
     conditions.push(
-      or(ilike(products.name, term), ilike(products.sku, term))!
+      or(ilike(products.name, term), ilike(products.nameEn, term), ilike(products.sku, term))!
     );
   }
 
@@ -230,6 +245,7 @@ export async function getBundlesAction(params?: {
         sku: products.sku,
         slug: products.slug,
         name: products.name,
+        nameEn: products.nameEn,
         price: products.price,
         stockQuantity: products.stockQuantity,
         status: products.status,
@@ -258,7 +274,7 @@ export async function getBundlesAction(params?: {
     // Fetch primary images and bundle child items count for each bundle
     const bundleIds = rawBundles.map((b) => b.id);
     let imagesMap: Record<string, string> = {};
-    let childPartsMap: Record<string, Array<{ id: string; name: string; price: string; categoryName: string; secureUrl?: string }>> = {};
+    let childPartsMap: Record<string, Array<{ id: string; name: string; nameEn?: string | null; price: string; categoryName: string; secureUrl?: string }>> = {};
 
     if (bundleIds.length > 0) {
       const [images, childItems] = await Promise.all([
@@ -276,6 +292,7 @@ export async function getBundlesAction(params?: {
             childProductId: productBundleItems.childProductId,
             position: productBundleItems.position,
             childName: products.name,
+            childNameEn: products.nameEn,
             childPrice: products.price,
             categoryName: categories.name,
           })
@@ -299,6 +316,7 @@ export async function getBundlesAction(params?: {
         childPartsMap[item.bundleProductId].push({
           id: item.childProductId,
           name: item.childName,
+          nameEn: item.childNameEn,
           price: item.childPrice,
           categoryName: item.categoryName || "-",
         });
@@ -356,8 +374,11 @@ export async function getBundleDetailAction(id: string) {
         sku: products.sku,
         slug: products.slug,
         name: products.name,
+        nameEn: products.nameEn,
         description: products.description,
+        descriptionEn: products.descriptionEn,
         shortDescription: products.shortDescription,
+        shortDescriptionEn: products.shortDescriptionEn,
         price: products.price,
         status: products.status,
         isFeatured: products.isFeatured,
@@ -387,6 +408,7 @@ export async function getBundleDetailAction(id: string) {
         quantity: productBundleItems.quantity,
         position: productBundleItems.position,
         childName: products.name,
+        childNameEn: products.nameEn,
         childSku: products.sku,
         childPrice: products.price,
         childStock: products.stockQuantity,
@@ -394,6 +416,7 @@ export async function getBundleDetailAction(id: string) {
         childDrag: products.dragN,
         categoryId: products.categoryId,
         categoryName: categories.name,
+        categoryNameEn: categories.nameEn,
       })
       .from(productBundleItems)
       .innerJoin(products, eq(productBundleItems.childProductId, products.id))
@@ -506,8 +529,11 @@ export async function createBundleAction(
   const totalDrag = childParts.reduce((sum, p) => sum + Number(p.dragN || 0), 0);
   const minStock = Math.min(...childParts.map((p) => p.stockQuantity || 0));
 
-  // Auto-generate slug
-  let slug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
+  // Auto-generate slug (prioritizes English name for clean URLs)
+  const effectiveNameEn = data.nameEn?.trim() || null;
+  const effectiveName = data.name?.trim() || effectiveNameEn || "Untitled Bundle";
+
+  let slug = data.slug?.trim() ? slugify(data.slug) : slugify(effectiveNameEn || effectiveName);
   if (!slug) {
     slug = `kit-${data.sku.toLowerCase()}-${Date.now().toString(36)}`;
   }
@@ -605,10 +631,13 @@ export async function createBundleAction(
       .values({
         sku: data.sku,
         slug,
-        name: data.name,
+        name: effectiveName,
+        nameEn: effectiveNameEn,
         productType: "bundle",
         description: data.description || null,
+        descriptionEn: data.descriptionEn ? data.descriptionEn.trim() : null,
         shortDescription: data.shortDescription || null,
+        shortDescriptionEn: data.shortDescriptionEn ? data.shortDescriptionEn.trim() : null,
         brandId: data.brandId,
         carModelId: data.carModelId,
         materialId: data.materialId || null,
@@ -765,7 +794,10 @@ export async function updateBundleAction(
   const totalDrag = childParts.reduce((sum, p) => sum + Number(p.dragN || 0), 0);
   const minStock = Math.min(...childParts.map((p) => p.stockQuantity || 0));
 
-  let slug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
+  const effectiveNameEn = data.nameEn?.trim() || null;
+  const effectiveName = data.name?.trim() || effectiveNameEn || "Untitled Bundle";
+
+  let slug = data.slug?.trim() ? slugify(data.slug) : slugify(effectiveNameEn || effectiveName);
 
   // Check max 4 featured bundles limit if isFeatured is true (excluding current bundle)
   if (data.isFeatured) {
@@ -876,9 +908,12 @@ export async function updateBundleAction(
       .set({
         sku: data.sku,
         slug,
-        name: data.name,
+        name: effectiveName,
+        nameEn: effectiveNameEn,
         description: data.description || null,
+        descriptionEn: data.descriptionEn ? data.descriptionEn.trim() : null,
         shortDescription: data.shortDescription || null,
+        shortDescriptionEn: data.shortDescriptionEn ? data.shortDescriptionEn.trim() : null,
         brandId: data.brandId,
         carModelId: data.carModelId,
         materialId: data.materialId || null,

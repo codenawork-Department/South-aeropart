@@ -17,11 +17,11 @@ export function ProfileHeader({
   user,
   addressCount,
   vehicleCount,
-  language = "th",
+  language = "en",
 }: ProfileHeaderProps) {
   const [imageError, setImageError] = useState(false);
 
-  const t = PROFILE_TRANSLATIONS[language]?.header || PROFILE_TRANSLATIONS.th.header;
+  const t = PROFILE_TRANSLATIONS[language]?.header || PROFILE_TRANSLATIONS.en.header;
 
   const memberSinceYear = user.createdAt
     ? new Date(user.createdAt).getFullYear()

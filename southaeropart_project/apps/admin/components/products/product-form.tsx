@@ -10,6 +10,7 @@ import {
   checkSkuAvailabilityAction,
   type ProductInput,
 } from "@/actions/product.actions";
+import { translateProductAction } from "@/actions/translate.actions";
 import { parseSku } from "@/lib/sku-helper";
 import { ImageUploader, type ImageUploadItem } from "./image-uploader";
 import { IconPicker } from "@/components/icons/icon-picker";
@@ -43,6 +44,7 @@ import {
   Wrench,
   ExternalLink,
   X,
+  Languages,
 } from "lucide-react";
 
 interface CategoryOption {
@@ -95,9 +97,12 @@ interface ProductFormProps {
     id: string;
     sku: string;
     name: string;
+    nameEn?: string | null;
     slug: string;
     description?: string | null;
+    descriptionEn?: string | null;
     shortDescription?: string | null;
+    shortDescriptionEn?: string | null;
     price: string;
     compareAtPrice?: string | null;
     stockQuantity: number;
@@ -105,6 +110,7 @@ interface ProductFormProps {
     isFeatured?: boolean | null;
     weightKg?: string | null;
     installation?: string | null;
+    installationEn?: string | null;
     installationId?: string | null;
     categoryId?: string | null;
     brandId?: string | null;
@@ -132,7 +138,9 @@ interface ProductFormProps {
     }>;
     features?: Array<{
       title: string;
+      titleEn?: string | null;
       description: string;
+      descriptionEn?: string | null;
       iconSlug?: string | null;
       iconId?: string | null;
     }>;
@@ -160,11 +168,17 @@ export function ProductForm({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
+  // Active Language Tab for General Info / Descriptions / Features (Default: English)
+  const [activeLangTab, setActiveLangTab] = useState<"th" | "en">("en");
+  const [isTranslating, setIsTranslating] = useState(false);
+
   // Form states
   const [sku, setSku] = useState(initialData?.sku || "");
   const [name, setName] = useState(initialData?.name || "");
+  const [nameEn, setNameEn] = useState(initialData?.nameEn || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [description, setDescription] = useState(initialData?.description || "");
+  const [descriptionEn, setDescriptionEn] = useState(initialData?.descriptionEn || "");
   const [price, setPrice] = useState(initialData?.price || "");
   const [compareAtPrice, setCompareAtPrice] = useState(
     initialData?.compareAtPrice || ""
@@ -182,9 +196,11 @@ export function ProductForm({
 
   // New fields
   const [shortDescription, setShortDescription] = useState(initialData?.shortDescription || "");
+  const [shortDescriptionEn, setShortDescriptionEn] = useState(initialData?.shortDescriptionEn || "");
   const [materialId, setMaterialId] = useState(initialData?.materialId || "");
   const [installationId, setInstallationId] = useState(initialData?.installationId || "");
   const [installation, setInstallation] = useState(initialData?.installation || "");
+  const [installationEn, setInstallationEn] = useState(initialData?.installationEn || "");
   const [isFeatured, setIsFeatured] = useState(initialData?.isFeatured ?? false);
   const [downforceN, setDownforceN] = useState(initialData?.downforceN || "");
   const [dragN, setDragN] = useState(initialData?.dragN || "");
@@ -312,7 +328,9 @@ export function ProductForm({
   // Key Features state
   interface FormFeatureItem {
     title: string;
+    titleEn?: string | null;
     description: string;
+    descriptionEn?: string | null;
     iconSlug?: string | null;
     iconId?: string | null;
   }
@@ -320,7 +338,9 @@ export function ProductForm({
   const [features, setFeatures] = useState<FormFeatureItem[]>(
     initialData?.features?.map((f) => ({
       title: f.title,
+      titleEn: f.titleEn || "",
       description: f.description,
+      descriptionEn: f.descriptionEn || "",
       iconSlug: f.iconSlug || null,
       iconId: f.iconId || null,
     })) || []
@@ -331,7 +351,9 @@ export function ProductForm({
       ...prev,
       {
         title: "",
+        titleEn: "",
         description: "",
+        descriptionEn: "",
         iconSlug: "aero-downforce",
         iconId: null,
       },
@@ -559,19 +581,83 @@ export function ProductForm({
     }
   };
 
+  // Auto-Translate all fields from English to Thai in 1 click
+  const handleAutoTranslateToThai = async () => {
+    const hasEnglishFeatures = features.some((f) => f.titleEn?.trim() || f.descriptionEn?.trim());
+    if (!nameEn?.trim() && !shortDescriptionEn?.trim() && !descriptionEn?.trim() && !hasEnglishFeatures) {
+      setErrorMessage("กรุณากรอกข้อมูลภาษาอังกฤษ (ชื่อ, คำอธิบาย หรือจุดเด่น) ก่อนกดแปลภาษา");
+      setTimeout(() => setErrorMessage(null), 4000);
+      return;
+    }
+
+    setIsTranslating(true);
+    setErrorMessage(null);
+    try {
+      const res = await translateProductAction({
+        nameEn,
+        shortDescriptionEn,
+        descriptionEn,
+        features: features.map((f) => ({
+          titleEn: f.titleEn,
+          descriptionEn: f.descriptionEn,
+        })),
+      });
+
+      if (res.success && res.data) {
+        if (res.data.name) setName(res.data.name);
+        if (res.data.shortDescription) setShortDescription(res.data.shortDescription);
+        if (res.data.description) setDescription(res.data.description);
+
+        if (Array.isArray(res.data.features) && res.data.features.length > 0) {
+          setFeatures((prev) =>
+            prev.map((item, idx) => {
+              const trans = res.data?.features[idx];
+              if (!trans) return item;
+              return {
+                ...item,
+                title: trans.title || item.title,
+                description: trans.description || item.description,
+              };
+            })
+          );
+        }
+
+        setSuccessMessage("แปลข้อมูลภาษาไทยจากภาษาอังกฤษสำเร็จเรียบร้อยทุกช่อง!");
+        setTimeout(() => setSuccessMessage(null), 4000);
+      } else {
+        setErrorMessage(res.error || "ไม่สามารถแปลภาษาได้ กรุณาลองใหม่อีกครั้ง");
+        setTimeout(() => setErrorMessage(null), 4000);
+      }
+    } catch (err: any) {
+      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อระบบแปลภาษา");
+      setTimeout(() => setErrorMessage(null), 4000);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
     setFieldErrors({});
 
+    if (!nameEn.trim() && !name.trim()) {
+      setActiveLangTab("en");
+      setErrorMessage("กรุณากรอกชื่อสินค้าภาษาอังกฤษ (Product Name)");
+      return;
+    }
+
     const selectedInst = installations.find((i) => i.id === installationId);
     const payload: ProductInput = {
       sku: sku.trim(),
-      name: name.trim(),
+      name: name.trim() || nameEn.trim(),
+      nameEn: nameEn.trim() || null,
       slug: slug.trim() || undefined,
       description: description.trim() || null,
+      descriptionEn: descriptionEn.trim() || null,
       shortDescription: shortDescription.trim() || null,
+      shortDescriptionEn: shortDescriptionEn.trim() || null,
       price: price.trim(),
       compareAtPrice: compareAtPrice.trim() || null,
       stockQuantity: Number(stockQuantity),
@@ -579,6 +665,7 @@ export function ProductForm({
       isFeatured,
       weightKg: weightKg.trim() || null,
       installation: selectedInst?.name || installation.trim() || null,
+      installationEn: installationEn.trim() || null,
       installationId: installationId || null,
       categoryId: categoryId || null,
       brandId: brandId || null,
@@ -592,7 +679,16 @@ export function ProductForm({
       dragAfter: dragAfter.trim() || null,
       images,
       compatibility: compatibility.filter((c) => c.make.trim() && c.model.trim()),
-      features: features.filter((f) => f.title.trim() && f.description.trim()),
+      features: features
+        .filter((f) => (f.titleEn?.trim() || f.title.trim()) && (f.descriptionEn?.trim() || f.description.trim()))
+        .map((f) => ({
+          title: f.title.trim() || f.titleEn?.trim() || "",
+          titleEn: f.titleEn?.trim() || null,
+          description: f.description.trim() || f.descriptionEn?.trim() || "",
+          descriptionEn: f.descriptionEn?.trim() || null,
+          iconSlug: f.iconSlug || null,
+          iconId: f.iconId || null,
+        })),
     };
 
     startTransition(async () => {
@@ -733,25 +829,118 @@ export function ProductForm({
         <div className="lg:col-span-2 space-y-6">
           {/* Section: General Info */}
           <div className="bg-[#121212] border border-[#222222] rounded-2xl p-5 sm:p-6 space-y-4">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2 border-b border-[#1E1E1E] pb-3">
-              <Package size={16} className="text-red-500" />
-              ข้อมูลทั่วไปของสินค้า
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E1E] pb-3">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <Package size={16} className="text-red-500" />
+                ข้อมูลทั่วไปของสินค้า
+              </h2>
+              {/* Language Switcher Tabs */}
+              <div className="flex items-center p-1 rounded-lg bg-[#181818] border border-[#2A2A2A] self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveLangTab("en")}
+                  className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    activeLangTab === "en"
+                      ? "bg-red-600 text-white shadow"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <span>🇬🇧 English (หลัก / Primary)</span>
+                  {nameEn && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveLangTab("th")}
+                  className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    activeLangTab === "th"
+                      ? "bg-red-600 text-white shadow"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <span>🇹🇭 ภาษาไทย (รอง / Optional)</span>
+                  {name && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>}
+                </button>
+              </div>
+            </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  ชื่อสินค้า <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  placeholder="เช่น สปอยเลอร์หลัง Ducktail Carbon Fiber สำหรับ GR86"
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors"
-                />
-              </div>
+              {/* Auto-Translate Banner for Thai Tab */}
+              {activeLangTab === "th" && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/30 border border-blue-800/40 shadow-inner">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400 shrink-0">
+                      <Sparkles size={16} className="animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white flex items-center gap-1.5">
+                        <span>ระบบแปลภาษาไทยอัตโนมัติจากฝั่งอังกฤษ</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300 font-mono">1-Click</span>
+                      </div>
+                      <p className="text-[11px] text-gray-400">
+                        ดึงชื่อสินค้า, คำอธิบายสั้น, รายละเอียด และรายการจุดเด่นจากภาษาอังกฤษ มาแปลเป็นภาษาไทยและใส่ลงช่องทั้งหมดให้อัตโนมัติทันที
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAutoTranslateToThai}
+                    disabled={isTranslating}
+                    className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-blue-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  >
+                    {isTranslating ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>กำลังแปลภาษา...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Languages size={13} />
+                        <span>แปลภาษาไทยทั้งหมด</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {activeLangTab === "en" ? (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                    Product Name (English) <span className="text-red-500">* (หลัก / Primary)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={nameEn}
+                    onChange={(e) => setNameEn(e.target.value)}
+                    required={!name}
+                    placeholder="e.g. GR86 Carbon Fiber Ducktail Spoiler"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                  {name && (
+                    <p className="text-[11px] text-gray-500 mt-1 truncate">
+                      ชื่อภาษาไทย (TH): <span className="text-gray-400">{name}</span>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                    ชื่อสินค้า (ภาษาไทย)
+                    <span className="text-gray-500 font-normal ml-1.5 text-[11px]">(ไม่บังคับ — หากเว้นว่างไว้จะแสดงภาษาอังกฤษ)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={nameEn ? `เช่น ${nameEn}` : "เช่น สปอยเลอร์หลัง Ducktail Carbon Fiber สำหรับ GR86"}
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                  {nameEn && (
+                    <p className="text-[11px] text-gray-500 mt-1 truncate">
+                      English Name: <span className="text-gray-400">{nameEn}</span>
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* ─── SKU Manager & Generator Section ─── */}
               <div className="p-4 rounded-xl bg-[#151515] border border-[#262626] space-y-3">
@@ -899,34 +1088,71 @@ export function ProductForm({
                 )}
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  รายละเอียดสินค้า (Description)
-                </label>
-                <textarea
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="รายละเอียดวัสดุ การใช้งาน คุณสมบัติพิเศษ และการรับประกัน..."
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors"
-                />
-              </div>
+              {activeLangTab === "en" ? (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Product Description (English)
+                      <span className="text-gray-500 font-normal ml-1.5 text-[11px]">(ไม่บังคับ)</span>
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={descriptionEn}
+                      onChange={(e) => setDescriptionEn(e.target.value)}
+                      placeholder="Material specifications, installation notes, warranty information in English..."
+                      className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5 flex items-center gap-1.5">
-                  <BookOpen size={13} className="text-blue-400" />
-                  คำอธิบายสั้น (Short Description)
-                  <span className="text-gray-500 font-normal">— แสดงผลใต้ชื่อสินค้าบนหน้าร้าน</span>
-                </label>
-                <textarea
-                  rows={2}
-                  value={shortDescription}
-                  onChange={(e) => setShortDescription(e.target.value)}
-                  placeholder="เช่น สปอยเลอร์หลังพรีเมียมคาร์บอนไฟเบอร์ จากลาย 3D CAD ตรงรุ่น 100%"
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                />
-                <p className="text-[11px] text-gray-500 mt-1">1-2 ประโยค ใช้อธิบายสินค้าสั้นๆ สำหรับแสดงระหว่างสินค้า</p>
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 flex items-center gap-1.5 mb-1.5">
+                      <BookOpen size={13} className="text-blue-400" />
+                      Short Description (English)
+                      <span className="text-gray-500 font-normal ml-1.5 text-[11px]">(ไม่บังคับ)</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={shortDescriptionEn}
+                      onChange={(e) => setShortDescriptionEn(e.target.value)}
+                      placeholder="e.g. Premium autoclave carbon fiber ducktail spoiler engineered with 3D CAD precision."
+                      className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">1-2 sentences overview shown under product title on storefront</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      รายละเอียดสินค้า (Description - ภาษาไทย)
+                      <span className="text-gray-500 font-normal ml-1.5 text-[11px]">(ไม่บังคับ)</span>
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="รายละเอียดวัสดุ การใช้งาน คุณสมบัติพิเศษ และการรับประกัน..."
+                      className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-red-500 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 flex items-center gap-1.5 mb-1.5">
+                      <BookOpen size={13} className="text-blue-400" />
+                      คำอธิบายสั้น (Short Description - ภาษาไทย)
+                      <span className="text-gray-500 font-normal">— แสดงผลใต้ชื่อสินค้าบนหน้าร้าน</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={shortDescription}
+                      onChange={(e) => setShortDescription(e.target.value)}
+                      placeholder="เช่น สปอยเลอร์หลังพรีเมียมคาร์บอนไฟเบอร์ จากลาย 3D CAD ตรงรุ่น 100%"
+                      className="w-full px-3.5 py-2.5 rounded-lg bg-[#181818] border border-[#2D2D2D] text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">1-2 ประโยค ใช้อธิบายสินค้าสั้นๆ สำหรับแสดงระหว่างสินค้า</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1275,33 +1501,65 @@ export function ProductForm({
                       </div>
 
                       <div className="sm:col-span-8 min-w-0">
-                        <label className="block text-[11px] font-semibold text-gray-400 mb-1">
-                          หัวข้อจุดเด่น (Feature Title) <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={feature.title}
-                          onChange={(e) => handleUpdateFeature(idx, "title", e.target.value)}
-                          placeholder="เช่น High-Speed Downforce Generation"
-                          className="w-full h-[38px] px-3 py-2 rounded-lg bg-[#141414] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-w-0"
-                        />
+                        {activeLangTab === "en" ? (
+                          <>
+                            <label className="block text-[11px] font-semibold text-gray-400 mb-1">
+                              Feature Title (EN) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={feature.titleEn || ""}
+                              onChange={(e) => handleUpdateFeature(idx, "titleEn", e.target.value)}
+                              placeholder="e.g. High-Speed Downforce Generation"
+                              className="w-full h-[38px] px-3 py-2 rounded-lg bg-[#141414] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-w-0"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <label className="block text-[11px] font-semibold text-gray-400 mb-1">
+                              หัวข้อจุดเด่น (Feature Title - TH) <span className="text-gray-500 font-normal">(ไม่บังคับ)</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={feature.title}
+                              onChange={(e) => handleUpdateFeature(idx, "title", e.target.value)}
+                              placeholder={feature.titleEn ? `เช่น ${feature.titleEn}` : "เช่น การสร้างแรงกดขณะขับขี่ความเร็วสูง"}
+                              className="w-full h-[38px] px-3 py-2 rounded-lg bg-[#141414] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-w-0"
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
 
                     {/* Description Textarea */}
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-400 mb-1">
-                        คำอธิบายจุดเด่น (Description) <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        rows={2}
-                        required
-                        value={feature.description}
-                        onChange={(e) => handleUpdateFeature(idx, "description", e.target.value)}
-                        placeholder="เช่น ออกแบบตามหลักอากาศพลศาสตร์ จัดระเบียบกระแสลมและสร้างแรงกดท้ายรถ..."
-                        className="w-full px-3 py-2 rounded-lg bg-[#141414] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-h-[64px]"
-                      />
+                      {activeLangTab === "en" ? (
+                        <>
+                          <label className="block text-[11px] font-semibold text-gray-400 mb-1">
+                            Feature Description (EN) <span className="text-red-500">*</span>
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={feature.descriptionEn || ""}
+                            onChange={(e) => handleUpdateFeature(idx, "descriptionEn", e.target.value)}
+                            placeholder="Aerodynamic drag reduction and high-speed stability enhancement..."
+                            className="w-full px-3 py-2 rounded-lg bg-[#141414] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-h-[64px]"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <label className="block text-[11px] font-semibold text-gray-400 mb-1">
+                            คำอธิบายจุดเด่น (Description - TH) <span className="text-gray-500 font-normal">(ไม่บังคับ)</span>
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={feature.description}
+                            onChange={(e) => handleUpdateFeature(idx, "description", e.target.value)}
+                            placeholder="เช่น ออกแบบตามหลักอากาศพลศาสตร์ จัดระเบียบกระแสลมและสร้างแรงกดท้ายรถ..."
+                            className="w-full px-3 py-2 rounded-lg bg-[#141414] border border-[#2D2D2D] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-red-500 min-h-[64px]"
+                          />
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}

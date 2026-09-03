@@ -26,6 +26,7 @@ import {
   Wand2,
   Flame,
   Star,
+  Languages,
 } from "lucide-react";
 import {
   createBundleAction,
@@ -33,6 +34,7 @@ import {
   getAvailablePartsForModelAction,
   type BundleInput,
 } from "@/actions/bundle.actions";
+import { translateBundleAction } from "@/actions/translate.actions";
 import { ImageUploader, type ImageUploadItem } from "@/components/products/image-uploader";
 
 interface BrandOption {
@@ -64,6 +66,7 @@ interface InstallationOption {
 interface AvailablePart {
   id: string;
   name: string;
+  nameEn?: string | null;
   sku: string;
   slug: string;
   price: string;
@@ -74,6 +77,7 @@ interface AvailablePart {
   weightKg?: string | null;
   categoryId?: string | null;
   categoryName?: string | null;
+  categoryNameEn?: string | null;
   categorySlug?: string | null;
   materialName?: string | null;
   carModelId?: string | null;
@@ -89,9 +93,12 @@ interface BundleFormProps {
     id: string;
     sku: string;
     name: string;
+    nameEn?: string | null;
     slug: string;
     description?: string | null;
+    descriptionEn?: string | null;
     shortDescription?: string | null;
+    shortDescriptionEn?: string | null;
     brandId: string;
     carModelId: string;
     materialId?: string | null;
@@ -105,9 +112,11 @@ interface BundleFormProps {
       id: string;
       childProductId: string;
       childName: string;
+      childNameEn?: string | null;
       childPrice: string;
       categoryId?: string | null;
       categoryName?: string | null;
+      categoryNameEn?: string | null;
     }>;
     images: Array<{
       id: string;
@@ -132,13 +141,20 @@ export function BundleForm({
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  // Language Tab State (Default: English)
+  const [activeLangTab, setActiveLangTab] = useState<"th" | "en">("en");
 
   // Form State
   const [name, setName] = useState(initialData?.name || "");
+  const [nameEn, setNameEn] = useState(initialData?.nameEn || "");
   const [sku, setSku] = useState(initialData?.sku || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [shortDescription, setShortDescription] = useState(initialData?.shortDescription || "");
+  const [shortDescriptionEn, setShortDescriptionEn] = useState(initialData?.shortDescriptionEn || "");
   const [description, setDescription] = useState(initialData?.description || "");
+  const [descriptionEn, setDescriptionEn] = useState(initialData?.descriptionEn || "");
   const [status, setStatus] = useState<"draft" | "active" | "archived" | "out_of_stock">(
     initialData?.status || "active"
   );
@@ -282,6 +298,42 @@ export function BundleForm({
     setSku(`KIT-${modelCode}-STAGE${selectedPartIds.length > 3 ? "2" : "1"}-${randomSuffix}`);
   };
 
+  // Auto Translate from English to Thai in one click
+  const handleAutoTranslateToThai = async () => {
+    if (!nameEn?.trim() && !shortDescriptionEn?.trim() && !descriptionEn?.trim()) {
+      setErrorMessage("กรุณากรอกข้อมูลภาษาอังกฤษ (ชื่อชุดเซ็ต หรือคำอธิบาย) ก่อนกดแปลภาษา");
+      setTimeout(() => setErrorMessage(null), 4000);
+      return;
+    }
+
+    setIsTranslating(true);
+    setErrorMessage(null);
+    try {
+      const res = await translateBundleAction({
+        nameEn,
+        shortDescriptionEn,
+        descriptionEn,
+      });
+
+      if (res.success && res.data) {
+        if (res.data.name) setName(res.data.name);
+        if (res.data.shortDescription) setShortDescription(res.data.shortDescription);
+        if (res.data.description) setDescription(res.data.description);
+
+        setSuccessMessage("แปลข้อมูลภาษาไทยจากภาษาอังกฤษสำเร็จเรียบร้อยแล้ว!");
+        setTimeout(() => setSuccessMessage(null), 4000);
+      } else {
+        setErrorMessage(res.error || "ไม่สามารถแปลภาษาได้ กรุณาลองใหม่อีกครั้ง");
+        setTimeout(() => setErrorMessage(null), 4000);
+      }
+    } catch (err: any) {
+      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อระบบแปลภาษา");
+      setTimeout(() => setErrorMessage(null), 4000);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,8 +347,9 @@ export function BundleForm({
       return;
     }
 
-    if (!name.trim()) {
-      setErrorMessage("กรุณากรอกชื่อชุดเซ็ต");
+    if (!nameEn.trim() && !name.trim()) {
+      setActiveLangTab("en");
+      setErrorMessage("กรุณากรอกชื่อชุดเซ็ตภาษาอังกฤษ (Kit Name)");
       return;
     }
 
@@ -306,11 +359,14 @@ export function BundleForm({
     }
 
     const payload: BundleInput = {
-      name: name.trim(),
+      name: name.trim() || nameEn.trim(),
+      nameEn: nameEn.trim() || null,
       sku: sku.trim(),
       slug: slug.trim() || undefined,
       shortDescription: shortDescription.trim() || null,
+      shortDescriptionEn: shortDescriptionEn.trim() || null,
       description: description.trim() || null,
+      descriptionEn: descriptionEn.trim() || null,
       brandId,
       carModelId,
       materialId: materialId || null,
@@ -600,6 +656,11 @@ export function BundleForm({
                                 <div className="text-[11px] font-mono text-gray-400 mt-0.5">
                                   SKU: {part.sku}
                                 </div>
+                                {part.nameEn && (
+                                  <div className="text-[10px] text-gray-400 truncate mt-0.5" title={part.nameEn}>
+                                    EN: {part.nameEn}
+                                  </div>
+                                )}
 
                                 <div className="flex items-center justify-between mt-1.5 text-xs">
                                   <span className="font-mono font-bold text-amber-400">
@@ -626,25 +687,125 @@ export function BundleForm({
 
           {/* 3. Step 3: Bundle Details & Descriptions */}
           <div className="bg-[#121212] border border-[#222222] rounded-xl p-6 space-y-4">
-            <div className="flex items-center gap-2 text-white font-bold text-base border-b border-[#222222] pb-3">
-              <Boxes size={18} className="text-[var(--accent-red)]" />
-              <span>ขั้นตอนที่ 3: ข้อมูลรายละเอียดชุดเซ็ต</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                  ชื่อชุดเซ็ต (Kit Name) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="เช่น Full Aero Body Kit — Clubsport Spec"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
-                />
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#222222] pb-3">
+              <div className="flex items-center gap-2 text-white font-bold text-base">
+                <Boxes size={18} className="text-[var(--accent-red)]" />
+                <span>ขั้นตอนที่ 3: ข้อมูลรายละเอียดชุดเซ็ต</span>
               </div>
 
+              {/* Language Switcher Tabs */}
+              <div className="flex items-center gap-1 p-1 rounded-lg bg-[#141414] border border-[#262626]">
+                <button
+                  type="button"
+                  onClick={() => setActiveLangTab("en")}
+                  className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    activeLangTab === "en"
+                      ? "bg-red-600 text-white shadow"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <span>🇬🇧 English (หลัก / Primary)</span>
+                  {nameEn && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveLangTab("th")}
+                  className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    activeLangTab === "th"
+                      ? "bg-red-600 text-white shadow"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <span>🇹🇭 ภาษาไทย (รอง / Optional)</span>
+                  {name && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>}
+                </button>
+              </div>
+            </div>
+
+            {/* Auto-Translate Banner for Thai Tab */}
+            {activeLangTab === "th" && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/30 border border-blue-800/40 shadow-inner">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400 shrink-0">
+                    <Sparkles size={16} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-white flex items-center gap-1.5">
+                      <span>แปลภาษาไทยอัตโนมัติจากฝั่งอังกฤษ</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300 font-mono">1-Click</span>
+                    </div>
+                    <p className="text-[11px] text-gray-400">
+                      ดึงชื่อชุดเซ็ต, คำอธิบายสั้น และรายละเอียดจากภาษาอังกฤษมาแปลและกรอกลงช่องให้อัตโนมัติทันที
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAutoTranslateToThai}
+                  disabled={isTranslating}
+                  className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-blue-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                >
+                  {isTranslating ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      <span>กำลังแปลภาษา...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Languages size={13} />
+                      <span>แปลภาษาไทยอัตโนมัติ</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* 2-Column Grid matching reference layout:
+                Row 1: Kit Name | SKU (with auto-generate)
+                Row 2: URL Slug | Status
+                Row 3: Material | Installation Method
+            */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Row 1 Left: Kit Name */}
+              {activeLangTab === "en" ? (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+                    KIT NAME (ENGLISH) <span className="text-red-500">* (หลัก / Primary)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Full Aero Body Kit — Clubsport Spec"
+                    value={nameEn}
+                    onChange={(e) => setNameEn(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
+                  />
+                  {name && (
+                    <p className="text-[11px] text-gray-500 mt-1 truncate">
+                      ชื่อภาษาไทย (TH): <span className="text-gray-400">{name}</span>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+                    ชื่อชุดเซ็ต (KIT NAME) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={nameEn ? `เช่น ${nameEn}` : "เช่น Full Aero Body Kit — Clubsport Spec"}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
+                  />
+                  {nameEn && (
+                    <p className="text-[11px] text-gray-500 mt-1 truncate">
+                      Kit Name (EN): <span className="text-gray-400">{nameEn}</span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Row 1 Right: SKU with Auto-generate */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider">
@@ -653,7 +814,7 @@ export function BundleForm({
                   <button
                     type="button"
                     onClick={handleGenerateSku}
-                    className="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors"
+                    className="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors font-medium"
                   >
                     <Wand2 size={12} />
                     สร้าง SKU อัตโนมัติ
@@ -667,12 +828,11 @@ export function BundleForm({
                   className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 font-mono focus:outline-none focus:border-amber-500/50 transition-colors"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Row 2 Left: URL Slug */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                  URL Slug (ไม่ระบุระบบจะสร้างให้อัตโนมัติ)
+                  URL SLUG (ไม่ระบุระบบจะสร้างให้อัตโนมัติ)
                 </label>
                 <input
                   type="text"
@@ -683,9 +843,10 @@ export function BundleForm({
                 />
               </div>
 
+              {/* Row 2 Right: Status */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                  สถานะสินค้า (Status)
+                  สถานะสินค้า (STATUS)
                 </label>
                 <select
                   value={status}
@@ -698,12 +859,11 @@ export function BundleForm({
                   <option value="archived">เก็บถาวร (Archived)</option>
                 </select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Row 3 Left: Material */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                  วัสดุหลักของเซ็ต (Material)
+                  วัสดุหลักของเซ็ต (MATERIAL)
                 </label>
                 <select
                   value={materialId}
@@ -719,9 +879,10 @@ export function BundleForm({
                 </select>
               </div>
 
+              {/* Row 3 Right: Installation Method */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                  วิธีการติดตั้ง (Installation Method)
+                  วิธีการติดตั้ง (INSTALLATION METHOD)
                 </label>
                 <select
                   value={installationId}
@@ -738,31 +899,68 @@ export function BundleForm({
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                คำอธิบายสั้น (Short Description)
-              </label>
-              <textarea
-                rows={2}
-                placeholder="สรุปจุดเด่นของชุดเซ็ตนี้ใน 1-2 ประโยค"
-                value={shortDescription}
-                onChange={(e) => setShortDescription(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
-              />
-            </div>
+            {/* Descriptions based on Language */}
+            {activeLangTab === "en" ? (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+                    SHORT DESCRIPTION (ENGLISH)
+                    <span className="text-gray-500 font-normal ml-1.5 text-[11px] lowercase">(ไม่บังคับ)</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Summary of this aero kit in 1-2 sentences in English..."
+                    value={shortDescriptionEn}
+                    onChange={(e) => setShortDescriptionEn(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
+                  />
+                </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                รายละเอียดแบบเต็ม (Full Description)
-              </label>
-              <textarea
-                rows={4}
-                placeholder="อธิบายรายละเอียด สเปก ความเข้ากันได้ และคุณสมบัติของชุดเซ็ตแบบละเอียด"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
-              />
-            </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+                    FULL DESCRIPTION (ENGLISH)
+                    <span className="text-gray-500 font-normal ml-1.5 text-[11px] lowercase">(ไม่บังคับ)</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder="Full description, specifications, compatibility, and features in English..."
+                    value={descriptionEn}
+                    onChange={(e) => setDescriptionEn(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+                    คำอธิบายสั้น (SHORT DESCRIPTION)
+                    <span className="text-gray-500 font-normal ml-1.5 text-[11px] lowercase">(ไม่บังคับ)</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="สรุปจุดเด่นของชุดเซ็ตนี้ใน 1-2 ประโยค"
+                    value={shortDescription}
+                    onChange={(e) => setShortDescription(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+                    รายละเอียดแบบเต็ม (FULL DESCRIPTION)
+                    <span className="text-gray-500 font-normal ml-1.5 text-[11px] lowercase">(ไม่บังคับ)</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder="อธิบายรายละเอียด สเปก ความเข้ากันได้ และคุณสมบัติของชุดเซ็ตแบบละเอียด"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#181818] border border-[#2A2A2A] rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/50 transition-colors"
+                  />
+                </div>
+              </>
+            )}
 
             <div className="pt-2 p-3.5 bg-[#171410] border border-amber-500/20 rounded-lg space-y-2">
               <div className="flex items-center gap-3">
@@ -966,6 +1164,37 @@ export function BundleForm({
           </div>
         </div>
       </div>
+
+      {/* Floating Toast Notification for Success / Error */}
+      {successMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#141414]/95 border border-emerald-500/60 text-emerald-300 shadow-2xl backdrop-blur-md animate-fade-in text-xs font-semibold max-w-md">
+          <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
+          <span className="flex-1 leading-snug">{successMessage}</span>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="text-gray-400 hover:text-white p-0.5 rounded transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 px-4 py-3 rounded-xl bg-[#141414]/95 border border-red-500/60 text-red-300 shadow-2xl backdrop-blur-md animate-fade-in text-xs font-semibold max-w-md">
+          <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-400" />
+          <div className="flex-1">
+            <p>{errorMessage}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorMessage(null)}
+            className="text-gray-400 hover:text-white p-0.5 rounded transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
     </form>
   );
 }
