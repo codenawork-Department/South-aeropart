@@ -27,6 +27,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { User as DbUser, UserAddress } from "@repo/db";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { VehicleBrandData } from "@/actions/vehicle.actions";
 import {
   updateUserProfile,
@@ -76,34 +77,25 @@ export function ProfileTabs({
   >("personal");
 
   // Personal Info form states
+  const { lang: appLang, setLanguage: setAppLanguage } = useLanguage();
   const [fullName, setFullName] = useState(user.fullName || "");
   const [phone, setPhone] = useState(user.phone || "");
   const [language, setLanguage] = useState<ProfileLanguage>(
-    (user.metadata?.preferences?.language as ProfileLanguage) || "th"
+    appLang || (user.metadata?.preferences?.language as ProfileLanguage) || "en"
   );
 
-  // Sync language changes across app via cookie and localStorage
+  // Keep local language in sync with appLang
+  useEffect(() => {
+    if (appLang && appLang !== language) {
+      setLanguage(appLang);
+    }
+  }, [appLang, language]);
+
+  // Sync language changes across app via LanguageProvider and cookie/storage
   const handleSetLanguage = (newLang: ProfileLanguage) => {
     setLanguage(newLang);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("south_aero_lang", newLang);
-        document.cookie = `south_aero_lang=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
-      } catch (e) {
-        // ignore
-      }
-    }
+    setAppLanguage(newLang);
   };
-
-  useEffect(() => {
-    const activeLang = (user.metadata?.preferences?.language as ProfileLanguage) || "th";
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("south_aero_lang", activeLang);
-        document.cookie = `south_aero_lang=${activeLang}; path=/; max-age=31536000; SameSite=Lax`;
-      } catch (e) {}
-    }
-  }, [user.metadata?.preferences?.language]);
 
   const [currency, setCurrency] = useState<"THB" | "USD" | "EUR" | "JPY" | "SGD">(
     (user.metadata?.preferences?.currency as "THB" | "USD" | "EUR" | "JPY" | "SGD") || "THB"

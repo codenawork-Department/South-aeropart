@@ -22,6 +22,8 @@ import type {
   ActiveCategory,
 } from "@/actions/product.actions";
 import { AddToCartButton } from "./AddToCartButton";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { getLocalizedField } from "@/lib/i18n-helpers";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -54,6 +56,7 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { t, lang } = useLanguage();
 
   // --- Derive initial state from URL search params ---
   const categoryParam = searchParams.get("category") || "all";
@@ -228,7 +231,7 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
                 }`}
                 id="filter-all"
               >
-                ALL PARTS
+                {lang === "en" ? "ALL PARTS" : "สินค้าทั้งหมด"}
               </button>
               {categories.map((cat) => (
                 <button
@@ -241,7 +244,7 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
                   }`}
                   id={`filter-${cat.slug}`}
                 >
-                  {cat.name}
+                  {lang === "en" && cat.nameEn ? cat.nameEn : cat.name}
                 </button>
               ))}
             </div>
@@ -253,7 +256,7 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
           <div className="flex items-center justify-center py-20">
             <Loader2 size={28} className="animate-spin text-[var(--accent-red)]" />
             <span className="ml-3 text-sm text-[var(--text-secondary)] font-heading uppercase tracking-wider">
-              Loading products...
+              {t.common.loading}
             </span>
           </div>
         )}
@@ -379,6 +382,10 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
 // ---------------------------------------------------------------------------
 
 function ProductCard({ product }: { product: ShopProductItem }) {
+  const { t, lang } = useLanguage();
+  const localizedName = getLocalizedField(product.name, product.nameEn, lang);
+  const localizedCat = lang === "en" && product.categoryNameEn ? product.categoryNameEn : product.categoryName;
+
   return (
     <div className="group flex flex-col bg-[#121212] border border-[#202020] hover:border-[var(--accent-red)] rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black">
       {/* Product Image Link */}
@@ -388,7 +395,7 @@ function ProductCard({ product }: { product: ShopProductItem }) {
       >
         <Image
           src={product.primaryImage}
-          alt={product.name}
+          alt={localizedName}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
@@ -410,7 +417,7 @@ function ProductCard({ product }: { product: ShopProductItem }) {
         {product.stockQuantity <= 0 && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <span className="text-xs font-heading font-bold uppercase tracking-wider text-white bg-[#333] px-3 py-1 rounded-sm">
-              OUT OF STOCK
+              {t.product.outOfStock}
             </span>
           </div>
         )}
@@ -424,12 +431,12 @@ function ProductCard({ product }: { product: ShopProductItem }) {
           </p>
           <Link href={`/products/${product.slug}`}>
             <h3 className="font-heading text-xs md:text-sm font-bold tracking-[0.06em] uppercase text-white group-hover:text-[var(--accent-red)] transition-colors leading-tight mt-0.5 line-clamp-1">
-              {product.name}
+              {localizedName}
             </h3>
           </Link>
-          {product.categoryName && (
+          {localizedCat && (
             <p className="text-[0.6rem] text-[var(--text-muted)] mt-0.5 font-sans">
-              {product.categoryName}
+              {localizedCat}
             </p>
           )}
         </div>

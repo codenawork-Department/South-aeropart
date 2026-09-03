@@ -3,8 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Wind, Compass } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export function InfoSections() {
+  const { t } = useLanguage();
+
   return (
     <section className="py-12 md:py-16 lg:py-20 bg-[#0C0C0C] border-t border-[#1C1C1C]">
       <div className="container-main">
@@ -15,16 +18,17 @@ export function InfoSections() {
               <div className="flex items-center gap-2 mb-3">
                 <Wind size={16} className="text-[var(--accent-red)]" />
                 <span className="text-[0.65rem] font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase">
-                  ENGINEERING &bull; CFD ANALYSIS
+                  {t.home.aeroBadge}
                 </span>
               </div>
 
               <h2 className="heading-md text-white">
-                WHAT IS <span className="text-[var(--accent-red)]">AERODYNAMICS ?</span>
+                {t.home.aeroTitleWhatIs}{" "}
+                <span className="text-[var(--accent-red)]">{t.home.aeroTitleHighlight}</span>
               </h2>
 
               <p className="body-md mt-3 text-[var(--text-secondary)]">
-                Ever wonder how high-performance vehicles effortlessly slice through the air with unshakeable stability? It&apos;s the science of aerodynamics at work—optimizing pressure gradients, minimizing turbulent drag, and generating calculated downforce to keep tires planted.
+                {t.home.aeroDesc}
               </p>
             </div>
 
@@ -40,7 +44,7 @@ export function InfoSections() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-3 left-3">
                 <span className="telemetry-pill text-[0.65rem]">
-                  PRESSURE VECTOR SIMULATION
+                  {t.home.aeroSimPill}
                 </span>
               </div>
             </div>
@@ -51,10 +55,10 @@ export function InfoSections() {
                 className="btn-outline gap-2 text-xs py-2.5 px-4"
                 id="learn-aero"
               >
-                LEARN MORE <ArrowRight size={14} />
+                {t.home.learnMore} <ArrowRight size={14} />
               </Link>
               <span className="text-[0.65rem] text-[var(--text-muted)] font-heading uppercase">
-                SOUTH AERO R&amp;D
+                {t.home.aeroRd}
               </span>
             </div>
           </div>
@@ -65,20 +69,21 @@ export function InfoSections() {
               <div className="flex items-center gap-2 mb-3">
                 <Compass size={16} className="text-[var(--accent-red)]" />
                 <span className="text-[0.65rem] font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase">
-                  OUR MOTORSPORT ETHOS
+                  {t.home.philosophyBadge}
                 </span>
               </div>
 
               <h2 className="heading-md text-white">
-                OUR <span className="text-[var(--accent-red)]">PHILOSOPHY</span>
+                {t.home.philosophyTitleOur}{" "}
+                <span className="text-[var(--accent-red)]">{t.home.philosophyTitleHighlight}</span>
               </h2>
 
               <p className="font-heading text-xs tracking-widest text-[var(--text-muted)] mt-1 uppercase font-semibold">
-                NOT LOUD, JUST DIFFERENT.
+                {t.home.philosophyTagline}
               </p>
 
               <p className="body-md mt-3 text-[var(--text-secondary)]">
-                Born in function, sculpted for the streets. We reject gaudy non-functional styling. Every spoiler angle, side strake, and diffuser fin is modeled using real vehicle scanning to ensure a cohesive, aggressive OEM+ aesthetic that enhances real performance.
+                {t.home.philosophyDesc}
               </p>
             </div>
 
@@ -94,7 +99,7 @@ export function InfoSections() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-3 left-3">
                 <span className="telemetry-pill text-[0.65rem]">
-                  ACCORD G9 REAR STANCE
+                  {t.home.philosophyCarPill}
                 </span>
               </div>
             </div>
@@ -105,10 +110,10 @@ export function InfoSections() {
                 className="btn-primary gap-2 text-xs py-2.5 px-4"
                 id="learn-philosophy"
               >
-                OUR STORY <ArrowRight size={14} />
+                {t.home.ourStory} <ArrowRight size={14} />
               </Link>
               <span className="text-[0.65rem] text-[var(--text-muted)] font-heading uppercase">
-                ESTABLISHED 2024
+                {t.home.estYear}
               </span>
             </div>
           </div>

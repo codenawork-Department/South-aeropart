@@ -2,11 +2,13 @@
 
 import { X, Minus, Plus, Trash2, ShoppingCart, Lock, Award, RotateCcw, Headphones, ArrowRight } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import Link from "next/link";
 import Image from "next/image";
 
 export function CartSidebar() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, itemCount, subtotal } = useCart();
+  const { t } = useLanguage();
 
   if (!isOpen) return null;
 
@@ -29,7 +31,7 @@ export function CartSidebar() {
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#222222]">
           <div className="flex items-center gap-2">
             <h2 className="font-heading text-lg font-bold tracking-wider uppercase text-white">
-              MY CART
+              {t.cart.title}
             </h2>
             <span className="text-[var(--accent-red)] font-heading text-lg font-bold">
               ({itemCount})
@@ -53,17 +55,17 @@ export function CartSidebar() {
                 <ShoppingCart size={28} />
               </div>
               <p className="font-heading text-base font-semibold tracking-wider text-white uppercase">
-                Your cart is empty
+                {t.cart.empty}
               </p>
               <p className="text-xs text-[var(--text-muted)] mt-1.5 max-w-xs">
-                Explore our precision-engineered aerodynamic body kits and parts.
+                {t.cart.emptyDesc}
               </p>
               <Link
                 href="/products"
                 onClick={closeCart}
                 className="btn-primary mt-6 text-xs gap-2"
               >
-                BROWSE ACCESSORIES <ArrowRight size={14} />
+                {t.cart.startShopping} <ArrowRight size={14} />
               </Link>
             </div>
           ) : (
@@ -154,14 +156,14 @@ export function CartSidebar() {
             {/* Subtotal */}
             <div className="flex items-center justify-between">
               <span className="font-heading text-sm font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
-                SUBTOTAL ({itemCount} {itemCount === 1 ? "ITEM" : "ITEMS"})
+                {t.cart.subtotal} ({itemCount} {t.cart.items})
               </span>
               <span className="font-heading text-xl font-bold text-white">
                 ฿{parseFloat(subtotal).toLocaleString()} THB
               </span>
             </div>
             <p className="text-[0.75rem] text-[var(--text-muted)] -mt-2">
-              Shipping &amp; taxes calculated at checkout.
+              {t.cart.shippingCalculated}
             </p>
 
             {/* Actions */}
@@ -172,7 +174,7 @@ export function CartSidebar() {
                 id="checkout-btn"
                 className="btn-primary w-full justify-center gap-2 py-3.5"
               >
-                CHECK OUT <ArrowRight size={16} />
+                {t.cart.checkout} <ArrowRight size={16} />
               </Link>
               <Link
                 href="/cart"
@@ -180,13 +182,13 @@ export function CartSidebar() {
                 id="view-cart-btn"
                 className="btn-outline w-full justify-center gap-2 py-3 text-xs tracking-wider"
               >
-                VIEW CART
+                {t.cart.title}
               </Link>
               <button
                 onClick={closeCart}
                 className="w-full text-center py-2 text-xs text-[var(--text-muted)] hover:text-white transition-colors"
               >
-                CONTINUE SHOPPING
+                {t.cart.continueShopping}
               </button>
             </div>
 

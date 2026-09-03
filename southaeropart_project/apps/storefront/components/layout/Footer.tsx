@@ -1,45 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Facebook, Instagram, Youtube, Music2, CheckCircle2, ShieldCheck, Loader2, Zap, Mail } from "lucide-react";
-import {
-  subscribeNewsletterAction,
-  getSubscriptionStatusAction,
-  SubscriptionStatusResult,
-} from "@/actions/newsletter.actions";
-
-const FOOTER_LINKS = {
-  shop: {
-    title: "SHOP",
-    links: [
-      { label: "Body Kits", href: "/products?category=body-kits" },
-      { label: "Front Lips", href: "/products?category=front-lips" },
-      { label: "Side Skirts", href: "/products?category=side-skirts" },
-      { label: "Diffusers", href: "/products?category=diffusers" },
-      { label: "Spoilers", href: "/products?category=spoilers" },
-    ],
-  },
-  company: {
-    title: "COMPANY",
-    links: [
-      { label: "About Us", href: "/about" },
-      { label: "Aerodynamics Guide", href: "/aerodynamics" },
-      { label: "Collection", href: "/collection" },
-      { label: "Gallery", href: "/gallery" },
-      { label: "Contact", href: "/about" },
-    ],
-  },
-  support: {
-    title: "SUPPORT",
-    links: [
-      { label: "Shipping & Delivery", href: "/about" },
-      { label: "Returns & Warranty", href: "/about" },
-      { label: "Fitment Guide", href: "/about" },
-      { label: "Terms & Conditions", href: "/about" },
-    ],
-  },
-};
+import { Facebook, Instagram, Youtube, Music2, ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const SOCIAL_LINKS = [
   { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
@@ -49,66 +12,39 @@ const SOCIAL_LINKS = [
 ];
 
 export function Footer() {
-  const [subscribed, setSubscribed] = useState(false);
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [status, setStatus] = useState<SubscriptionStatusResult>({
-    isLoggedIn: false,
-    isSubscribed: false,
-    userEmail: null,
-  });
+  const { t } = useLanguage();
 
-  useEffect(() => {
-    getSubscriptionStatusAction().then((res) => {
-      setStatus(res);
-    });
-  }, []);
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-
-    setIsLoading(true);
-    setErrorMessage("");
-    try {
-      const res = await subscribeNewsletterAction({
-        email: email.trim(),
-        source: "footer",
-      });
-      if (res.success) {
-        setSubscribed(true);
-        setStatus((prev) => ({ ...prev, isSubscribed: true }));
-      } else {
-        setErrorMessage(res.error || "เกิดข้อผิดพลาด");
-      }
-    } catch {
-      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-    } finally {
-      setIsLoading(false);
-    }
+  const footerLinks = {
+    shop: {
+      title: t.footer.shop,
+      links: [
+        { label: t.footer.allProducts, href: "/products" },
+        { label: t.footer.collections, href: "/collection" },
+        { label: "Front Lips", href: "/products?category=front-lips" },
+        { label: "Side Skirts", href: "/products?category=side-skirts" },
+        { label: "Diffusers", href: "/products?category=diffusers" },
+        { label: "Spoilers", href: "/products?category=spoilers" },
+      ],
+    },
+    company: {
+      title: t.footer.about,
+      links: [
+        { label: t.footer.ourStory, href: "/about" },
+        { label: t.footer.aerodynamicsGuide, href: "/aerodynamics" },
+        { label: t.footer.gallery, href: "/gallery" },
+        { label: t.footer.contactUs, href: "/about" },
+      ],
+    },
+    support: {
+      title: t.footer.support,
+      links: [
+        { label: t.footer.shippingPolicy, href: "/about" },
+        { label: t.footer.returnPolicy, href: "/about" },
+        { label: t.footer.faq, href: "/about" },
+        { label: t.footer.termsOfService, href: "/about" },
+      ],
+    },
   };
-
-  const handleOneClickSubscribe = async () => {
-    setIsLoading(true);
-    setErrorMessage("");
-    try {
-      const res = await subscribeNewsletterAction({
-        source: "1click_banner",
-      });
-      if (res.success) {
-        setSubscribed(true);
-        setStatus((prev) => ({ ...prev, isSubscribed: true }));
-      } else {
-        setErrorMessage(res.error || "เกิดข้อผิดพลาด");
-      }
-    } catch {
-      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <footer className="bg-[#080808] border-t border-[#1F1F1F]">
       {/* Main Footer Links */}
@@ -149,7 +85,7 @@ export function Footer() {
           </div>
 
           {/* Nav Links Columns */}
-          {Object.values(FOOTER_LINKS).map((section) => (
+          {Object.values(footerLinks).map((section) => (
             <div key={section.title}>
               <h3 className="font-heading text-xs font-bold tracking-[0.15em] uppercase text-white mb-4">
                 {section.title}
@@ -204,83 +140,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-
-      {/* Newsletter Strip (Smart Visibility: Hides if logged in and already subscribed) */}
-      {!status.isSubscribed || subscribed ? (
-        <div className="bg-[#111111] border-t border-[#1C1C1C]">
-          <div className="container-main py-6 md:py-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div>
-                <h3 className="font-heading text-base font-bold tracking-wider uppercase text-white">
-                  JOIN THE MOVEMENT
-                </h3>
-                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                  ติดตามข่าวสารการเปิดตัวชุดแต่งใหม่ และรายงานผลทดสอบ CFD Aerodynamics ล่าสุด
-                </p>
-              </div>
-
-              {subscribed ? (
-                <div className="flex items-center gap-2 text-xs text-emerald-400 font-heading font-semibold tracking-wider p-2 rounded bg-emerald-950/40 border border-emerald-800/40 animate-fade-in">
-                  <CheckCircle2 size={16} />
-                  THANK YOU FOR SUBSCRIBING!
-                </div>
-              ) : status.isLoggedIn ? (
-                <div className="flex items-center gap-2.5">
-                  {status.userEmail && (
-                    <span className="text-xs text-[var(--text-secondary)] font-mono hidden sm:inline-block">
-                      {status.userEmail}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleOneClickSubscribe}
-                    disabled={isLoading}
-                    className="btn-primary rounded-none whitespace-nowrap text-xs py-2 px-5 flex items-center gap-1.5 disabled:opacity-50"
-                    id="footer-1click-subscribe"
-                  >
-                    {isLoading ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <>
-                        <Zap size={13} className="fill-current" />
-                        <span>SUBSCRIBE 1-CLICK</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubscribe} className="flex w-full md:w-auto gap-0">
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email..."
-                    className="input-dark flex-1 md:w-72 rounded-none text-xs"
-                    id="footer-newsletter-email"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="btn-primary rounded-none whitespace-nowrap text-xs py-2 px-5 flex items-center gap-1.5 disabled:opacity-50"
-                    id="footer-newsletter-subscribe"
-                  >
-                    {isLoading ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <span>SUBSCRIBE</span>
-                    )}
-                  </button>
-                </form>
-              )}
-            </div>
-            {errorMessage && (
-              <p className="text-xs text-red-400 mt-2">{errorMessage}</p>
-            )}
-          </div>
-        </div>
-      ) : null}
 
       {/* Copyright Line */}
       <div className="border-t border-[#1A1A1A] bg-[#070707]">

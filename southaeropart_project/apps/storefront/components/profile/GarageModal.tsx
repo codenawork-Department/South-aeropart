@@ -28,12 +28,12 @@ export function GarageModal({
   brands,
   initialVehicle,
   onSuccess,
-  language = "th",
+  language = "en",
 }: GarageModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const t = PROFILE_TRANSLATIONS[language]?.garageTab || PROFILE_TRANSLATIONS.th.garageTab;
+  const t = PROFILE_TRANSLATIONS[language]?.garageTab || PROFILE_TRANSLATIONS.en.garageTab;
 
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const [selectedModelId, setSelectedModelId] = useState<string>("");

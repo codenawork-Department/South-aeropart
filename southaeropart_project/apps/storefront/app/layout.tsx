@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { Inter, Oswald } from "next/font/google";
+import { cookies } from "next/headers";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AuthSessionTracker } from "@/components/auth/AuthSessionTracker";
 import { RealtimeLiveProvider } from "@/components/providers/RealtimeLiveProvider";
+import { LanguageProvider } from "@/components/providers/LanguageProvider";
+import { getUserLanguagePreference } from "@/actions/profile.actions";
+import { Language, DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME, sanitizeLanguage } from "@/i18n/config";
 import "./globals.css";
 
 const inter = Inter({
@@ -33,17 +37,35 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = cookies();
+  const cookieRawLang = cookieStore.get(LANGUAGE_COOKIE_NAME)?.value;
+
+  // Sanitize cookie value through central guard — prevents locale injection
+  let initialLang: Language = sanitizeLanguage(cookieRawLang);
+
+  // If cookie held no valid language, try the user's DB preference
+  if (!cookieRawLang || initialLang === DEFAULT_LANGUAGE) {
+    try {
+      const userPref = await getUserLanguagePreference();
+      initialLang = sanitizeLanguage(userPref);
+    } catch {
+      // fallback stays at DEFAULT_LANGUAGE
+    }
+  }
+
   return (
     <ClerkProvider>
-      <html lang="en" className={`${inter.variable} ${oswald.variable}`}>
+      <html lang={initialLang} className={`${inter.variable} ${oswald.variable}`}>
         <body className="min-h-screen flex flex-col">
           <AuthSessionTracker />
-          <RealtimeLiveProvider>{children}</RealtimeLiveProvider>
+          <LanguageProvider initialLang={initialLang}>
+            <RealtimeLiveProvider>{children}</RealtimeLiveProvider>
+          </LanguageProvider>
         </body>
       </html>
     </ClerkProvider>

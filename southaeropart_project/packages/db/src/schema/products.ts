@@ -5,7 +5,9 @@ import {
 
 export interface ProductFeatureItem {
   title: string;
+  titleEn?: string | null;
   description: string;
+  descriptionEn?: string | null;
   iconSlug?: string | null;
   iconId?: string | null;
 }
@@ -26,6 +28,7 @@ export const categories = pgTable("categories", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  nameEn: text("name_en"),
   parentId: uuid("parent_id").references((): AnyPgColumn => categories.id, { onDelete: "set null" }),
   position: integer("position").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
@@ -75,8 +78,10 @@ export const carModels = pgTable("car_models", {
 export const materials = pgTable("materials", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull().unique(),
+  nameEn: text("name_en"),
   slug: text("slug").notNull().unique(),
   description: text("description"),
+  descriptionEn: text("description_en"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -88,8 +93,10 @@ export const materials = pgTable("materials", {
 export const installations = pgTable("installations", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull().unique(),
+  nameEn: text("name_en"),
   slug: text("slug").notNull().unique(),
   description: text("description"),
+  descriptionEn: text("description_en"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -103,9 +110,12 @@ export const products = pgTable("products", {
   sku: text("sku").notNull().unique(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  nameEn: text("name_en"),
   productType: productTypeEnum("product_type").notNull().default("single"),
   description: text("description"),
+  descriptionEn: text("description_en"),
   shortDescription: text("short_description"),
+  shortDescriptionEn: text("short_description_en"),
   brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
   carModelId: uuid("car_model_id").references(() => carModels.id, { onDelete: "set null" }),
   categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
@@ -118,6 +128,7 @@ export const products = pgTable("products", {
   isFeatured: boolean("is_featured").notNull().default(false),
   weightKg: numeric("weight_kg", { precision: 8, scale: 2 }),
   installation: text("installation"),
+  installationEn: text("installation_en"),
   // CFD Aerodynamic Telemetry Data
   downforceN: numeric("downforce_n", { precision: 10, scale: 2 }),
   dragN: numeric("drag_n", { precision: 10, scale: 2 }),

@@ -12,6 +12,7 @@ import {
   materials,
   installations,
   productCompatibility,
+  ProductFeatureItem,
   eq,
   and,
   desc,
@@ -55,56 +56,82 @@ const compatibilityItemSchema = z.object({
   yearTo: z.number().int().min(1900).max(2100),
 });
 
-const featureItemSchema = z.object({
-  title: z.string().min(1, "กรุณากรอกหัวข้อจุดเด่น").max(200).trim(),
-  description: z.string().min(1, "กรุณากรอกคำอธิบายจุดเด่น").max(1000).trim(),
-  iconSlug: z.string().optional().nullable(),
-  iconId: z.string().optional().nullable(),
-});
+const featureItemSchema = z
+  .object({
+    title: z.string().max(200).optional().nullable(),
+    titleEn: z.string().max(200).optional().nullable(),
+    description: z.string().max(1000).optional().nullable(),
+    descriptionEn: z.string().max(1000).optional().nullable(),
+    iconSlug: z.string().optional().nullable(),
+    iconId: z.string().optional().nullable(),
+  })
+  .refine(
+    (f) =>
+      (f.titleEn && f.titleEn.trim().length > 0) ||
+      (f.title && f.title.trim().length > 0),
+    {
+      message: "กรุณากรอกหัวข้อจุดเด่น (Feature Title)",
+      path: ["titleEn"],
+    }
+  );
 
-const productInputSchema = z.object({
-  sku: z.string().min(1, "กรุณากรอกรหัสสินค้า (SKU)").max(100).trim(),
-  name: z.string().min(1, "กรุณากรอกชื่อสินค้า").max(255).trim(),
-  slug: z.string().optional(),
-  description: z.string().optional().nullable(),
-  shortDescription: z.string().max(500).optional().nullable(),
-  price: z
-    .string()
-    .min(1, "กรุณากรอกราคา")
-    .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบราคาไม่ถูกต้อง เช่น 1500 หรือ 1500.50"),
-  compareAtPrice: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบราคาไม่ถูกต้อง")
-    .optional()
-    .nullable(),
-  stockQuantity: z.number().int().min(0, "จำนวนสต็อกต้องไม่ติดลบ").default(0),
-  status: z.enum(["draft", "active", "archived", "out_of_stock"]).default("draft"),
-  isFeatured: z.boolean().default(false),
-  weightKg: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบน้ำหนักไม่ถูกต้อง")
-    .optional()
-    .nullable(),
-  installation: z.string().max(500).optional().nullable(),
-  installationId: z.string().uuid("วิธีการติดตั้งไม่ถูกต้อง").optional().nullable(),
-  categoryId: z.string().uuid("หมวดหมู่ไม่ถูกต้อง").optional().nullable(),
-  brandId: z.string().uuid("แบรนด์ไม่ถูกต้อง").optional().nullable(),
-  carModelId: z.string().uuid("รุ่นรถไม่ถูกต้อง").optional().nullable(),
-  materialId: z.string().uuid("วัสดุไม่ถูกต้อง").optional().nullable(),
-  // CFD Aerodynamic Telemetry
-  downforceN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-  dragN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-  downforceBefore: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-  downforceAfter: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-  dragBefore: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-  dragAfter: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-  images: z
-    .array(imageItemSchema)
-    .max(20, "สามารถเพิ่มรูปภาพสินค้าได้สูงสุดไม่เกิน 20 รูป")
-    .default([]),
-  compatibility: z.array(compatibilityItemSchema).optional().default([]),
-  features: z.array(featureItemSchema).optional().default([]),
-});
+const productInputSchema = z
+  .object({
+    sku: z.string().min(1, "กรุณากรอกรหัสสินค้า (SKU)").max(100).trim(),
+    name: z.string().max(255).optional().nullable(),
+    nameEn: z.string().max(255).optional().nullable(),
+    slug: z.string().optional(),
+    description: z.string().optional().nullable(),
+    descriptionEn: z.string().optional().nullable(),
+    shortDescription: z.string().max(500).optional().nullable(),
+    shortDescriptionEn: z.string().max(500).optional().nullable(),
+    price: z
+      .string()
+      .min(1, "กรุณากรอกราคา")
+      .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบราคาไม่ถูกต้อง เช่น 1500 หรือ 1500.50"),
+    compareAtPrice: z
+      .string()
+      .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบราคาไม่ถูกต้อง")
+      .optional()
+      .nullable(),
+    stockQuantity: z.number().int().min(0, "จำนวนสต็อกต้องไม่ติดลบ").default(0),
+    status: z.enum(["draft", "active", "archived", "out_of_stock"]).default("draft"),
+    isFeatured: z.boolean().default(false),
+    weightKg: z
+      .string()
+      .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบน้ำหนักไม่ถูกต้อง")
+      .optional()
+      .nullable(),
+    installation: z.string().max(500).optional().nullable(),
+    installationEn: z.string().max(500).optional().nullable(),
+    installationId: z.string().uuid("วิธีการติดตั้งไม่ถูกต้อง").optional().nullable(),
+    categoryId: z.string().uuid("หมวดหมู่ไม่ถูกต้อง").optional().nullable(),
+    brandId: z.string().uuid("แบรนด์ไม่ถูกต้อง").optional().nullable(),
+    carModelId: z.string().uuid("รุ่นรถไม่ถูกต้อง").optional().nullable(),
+    materialId: z.string().uuid("วัสดุไม่ถูกต้อง").optional().nullable(),
+    // CFD Aerodynamic Telemetry
+    downforceN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+    dragN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+    downforceBefore: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+    downforceAfter: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+    dragBefore: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+    dragAfter: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
+    images: z
+      .array(imageItemSchema)
+      .max(20, "สามารถเพิ่มรูปภาพสินค้าได้สูงสุดไม่เกิน 20 รูป")
+      .default([]),
+    compatibility: z.array(compatibilityItemSchema).optional().default([]),
+    features: z.array(featureItemSchema).optional().default([]),
+  })
+  .refine(
+    (data) =>
+      (data.nameEn && data.nameEn.trim().length > 0) ||
+      (data.name && data.name.trim().length > 0),
+    {
+      message: "กรุณากรอกชื่อสินค้า (Product Name)",
+      path: ["nameEn"],
+    }
+  );
 
 export type ProductInput = z.infer<typeof productInputSchema>;
 
@@ -247,6 +274,7 @@ export async function getProductsAction(params?: {
     const q = `%${params.search.trim()}%`;
     const searchCondition = or(
       ilike(products.name, q),
+      ilike(products.nameEn, q),
       ilike(products.sku, q),
       ilike(products.slug, q)
     );
@@ -294,6 +322,7 @@ export async function getProductsAction(params?: {
       sku: products.sku,
       slug: products.slug,
       name: products.name,
+      nameEn: products.nameEn,
       price: products.price,
       compareAtPrice: products.compareAtPrice,
       stockQuantity: products.stockQuantity,
@@ -440,8 +469,11 @@ export async function createProductAction(
 
   const data = parsed.data;
 
-  // Auto-generate slug if not provided
-  let slug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
+  const effectiveNameEn = data.nameEn?.trim() || null;
+  const effectiveName = data.name?.trim() || effectiveNameEn || "Untitled Product";
+
+  // Auto-generate slug if not provided (prioritizes English name for clean URLs)
+  let slug = data.slug?.trim() ? slugify(data.slug) : slugify(effectiveNameEn || effectiveName);
   if (!slug) {
     slug = `part-${data.sku.toLowerCase()}-${Date.now().toString(36)}`;
   }
@@ -522,14 +554,26 @@ export async function createProductAction(
     }
 
     // 2. Insert into products table
+    const mappedFeatures: ProductFeatureItem[] = (data.features || []).map((f) => ({
+      title: f.title?.trim() || f.titleEn?.trim() || "",
+      titleEn: f.titleEn?.trim() || null,
+      description: f.description?.trim() || f.descriptionEn?.trim() || "",
+      descriptionEn: f.descriptionEn?.trim() || null,
+      iconSlug: f.iconSlug || null,
+      iconId: f.iconId || null,
+    }));
+
     const [newProduct] = await db
       .insert(products)
       .values({
         sku: data.sku,
         slug,
-        name: data.name,
+        name: effectiveName,
+        nameEn: effectiveNameEn,
         description: data.description ?? null,
+        descriptionEn: data.descriptionEn ?? null,
         shortDescription: data.shortDescription ?? null,
+        shortDescriptionEn: data.shortDescriptionEn ?? null,
         price: data.price,
         compareAtPrice: data.compareAtPrice ?? null,
         stockQuantity: data.stockQuantity,
@@ -537,6 +581,7 @@ export async function createProductAction(
         isFeatured: data.isFeatured ?? false,
         weightKg: data.weightKg ?? null,
         installation: data.installation ?? null,
+        installationEn: data.installationEn ?? null,
         installationId: data.installationId ?? null,
         categoryId: data.categoryId ?? null,
         brandId: data.brandId ?? null,
@@ -548,7 +593,7 @@ export async function createProductAction(
         downforceAfter: data.downforceAfter ?? null,
         dragBefore: data.dragBefore ?? null,
         dragAfter: data.dragAfter ?? null,
-        features: data.features || [],
+        features: mappedFeatures,
       })
       .returning({ id: products.id });
 
@@ -778,9 +823,12 @@ export async function updateProductAction(
     }
 
     // 5. Update main product info (including slug if name changed)
+    const effectiveNameEn = data.nameEn?.trim() || null;
+    const effectiveName = data.name?.trim() || effectiveNameEn || "Untitled Product";
+
     let newSlug = existingProduct.slug;
-    if (data.name !== existingProduct.name) {
-      newSlug = data.slug?.trim() ? slugify(data.slug) : slugify(data.name);
+    if (data.slug?.trim() || effectiveName !== existingProduct.name || effectiveNameEn !== existingProduct.nameEn) {
+      newSlug = data.slug?.trim() ? slugify(data.slug) : slugify(effectiveNameEn || effectiveName);
       if (!newSlug) newSlug = existingProduct.slug;
 
       // If slug conflicts with another product, append timestamp
@@ -794,14 +842,26 @@ export async function updateProductAction(
       }
     }
 
+    const mappedFeatures: ProductFeatureItem[] = (data.features || []).map((f) => ({
+      title: f.title?.trim() || f.titleEn?.trim() || "",
+      titleEn: f.titleEn?.trim() || null,
+      description: f.description?.trim() || f.descriptionEn?.trim() || "",
+      descriptionEn: f.descriptionEn?.trim() || null,
+      iconSlug: f.iconSlug || null,
+      iconId: f.iconId || null,
+    }));
+
     await db
       .update(products)
       .set({
         sku: data.sku,
         slug: newSlug,
-        name: data.name,
+        name: effectiveName,
+        nameEn: effectiveNameEn,
         description: data.description ?? null,
+        descriptionEn: data.descriptionEn ?? null,
         shortDescription: data.shortDescription ?? null,
+        shortDescriptionEn: data.shortDescriptionEn ?? null,
         price: data.price,
         compareAtPrice: data.compareAtPrice ?? null,
         stockQuantity: data.stockQuantity,
@@ -809,6 +869,7 @@ export async function updateProductAction(
         isFeatured: data.isFeatured ?? false,
         weightKg: data.weightKg ?? null,
         installation: data.installation ?? null,
+        installationEn: data.installationEn ?? null,
         installationId: data.installationId ?? null,
         categoryId: data.categoryId ?? null,
         brandId: data.brandId ?? null,
@@ -820,7 +881,7 @@ export async function updateProductAction(
         downforceAfter: data.downforceAfter ?? null,
         dragBefore: data.dragBefore ?? null,
         dragAfter: data.dragAfter ?? null,
-        features: data.features || [],
+        features: mappedFeatures,
         updatedAt: new Date(),
       })
       .where(eq(products.id, productId));

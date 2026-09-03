@@ -22,7 +22,7 @@ interface PdpaTermsModalProps {
   language?: ProfileLanguage;
 }
 
-export function PdpaTermsModal({ isOpen, onClose, language = "th" }: PdpaTermsModalProps) {
+export function PdpaTermsModal({ isOpen, onClose, language = "en" }: PdpaTermsModalProps) {
   const [activeTab, setActiveTab] = useState<"privacy" | "data_matrix" | "terms">("privacy");
   const [modalLanguage, setModalLanguage] = useState<ProfileLanguage>(language);
 

@@ -33,6 +33,7 @@ export interface BundleRow {
   sku: string;
   slug: string;
   name: string;
+  nameEn?: string | null;
   price: string;
   stockQuantity: number;
   status: "draft" | "active" | "archived" | "out_of_stock";
@@ -606,8 +607,13 @@ export function BundlesTable({
                                 </span>
                               )}
                             </Link>
-                            <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500 font-mono">
-                              <span>SKU: {bundle.sku}</span>
+                            <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                              <span className="font-mono">SKU: {bundle.sku}</span>
+                              {bundle.nameEn && (
+                                <span className="text-gray-400 truncate max-w-[220px]" title={bundle.nameEn}>
+                                  • {bundle.nameEn}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
