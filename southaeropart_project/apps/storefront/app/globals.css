@@ -371,3 +371,53 @@ body {
     text-transform: uppercase;
   }
 }
+
+/* ═══════════════════════════════════════════
+   SKELETON SHIMMER ANIMATION (MOTORSPORT DARK)
+   ═══════════════════════════════════════════ */
+@keyframes shimmerWave {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #141414 0%,
+    #1C1C1C 20%,
+    #252525 50%,
+    #1C1C1C 80%,
+    #141414 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerWave 1.8s ease-in-out infinite;
+}
+
+.skeleton-shimmer-subtle {
+  background: linear-gradient(
+    90deg,
+    #101010 0%,
+    #171717 25%,
+    #1E1E1E 50%,
+    #171717 75%,
+    #101010 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerWave 2s ease-in-out infinite;
+}
+
+.skeleton-shimmer-red {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 29, 36, 0.08) 0%,
+    rgba(229, 29, 36, 0.2) 50%,
+    rgba(229, 29, 36, 0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerWave 1.8s ease-in-out infinite;
+}
+

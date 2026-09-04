@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { VehicleSelector } from "@/components/home/VehicleSelector";
+import { VehicleSelectorSkeleton } from "@/components/ui/skeleton";
 import {
   getVehicleSelectorData,
   getUserGarageVehicles,
@@ -28,14 +29,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Suspense
-        fallback={
-          <VehicleSelector
-            initialBrands={vehicleData}
-            initialGarageVehicles={garageVehicles}
-          />
-        }
-      >
+      <Suspense fallback={<VehicleSelectorSkeleton />}>
         <VehicleSelector
           initialBrands={vehicleData}
           initialGarageVehicles={garageVehicles}

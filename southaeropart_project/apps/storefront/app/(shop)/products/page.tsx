@@ -1,10 +1,13 @@
 import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { VehicleSelector } from "@/components/home/VehicleSelector";
 import { ProductsGrid } from "@/components/products/ProductsGrid";
 import { VehicleBundleHero } from "@/components/products/VehicleBundleHero";
+import {
+  VehicleSelectorSkeleton,
+  ProductGridSkeleton,
+} from "@/components/ui/skeleton";
 import {
   getShopProducts,
   getActiveCategories,
@@ -78,13 +81,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   return (
     <div className="bg-[#0A0A0A] min-h-screen">
       {/* 1. Select Your Vehicle Bar with My Garage Quick-Select */}
-      <Suspense
-        fallback={
-          <div className="bg-[#111111] border-b border-[#222222] py-6 flex items-center justify-center">
-            <Loader2 size={18} className="animate-spin text-[var(--accent-red)]" />
-          </div>
-        }
-      >
+      <Suspense fallback={<VehicleSelectorSkeleton />}>
         <VehicleSelector
           initialBrands={vehicleData}
           initialGarageVehicles={garageVehicles}
@@ -103,11 +100,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       <Suspense
         key={`suspense-grid-${makeParam}-${modelParam}`}
         fallback={
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={28} className="animate-spin text-[var(--accent-red)]" />
-            <span className="ml-3 text-sm text-[var(--text-secondary)] font-heading uppercase tracking-wider">
-              Loading products...
-            </span>
+          <div className="container-main py-10">
+            <ProductGridSkeleton count={8} />
           </div>
         }
       >

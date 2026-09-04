@@ -73,13 +73,13 @@ export function CollectionClient({ activeBundles }: CollectionClientProps) {
               return (
                 <div
                   key={kit.id}
-                  className="card p-6 md:p-10 bg-[#121212] border-[#222222] hover:border-[var(--accent-red)] transition-all duration-500 group shadow-2xl"
+                  className="card p-4 sm:p-6 md:p-8 lg:p-10 bg-[#121212] border-[#222222] hover:border-[var(--accent-red)] transition-all duration-500 group shadow-2xl"
                 >
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-                    {/* Left Column (Image) */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-center">
+                    {/* Left Column (Image: always order-1 on mobile) */}
                     <div
-                      className={`lg:col-span-6 ${
-                        isEven ? "lg:order-1" : "lg:order-2"
+                      className={`order-1 md:col-span-6 ${
+                        isEven ? "md:order-1" : "md:order-2"
                       }`}
                     >
                       <div className="relative aspect-[16/10] w-full rounded-sm overflow-hidden border border-[#262626] bg-[#161616]">
@@ -110,10 +110,10 @@ export function CollectionClient({ activeBundles }: CollectionClientProps) {
                       </div>
                     </div>
 
-                    {/* Right Column (Info) */}
+                    {/* Right Column (Info: always order-2 on mobile) */}
                     <div
-                      className={`lg:col-span-6 space-y-4 ${
-                        isEven ? "lg:order-2" : "lg:order-1"
+                      className={`order-2 md:col-span-6 space-y-3.5 sm:space-y-4 ${
+                        isEven ? "md:order-2" : "md:order-1"
                       }`}
                     >
                       <p className="text-[0.65rem] font-heading font-bold tracking-[0.2em] text-[var(--accent-red)] uppercase">

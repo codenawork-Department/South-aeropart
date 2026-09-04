@@ -89,10 +89,15 @@ pnpm db:studio                      # เปิด Drizzle Studio GUI (https://l
 
 ### Webhook & Public Tunnel
 ```bash
-# พอร์ต 3000 สำหรับ Clerk และ Omise webhooks:
+# ใช้ Cloudflare Tunnel (มาตรฐานหลักของโปรเจกต์: ทะลุ Firewall, ได้ HTTPS สำหรับ Webhook & Mobile test):
+pnpm tunnel:storefront          # สำหรับ Storefront (Port 3000)
+pnpm tunnel:admin               # สำหรับ Admin (Port 3001)
+
+# หรือรันคำสั่ง cloudflared ตรงๆ:
+cloudflared tunnel --url http://localhost:3000
+
+# ทางเลือกสำรองผ่าน SSH (localhost.run):
 ssh -o ServerAliveInterval=30 -R 80:localhost:3000 localhost.run
-# หรือใช้ ngrok:
-ngrok http 3000
 ```
 
 ### Troubleshooting (Windows PowerShell)

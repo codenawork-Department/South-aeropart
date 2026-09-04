@@ -95,10 +95,10 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
   return (
     <section className="bg-[#0A0A0A] text-white py-12 md:py-16 lg:py-20 border-y border-[#181818] relative overflow-hidden">
       <div className="container-main">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
           
           {/* ================= LEFT COLUMN ================= */}
-          <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
+          <div className="order-2 md:order-1 md:col-span-6 lg:col-span-5 flex flex-col justify-between space-y-6">
             
             {/* 1. Header & Title */}
             <div>
@@ -188,10 +188,10 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
             </div>
 
             {/* 4. Action Buttons Row */}
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
               <Link
                 href={activeBundle.link || `/products/${activeBundle.slug}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#E5252A] hover:bg-[#c91e23] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all shadow-lg shadow-[#E5252A]/20"
+                className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-[#E5252A] hover:bg-[#c91e23] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all shadow-lg shadow-[#E5252A]/20"
                 id="explore-bodykit"
               >
                 {t.home.exploreBuild} <ArrowRight size={15} />
@@ -199,7 +199,7 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
 
               <Link
                 href={activeBundle.link || `/products/${activeBundle.slug}`}
-                className="inline-flex items-center justify-center px-5 py-3 bg-[#141414] hover:bg-[#1C1C1C] border border-[#2A2A2A] hover:border-[#444] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all"
+                className="inline-flex items-center justify-center px-4 sm:px-5 py-2.5 sm:py-3 bg-[#141414] hover:bg-[#1C1C1C] border border-[#2A2A2A] hover:border-[#444] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all"
               >
                 {t.home.viewAllParts.replace("{count}", String(partsCount))}
               </Link>
@@ -245,7 +245,7 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
           </div>
 
           {/* ================= RIGHT COLUMN (STAGE & THUMBNAILS) ================= */}
-          <div className="lg:col-span-7 flex flex-col space-y-4">
+          <div className="order-1 md:order-2 md:col-span-6 lg:col-span-7 flex flex-col space-y-4">
             
             {/* Main Stage Frame */}
             <div className="bg-[#0E0E0E] border border-[#222222] rounded-lg p-4 sm:p-5 relative shadow-2xl">

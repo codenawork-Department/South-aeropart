@@ -267,7 +267,7 @@ export function AerodynamicsGuideClient({ initialLanguage }: AerodynamicsGuideCl
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {/* Card A: Aerodynamic Drag */}
             <div className="card p-6 md:p-8 bg-[#121212] border-[#222222] relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-bl-full pointer-events-none" />
@@ -663,9 +663,9 @@ export function AerodynamicsGuideClient({ initialLanguage }: AerodynamicsGuideCl
           </div>
 
           {/* Active Part Detail Presentation */}
-          <div className="card p-6 md:p-10 bg-[#121212] border-[#242424] grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="card p-5 sm:p-6 md:p-8 lg:p-10 bg-[#121212] border-[#242424] grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center">
             {/* Left/Graphic Showcase */}
-            <div className="lg:col-span-5 flex flex-col justify-between h-full">
+            <div className="md:col-span-5 lg:col-span-5 flex flex-col justify-between h-full">
               <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-[#242424] bg-[#0A0A0A]">
                 <Image
                   src={activePart.image}
@@ -701,7 +701,7 @@ export function AerodynamicsGuideClient({ initialLanguage }: AerodynamicsGuideCl
             </div>
 
             {/* Right/Engineering Deep Dive */}
-            <div className="lg:col-span-7 flex flex-col justify-between">
+            <div className="md:col-span-7 lg:col-span-7 flex flex-col justify-between">
               <div>
                 <span className="text-xs font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase">
                   {activePart.category[lang]}

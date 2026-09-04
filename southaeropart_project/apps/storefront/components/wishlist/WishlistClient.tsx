@@ -77,10 +77,10 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
   });
 
   return (
-    <div className="bg-[#0A0A0A] min-h-screen pt-24 md:pt-28 pb-20">
+    <div className="bg-[#0A0A0A] min-h-screen pb-16 md:pb-20">
       {/* Header Banner */}
       <section className="border-b border-[#1E1E1E] bg-gradient-to-b from-[#141414] to-[#0A0A0A]">
-        <div className="container-main py-10 md:py-14">
+        <div className="container-main py-8 md:py-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#181818] border border-[#2B2B2B] rounded-full text-[0.65rem] font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase mb-3">
@@ -96,20 +96,20 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
             </div>
 
             {/* Quick Metrics */}
-            <div className="flex items-center gap-3">
-              <div className="bg-[#121212] border border-[#222222] px-4 py-2.5 rounded-sm">
-                <span className="text-[0.65rem] font-heading text-[var(--text-muted)] tracking-wider uppercase block">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="bg-[#121212] border border-[#222222] px-3 sm:px-4 py-2 sm:py-2.5 rounded-sm">
+                <span className="text-[0.6rem] sm:text-[0.65rem] font-heading text-[var(--text-muted)] tracking-wider uppercase block">
                   TOTAL SAVED
                 </span>
-                <span className="text-xl font-heading font-bold text-white">
+                <span className="text-lg sm:text-xl font-heading font-bold text-white">
                   {items.length} <span className="text-xs font-normal text-[var(--text-secondary)]">รายการ</span>
                 </span>
               </div>
-              <div className="bg-[#121212] border border-[#222222] px-4 py-2.5 rounded-sm">
-                <span className="text-[0.65rem] font-heading text-[var(--text-muted)] tracking-wider uppercase block">
+              <div className="bg-[#121212] border border-[#222222] px-3 sm:px-4 py-2 sm:py-2.5 rounded-sm">
+                <span className="text-[0.6rem] sm:text-[0.65rem] font-heading text-[var(--text-muted)] tracking-wider uppercase block">
                   BUNDLES / ชุดเซ็ต
                 </span>
-                <span className="text-xl font-heading font-bold text-[var(--accent-red)]">
+                <span className="text-lg sm:text-xl font-heading font-bold text-[var(--accent-red)]">
                   {bundleCount} <span className="text-xs font-normal text-[var(--text-secondary)]">เซ็ต</span>
                 </span>
               </div>
@@ -118,10 +118,10 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
 
           {/* Filter Tabs if items exist */}
           {items.length > 0 && (
-            <div className="flex items-center gap-2 mt-8 border-t border-[#1C1C1C] pt-4">
+            <div className="flex items-center gap-2 mt-6 sm:mt-8 border-t border-[#1C1C1C] pt-4 overflow-x-auto scrollbar-none pb-1">
               <button
                 onClick={() => setFilterType("all")}
-                className={`px-3 py-1.5 text-xs font-heading tracking-wider uppercase rounded-sm transition-colors ${
+                className={`px-3 py-1.5 text-xs font-heading tracking-wider uppercase rounded-sm transition-colors shrink-0 ${
                   filterType === "all"
                     ? "bg-[var(--accent-red)] text-white font-bold"
                     : "bg-[#141414] text-[var(--text-secondary)] hover:text-white border border-[#242424]"
@@ -197,7 +197,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
           </div>
         ) : (
           /* Wishlist Grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {filteredItems.map((item) => {
               const isRemoving = removingId === item.productId;
               const isAdding = addingId === item.productId;

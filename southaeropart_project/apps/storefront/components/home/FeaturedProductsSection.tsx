@@ -51,7 +51,7 @@ export function FeaturedProductsSection({
         </div>
 
         {/* 4 Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           {initialProducts.map((product) => {
             const hasDiscount =
               Boolean(product.compareAtPrice) &&
@@ -103,30 +103,30 @@ export function FeaturedProductsSection({
                 </div>
 
                 {/* Card Info */}
-                <div className="p-3.5 md:p-4 bg-[#121212] flex-1 flex flex-col justify-between border-t border-[#1C1C1C]">
+                <div className="p-2.5 sm:p-3.5 md:p-4 bg-[#121212] flex-1 flex flex-col justify-between border-t border-[#1C1C1C]">
                   <div>
-                    <p className="text-[0.65rem] text-[var(--accent-red)] font-heading font-bold uppercase tracking-wider truncate">
+                    <p className="text-[0.6rem] sm:text-[0.65rem] text-[var(--accent-red)] font-heading font-bold uppercase tracking-wider truncate">
                       {displayCategory}
                     </p>
-                    <h3 className="font-heading text-xs md:text-sm font-bold tracking-[0.08em] uppercase text-white group-hover:text-[var(--accent-red)] transition-colors line-clamp-1 mt-0.5">
+                    <h3 className="font-heading text-xs sm:text-xs md:text-sm font-bold tracking-[0.05em] sm:tracking-[0.08em] uppercase text-white group-hover:text-[var(--accent-red)] transition-colors line-clamp-1 mt-0.5">
                       {localizedName}
                     </h3>
                   </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-[#1C1C1C] flex items-center justify-between">
-                    <div>
-                      <p className="font-heading text-xs md:text-sm font-bold text-white">
-                        ฿{Number(product.price).toLocaleString("th-TH")} THB
+                  <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-[#1C1C1C] flex items-center justify-between gap-1.5">
+                    <div className="min-w-0">
+                      <p className="font-heading text-[0.72rem] sm:text-xs md:text-sm font-bold text-white truncate">
+                        ฿{Number(product.price).toLocaleString("th-TH")}
                       </p>
                       {hasDiscount && product.compareAtPrice && (
-                        <p className="text-[0.65rem] text-[var(--text-muted)] line-through -mt-0.5 font-sans">
+                        <p className="text-[0.6rem] sm:text-[0.65rem] text-[var(--text-muted)] line-through -mt-0.5 font-sans">
                           ฿{Number(product.compareAtPrice).toLocaleString("th-TH")}
                         </p>
                       )}
                     </div>
 
-                    <div className="w-6 h-6 rounded-full bg-[#1C1C1C] flex items-center justify-center text-[var(--text-muted)] group-hover:bg-[var(--accent-red)] group-hover:text-white transition-colors shrink-0">
-                      <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#1C1C1C] flex items-center justify-center text-[var(--text-muted)] group-hover:bg-[var(--accent-red)] group-hover:text-white transition-colors shrink-0">
+                      <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </div>
                 </div>

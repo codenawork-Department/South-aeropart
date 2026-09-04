@@ -120,15 +120,17 @@ export function OrdersListClient({ initialOrders }: { initialOrders: OrderWithCo
               </div>
 
               {/* Amount & Actions */}
-              <div className="flex items-center justify-between md:justify-end gap-6 pt-4 md:pt-0 border-t md:border-t-0 border-[#1C1C1C]">
-                <div className="text-left md:text-right">
-                  <span className="text-[0.65rem] text-[var(--text-muted)] font-heading uppercase tracking-wider block">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between md:justify-end gap-3 sm:gap-6 pt-4 md:pt-0 border-t md:border-t-0 border-[#1C1C1C]">
+                <div className="text-left md:text-right flex sm:block items-baseline justify-between">
+                  <span className="text-[0.65rem] text-[var(--text-muted)] font-heading uppercase tracking-wider block sm:inline-block md:block">
                     TOTAL
                   </span>
-                  <span className="font-heading text-lg sm:text-xl font-bold text-white">
-                    ฿{parseFloat(ord.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </span>
-                  <span className="text-[0.65rem] text-[var(--text-muted)] font-mono ml-1">THB</span>
+                  <div>
+                    <span className="font-heading text-lg sm:text-xl font-bold text-white">
+                      ฿{parseFloat(ord.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-[0.65rem] text-[var(--text-muted)] font-mono ml-1">THB</span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">

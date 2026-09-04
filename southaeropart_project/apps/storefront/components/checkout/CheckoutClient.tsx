@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { UserAddress } from "@repo/db";
+import { CheckoutPageSkeleton } from "@/components/ui/skeleton";
 
 export function CheckoutClient() {
   const router = useRouter();
@@ -176,16 +177,7 @@ export function CheckoutClient() {
   }
 
   if (!isHydrated) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[var(--accent-red)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs uppercase font-heading tracking-widest text-[var(--text-muted)]">
-            PREPARING CHECKOUT...
-          </p>
-        </div>
-      </div>
-    );
+    return <CheckoutPageSkeleton />;
   }
 
   if (items.length === 0) {
@@ -241,11 +233,11 @@ export function CheckoutClient() {
       )}
 
       {/* Main 2-Column Form */}
-      <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+      <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
         {/* Left Column: Delivery Details & Payment Method */}
-        <div className="lg:col-span-7 space-y-8">
+        <div className="md:col-span-7 lg:col-span-7 space-y-6 sm:space-y-8">
           {/* Section 1: Customer & Shipping Address */}
-          <div className="bg-[#121212] border border-[#222222] rounded-xl p-6 sm:p-7 shadow-xl">
+          <div className="bg-[#121212] border border-[#222222] rounded-xl p-4 sm:p-6 md:p-7 shadow-xl">
             <div className="flex items-center justify-between pb-4 border-b border-[#222222] mb-5">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded bg-[var(--accent-red)] text-white font-heading font-bold flex items-center justify-center text-xs">
@@ -519,7 +511,7 @@ export function CheckoutClient() {
           </div>
 
           {/* Section 3: Payment Method */}
-          <div className="bg-[#121212] border border-[#222222] rounded-xl p-6 sm:p-7 shadow-xl">
+          <div className="bg-[#121212] border border-[#222222] rounded-xl p-4 sm:p-6 md:p-7 shadow-xl">
             <div className="flex items-center gap-2.5 pb-4 border-b border-[#222222] mb-5">
               <div className="w-7 h-7 rounded bg-[var(--accent-red)] text-white font-heading font-bold flex items-center justify-center text-xs">
                 3
@@ -601,8 +593,8 @@ export function CheckoutClient() {
         </div>
 
         {/* Right Column: Order Review & Submit CTA */}
-        <div className="lg:col-span-5 sticky top-28 space-y-6">
-          <div className="bg-[#121212] border border-[#222222] rounded-xl p-6 shadow-2xl space-y-5">
+        <div className="md:col-span-5 lg:col-span-5 sticky top-24 md:top-28 space-y-6">
+          <div className="bg-[#121212] border border-[#222222] rounded-xl p-4 sm:p-6 shadow-2xl space-y-5">
             <h2 className="font-heading text-base sm:text-lg font-bold uppercase tracking-wider text-white pb-3 border-b border-[#222222]">
               ORDER SUMMARY ({itemCount} ITEMS)
             </h2>

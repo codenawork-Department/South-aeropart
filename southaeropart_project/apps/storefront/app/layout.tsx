@@ -48,8 +48,8 @@ export default async function RootLayout({
   // Sanitize cookie value through central guard — prevents locale injection
   let initialLang: Language = sanitizeLanguage(cookieRawLang);
 
-  // If cookie held no valid language, try the user's DB preference
-  if (!cookieRawLang || initialLang === DEFAULT_LANGUAGE) {
+  // If cookie held no language, try the user's DB preference
+  if (!cookieRawLang) {
     try {
       const userPref = await getUserLanguagePreference();
       initialLang = sanitizeLanguage(userPref);

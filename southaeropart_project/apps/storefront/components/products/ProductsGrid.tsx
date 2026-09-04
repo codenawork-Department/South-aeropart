@@ -24,6 +24,7 @@ import type {
 import { AddToCartButton } from "./AddToCartButton";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { getLocalizedField } from "@/lib/i18n-helpers";
+import { ProductGridSkeleton } from "@/components/ui/skeleton";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -220,11 +221,11 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
               />
             </form>
 
-            {/* Category Pills */}
-            <div className="flex items-center gap-1.5 flex-wrap overflow-x-auto scrollbar-hide">
+            {/* Category Pills - Smooth horizontal scroll on mobile */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-nowrap scrollbar-none max-w-full">
               <button
                 onClick={() => handleCategoryChange("all")}
-                className={`px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap shrink-0 ${
                   selectedCategory === "all"
                     ? "bg-[var(--accent-red)] text-white shadow-md shadow-[var(--accent-red)]/30"
                     : "bg-[#141414] border border-[#262626] text-[var(--text-secondary)] hover:text-white hover:border-[#3A3A3A]"
@@ -237,7 +238,7 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryChange(cat.slug)}
-                  className={`px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap ${
+                  className={`px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap shrink-0 ${
                     selectedCategory === cat.slug
                       ? "bg-[var(--accent-red)] text-white shadow-md shadow-[var(--accent-red)]/30"
                       : "bg-[#141414] border border-[#262626] text-[var(--text-secondary)] hover:text-white hover:border-[#3A3A3A]"
@@ -253,11 +254,8 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
 
         {/* ---- Loading State ---- */}
         {isPending && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={28} className="animate-spin text-[var(--accent-red)]" />
-            <span className="ml-3 text-sm text-[var(--text-secondary)] font-heading uppercase tracking-wider">
-              {t.common.loading}
-            </span>
+          <div className="py-4">
+            <ProductGridSkeleton count={8} />
           </div>
         )}
 
@@ -319,7 +317,7 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {data.products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -424,9 +422,9 @@ function ProductCard({ product }: { product: ShopProductItem }) {
       </Link>
 
       {/* Info & Cart Action */}
-      <div className="p-3.5 md:p-4 flex-1 flex flex-col justify-between bg-[#121212] border-t border-[#1C1C1C]">
+      <div className="p-3 sm:p-3.5 md:p-4 flex-1 flex flex-col justify-between bg-[#121212] border-t border-[#1C1C1C]">
         <div>
-          <p className="text-[0.65rem] text-[var(--accent-red)] font-heading font-bold uppercase tracking-widest">
+          <p className="text-[0.6rem] sm:text-[0.65rem] text-[var(--accent-red)] font-heading font-bold uppercase tracking-widest">
             {product.brandName}
           </p>
           <Link href={`/products/${product.slug}`}>
@@ -435,19 +433,19 @@ function ProductCard({ product }: { product: ShopProductItem }) {
             </h3>
           </Link>
           {localizedCat && (
-            <p className="text-[0.6rem] text-[var(--text-muted)] mt-0.5 font-sans">
+            <p className="text-[0.6rem] text-[var(--text-muted)] mt-0.5 font-sans truncate">
               {localizedCat}
             </p>
           )}
         </div>
 
-        <div className="mt-3.5 pt-2.5 border-t border-[#1A1A1A] flex items-center justify-between gap-2">
-          <div>
-            <p className="font-heading text-sm md:text-base font-bold text-white">
-              ฿{parseFloat(product.price).toLocaleString()} THB
+        <div className="mt-3 sm:mt-3.5 pt-2 sm:pt-2.5 border-t border-[#1A1A1A] flex items-center justify-between gap-1.5">
+          <div className="min-w-0">
+            <p className="font-heading text-xs sm:text-sm md:text-base font-bold text-white truncate">
+              ฿{parseFloat(product.price).toLocaleString()}
             </p>
             {product.compareAtPrice && (
-              <p className="text-[0.7rem] text-[var(--text-muted)] line-through -mt-1 font-sans">
+              <p className="text-[0.62rem] sm:text-[0.7rem] text-[var(--text-muted)] line-through -mt-0.5 font-sans truncate">
                 ฿{parseFloat(product.compareAtPrice).toLocaleString()}
               </p>
             )}
