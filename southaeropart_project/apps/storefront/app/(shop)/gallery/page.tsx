@@ -74,7 +74,7 @@ export default function GalleryPage() {
             </div>
 
             {/* Quick Category Filters */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none max-w-full flex-nowrap md:flex-wrap">
               {CATEGORY_TABS.map((tab) => (
                 <button
                   key={tab.id}
@@ -82,7 +82,7 @@ export default function GalleryPage() {
                     setSelectedCategory(tab.id);
                     setSelectedImageIndex(null);
                   }}
-                  className={`px-3.5 py-2 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all ${
+                  className={`px-3 sm:px-3.5 py-1.5 sm:py-2 text-[0.7rem] sm:text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all shrink-0 ${
                     selectedCategory === tab.id
                       ? "bg-[var(--accent-red)] text-white shadow-md shadow-[var(--accent-red)]/30"
                       : "bg-[#161616] border border-[#2B2B2B] text-[var(--text-secondary)] hover:text-white hover:border-[#404040]"
@@ -177,23 +177,23 @@ export default function GalleryPage() {
           {/* Navigation Arrows */}
           <button
             onClick={prevImage}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-[var(--accent-red)] text-white rounded-full transition-colors z-20 backdrop-blur-sm"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/60 hover:bg-[var(--accent-red)] text-white rounded-full transition-colors z-20 backdrop-blur-sm"
             aria-label="Previous build photo"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
           </button>
           <button
             onClick={nextImage}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/60 hover:bg-[var(--accent-red)] text-white rounded-full transition-colors z-20 backdrop-blur-sm"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/60 hover:bg-[var(--accent-red)] text-white rounded-full transition-colors z-20 backdrop-blur-sm"
             aria-label="Next build photo"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={20} className="sm:w-6 sm:h-6" />
           </button>
 
           {/* Modal Container */}
           <div className="relative w-full max-w-5xl flex flex-col items-center">
             {/* Image Container */}
-            <div className="relative w-full aspect-[16/10] max-h-[70vh] bg-[#101010] rounded-sm overflow-hidden border border-[#2B2B2B] shadow-2xl">
+            <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] max-h-[60vh] sm:max-h-[70vh] bg-[#101010] rounded-sm overflow-hidden border border-[#2B2B2B] shadow-2xl">
               <Image
                 src={activeItem.image}
                 alt={activeItem.title}

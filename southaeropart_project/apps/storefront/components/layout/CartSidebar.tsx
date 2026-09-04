@@ -28,12 +28,12 @@ export function CartSidebar() {
         aria-label="Shopping cart"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#222222]">
+        <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 border-b border-[#222222]">
           <div className="flex items-center gap-2">
-            <h2 className="font-heading text-lg font-bold tracking-wider uppercase text-white">
+            <h2 className="font-heading text-base sm:text-lg font-bold tracking-wider uppercase text-white">
               {t.cart.title}
             </h2>
-            <span className="text-[var(--accent-red)] font-heading text-lg font-bold">
+            <span className="text-[var(--accent-red)] font-heading text-base sm:text-lg font-bold">
               ({itemCount})
             </span>
           </div>
@@ -48,7 +48,7 @@ export function CartSidebar() {
         </div>
 
         {/* Cart Items List */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 space-y-3 sm:space-y-4">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-16 h-16 rounded-full bg-[#181818] flex items-center justify-center mb-4 text-[var(--text-muted)]">
@@ -72,10 +72,10 @@ export function CartSidebar() {
             items.map((item) => (
               <div
                 key={item.id}
-                className="flex gap-4 p-3.5 bg-[#141414] border border-[#222222] rounded relative group"
+                className="flex gap-3 sm:gap-4 p-3 sm:p-3.5 bg-[#141414] border border-[#222222] rounded relative group"
               >
                 {/* Product Thumbnail */}
-                <div className="w-20 h-20 flex-shrink-0 bg-[#1C1C1C] rounded overflow-hidden relative border border-[#2A2A2A]">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-[#1C1C1C] rounded overflow-hidden relative border border-[#2A2A2A]">
                   {item.product.images?.[0] ? (
                     <Image
                       src={item.product.images[0]}
@@ -152,27 +152,27 @@ export function CartSidebar() {
 
         {/* Footer Checkout Summary */}
         {items.length > 0 && (
-          <div className="border-t border-[#222222] bg-[#111111] px-6 py-5 space-y-4">
+          <div className="border-t border-[#222222] bg-[#111111] px-4 py-4 sm:px-6 sm:py-5 space-y-3 sm:space-y-4">
             {/* Subtotal */}
             <div className="flex items-center justify-between">
-              <span className="font-heading text-sm font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+              <span className="font-heading text-xs sm:text-sm font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
                 {t.cart.subtotal} ({itemCount} {t.cart.items})
               </span>
-              <span className="font-heading text-xl font-bold text-white">
+              <span className="font-heading text-lg sm:text-xl font-bold text-white">
                 ฿{parseFloat(subtotal).toLocaleString()} THB
               </span>
             </div>
-            <p className="text-[0.75rem] text-[var(--text-muted)] -mt-2">
+            <p className="text-[0.7rem] sm:text-[0.75rem] text-[var(--text-muted)] -mt-1 sm:-mt-2">
               {t.cart.shippingCalculated}
             </p>
 
             {/* Actions */}
-            <div className="space-y-2.5 pt-1">
+            <div className="space-y-2 sm:space-y-2.5 pt-1">
               <Link
                 href="/checkout"
                 onClick={closeCart}
                 id="checkout-btn"
-                className="btn-primary w-full justify-center gap-2 py-3.5"
+                className="btn-primary w-full justify-center gap-2 py-3 sm:py-3.5 text-xs sm:text-sm"
               >
                 {t.cart.checkout} <ArrowRight size={16} />
               </Link>
@@ -180,33 +180,33 @@ export function CartSidebar() {
                 href="/cart"
                 onClick={closeCart}
                 id="view-cart-btn"
-                className="btn-outline w-full justify-center gap-2 py-3 text-xs tracking-wider"
+                className="btn-outline w-full justify-center gap-2 py-2.5 sm:py-3 text-xs tracking-wider"
               >
                 {t.cart.title}
               </Link>
               <button
                 onClick={closeCart}
-                className="w-full text-center py-2 text-xs text-[var(--text-muted)] hover:text-white transition-colors"
+                className="w-full text-center py-1.5 sm:py-2 text-xs text-[var(--text-muted)] hover:text-white transition-colors"
               >
                 {t.cart.continueShopping}
               </button>
             </div>
 
             {/* 4 Trust Badges */}
-            <div className="pt-4 border-t border-[#222222] grid grid-cols-2 gap-3">
+            <div className="pt-3 sm:pt-4 border-t border-[#222222] grid grid-cols-2 gap-2 sm:gap-3">
               {[
                 { icon: Lock, title: "SECURE CHECKOUT", desc: "Your payment is 100% secure." },
                 { icon: Award, title: "PREMIUM QUALITY", desc: "Built for performance and style." },
                 { icon: RotateCcw, title: "EASY RETURNS", desc: "Hassle-free 30-day policy." },
                 { icon: Headphones, title: "DEDICATED SUPPORT", desc: "We're here to help you." },
               ].map(({ icon: Icon, title, desc }) => (
-                <div key={title} className="flex items-start gap-2.5">
-                  <Icon size={14} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
+                <div key={title} className="flex items-start gap-2 sm:gap-2.5">
+                  <Icon size={13} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[0.65rem] font-heading font-bold text-white tracking-wider uppercase">
+                    <p className="text-[0.6rem] sm:text-[0.65rem] font-heading font-bold text-white tracking-wider uppercase">
                       {title}
                     </p>
-                    <p className="text-[0.65rem] text-[var(--text-muted)] leading-tight mt-0.5">
+                    <p className="text-[0.58rem] sm:text-[0.65rem] text-[var(--text-muted)] leading-tight mt-0.5">
                       {desc}
                     </p>
                   </div>

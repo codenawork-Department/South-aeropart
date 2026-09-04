@@ -46,7 +46,7 @@ export default async function ProfilePage() {
   const { user, addresses, vehicles } = profileRes.data;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] pt-24 md:pt-28 pb-20">
+    <div className="min-h-screen bg-[var(--bg-primary)] py-6 md:py-10">
       <div className="container-main">
         {/* Main Profile Component with Dynamic Language Sync & Modals */}
         <ProfileTabs

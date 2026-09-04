@@ -20,7 +20,7 @@ export function MobileMenu({ isOpen, onClose, links, onOpenSearch }: MobileMenuP
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] lg:hidden">
+    <div className="fixed inset-0 z-[80] md:hidden">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"

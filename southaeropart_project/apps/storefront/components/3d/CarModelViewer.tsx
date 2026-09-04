@@ -67,7 +67,7 @@ export function CarModelViewer() {
       className={`relative w-full rounded-sm overflow-hidden border border-[#222222] bg-[#0A0A0A] shadow-2xl shadow-black/90 transition-all duration-300 group ${
         isFullscreen
           ? "fixed inset-0 z-50 rounded-none border-none aspect-auto h-screen"
-          : "aspect-[21/10] sm:aspect-[2.2/1] min-h-[420px] md:min-h-[520px]"
+          : "aspect-[16/10] sm:aspect-[16/9] md:aspect-[2/1] lg:aspect-[2.2/1] min-h-[280px] sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
       }`}
       onPointerDown={() => setHasInteracted(true)}
     >
@@ -144,10 +144,10 @@ export function CarModelViewer() {
       )}
 
       {/* BOTTOM BAR OVERLAYS */}
-      <div className="absolute bottom-3 left-3 right-3 md:bottom-5 md:left-5 md:right-5 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 pointer-events-none z-20">
+      <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-3 sm:right-3 md:bottom-5 md:left-5 md:right-5 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 sm:gap-3 pointer-events-none z-20">
         {/* Bottom Left: Camera Angle Presets */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#101010]/90 backdrop-blur-md border border-[#262626] rounded-sm shadow-xl pointer-events-auto">
-          <span className="text-[0.6rem] font-heading font-bold text-white/40 px-1.5 hidden sm:inline uppercase">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 p-0.5 sm:p-1 bg-[#101010]/90 backdrop-blur-md border border-[#262626] rounded-sm shadow-xl pointer-events-auto max-w-full overflow-x-auto">
+          <span className="text-[0.55rem] sm:text-[0.6rem] font-heading font-bold text-white/40 px-1 hidden sm:inline uppercase">
             VIEW:
           </span>
           {(
@@ -166,7 +166,7 @@ export function CarModelViewer() {
                 setCameraPreset(cam.id);
                 setHasInteracted(true);
               }}
-              className={`px-2.5 py-1 text-[0.62rem] md:text-[0.65rem] font-heading font-bold rounded-sm transition-all ${
+              className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[0.58rem] sm:text-[0.62rem] md:text-[0.65rem] font-heading font-bold rounded-sm transition-all whitespace-nowrap ${
                 cameraPreset === cam.id
                   ? "bg-[var(--accent-red)] text-white shadow-[0_0_10px_rgba(229,29,36,0.4)]"
                   : "text-white/70 hover:text-white hover:bg-[#1E1E1E]"
@@ -181,9 +181,9 @@ export function CarModelViewer() {
         <div className="pointer-events-auto w-full sm:w-auto">
           <Link
             href="/products/ford-mustang-gt3-aero-package"
-            className="btn-primary py-2 px-4 text-xs gap-2 shadow-xl whitespace-nowrap w-full sm:w-auto justify-center"
+            className="btn-primary py-1.5 sm:py-2 px-3 sm:px-4 text-[0.7rem] sm:text-xs gap-1.5 sm:gap-2 shadow-xl whitespace-nowrap w-full sm:w-auto justify-center"
           >
-            CUSTOMIZE BUILD <ArrowRight size={14} />
+            CUSTOMIZE BUILD <ArrowRight size={13} />
           </Link>
         </div>
       </div>

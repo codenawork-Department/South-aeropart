@@ -15,6 +15,7 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
+import { CartPageSkeleton } from "@/components/ui/skeleton";
 
 const FREE_SHIPPING_THRESHOLD = 15000;
 
@@ -26,16 +27,7 @@ export function CartPageClient() {
   const freeShippingPercent = Math.min(100, (subtotalNum / FREE_SHIPPING_THRESHOLD) * 100);
 
   if (!isHydrated) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[var(--accent-red)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs uppercase font-heading tracking-widest text-[var(--text-muted)]">
-            LOADING CART...
-          </p>
-        </div>
-      </div>
-    );
+    return <CartPageSkeleton />;
   }
 
   if (items.length === 0) {
@@ -122,9 +114,9 @@ export function CartPageClient() {
       </div>
 
       {/* Main Grid: Cart Items (Left) vs Summary (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
         {/* Left Column: Items List */}
-        <div className="lg:col-span-8 space-y-4">
+        <div className="md:col-span-7 lg:col-span-8 space-y-4">
           <div className="hidden sm:grid grid-cols-12 text-[0.7rem] font-heading font-bold uppercase tracking-wider text-[var(--text-muted)] pb-3 border-b border-[#222222] px-4">
             <div className="col-span-6">PRODUCT</div>
             <div className="col-span-2 text-center">PRICE</div>
@@ -248,7 +240,7 @@ export function CartPageClient() {
         </div>
 
         {/* Right Column: Order Summary Card */}
-        <div className="lg:col-span-4 sticky top-28">
+        <div className="md:col-span-5 lg:col-span-4 sticky top-24 md:top-28">
           <div className="bg-[#121212] border border-[#222222] rounded-xl p-6 shadow-2xl space-y-5">
             <h2 className="font-heading text-lg font-bold uppercase tracking-wider text-white pb-4 border-b border-[#222222]">
               ORDER SUMMARY

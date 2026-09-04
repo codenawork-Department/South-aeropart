@@ -170,7 +170,7 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
 
       {/* Stepper Timeline (if not cancelled) */}
       {!isCancelled && (
-        <div className="bg-gradient-to-b from-[#151515] to-[#0F0F0F] border border-[#262626] rounded-2xl p-6 sm:p-8 shadow-2xl mb-8 relative overflow-hidden">
+        <div className="bg-gradient-to-b from-[#151515] to-[#0F0F0F] border border-[#262626] rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl mb-8 relative overflow-hidden">
           {/* Subtle Ambient Red Glow on Active Header */}
           <div className="absolute -top-20 -left-20 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-red-600/5 rounded-full blur-3xl pointer-events-none" />
@@ -321,9 +321,9 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
       )}
 
       {/* Main Details Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start">
         {/* Left Column: Order Items Table */}
-        <div className="lg:col-span-8 bg-[#121212] border border-[#222222] rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+        <div className="md:col-span-7 lg:col-span-8 bg-[#121212] border border-[#222222] rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl space-y-6">
           <h3 className="font-heading text-base font-bold uppercase tracking-wider text-white pb-3 border-b border-[#222222]">
             ITEMS IN YOUR ORDER ({items.length})
           </h3>
@@ -403,9 +403,9 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
         </div>
 
         {/* Right Column: Customer & Delivery Info */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="md:col-span-5 lg:col-span-4 space-y-6">
           {/* Shipping Address Card */}
-          <div className="bg-[#121212] border border-[#222222] rounded-2xl p-6 shadow-xl space-y-4">
+          <div className="bg-[#121212] border border-[#222222] rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-[#222222]">
               <MapPin size={16} className="text-[var(--accent-red)]" />
               <h3 className="font-heading text-xs font-bold uppercase tracking-wider text-white">

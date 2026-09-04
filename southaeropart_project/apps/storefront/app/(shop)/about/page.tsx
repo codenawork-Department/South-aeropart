@@ -90,8 +90,8 @@ function AboutPage() {
       {/* 2. Story & Showcase Dual Column */}
       <section className="py-12 md:py-20 border-b border-[#1C1C1C]">
         <div className="container-main">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            <div className="lg:col-span-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-center">
+            <div className="order-2 md:order-1 md:col-span-6 lg:col-span-6 space-y-4">
               <span className="text-xs font-heading font-bold text-[var(--accent-red)] tracking-widest uppercase">
                 OUR STORY &bull; BORN ON THE TRACK
               </span>
@@ -106,7 +106,7 @@ function AboutPage() {
               </p>
             </div>
 
-            <div className="lg:col-span-6">
+            <div className="order-1 md:order-2 md:col-span-6 lg:col-span-6">
               <div className="relative aspect-[16/10] rounded-sm overflow-hidden border border-[#242424] bg-[#121212] shadow-2xl">
                 <Image
                   src="/images/SOUTH IG/Artboard 1.png"
@@ -166,9 +166,9 @@ function AboutPage() {
       {/* 4. Inquiry & Contact Section */}
       <section className="py-12 md:py-20">
         <div className="container-main">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12">
             {/* Contact Details */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="md:col-span-5 lg:col-span-5 space-y-6">
               <div>
                 <span className="text-xs font-heading font-bold text-[var(--accent-red)] tracking-widest uppercase">
                   GET IN TOUCH
@@ -206,7 +206,7 @@ function AboutPage() {
             </div>
 
             {/* Inquiry Form */}
-            <div className="lg:col-span-7">
+            <div className="md:col-span-7 lg:col-span-7">
               <div className="card p-6 md:p-8 bg-[#121212] border-[#242424]">
                 {formSent ? (
                   <div className="py-12 text-center space-y-3">

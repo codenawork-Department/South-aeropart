@@ -148,10 +148,10 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
       </nav>
 
       {/* 2. Main Product Hero Section (Gallery + Purchase Box) */}
-      <div className="container-main py-8 md:py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* Left Column: Interactive Image Gallery (7 cols) */}
-          <div className="lg:col-span-7">
+      <div className="container-main py-6 sm:py-8 md:py-14">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
+          {/* Left Column: Interactive Image Gallery */}
+          <div className="md:col-span-6 lg:col-span-7">
             {/* Main Stage Image */}
             <div className="relative aspect-[4/3] bg-[#121212] rounded-sm overflow-hidden border border-[#242424] shadow-2xl group">
               <Image
@@ -201,12 +201,12 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
 
             {/* Thumbnail Strip */}
             {product.images.length > 1 && (
-              <div className="flex gap-2.5 mt-3.5 overflow-x-auto pb-2">
+              <div className="flex gap-2 sm:gap-2.5 mt-2.5 sm:mt-3.5 overflow-x-auto pb-2 scrollbar-none">
                 {product.images.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentImage(i)}
-                    className={`w-20 h-20 relative rounded-sm overflow-hidden border-2 transition-all flex-shrink-0 bg-[#141414] ${
+                    className={`w-16 h-16 sm:w-20 sm:h-20 relative rounded-sm overflow-hidden border-2 transition-all flex-shrink-0 bg-[#141414] ${
                       currentImage === i
                         ? "border-[var(--accent-red)] opacity-100 shadow-md shadow-[var(--accent-red)]/30"
                         : "border-[#262626] opacity-60 hover:opacity-100"
@@ -225,8 +225,8 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
             )}
           </div>
 
-          {/* Right Column: Product Purchasing Details (5 cols) */}
-          <div className="lg:col-span-5 space-y-5">
+          {/* Right Column: Product Purchasing Details */}
+          <div className="md:col-span-6 lg:col-span-5 space-y-4 sm:space-y-5">
             {/* Compatibility Badge */}
             {compatibility && (
               <div className="flex items-center gap-2">
@@ -459,10 +459,10 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
 
       {/* 3. Detailed Description & Specifications Section */}
       <div className="border-t border-[#1C1C1C] bg-[#0D0D0D]">
-        <div className="container-main py-12 md:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div className="container-main py-10 md:py-16">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
             {/* Left: Detailed Story & Specs Table */}
-            <div className="lg:col-span-7">
+            <div className="md:col-span-6 lg:col-span-7">
               <h2 className="heading-md text-white uppercase">
                 TRANSFORM YOUR {compatibility?.model || "VEHICLE"} WITH THE
                 SOUTH AERO {localizedName.toUpperCase()}
@@ -508,7 +508,7 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
             </div>
 
             {/* Right: Key Features List */}
-            <div className="lg:col-span-5">
+            <div className="md:col-span-6 lg:col-span-5">
               <h2 className="heading-md text-white uppercase mb-6">
                 {t.product.features}
               </h2>

@@ -168,7 +168,7 @@ export function Navbar() {
         {/* Main Row: Hamburger (mobile) — Logo — Desktop Links — Actions */}
         <div className="container-main flex items-center justify-between h-16 md:h-20">
           {/* Left: Mobile Hamburger Toggle */}
-          <div className="flex items-center gap-4 lg:hidden">
+          <div className="flex items-center gap-4 md:hidden">
             <button
               id="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(true)}
@@ -194,15 +194,17 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-10" aria-label="Main navigation">
+          {/* Desktop Nav Links - Visible on Tablets (iPad Mini, Air, Gen) & Desktop */}
+          <nav className="hidden md:flex items-center gap-4 lg:gap-8" aria-label="Main navigation">
             {navLinks.map((link) => {
               const isActive = link.match(pathname);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`nav-link ${isActive ? "active text-white" : "text-[var(--text-secondary)]"}`}
+                  className={`nav-link text-xs lg:text-sm font-heading font-semibold tracking-wider ${
+                    isActive ? "active text-white" : "text-[var(--text-secondary)]"
+                  }`}
                 >
                   {link.label}
                 </Link>
@@ -445,7 +447,7 @@ export function Navbar() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                         {searchResults.map((product) => {
                           const localizedName = getLocalizedField(product.name, product.nameEn, lang);
                           return (

@@ -86,10 +86,12 @@ export interface FeaturedBundleData {
 export interface VehicleBundleItem {
   id: string;
   name: string;
+  nameEn?: string | null;
   slug: string;
   sku: string;
   price: string;
   categoryName: string;
+  categoryNameEn?: string | null;
   image?: string;
   downforceN?: number;
   dragN?: number;
@@ -98,11 +100,14 @@ export interface VehicleBundleItem {
 export interface VehicleBundleData {
   id: string;
   name: string;
+  nameEn?: string | null;
   slug: string;
   sku: string;
   tagline: string;
   description: string;
+  descriptionEn?: string | null;
   shortDescription?: string | null;
+  shortDescriptionEn?: string | null;
   price: string;
   compareAtPrice?: string | null;
   formattedPrice: string;
@@ -160,8 +165,11 @@ export async function getFeaturedBundleForVehicle(
         sku: products.sku,
         slug: products.slug,
         name: products.name,
+        nameEn: products.nameEn,
         description: products.description,
+        descriptionEn: products.descriptionEn,
         shortDescription: products.shortDescription,
+        shortDescriptionEn: products.shortDescriptionEn,
         price: products.price,
         compareAtPrice: products.compareAtPrice,
         status: products.status,
@@ -272,12 +280,14 @@ export async function getFeaturedBundleForVehicle(
         .select({
           id: products.id,
           name: products.name,
+          nameEn: products.nameEn,
           slug: products.slug,
           sku: products.sku,
           price: products.price,
           downforceN: products.downforceN,
           dragN: products.dragN,
           categoryName: categories.name,
+          categoryNameEn: categories.nameEn,
         })
         .from(productBundleItems)
         .innerJoin(products, eq(productBundleItems.childProductId, products.id))
@@ -314,10 +324,12 @@ export async function getFeaturedBundleForVehicle(
     const bundleItems: VehicleBundleItem[] = childRows.map((item) => ({
       id: item.id,
       name: item.name,
+      nameEn: item.nameEn,
       slug: item.slug,
       sku: item.sku,
       price: item.price,
       categoryName: item.categoryName || "Aero Part",
+      categoryNameEn: item.categoryNameEn || "Aero Part",
       image: childImagesMap.get(item.id),
       downforceN: item.downforceN ? Number(item.downforceN) : undefined,
       dragN: item.dragN ? Number(item.dragN) : undefined,
@@ -346,6 +358,7 @@ export async function getFeaturedBundleForVehicle(
     return {
       id: selectedBundle.id,
       name: selectedBundle.name,
+      nameEn: selectedBundle.nameEn,
       slug: selectedBundle.slug,
       sku: selectedBundle.sku,
       tagline:
@@ -354,7 +367,9 @@ export async function getFeaturedBundleForVehicle(
       description:
         selectedBundle.description ||
         `Precision engineered to elevate the stance and aerodynamic downforce of your ${selectedBundle.brandName || ""} ${selectedBundle.carModelName || ""}. Functional, track-tested, and built to stand out.`,
+      descriptionEn: selectedBundle.descriptionEn,
       shortDescription: selectedBundle.shortDescription,
+      shortDescriptionEn: selectedBundle.shortDescriptionEn,
       price: effectivePriceStr,
       compareAtPrice: selectedBundle.compareAtPrice,
       formattedPrice,
@@ -893,10 +908,12 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
             .select({
               id: products.id,
               name: products.name,
+              nameEn: products.nameEn,
               slug: products.slug,
               sku: products.sku,
               price: products.price,
               categoryName: categories.name,
+              categoryNameEn: categories.nameEn,
               downforceN: products.downforceN,
               dragN: products.dragN,
             })
@@ -1011,10 +1028,12 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
       bundleItems: childItems.map((c) => ({
         id: c.id,
         name: c.name,
+        nameEn: c.nameEn,
         slug: c.slug,
         sku: c.sku,
         price: c.price,
         categoryName: c.categoryName || "Aero Part",
+        categoryNameEn: c.categoryNameEn || "Aero Part",
         image: childImagesMap[c.id] || undefined,
         downforceN: c.downforceN ? Number(c.downforceN) : undefined,
         dragN: c.dragN ? Number(c.dragN) : undefined,

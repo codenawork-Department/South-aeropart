@@ -6,7 +6,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] relative overflow-x-hidden overflow-y-auto">
       {/* Background watermark */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
         <span className="font-heading text-[25vw] font-bold tracking-[0.2em] text-white/[0.015] uppercase whitespace-nowrap">

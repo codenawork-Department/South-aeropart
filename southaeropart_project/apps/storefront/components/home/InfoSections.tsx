@@ -11,9 +11,9 @@ export function InfoSections() {
   return (
     <section className="py-12 md:py-16 lg:py-20 bg-[#0C0C0C] border-t border-[#1C1C1C]">
       <div className="container-main">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 lg:gap-8">
           {/* Card 1: Aerodynamics Science */}
-          <div className="card p-6 md:p-8 flex flex-col justify-between group hover:border-[#333333] transition-all bg-[#131313]">
+          <div className="card p-5 sm:p-6 md:p-6 lg:p-8 flex flex-col justify-between group hover:border-[#333333] transition-all bg-[#131313]">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Wind size={16} className="text-[var(--accent-red)]" />
@@ -64,7 +64,7 @@ export function InfoSections() {
           </div>
 
           {/* Card 2: Philosophy */}
-          <div className="card p-6 md:p-8 flex flex-col justify-between group hover:border-[#333333] transition-all bg-[#131313]">
+          <div className="card p-5 sm:p-6 md:p-6 lg:p-8 flex flex-col justify-between group hover:border-[#333333] transition-all bg-[#131313]">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Compass size={16} className="text-[var(--accent-red)]" />

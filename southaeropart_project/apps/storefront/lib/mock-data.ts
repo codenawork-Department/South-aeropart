@@ -46,10 +46,12 @@ export type MockProduct = {
   bundleItems?: Array<{
     id: string;
     name: string;
+    nameEn?: string | null;
     slug: string;
     sku?: string;
     price: string;
     categoryName: string;
+    categoryNameEn?: string | null;
     material?: string;
     image?: string;
     downforceN?: number;
