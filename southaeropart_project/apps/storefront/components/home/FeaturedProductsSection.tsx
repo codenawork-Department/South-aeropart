@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowRight, Wind } from "lucide-react";
 import { FeaturedProductItem } from "@/actions/product.actions";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { getLocalizedField } from "@/lib/i18n-helpers";
 
 interface FeaturedProductsSectionProps {
@@ -15,6 +16,7 @@ export function FeaturedProductsSection({
   initialProducts,
 }: FeaturedProductsSectionProps) {
   const { t, lang } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   if (!initialProducts || initialProducts.length === 0) {
     return null;
@@ -116,11 +118,11 @@ export function FeaturedProductsSection({
                   <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-[#1C1C1C] flex items-center justify-between gap-1.5">
                     <div className="min-w-0">
                       <p className="font-heading text-[0.72rem] sm:text-xs md:text-sm font-bold text-white truncate">
-                        ฿{Number(product.price).toLocaleString("th-TH")}
+                        {formatPrice(product.price)}
                       </p>
                       {hasDiscount && product.compareAtPrice && (
                         <p className="text-[0.6rem] sm:text-[0.65rem] text-[var(--text-muted)] line-through -mt-0.5 font-sans">
-                          ฿{Number(product.compareAtPrice).toLocaleString("th-TH")}
+                          {formatPrice(product.compareAtPrice)}
                         </p>
                       )}
                     </div>

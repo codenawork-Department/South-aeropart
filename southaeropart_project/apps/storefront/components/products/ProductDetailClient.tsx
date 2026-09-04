@@ -29,6 +29,7 @@ import {
 import { MockProduct } from "@/lib/mock-data";
 import { useCart } from "@/components/providers/CartProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { getLocalizedField } from "@/lib/i18n-helpers";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { KitIncludedParts } from "@/components/products/KitIncludedParts";
@@ -38,6 +39,7 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
   const { isSignedIn } = useUser();
   const router = useRouter();
   const { t, lang } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   const localizedName = getLocalizedField(product.name, product.nameEn, lang);
   const localizedDescription = getLocalizedField(product.description, product.descriptionEn, lang);
@@ -272,11 +274,11 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 </span>
                 <div className="text-right">
                   <span className="font-heading text-2xl font-bold text-white">
-                    ฿{parseFloat(product.price).toLocaleString()} THB
+                    {formatPrice(product.price, { showCode: true })}
                   </span>
                   {product.compareAtPrice && (
                     <span className="text-xs text-[var(--text-muted)] line-through ml-2">
-                      ฿{parseFloat(product.compareAtPrice).toLocaleString()}
+                      {formatPrice(product.compareAtPrice)}
                     </span>
                   )}
                 </div>

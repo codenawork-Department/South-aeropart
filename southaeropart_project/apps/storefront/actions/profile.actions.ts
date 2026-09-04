@@ -279,6 +279,76 @@ export async function updateUserLanguagePreference(newLang: "th" | "en"): Promis
 }
 
 /**
+ * Retrieve user's currency preference from profile metadata.
+ * Defaults to "THB" if unauthenticated or not configured.
+ */
+export async function getUserCurrencyPreference(): Promise<"THB" | "USD" | "EUR" | "JPY" | "SGD"> {
+  try {
+    const { userId } = auth();
+    if (!userId) return "THB";
+
+    const [userRow] = await db
+      .select({ metadata: users.metadata })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const curr = userRow?.metadata?.preferences?.currency;
+    if (curr === "THB" || curr === "USD" || curr === "EUR" || curr === "JPY" || curr === "SGD") {
+      return curr;
+    }
+    return "THB";
+  } catch (err) {
+    console.error("[getUserCurrencyPreference] Error:", err);
+    return "THB";
+  }
+}
+
+/**
+ * Quick update for user's currency preference from global switcher or profile.
+ * Runs in the background if the user is authenticated.
+ */
+export async function updateUserCurrencyPreference(
+  newCurrency: "THB" | "USD" | "EUR" | "JPY" | "SGD"
+): Promise<{ success: boolean }> {
+  try {
+    const currencySchema = z.enum(["THB", "USD", "EUR", "JPY", "SGD"]);
+    const parsed = currencySchema.safeParse(newCurrency);
+    if (!parsed.success) return { success: false };
+    const validatedCurrency = parsed.data;
+
+    const { userId } = auth();
+    if (!userId) return { success: false };
+
+    const [currentUserRow] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const existingMetadata: UserMetadata = currentUserRow?.metadata || {};
+    const existingPreferences = existingMetadata.preferences || {};
+
+    const updatedMetadata: UserMetadata = {
+      ...existingMetadata,
+      preferences: {
+        ...existingPreferences,
+        currency: validatedCurrency,
+      },
+    };
+
+    await db
+      .update(users)
+      .set({
+        metadata: updatedMetadata,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    revalidatePath("/profile");
+    return { success: true };
+  } catch (error) {
+    console.error("[updateUserCurrencyPreference] Error:", error);
+    return { success: false };
+  }
+}
+
+/**
  * Update PDPA / GDPR Privacy Consents.
  */
 export async function updatePrivacyConsents(input: z.infer<typeof privacyConsentsSchema>) {

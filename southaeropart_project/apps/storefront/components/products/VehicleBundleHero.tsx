@@ -16,6 +16,7 @@ import {
 import type { VehicleBundleData } from "@/actions/bundle.actions";
 import { AddToCartButton } from "./AddToCartButton";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { getLocalizedField } from "@/lib/i18n-helpers";
 
 interface VehicleBundleHeroProps {
@@ -32,6 +33,7 @@ export function VehicleBundleHero({
   hasFilter = false,
 }: VehicleBundleHeroProps) {
   const { lang } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   // ---------------------------------------------------------------------------
   // 1. Empty State Handling
@@ -209,11 +211,11 @@ export function VehicleBundleHero({
             <div className="pt-2 flex flex-wrap items-center gap-3.5">
               <div>
                 <p className="font-heading text-lg md:text-xl font-bold text-white tracking-wide">
-                  {bundle.formattedPrice}
+                  {formatPrice(bundle.price, { showCode: true })}
                 </p>
                 {bundle.compareAtPrice && (
                   <p className="text-xs text-zinc-500 line-through -mt-0.5 font-sans">
-                    ฿{parseFloat(bundle.compareAtPrice).toLocaleString()} THB
+                    {formatPrice(bundle.compareAtPrice, { showCode: true })}
                   </p>
                 )}
               </div>

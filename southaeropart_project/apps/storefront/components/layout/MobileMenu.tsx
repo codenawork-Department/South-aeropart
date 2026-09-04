@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X, User, Search, ArrowRight, Heart } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { CurrencySwitcher } from "./CurrencySwitcher";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
 type MobileMenuProps = {
@@ -94,8 +95,9 @@ export function MobileMenu({ isOpen, onClose, links, onOpenSearch }: MobileMenuP
           })}
         </nav>
 
-        {/* Mobile Language Switcher */}
-        <div className="p-3 border-t border-[#1E1E1E] bg-[#0C0C0C]">
+        {/* Mobile Language & Currency Switchers */}
+        <div className="p-3 border-t border-[#1E1E1E] bg-[#0C0C0C] space-y-2">
+          <CurrencySwitcher variant="mobile" />
           <LanguageSwitcher variant="mobile" />
         </div>
 

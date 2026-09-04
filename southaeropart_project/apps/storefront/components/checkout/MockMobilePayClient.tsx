@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { Order, OrderItem } from "@repo/db";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface MockMobilePayClientProps {
   order: Order;
@@ -23,7 +24,8 @@ interface MockMobilePayClientProps {
 }
 
 export function MockMobilePayClient({ order, items }: MockMobilePayClientProps) {
-  const [status, setStatus] = useState<string>(order.paymentStatus);
+  const { formatPrice, currency } = useCurrency();
+  const [status, setStatus] = useState<"idle" | "authorizing" | "paid" | "cancelled">("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [txRef, setTxRef] = useState<string>(`TXN-${Date.now().toString(36).toUpperCase()}`);
@@ -118,9 +120,16 @@ export function MockMobilePayClient({ order, items }: MockMobilePayClientProps) 
               </div>
               <div className="flex justify-between items-baseline pt-2">
                 <span className="text-[var(--text-secondary)] font-heading uppercase">ยอดเงินที่โอน:</span>
-                <span className="font-heading text-xl font-bold text-white">
-                  ฿{parseFloat(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
-                </span>
+                <div className="text-right">
+                  <span className="font-heading text-xl font-bold text-white">
+                    ฿{parseFloat(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
+                  </span>
+                  {currency !== "THB" && (
+                    <span className="text-xs text-[var(--text-muted)] font-mono block">
+                      ≈ {formatPrice(order.total, { showCode: true })}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -187,6 +196,11 @@ export function MockMobilePayClient({ order, items }: MockMobilePayClientProps) 
                 </span>
                 <span className="text-xs text-[var(--accent-red)] font-bold ml-1.5 font-mono">THB</span>
               </div>
+              {currency !== "THB" && (
+                <p className="text-xs text-[var(--text-muted)] font-mono mt-1">
+                  ≈ {formatPrice(order.total, { showCode: true })}
+                </p>
+              )}
               <p className="text-[0.7rem] text-[var(--text-muted)] mt-1 font-mono">
                 Order: {order.orderNumber}
               </p>
@@ -205,7 +219,7 @@ export function MockMobilePayClient({ order, items }: MockMobilePayClientProps) 
                       {it.quantity}x {it.productNameSnapshot}
                     </span>
                     <span className="text-white font-mono">
-                      ฿{parseFloat(it.lineTotal).toLocaleString()}
+                      {currency === "THB" ? `฿${parseFloat(it.lineTotal).toLocaleString()}` : formatPrice(it.lineTotal)}
                     </span>
                   </div>
                 ))}

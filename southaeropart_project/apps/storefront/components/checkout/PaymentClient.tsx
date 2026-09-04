@@ -25,6 +25,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import type { Order, OrderItem } from "@repo/db";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface PaymentClientProps {
   order: Order;
@@ -33,6 +34,7 @@ interface PaymentClientProps {
 
 export function PaymentClient({ order, items }: PaymentClientProps) {
   const router = useRouter();
+  const { formatPrice, currency } = useCurrency();
 
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [mobilePayUrl, setMobilePayUrl] = useState<string>("");
@@ -272,6 +274,11 @@ export function PaymentClient({ order, items }: PaymentClientProps) {
               </span>
               <span className="text-xs font-mono text-[var(--accent-red)] font-bold">THB</span>
             </div>
+            {currency !== "THB" && (
+              <span className="text-xs font-mono text-[var(--text-muted)] block mt-1">
+                ≈ {formatPrice(order.total, { showCode: true })}
+              </span>
+            )}
           </div>
 
           {/* QR Code Container */}
@@ -460,7 +467,9 @@ export function PaymentClient({ order, items }: PaymentClientProps) {
                       {it.quantity}x {it.productNameSnapshot}
                     </span>
                     <span className="text-white font-mono">
-                      ฿{parseFloat(it.lineTotal).toLocaleString()}
+                      {currency === "THB"
+                        ? `฿${parseFloat(it.lineTotal).toLocaleString()}`
+                        : formatPrice(it.lineTotal)}
                     </span>
                   </div>
                 ))}

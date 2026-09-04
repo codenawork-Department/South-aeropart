@@ -11,7 +11,9 @@ import { quickSearchAction, ShopProductItem } from "@/actions/product.actions";
 import { CartSidebar } from "./CartSidebar";
 import { MobileMenu } from "./MobileMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { CurrencySwitcher } from "./CurrencySwitcher";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { getLocalizedField } from "@/lib/i18n-helpers";
 
 const POPULAR_SEARCHES = ["Accord G9", "Civic FE", "Front Lip", "Diffuser", "Ducktail", "Dry Carbon"];
@@ -20,6 +22,7 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { t, lang } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   const navLinks = [
     { href: "/products", label: t.nav.shop, match: (p: string) => p.startsWith("/products") },
@@ -214,8 +217,9 @@ export function Navbar() {
 
           {/* Right: Search, User, Cart */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Desktop Language Switcher */}
-            <div className="hidden sm:flex items-center">
+            {/* Desktop Language & Currency Switchers */}
+            <div className="hidden sm:flex items-center gap-1.5">
+              <CurrencySwitcher variant="navbar" />
               <LanguageSwitcher variant="navbar" />
             </div>
 
@@ -474,7 +478,7 @@ export function Navbar() {
                                 </h4>
                                 <div className="flex items-center justify-between mt-1">
                                   <span className="text-xs font-bold text-white font-mono">
-                                    ฿{parseFloat(product.price).toLocaleString()}
+                                    {formatPrice(product.price)}
                                   </span>
                                   {(product.categoryNameEn && lang === "en" ? product.categoryNameEn : product.categoryName) && (
                                     <span className="text-[0.65rem] text-[var(--text-muted)] uppercase truncate max-w-[90px]">

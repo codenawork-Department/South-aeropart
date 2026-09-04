@@ -15,6 +15,7 @@ import {
   Truck,
 } from "lucide-react";
 import type { Order } from "@repo/db";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface OrderWithCount extends Order {
   itemCount: number;
@@ -22,6 +23,7 @@ interface OrderWithCount extends Order {
 
 export function OrdersListClient({ initialOrders }: { initialOrders: OrderWithCount[] }) {
   const [orders] = useState<OrderWithCount[]>(initialOrders);
+  const { formatPrice, currency } = useCurrency();
 
   if (orders.length === 0) {
     return (
@@ -127,9 +129,16 @@ export function OrdersListClient({ initialOrders }: { initialOrders: OrderWithCo
                   </span>
                   <div>
                     <span className="font-heading text-lg sm:text-xl font-bold text-white">
-                      ฿{parseFloat(ord.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {currency === "THB"
+                        ? `฿${parseFloat(ord.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        : formatPrice(ord.total)}
                     </span>
-                    <span className="text-[0.65rem] text-[var(--text-muted)] font-mono ml-1">THB</span>
+                    <span className="text-[0.65rem] text-[var(--text-muted)] font-mono ml-1">{currency}</span>
+                    {currency !== "THB" && (
+                      <span className="text-[0.6rem] text-[var(--text-muted)] block font-mono">
+                        (฿{parseFloat(ord.total).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB)
+                      </span>
+                    )}
                   </div>
                 </div>
 
