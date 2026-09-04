@@ -8,7 +8,8 @@ export const metadata = {
 
 export default async function BundlesPage() {
   const [{ items, pagination }, { carModels, brands }] = await Promise.all([
-    getBundlesAction({ limit: 50 }),
+    // D-3 fix: reduce default limit from 50 → 20 to shrink RSC payload
+    getBundlesAction({ limit: 20 }),
     getCategoriesAndBrandsAction(),
   ]);
 

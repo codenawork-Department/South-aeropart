@@ -162,7 +162,11 @@ export async function getAvailablePartsForModelAction(carModelId: string) {
           isPrimary: productImages.isPrimary,
         })
         .from(productImages)
-        .where(inArray(productImages.productId, partIds));
+        // B-6 fix: only fetch primary images for parts list
+        .where(and(
+          inArray(productImages.productId, partIds),
+          eq(productImages.isPrimary, true)
+        ));
 
       images.forEach((img) => {
         if (!imagesMap[img.productId] || img.isPrimary) {
@@ -232,44 +236,46 @@ export async function getBundlesAction(params?: {
   const whereClause = and(...conditions);
 
   try {
-    const [totalRes] = await db
-      .select({ count: count() })
-      .from(products)
-      .where(whereClause);
+    // B-7 fix: parallelize COUNT + SELECT (were sequential)
+    const [countResult, rawBundles] = await Promise.all([
+      db
+        .select({ count: count() })
+        .from(products)
+        .where(whereClause),
+      db
+        .select({
+          id: products.id,
+          sku: products.sku,
+          slug: products.slug,
+          name: products.name,
+          nameEn: products.nameEn,
+          price: products.price,
+          stockQuantity: products.stockQuantity,
+          status: products.status,
+          isFeatured: products.isFeatured,
+          isCustomCfd: products.isCustomCfd,
+          downforceN: products.downforceN,
+          customDownforceN: products.customDownforceN,
+          dragN: products.dragN,
+          customDragN: products.customDragN,
+          brandId: products.brandId,
+          brandName: brands.name,
+          carModelId: products.carModelId,
+          carModelName: carModels.name,
+          carModelGen: carModels.generation,
+          createdAt: products.createdAt,
+          updatedAt: products.updatedAt,
+        })
+        .from(products)
+        .leftJoin(brands, eq(products.brandId, brands.id))
+        .leftJoin(carModels, eq(products.carModelId, carModels.id))
+        .where(whereClause)
+        .orderBy(desc(products.createdAt))
+        .limit(limit)
+        .offset(offset),
+    ]);
 
-    const total = Number(totalRes?.count || 0);
-
-    const rawBundles = await db
-      .select({
-        id: products.id,
-        sku: products.sku,
-        slug: products.slug,
-        name: products.name,
-        nameEn: products.nameEn,
-        price: products.price,
-        stockQuantity: products.stockQuantity,
-        status: products.status,
-        isFeatured: products.isFeatured,
-        isCustomCfd: products.isCustomCfd,
-        downforceN: products.downforceN,
-        customDownforceN: products.customDownforceN,
-        dragN: products.dragN,
-        customDragN: products.customDragN,
-        brandId: products.brandId,
-        brandName: brands.name,
-        carModelId: products.carModelId,
-        carModelName: carModels.name,
-        carModelGen: carModels.generation,
-        createdAt: products.createdAt,
-        updatedAt: products.updatedAt,
-      })
-      .from(products)
-      .leftJoin(brands, eq(products.brandId, brands.id))
-      .leftJoin(carModels, eq(products.carModelId, carModels.id))
-      .where(whereClause)
-      .orderBy(desc(products.createdAt))
-      .limit(limit)
-      .offset(offset);
+    const total = Number(countResult[0]?.count || 0);
 
     // Fetch primary images and bundle child items count for each bundle
     const bundleIds = rawBundles.map((b) => b.id);
@@ -285,7 +291,11 @@ export async function getBundlesAction(params?: {
             isPrimary: productImages.isPrimary,
           })
           .from(productImages)
-          .where(inArray(productImages.productId, bundleIds)),
+          // B-6 fix: only fetch primary images for list view
+          .where(and(
+            inArray(productImages.productId, bundleIds),
+            eq(productImages.isPrimary, true)
+          )),
         db
           .select({
             bundleProductId: productBundleItems.bundleProductId,
@@ -400,42 +410,42 @@ export async function getBundleDetailAction(id: string) {
       return { success: false, message: "ไม่พบข้อมูลชุดเซ็ตนี้ในระบบ" };
     }
 
-    // Fetch child parts
-    const bundleItems = await db
-      .select({
-        id: productBundleItems.id,
-        childProductId: productBundleItems.childProductId,
-        quantity: productBundleItems.quantity,
-        position: productBundleItems.position,
-        childName: products.name,
-        childNameEn: products.nameEn,
-        childSku: products.sku,
-        childPrice: products.price,
-        childStock: products.stockQuantity,
-        childDownforce: products.downforceN,
-        childDrag: products.dragN,
-        categoryId: products.categoryId,
-        categoryName: categories.name,
-        categoryNameEn: categories.nameEn,
-      })
-      .from(productBundleItems)
-      .innerJoin(products, eq(productBundleItems.childProductId, products.id))
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .where(eq(productBundleItems.bundleProductId, id))
-      .orderBy(asc(productBundleItems.position));
-
-    // Fetch images
-    const images = await db
-      .select({
-        id: productImages.id,
-        secureUrl: productImages.secureUrl,
-        cloudinaryPublicId: productImages.cloudinaryPublicId,
-        position: productImages.position,
-        isPrimary: productImages.isPrimary,
-      })
-      .from(productImages)
-      .where(eq(productImages.productId, id))
-      .orderBy(asc(productImages.position));
+    // B-5 fix: parallelize child parts + images queries (were sequential)
+    const [bundleItems, images] = await Promise.all([
+      db
+        .select({
+          id: productBundleItems.id,
+          childProductId: productBundleItems.childProductId,
+          quantity: productBundleItems.quantity,
+          position: productBundleItems.position,
+          childName: products.name,
+          childNameEn: products.nameEn,
+          childSku: products.sku,
+          childPrice: products.price,
+          childStock: products.stockQuantity,
+          childDownforce: products.downforceN,
+          childDrag: products.dragN,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          categoryNameEn: categories.nameEn,
+        })
+        .from(productBundleItems)
+        .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(eq(productBundleItems.bundleProductId, id))
+        .orderBy(asc(productBundleItems.position)),
+      db
+        .select({
+          id: productImages.id,
+          secureUrl: productImages.secureUrl,
+          cloudinaryPublicId: productImages.cloudinaryPublicId,
+          position: productImages.position,
+          isPrimary: productImages.isPrimary,
+        })
+        .from(productImages)
+        .where(eq(productImages.productId, id))
+        .orderBy(asc(productImages.position)),
+    ]);
 
     return {
       success: true,

@@ -153,6 +153,9 @@ export const products = pgTable("products", {
   statusIdx: index("products_status_idx").on(table.status),
   featuredIdx: index("products_featured_idx").on(table.isFeatured),
   productTypeIdx: index("products_type_idx").on(table.productType),
+  // B-1 fix: composite index for the most common list query pattern
+  // WHERE product_type = 'single'/'bundle' ORDER BY created_at DESC
+  typeCreatedIdx: index("products_type_created_idx").on(table.productType, table.createdAt),
 }));
 
 export const productImages = pgTable("product_images", {
