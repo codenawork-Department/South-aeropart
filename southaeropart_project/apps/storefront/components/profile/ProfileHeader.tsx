@@ -5,6 +5,7 @@ import Image from "next/image";
 import { User, ShieldCheck, Car, MapPin, Calendar, Globe } from "lucide-react";
 import { User as DbUser } from "@repo/db";
 import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface ProfileHeaderProps {
   user: DbUser;
@@ -27,8 +28,9 @@ export function ProfileHeader({
     ? new Date(user.createdAt).getFullYear()
     : new Date().getFullYear();
 
+  const { currency: appCurrency } = useCurrency();
   const preferredLanguage = language.toUpperCase();
-  const preferredCurrency = (user.metadata?.preferences?.currency as string) || "THB";
+  const preferredCurrency = appCurrency || (user.metadata?.preferences?.currency as string) || "THB";
 
   return (
     <div className="relative overflow-hidden bg-[#111111] border border-[#222222] rounded-lg p-6 md:p-8 mb-8">

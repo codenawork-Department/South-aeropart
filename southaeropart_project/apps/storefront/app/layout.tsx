@@ -5,8 +5,10 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { AuthSessionTracker } from "@/components/auth/AuthSessionTracker";
 import { RealtimeLiveProvider } from "@/components/providers/RealtimeLiveProvider";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
-import { getUserLanguagePreference } from "@/actions/profile.actions";
+import { CurrencyProvider } from "@/components/providers/CurrencyProvider";
+import { getUserLanguagePreference, getUserCurrencyPreference } from "@/actions/profile.actions";
 import { Language, DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME, sanitizeLanguage } from "@/i18n/config";
+import { Currency, DEFAULT_CURRENCY, CURRENCY_COOKIE_NAME, sanitizeCurrency } from "@/lib/currency";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,9 +46,11 @@ export default async function RootLayout({
 }) {
   const cookieStore = cookies();
   const cookieRawLang = cookieStore.get(LANGUAGE_COOKIE_NAME)?.value;
+  const cookieRawCurr = cookieStore.get(CURRENCY_COOKIE_NAME)?.value;
 
   // Sanitize cookie value through central guard — prevents locale injection
   let initialLang: Language = sanitizeLanguage(cookieRawLang);
+  let initialCurrency: Currency = sanitizeCurrency(cookieRawCurr);
 
   // If cookie held no language, try the user's DB preference
   if (!cookieRawLang) {
@@ -58,13 +62,25 @@ export default async function RootLayout({
     }
   }
 
+  // If cookie held no currency, try the user's DB preference
+  if (!cookieRawCurr) {
+    try {
+      const userCurrPref = await getUserCurrencyPreference();
+      initialCurrency = sanitizeCurrency(userCurrPref);
+    } catch {
+      // fallback stays at DEFAULT_CURRENCY
+    }
+  }
+
   return (
     <ClerkProvider>
       <html lang={initialLang} className={`${inter.variable} ${oswald.variable}`}>
         <body className="min-h-screen flex flex-col">
           <AuthSessionTracker />
           <LanguageProvider initialLang={initialLang}>
-            <RealtimeLiveProvider>{children}</RealtimeLiveProvider>
+            <CurrencyProvider initialCurrency={initialCurrency}>
+              <RealtimeLiveProvider>{children}</RealtimeLiveProvider>
+            </CurrencyProvider>
           </LanguageProvider>
         </body>
       </html>

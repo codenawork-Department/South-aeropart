@@ -23,6 +23,7 @@ import type {
 } from "@/actions/product.actions";
 import { AddToCartButton } from "./AddToCartButton";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { getLocalizedField } from "@/lib/i18n-helpers";
 import { ProductGridSkeleton } from "@/components/ui/skeleton";
 
@@ -381,6 +382,7 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
 
 function ProductCard({ product }: { product: ShopProductItem }) {
   const { t, lang } = useLanguage();
+  const { formatPrice } = useCurrency();
   const localizedName = getLocalizedField(product.name, product.nameEn, lang);
   const localizedCat = lang === "en" && product.categoryNameEn ? product.categoryNameEn : product.categoryName;
 
@@ -442,11 +444,11 @@ function ProductCard({ product }: { product: ShopProductItem }) {
         <div className="mt-3 sm:mt-3.5 pt-2 sm:pt-2.5 border-t border-[#1A1A1A] flex items-center justify-between gap-1.5">
           <div className="min-w-0">
             <p className="font-heading text-xs sm:text-sm md:text-base font-bold text-white truncate">
-              ฿{parseFloat(product.price).toLocaleString()}
+              {formatPrice(product.price)}
             </p>
             {product.compareAtPrice && (
               <p className="text-[0.62rem] sm:text-[0.7rem] text-[var(--text-muted)] line-through -mt-0.5 font-sans truncate">
-                ฿{parseFloat(product.compareAtPrice).toLocaleString()}
+                {formatPrice(product.compareAtPrice)}
               </p>
             )}
           </div>

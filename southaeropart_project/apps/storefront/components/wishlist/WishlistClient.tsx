@@ -20,6 +20,7 @@ import {
 import type { WishlistItem } from "@/actions/wishlist.actions";
 import { removeFromWishlist } from "@/actions/wishlist.actions";
 import { useCart } from "@/components/providers/CartProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface WishlistClientProps {
   initialItems: WishlistItem[];
@@ -28,6 +29,7 @@ interface WishlistClientProps {
 export function WishlistClient({ initialItems }: WishlistClientProps) {
   const [items, setItems] = useState<WishlistItem[]>(initialItems);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const { formatPrice } = useCurrency();
   const [addingId, setAddingId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<"all" | "single" | "bundle">("all");
 
@@ -202,9 +204,9 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
               const isRemoving = removingId === item.productId;
               const isAdding = addingId === item.productId;
               const isBundle = item.productType === "bundle";
-              const formattedPrice = Number(item.price).toLocaleString("th-TH");
+              const formattedPrice = formatPrice(item.price);
               const formattedCompare = item.compareAtPrice
-                ? Number(item.compareAtPrice).toLocaleString("th-TH")
+                ? formatPrice(item.compareAtPrice)
                 : null;
 
               return (
@@ -319,11 +321,11 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="font-heading text-lg font-bold text-white">
-                            ฿{formattedPrice}
+                            {formattedPrice}
                           </span>
                           {formattedCompare && (
                             <span className="text-xs text-[var(--text-muted)] line-through">
-                              ฿{formattedCompare}
+                              {formattedCompare}
                             </span>
                           )}
                         </div>

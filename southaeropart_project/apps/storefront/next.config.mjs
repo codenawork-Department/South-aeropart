@@ -7,7 +7,7 @@ config({ path: resolve(__dirname, "../../.env") });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@repo/ui", "@repo/lib"],
+  transpilePackages: ["@repo/ui", "@repo/lib", "@repo/db"],
   images: {
     remotePatterns: [
       {
@@ -41,7 +41,6 @@ const nextConfig = {
       "clsx",
       "tailwind-merge",
     ],
-    serverComponentsExternalPackages: ["@repo/db", "drizzle-orm", "@neondatabase/serverless"],
     serverActions: {
       bodySizeLimit: "25mb",
     },

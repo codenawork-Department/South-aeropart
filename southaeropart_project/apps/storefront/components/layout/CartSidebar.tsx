@@ -3,12 +3,14 @@
 import { X, Minus, Plus, Trash2, ShoppingCart, Lock, Award, RotateCcw, Headphones, ArrowRight } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import Link from "next/link";
 import Image from "next/image";
 
 export function CartSidebar() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, itemCount, subtotal } = useCart();
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   if (!isOpen) return null;
 
@@ -119,7 +121,7 @@ export function CartSidebar() {
 
                   <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#202020]">
                     <p className="font-heading text-sm font-bold text-white">
-                      ฿{parseFloat(item.product.price).toLocaleString()} THB
+                      {formatPrice(item.product.price, { showCode: true })}
                     </p>
 
                     {/* Quantity Selector Stepper */}
@@ -159,7 +161,7 @@ export function CartSidebar() {
                 {t.cart.subtotal} ({itemCount} {t.cart.items})
               </span>
               <span className="font-heading text-lg sm:text-xl font-bold text-white">
-                ฿{parseFloat(subtotal).toLocaleString()} THB
+                {formatPrice(subtotal, { showCode: true })}
               </span>
             </div>
             <p className="text-[0.7rem] sm:text-[0.75rem] text-[var(--text-muted)] -mt-1 sm:-mt-2">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@/components/providers/CartProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -21,6 +22,7 @@ const FREE_SHIPPING_THRESHOLD = 15000;
 
 export function CartPageClient() {
   const { items, itemCount, subtotal, removeItem, updateQuantity, clearCart, isHydrated } = useCart();
+  const { formatPrice, currency } = useCurrency();
 
   const subtotalNum = parseFloat(subtotal || "0");
   const amountToFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotalNum);
@@ -95,7 +97,7 @@ export function CartPageClient() {
             <Truck size={16} className="text-[var(--accent-red)]" />
             {amountToFreeShipping > 0 ? (
               <span>
-                ซื้อเพิ่มอีก <span className="text-[var(--accent-red)] font-bold">฿{amountToFreeShipping.toLocaleString()} THB</span> เพื่อรับสิทธิ์จัดส่งฟรี!
+                ซื้อเพิ่มอีก <span className="text-[var(--accent-red)] font-bold">{formatPrice(amountToFreeShipping, { showCode: true })}</span> เพื่อรับสิทธิ์จัดส่งฟรี!
               </span>
             ) : (
               <span className="text-[var(--success)] font-bold flex items-center gap-1.5">
@@ -175,7 +177,7 @@ export function CartPageClient() {
                       Price:
                     </span>
                     <span className="font-heading text-sm font-semibold text-white">
-                      ฿{priceNum.toLocaleString()}
+                      {formatPrice(priceNum)}
                     </span>
                   </div>
 
@@ -206,7 +208,7 @@ export function CartPageClient() {
                   {/* Line Total & Remove */}
                   <div className="sm:col-span-2 flex items-center justify-between sm:justify-end gap-3">
                     <span className="font-heading text-sm sm:text-base font-bold text-white">
-                      ฿{parseFloat(lineTotal).toLocaleString()}
+                      {formatPrice(lineTotal)}
                     </span>
                     <button
                       onClick={() => removeItem(item.id)}
@@ -251,7 +253,7 @@ export function CartPageClient() {
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
                 <span>Subtotal ({itemCount} items)</span>
                 <span className="font-heading font-semibold text-white">
-                  ฿{subtotalNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {formatPrice(subtotalNum)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
@@ -260,7 +262,7 @@ export function CartPageClient() {
                   {subtotalNum >= FREE_SHIPPING_THRESHOLD ? (
                     <span className="text-[var(--success)] uppercase text-xs">FREE SHIPPING</span>
                   ) : (
-                    "฿150.00 THB"
+                    formatPrice(150, { showCode: true })
                   )}
                 </span>
               </div>
@@ -282,11 +284,9 @@ export function CartPageClient() {
               </div>
               <div className="text-right">
                 <span className="font-heading text-2xl font-extrabold text-white">
-                  ฿{(subtotalNum + (subtotalNum >= FREE_SHIPPING_THRESHOLD ? 0 : 150)).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatPrice(subtotalNum + (subtotalNum >= FREE_SHIPPING_THRESHOLD ? 0 : 150))}
                 </span>
-                <span className="text-[0.7rem] text-[var(--text-muted)] block font-mono">THB</span>
+                <span className="text-[0.7rem] text-[var(--text-muted)] block font-mono">{currency}</span>
               </div>
             </div>
 

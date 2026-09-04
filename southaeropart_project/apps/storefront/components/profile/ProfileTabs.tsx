@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { User as DbUser, UserAddress } from "@repo/db";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { Currency } from "@/lib/currency";
 import { VehicleBrandData } from "@/actions/vehicle.actions";
 import {
   updateUserProfile,
@@ -97,9 +99,24 @@ export function ProfileTabs({
     setAppLanguage(newLang);
   };
 
-  const [currency, setCurrency] = useState<"THB" | "USD" | "EUR" | "JPY" | "SGD">(
-    (user.metadata?.preferences?.currency as "THB" | "USD" | "EUR" | "JPY" | "SGD") || "THB"
+  const { currency: appCurrency, setCurrency: setAppCurrency } = useCurrency();
+  const [currency, setCurrency] = useState<Currency>(
+    appCurrency || (user.metadata?.preferences?.currency as Currency) || "THB"
   );
+
+  // Keep local currency in sync with appCurrency
+  useEffect(() => {
+    if (appCurrency && appCurrency !== currency) {
+      setCurrency(appCurrency);
+    }
+  }, [appCurrency, currency]);
+
+  // Sync currency changes across app via CurrencyProvider
+  const handleSetCurrency = (newCurr: Currency) => {
+    setCurrency(newCurr);
+    setAppCurrency(newCurr);
+  };
+
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [profileFeedback, setProfileFeedback] = useState<{
     type: "success" | "error";
@@ -152,6 +169,7 @@ export function ProfileTabs({
 
     setIsUpdatingProfile(false);
     if (res.success) {
+      setAppCurrency(currency);
       setProfileFeedback({
         type: "success",
         message: t.personalTab.saveSuccess,
@@ -431,7 +449,7 @@ export function ProfileTabs({
                   </label>
                   <select
                     value={currency}
-                    onChange={(e) => setCurrency(e.target.value as any)}
+                    onChange={(e) => handleSetCurrency(e.target.value as Currency)}
                     className="select-dark bg-[#181818] border-[#2A2A2A] text-white max-w-md"
                   >
                     <option value="THB">THB (฿ - Thai Baht)</option>

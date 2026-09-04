@@ -20,6 +20,7 @@ import {
   Check,
 } from "lucide-react";
 import type { Order, OrderItem, OrderStatusHistory } from "@repo/db";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface OrderDetailClientProps {
   order: Order;
@@ -28,6 +29,7 @@ interface OrderDetailClientProps {
 }
 
 export function OrderDetailClient({ order, items, history }: OrderDetailClientProps) {
+  const { formatPrice, currency } = useCurrency();
   const searchParams = useSearchParams();
   const isJustPaid = searchParams.get("paid") === "true";
 
@@ -355,15 +357,15 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
                     {it.productNameSnapshot}
                   </h4>
                   <p className="text-xs text-[var(--text-muted)] font-mono mt-0.5">
-                    Qty: {it.quantity} × ฿{parseFloat(it.unitPrice).toLocaleString()} THB
+                    Qty: {it.quantity} × {currency === "THB" ? `฿${parseFloat(it.unitPrice).toLocaleString()} THB` : formatPrice(it.unitPrice, { showCode: true })}
                   </p>
                 </div>
 
                 <div className="text-right">
                   <span className="font-heading text-sm sm:text-base font-bold text-white">
-                    ฿{parseFloat(it.lineTotal).toLocaleString()}
+                    {currency === "THB" ? `฿${parseFloat(it.lineTotal).toLocaleString()}` : formatPrice(it.lineTotal)}
                   </span>
-                  <span className="text-[0.65rem] text-[var(--text-muted)] block font-mono">THB</span>
+                  <span className="text-[0.65rem] text-[var(--text-muted)] block font-mono">{currency}</span>
                 </div>
               </div>
             ))}
@@ -374,7 +376,9 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
             <div className="flex justify-between text-[var(--text-secondary)]">
               <span>SUBTOTAL</span>
               <span className="font-heading font-semibold text-white">
-                ฿{parseFloat(order.subtotal).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
+                {currency === "THB"
+                  ? `฿${parseFloat(order.subtotal).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB`
+                  : formatPrice(order.subtotal, { showCode: true })}
               </span>
             </div>
             <div className="flex justify-between text-[var(--text-secondary)]">
@@ -382,8 +386,10 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
               <span className="font-heading font-semibold text-white">
                 {parseFloat(order.shippingFee) === 0 ? (
                   <span className="text-[var(--success)] uppercase">FREE</span>
-                ) : (
+                ) : currency === "THB" ? (
                   `฿${parseFloat(order.shippingFee).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB`
+                ) : (
+                  formatPrice(order.shippingFee, { showCode: true })
                 )}
               </span>
             </div>
@@ -395,9 +401,18 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
               <span className="font-heading text-sm font-bold uppercase tracking-wider text-white">
                 TOTAL PAID / DUE
               </span>
-              <span className="font-heading text-xl font-extrabold text-[var(--accent-red)]">
-                ฿{parseFloat(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
-              </span>
+              <div className="text-right">
+                <span className="font-heading text-xl font-extrabold text-[var(--accent-red)]">
+                  {currency === "THB"
+                    ? `฿${parseFloat(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB`
+                    : formatPrice(order.total, { showCode: true })}
+                </span>
+                {currency !== "THB" && (
+                  <span className="text-[0.65rem] text-[var(--text-muted)] block font-mono">
+                    (฿{parseFloat(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB)
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

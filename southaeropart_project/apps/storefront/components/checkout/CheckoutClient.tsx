@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/components/providers/CartProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { createOrder, getSavedCheckoutAddresses } from "@/actions/checkout.actions";
 import {
   ShieldCheck,
@@ -25,6 +26,7 @@ import { CheckoutPageSkeleton } from "@/components/ui/skeleton";
 export function CheckoutClient() {
   const router = useRouter();
   const { items, itemCount, subtotal, clearCart, isHydrated } = useCart();
+  const { formatPrice, currency } = useCurrency();
 
   const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("new");
@@ -466,7 +468,7 @@ export function CheckoutClient() {
                     {subtotalNum >= 15000 ? (
                       <span className="text-[var(--success)] uppercase">FREE</span>
                     ) : (
-                      "฿150 THB"
+                      formatPrice(150, { showCode: true })
                     )}
                   </span>
                 </div>
@@ -503,7 +505,7 @@ export function CheckoutClient() {
                 </div>
                 <div className="text-right">
                   <span className="font-heading text-sm font-bold text-white">
-                    ฿450 THB
+                    {formatPrice(450, { showCode: true })}
                   </span>
                 </div>
               </label>
@@ -626,11 +628,11 @@ export function CheckoutClient() {
                       Finish: <span className="text-gray-300">{item.variant || "Gloss Black"}</span>
                     </p>
                     <p className="text-[0.7rem] text-[var(--text-muted)] font-mono">
-                      Qty: {item.quantity} × ฿{parseFloat(item.product.price).toLocaleString()}
+                      Qty: {item.quantity} × {formatPrice(item.product.price)}
                     </p>
                   </div>
                   <div className="text-right font-heading text-xs font-bold text-white">
-                    ฿{(parseFloat(item.product.price) * item.quantity).toLocaleString()}
+                    {formatPrice(parseFloat(item.product.price) * item.quantity)}
                   </div>
                 </div>
               ))}
@@ -641,7 +643,7 @@ export function CheckoutClient() {
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
                 <span>SUBTOTAL</span>
                 <span className="font-heading font-semibold text-white">
-                  ฿{subtotalNum.toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
+                  {formatPrice(subtotalNum, { showCode: true })}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
@@ -650,7 +652,7 @@ export function CheckoutClient() {
                   {shippingFeeNum === 0 ? (
                     <span className="text-[var(--success)] uppercase">FREE</span>
                   ) : (
-                    `฿${shippingFeeNum.toFixed(2)} THB`
+                    formatPrice(shippingFeeNum, { showCode: true })
                   )}
                 </span>
               </div>
@@ -661,19 +663,27 @@ export function CheckoutClient() {
             </div>
 
             {/* Total */}
-            <div className="pt-4 border-t border-[#222222] flex items-baseline justify-between">
-              <div>
-                <span className="font-heading text-sm font-bold uppercase tracking-wider text-white">
-                  GRAND TOTAL
-                </span>
-                <p className="text-[0.65rem] text-[var(--text-muted)] uppercase">PromptPay / Net</p>
+            <div className="pt-4 border-t border-[#222222] flex flex-col space-y-1">
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="font-heading text-sm font-bold uppercase tracking-wider text-white">
+                    GRAND TOTAL
+                  </span>
+                  <p className="text-[0.65rem] text-[var(--text-muted)] uppercase">PromptPay / Net</p>
+                </div>
+                <div className="text-right">
+                  <span className="font-heading text-2xl font-extrabold text-[var(--accent-red)]">
+                    {formatPrice(totalNum)}
+                  </span>
+                  <span className="text-[0.7rem] text-[var(--text-muted)] block font-mono">{currency}</span>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="font-heading text-2xl font-extrabold text-[var(--accent-red)]">
-                  ฿{totalNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </span>
-                <span className="text-[0.7rem] text-[var(--text-muted)] block font-mono">THB</span>
-              </div>
+
+              {currency !== "THB" && (
+                <p className="text-[0.65rem] text-[var(--text-muted)] text-right pt-1 font-sans">
+                  * ชำระเงินจริงในสกุลเงินหลัก ฿{totalNum.toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
+                </p>
+              )}
             </div>
 
             {/* Submit Action */}

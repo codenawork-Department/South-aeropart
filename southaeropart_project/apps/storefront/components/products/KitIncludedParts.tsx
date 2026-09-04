@@ -11,6 +11,7 @@ import {
   Layers,
   Sparkles,
 } from "lucide-react";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface BundleItem {
   id: string;
@@ -31,6 +32,7 @@ interface KitIncludedPartsProps {
 }
 
 export function KitIncludedParts({ items, kitName }: KitIncludedPartsProps) {
+  const { formatPrice } = useCurrency();
   if (!items || items.length === 0) return null;
 
   const totalSum = items.reduce((acc, item) => acc + Number(item.price || 0), 0);
@@ -64,7 +66,7 @@ export function KitIncludedParts({ items, kitName }: KitIncludedPartsProps) {
             ราคารวมทุกชิ้นส่วน
           </span>
           <span className="text-lg font-bold font-mono text-white">
-            ฿{totalSum.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+            {formatPrice(totalSum)}
           </span>
         </div>
       </div>
@@ -119,7 +121,7 @@ export function KitIncludedParts({ items, kitName }: KitIncludedPartsProps) {
 
                 <div className="flex items-center gap-3 pt-1">
                   <span className="font-mono font-bold text-white text-sm">
-                    ฿{Number(part.price).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                    {formatPrice(part.price)}
                   </span>
                   {part.downforceN && (
                     <span className="text-[11px] text-gray-400 flex items-center gap-1 font-mono">
