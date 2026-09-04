@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import {
   db,
   products,
@@ -157,6 +157,7 @@ function slugify(text: string): string {
 
 /**
  * Fetch all categories, brands, and car models for dropdown selectors
+ * D-4 fix: cached with 60s TTL to avoid redundant queries across navigations
  */
 export async function getCategoriesAndBrandsAction() {
   const admin = await validateSession();
@@ -170,6 +171,10 @@ export async function getCategoriesAndBrandsAction() {
     };
   }
 
+  return _cachedCategoriesAndBrands();
+}
+
+async function _fetchCategoriesAndBrands() {
   const [allCategories, allBrands, allModels, allMaterials, allInstallations] = await Promise.all([
     db
       .select({
@@ -236,6 +241,52 @@ export async function getCategoriesAndBrandsAction() {
     carModels: allModels,
     materials: allMaterials,
     installations: allInstallations,
+  };
+}
+
+const _cachedCategoriesAndBrands = unstable_cache(
+  _fetchCategoriesAndBrands,
+  ["admin-categories-brands"],
+  { revalidate: 60 }
+);
+
+/**
+ * D-1 fix: Lightweight filter data for the products list page
+ * Only fetches categories + brands (no carModels, materials, installations)
+ */
+export async function getProductFiltersAction() {
+  const admin = await validateSession();
+  if (!admin) {
+    return { categories: [], brands: [] };
+  }
+
+  const [allCategories, allBrands] = await Promise.all([
+    db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+        parentId: categories.parentId,
+      })
+      .from(categories)
+      .where(eq(categories.isActive, true))
+      .orderBy(asc(categories.position), asc(categories.name)),
+
+    db
+      .select({
+        id: brands.id,
+        name: brands.name,
+        slug: brands.slug,
+        logoUrl: brands.logoUrl,
+      })
+      .from(brands)
+      .where(eq(brands.isActive, true))
+      .orderBy(asc(brands.name)),
+  ]);
+
+  return {
+    categories: allCategories,
+    brands: allBrands,
   };
 }
 
@@ -309,43 +360,45 @@ export async function getProductsAction(params?: {
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const [totalCountResult] = await db
-    .select({ count: count() })
-    .from(products)
-    .where(whereClause);
+  // B-7 fix: parallelize COUNT + SELECT (were sequential)
+  const [countResult, productRows] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(products)
+      .where(whereClause),
+    db
+      .select({
+        id: products.id,
+        sku: products.sku,
+        slug: products.slug,
+        name: products.name,
+        nameEn: products.nameEn,
+        price: products.price,
+        compareAtPrice: products.compareAtPrice,
+        stockQuantity: products.stockQuantity,
+        status: products.status,
+        isFeatured: products.isFeatured,
+        weightKg: products.weightKg,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+        categoryName: categories.name,
+        categorySlug: categories.slug,
+        brandName: brands.name,
+        brandSlug: brands.slug,
+        carModelName: carModels.name,
+        carModelSlug: carModels.slug,
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .leftJoin(brands, eq(products.brandId, brands.id))
+      .leftJoin(carModels, eq(products.carModelId, carModels.id))
+      .where(whereClause)
+      .orderBy(desc(products.createdAt))
+      .limit(limit)
+      .offset(offset),
+  ]);
 
-  const total = Number(totalCountResult?.count || 0);
-
-  const productRows = await db
-    .select({
-      id: products.id,
-      sku: products.sku,
-      slug: products.slug,
-      name: products.name,
-      nameEn: products.nameEn,
-      price: products.price,
-      compareAtPrice: products.compareAtPrice,
-      stockQuantity: products.stockQuantity,
-      status: products.status,
-      isFeatured: products.isFeatured,
-      weightKg: products.weightKg,
-      createdAt: products.createdAt,
-      updatedAt: products.updatedAt,
-      categoryName: categories.name,
-      categorySlug: categories.slug,
-      brandName: brands.name,
-      brandSlug: brands.slug,
-      carModelName: carModels.name,
-      carModelSlug: carModels.slug,
-    })
-    .from(products)
-    .leftJoin(categories, eq(products.categoryId, categories.id))
-    .leftJoin(brands, eq(products.brandId, brands.id))
-    .leftJoin(carModels, eq(products.carModelId, carModels.id))
-    .where(whereClause)
-    .orderBy(desc(products.createdAt))
-    .limit(limit)
-    .offset(offset);
+  const total = Number(countResult[0]?.count || 0);
 
   // Fetch primary images for these products
   const productIds = productRows.map((p) => p.id);
@@ -361,7 +414,11 @@ export async function getProductsAction(params?: {
             position: productImages.position,
           })
           .from(productImages)
-          .where(inArray(productImages.productId, productIds))
+          // B-6 fix: only fetch primary images for list view (was fetching ALL images)
+          .where(and(
+            inArray(productImages.productId, productIds),
+            eq(productImages.isPrimary, true)
+          ))
           .orderBy(asc(productImages.position))
       : [];
 
@@ -388,20 +445,87 @@ export async function getProductsAction(params?: {
 
 /**
  * Get product by ID with all relations, images, compatibility items, and carModel
+ * B-4 fix: consolidated from 8 queries (waterfall) → 3 queries (1 JOIN + 2 parallel)
  */
 export async function getProductByIdAction(id: string) {
   const admin = await validateSession();
   if (!admin) return null;
 
-  const [product] = await db
-    .select()
+  // Single query with LEFT JOINs for all relation data (was 1+7 queries)
+  const [productRow] = await db
+    .select({
+      id: products.id,
+      sku: products.sku,
+      slug: products.slug,
+      name: products.name,
+      nameEn: products.nameEn,
+      productType: products.productType,
+      description: products.description,
+      descriptionEn: products.descriptionEn,
+      shortDescription: products.shortDescription,
+      shortDescriptionEn: products.shortDescriptionEn,
+      brandId: products.brandId,
+      carModelId: products.carModelId,
+      categoryId: products.categoryId,
+      materialId: products.materialId,
+      installationId: products.installationId,
+      price: products.price,
+      compareAtPrice: products.compareAtPrice,
+      stockQuantity: products.stockQuantity,
+      status: products.status,
+      isFeatured: products.isFeatured,
+      weightKg: products.weightKg,
+      installation: products.installation,
+      installationEn: products.installationEn,
+      downforceN: products.downforceN,
+      dragN: products.dragN,
+      downforceBefore: products.downforceBefore,
+      downforceAfter: products.downforceAfter,
+      dragBefore: products.dragBefore,
+      dragAfter: products.dragAfter,
+      isCustomCfd: products.isCustomCfd,
+      customDownforceN: products.customDownforceN,
+      customDragN: products.customDragN,
+      features: products.features,
+      createdAt: products.createdAt,
+      updatedAt: products.updatedAt,
+      // JOINed relation fields (eliminates 5 separate queries)
+      brandName: brands.name,
+      brandSlug: brands.slug,
+      brandLogoUrl: brands.logoUrl,
+      brandIsActive: brands.isActive,
+      brandCreatedAt: brands.createdAt,
+      carModelName: carModels.name,
+      carModelSlug: carModels.slug,
+      carModelGeneration: carModels.generation,
+      carModelYearFrom: carModels.yearFrom,
+      carModelYearTo: carModels.yearTo,
+      carModelBrandId: carModels.brandId,
+      carModelIsActive: carModels.isActive,
+      carModelCreatedAt: carModels.createdAt,
+      categoryName: categories.name,
+      categorySlug: categories.slug,
+      categoryParentId: categories.parentId,
+      categoryIsActive: categories.isActive,
+      categoryCreatedAt: categories.createdAt,
+      materialName: materials.name,
+      materialSlug: materials.slug,
+      installationMethodName: installations.name,
+      installationMethodSlug: installations.slug,
+    })
     .from(products)
+    .leftJoin(brands, eq(products.brandId, brands.id))
+    .leftJoin(carModels, eq(products.carModelId, carModels.id))
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .leftJoin(materials, eq(products.materialId, materials.id))
+    .leftJoin(installations, eq(products.installationId, installations.id))
     .where(eq(products.id, id))
     .limit(1);
 
-  if (!product) return null;
+  if (!productRow) return null;
 
-  const [images, compatibility, brand, carModel, category, material, installationMethod] = await Promise.all([
+  // Parallel fetch for images + compatibility (only 2 queries, no dependency)
+  const [images, compatibility] = await Promise.all([
     db
       .select()
       .from(productImages)
@@ -411,36 +535,84 @@ export async function getProductByIdAction(id: string) {
       .select()
       .from(productCompatibility)
       .where(eq(productCompatibility.productId, id)),
-    product.brandId
-      ? db.select().from(brands).where(eq(brands.id, product.brandId)).limit(1)
-      : Promise.resolve([]),
-    product.carModelId
-      ? db.select().from(carModels).where(eq(carModels.id, product.carModelId)).limit(1)
-      : Promise.resolve([]),
-    product.categoryId
-      ? db
-          .select()
-          .from(categories)
-          .where(eq(categories.id, product.categoryId))
-          .limit(1)
-      : Promise.resolve([]),
-    product.materialId
-      ? db.select({ id: materials.id, name: materials.name, slug: materials.slug }).from(materials).where(eq(materials.id, product.materialId)).limit(1)
-      : Promise.resolve([]),
-    product.installationId
-      ? db.select({ id: installations.id, name: installations.name, slug: installations.slug }).from(installations).where(eq(installations.id, product.installationId)).limit(1)
-      : Promise.resolve([]),
   ]);
 
+  // Reconstruct the shape expected by consumers
   return {
-    ...product,
+    id: productRow.id,
+    sku: productRow.sku,
+    slug: productRow.slug,
+    name: productRow.name,
+    nameEn: productRow.nameEn,
+    productType: productRow.productType,
+    description: productRow.description,
+    descriptionEn: productRow.descriptionEn,
+    shortDescription: productRow.shortDescription,
+    shortDescriptionEn: productRow.shortDescriptionEn,
+    brandId: productRow.brandId,
+    carModelId: productRow.carModelId,
+    categoryId: productRow.categoryId,
+    materialId: productRow.materialId,
+    installationId: productRow.installationId,
+    price: productRow.price,
+    compareAtPrice: productRow.compareAtPrice,
+    stockQuantity: productRow.stockQuantity,
+    status: productRow.status,
+    isFeatured: productRow.isFeatured,
+    weightKg: productRow.weightKg,
+    installation: productRow.installation,
+    installationEn: productRow.installationEn,
+    downforceN: productRow.downforceN,
+    dragN: productRow.dragN,
+    downforceBefore: productRow.downforceBefore,
+    downforceAfter: productRow.downforceAfter,
+    dragBefore: productRow.dragBefore,
+    dragAfter: productRow.dragAfter,
+    isCustomCfd: productRow.isCustomCfd,
+    customDownforceN: productRow.customDownforceN,
+    customDragN: productRow.customDragN,
+    features: productRow.features,
+    createdAt: productRow.createdAt,
+    updatedAt: productRow.updatedAt,
     images,
     compatibility,
-    brand: brand[0] || null,
-    carModel: carModel[0] || null,
-    category: category[0] || null,
-    material: material[0] || null,
-    installationMethod: installationMethod[0] || null,
+    brand: productRow.brandId ? {
+      id: productRow.brandId,
+      slug: productRow.brandSlug!,
+      name: productRow.brandName!,
+      logoUrl: productRow.brandLogoUrl ?? null,
+      isActive: productRow.brandIsActive!,
+      createdAt: productRow.brandCreatedAt!,
+    } : null,
+    carModel: productRow.carModelId ? {
+      id: productRow.carModelId,
+      brandId: productRow.carModelBrandId!,
+      name: productRow.carModelName!,
+      slug: productRow.carModelSlug!,
+      generation: productRow.carModelGeneration ?? null,
+      yearFrom: productRow.carModelYearFrom ?? null,
+      yearTo: productRow.carModelYearTo ?? null,
+      isActive: productRow.carModelIsActive!,
+      createdAt: productRow.carModelCreatedAt!,
+    } : null,
+    category: productRow.categoryId ? {
+      id: productRow.categoryId,
+      slug: productRow.categorySlug!,
+      name: productRow.categoryName!,
+      parentId: productRow.categoryParentId ?? null,
+      isActive: productRow.categoryIsActive!,
+      createdAt: productRow.categoryCreatedAt!,
+    } : null,
+    material: productRow.materialId ? {
+      id: productRow.materialId,
+      name: productRow.materialName!,
+      slug: productRow.materialSlug!,
+    } : null,
+    installationMethod: productRow.installationId ? {
+      id: productRow.installationId,
+      name: productRow.installationMethodName!,
+      slug: productRow.installationMethodSlug!,
+    } : null,
   };
 }
 
@@ -500,20 +672,22 @@ export async function createProductAction(
   let modelSlug = "universal";
   let categorySlug = "aeropart";
 
-  if (data.brandId) {
-    const [b] = await db.select({ slug: brands.slug }).from(brands).where(eq(brands.id, data.brandId)).limit(1);
-    if (b) brandSlug = b.slug;
-  }
+  // B-9 fix: parallelize slug lookups (were sequential)
+  const [brandRow, modelRow, categoryRow] = await Promise.all([
+    data.brandId
+      ? db.select({ slug: brands.slug }).from(brands).where(eq(brands.id, data.brandId)).limit(1)
+      : Promise.resolve([]),
+    data.carModelId
+      ? db.select({ slug: carModels.slug }).from(carModels).where(eq(carModels.id, data.carModelId)).limit(1)
+      : Promise.resolve([]),
+    data.categoryId
+      ? db.select({ slug: categories.slug }).from(categories).where(eq(categories.id, data.categoryId)).limit(1)
+      : Promise.resolve([]),
+  ]);
 
-  if (data.carModelId) {
-    const [m] = await db.select({ slug: carModels.slug }).from(carModels).where(eq(carModels.id, data.carModelId)).limit(1);
-    if (m) modelSlug = m.slug;
-  }
-
-  if (data.categoryId) {
-    const [c] = await db.select({ slug: categories.slug }).from(categories).where(eq(categories.id, data.categoryId)).limit(1);
-    if (c) categorySlug = c.slug;
-  }
+  if (brandRow[0]) brandSlug = brandRow[0].slug;
+  if (modelRow[0]) modelSlug = modelRow[0].slug;
+  if (categoryRow[0]) categorySlug = categoryRow[0].slug;
 
   // Target Cloudinary Folder Path: south-aero/products/[brand]/[model]/[category]/[slug]
   const cloudinaryFolder = `south-aero/products/${brandSlug}/${modelSlug}/${categorySlug}/${slug}`;
@@ -682,9 +856,14 @@ export async function updateProductAction(
 
   const data = parsed.data;
 
-  // Check product exists
+  // B-8 fix: project only needed columns (was SELECT * fetching all 30+ columns)
   const [existingProduct] = await db
-    .select()
+    .select({
+      id: products.id,
+      slug: products.slug,
+      name: products.name,
+      nameEn: products.nameEn,
+    })
     .from(products)
     .where(eq(products.id, productId))
     .limit(1);
@@ -698,20 +877,22 @@ export async function updateProductAction(
   let modelSlug = "universal";
   let categorySlug = "aeropart";
 
-  if (data.brandId) {
-    const [b] = await db.select({ slug: brands.slug }).from(brands).where(eq(brands.id, data.brandId)).limit(1);
-    if (b) brandSlug = b.slug;
-  }
+  // B-9 fix: parallelize slug lookups (were sequential)
+  const [brandRow, modelRow, categoryRow] = await Promise.all([
+    data.brandId
+      ? db.select({ slug: brands.slug }).from(brands).where(eq(brands.id, data.brandId)).limit(1)
+      : Promise.resolve([]),
+    data.carModelId
+      ? db.select({ slug: carModels.slug }).from(carModels).where(eq(carModels.id, data.carModelId)).limit(1)
+      : Promise.resolve([]),
+    data.categoryId
+      ? db.select({ slug: categories.slug }).from(categories).where(eq(categories.id, data.categoryId)).limit(1)
+      : Promise.resolve([]),
+  ]);
 
-  if (data.carModelId) {
-    const [m] = await db.select({ slug: carModels.slug }).from(carModels).where(eq(carModels.id, data.carModelId)).limit(1);
-    if (m) modelSlug = m.slug;
-  }
-
-  if (data.categoryId) {
-    const [c] = await db.select({ slug: categories.slug }).from(categories).where(eq(categories.id, data.categoryId)).limit(1);
-    if (c) categorySlug = c.slug;
-  }
+  if (brandRow[0]) brandSlug = brandRow[0].slug;
+  if (modelRow[0]) modelSlug = modelRow[0].slug;
+  if (categoryRow[0]) categorySlug = categoryRow[0].slug;
 
   const cloudinaryFolder = `south-aero/products/${brandSlug}/${modelSlug}/${categorySlug}/${existingProduct.slug}`;
 
@@ -786,10 +967,20 @@ export async function updateProductAction(
     }
 
     // 4. Update existing image positions, isPrimary flags, and auto-relocate to new folder hierarchy
+    // B-10 fix: collect DB updates and batch them (was N+1 sequential writes)
     const existingRetainedImages = data.images.filter(
       (img) => !img.isDeleted && !img.data && img.id
     );
 
+    const imageUpdateOps: Array<{
+      id: string;
+      position: number | undefined;
+      isPrimary: boolean | undefined;
+      publicId: string | undefined;
+      secureUrl: string | undefined;
+    }> = [];
+
+    // Cloudinary renames must be serial (API rate limits), but we collect DB update data
     for (const img of existingRetainedImages) {
       if (img.id) {
         let currentPublicId = img.publicId;
@@ -810,16 +1001,31 @@ export async function updateProductAction(
           }
         }
 
-        await db
-          .update(productImages)
-          .set({
-            position: img.position,
-            isPrimary: img.isPrimary,
-            cloudinaryPublicId: currentPublicId,
-            secureUrl: currentSecureUrl,
-          })
-          .where(eq(productImages.id, img.id));
+        imageUpdateOps.push({
+          id: img.id,
+          position: img.position,
+          isPrimary: img.isPrimary,
+          publicId: currentPublicId,
+          secureUrl: currentSecureUrl,
+        });
       }
+    }
+
+    // Batch all DB image updates in parallel (was 1 UPDATE per image)
+    if (imageUpdateOps.length > 0) {
+      await Promise.all(
+        imageUpdateOps.map((op) =>
+          db
+            .update(productImages)
+            .set({
+              position: op.position,
+              isPrimary: op.isPrimary,
+              cloudinaryPublicId: op.publicId,
+              secureUrl: op.secureUrl,
+            })
+            .where(eq(productImages.id, op.id))
+        )
+      );
     }
 
     // 5. Update main product info (including slug if name changed)
