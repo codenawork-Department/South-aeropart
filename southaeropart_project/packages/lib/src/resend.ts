@@ -35,6 +35,12 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
   if (from.includes("yourdomain.com") || from.includes("example.com")) {
     from = "South Aero Performance <onboarding@resend.dev>";
   }
+  if (!from.includes("<") && from.includes(" ") && from.includes("@")) {
+    const parts = from.trim().split(/\s+/);
+    const email = parts.pop();
+    const name = parts.join(" ");
+    from = `${name} <${email}>`;
+  }
 
   if (!resend) {
     console.warn("[RESEND] RESEND_API_KEY is not set in .env. Email dispatch simulated.");
@@ -77,6 +83,12 @@ export async function sendBatchEmails(
   let from = fromAddress || process.env.RESEND_FROM_EMAIL || "South Aero Performance <onboarding@resend.dev>";
   if (from.includes("yourdomain.com") || from.includes("example.com")) {
     from = "South Aero Performance <onboarding@resend.dev>";
+  }
+  if (!from.includes("<") && from.includes(" ") && from.includes("@")) {
+    const parts = from.trim().split(/\s+/);
+    const email = parts.pop();
+    const name = parts.join(" ");
+    from = `${name} <${email}>`;
   }
 
   if (!resend) {

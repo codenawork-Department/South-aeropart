@@ -3,11 +3,21 @@
 import { z } from "zod";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+
+function safeRevalidatePath(path: string) {
+  try {
+    revalidatePath(path);
+  } catch {
+    // Gracefully ignore when invoked outside Next.js request context (e.g. scripts or test suite)
+  }
+}
 import {
   db,
   orders,
   orderItems,
   orderStatusHistory,
+  orderItemBundleParts,
+  productBundleItems,
   users,
   userAddresses,
   products,
@@ -16,6 +26,7 @@ import {
   desc,
   Address,
 } from "@repo/db";
+import { sendOrderConfirmationEmail } from "@/lib/order-email";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -63,7 +74,12 @@ export type CheckoutInput = z.infer<typeof checkoutSchema>;
 export async function createOrder(input: CheckoutInput) {
   try {
     const validated = checkoutSchema.parse(input);
-    const { userId: clerkUserId } = auth();
+    let clerkUserId: string | null = null;
+    try {
+      clerkUserId = auth().userId;
+    } catch {
+      clerkUserId = null;
+    }
 
     let orderUserId = clerkUserId;
 
@@ -71,7 +87,12 @@ export async function createOrder(input: CheckoutInput) {
     if (orderUserId) {
       const [existing] = await db.select().from(users).where(eq(users.id, orderUserId)).limit(1);
       if (!existing) {
-        const clerkUser = await currentUser();
+        let clerkUser = null;
+        try {
+          clerkUser = await currentUser();
+        } catch {
+          clerkUser = null;
+        }
         const email = clerkUser?.emailAddresses?.[0]?.emailAddress || validated.shippingAddress.email || `user_${orderUserId}@example.com`;
         const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || validated.shippingAddress.recipientName;
         
@@ -109,6 +130,84 @@ export async function createOrder(input: CheckoutInput) {
       throw new Error("Unable to determine customer identity");
     }
 
+    // Pre-flight Stock & Status Verification
+    for (const item of validated.items) {
+      const [productRow] = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          status: products.status,
+          stockQuantity: products.stockQuantity,
+          productType: products.productType,
+        })
+        .from(products)
+        .where(eq(products.id, item.productId))
+        .limit(1);
+
+      if (!productRow) {
+        return {
+          success: false,
+          error: `ไม่พบข้อมูลสินค้า "${item.productName}" ในระบบ`,
+        };
+      }
+
+      if (productRow.status !== "active") {
+        return {
+          success: false,
+          error: `สินค้า "${productRow.name}" ขณะนี้ยังไม่เปิดจำหน่ายหรือสินค้าหมดชั่วคราว`,
+        };
+      }
+
+      // 1. Single Product Check
+      if (productRow.productType === "single") {
+        if (productRow.stockQuantity < item.quantity) {
+          return {
+            success: false,
+            error: `สินค้า "${productRow.name}" มีสต็อกคงเหลือไม่เพียงพอ (คงเหลือ ${productRow.stockQuantity} ชิ้น, ท่านสั่งซื้อ ${item.quantity} ชิ้น)`,
+          };
+        }
+      }
+
+      // 2. Bundle Product Check (check bundle header stock and all child items)
+      if (productRow.productType === "bundle") {
+        if (productRow.stockQuantity < item.quantity) {
+          return {
+            success: false,
+            error: `ชุดแต่ง "${productRow.name}" มีสต็อกคงเหลือไม่เพียงพอ (คงเหลือ ${productRow.stockQuantity} ชุด, ท่านสั่งซื้อ ${item.quantity} ชุด)`,
+          };
+        }
+
+        // Query constituent child parts from productBundleItems
+        const bundleChildParts = await db
+          .select({
+            childId: productBundleItems.childProductId,
+            partQtyInBundle: productBundleItems.quantity,
+            childName: products.name,
+            childStock: products.stockQuantity,
+            childStatus: products.status,
+          })
+          .from(productBundleItems)
+          .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+          .where(eq(productBundleItems.bundleProductId, item.productId));
+
+        for (const childPart of bundleChildParts) {
+          if (childPart.childStatus !== "active") {
+            return {
+              success: false,
+              error: `ชิ้นส่วน "${childPart.childName}" ในชุดแต่ง "${productRow.name}" ขณะนี้ไม่พร้อมจำหน่าย`,
+            };
+          }
+          const requiredChildQuantity = childPart.partQtyInBundle * item.quantity;
+          if (childPart.childStock < requiredChildQuantity) {
+            return {
+              success: false,
+              error: `ชิ้นส่วน "${childPart.childName}" ในชุดแต่ง "${productRow.name}" มีสต็อกไม่เพียงพอ (คงเหลือ ${childPart.childStock} ชิ้น, จำเป็นต้องใช้ ${requiredChildQuantity} ชิ้น)`,
+            };
+          }
+        }
+      }
+    }
+
     // Calculate subtotal
     const subtotalNum = validated.items.reduce((acc, item) => {
       return acc + parseFloat(item.unitPrice) * item.quantity;
@@ -133,6 +232,7 @@ export async function createOrder(input: CheckoutInput) {
     const formattedShippingAddress: Address = {
       recipientName: validated.shippingAddress.recipientName,
       phone: validated.shippingAddress.phone,
+      email: validated.shippingAddress.email || undefined,
       line1: validated.shippingAddress.line1,
       line2: validated.shippingAddress.line2 || undefined,
       subDistrict: validated.shippingAddress.subDistrict,
@@ -144,6 +244,7 @@ export async function createOrder(input: CheckoutInput) {
     const formattedBillingAddress: Address | undefined = validated.billingAddress ? {
       recipientName: validated.billingAddress.recipientName,
       phone: validated.billingAddress.phone,
+      email: validated.billingAddress.email || undefined,
       line1: validated.billingAddress.line1,
       line2: validated.billingAddress.line2 || undefined,
       subDistrict: validated.billingAddress.subDistrict,
@@ -170,18 +271,51 @@ export async function createOrder(input: CheckoutInput) {
       billingAddress: formattedBillingAddress,
     }).returning();
 
-    // 2. Insert order items
-    const orderItemsToInsert = validated.items.map((item) => ({
-      orderId: createdOrder.id,
-      productId: item.productId,
-      productNameSnapshot: `${item.productName}${item.variant ? ` (${item.variant})` : ""}`,
-      unitPrice: item.unitPrice,
-      quantity: item.quantity,
-      lineTotal: (parseFloat(item.unitPrice) * item.quantity).toFixed(2),
-    }));
+    // 2. Insert order items and bundle child part snapshots
+    for (const item of validated.items) {
+      const [createdOrderItem] = await db
+        .insert(orderItems)
+        .values({
+          orderId: createdOrder.id,
+          productId: item.productId,
+          productNameSnapshot: `${item.productName}${item.variant ? ` (${item.variant})` : ""}`,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          lineTotal: (parseFloat(item.unitPrice) * item.quantity).toFixed(2),
+        })
+        .returning();
 
-    if (orderItemsToInsert.length > 0) {
-      await db.insert(orderItems).values(orderItemsToInsert);
+      // If this item is a bundle, snapshot its child parts into orderItemBundleParts
+      const [prodHeader] = await db
+        .select({ productType: products.productType })
+        .from(products)
+        .where(eq(products.id, item.productId))
+        .limit(1);
+
+      if (prodHeader?.productType === "bundle") {
+        const bundleChildParts = await db
+          .select({
+            childProductId: productBundleItems.childProductId,
+            childQty: productBundleItems.quantity,
+            childName: products.name,
+            childPrice: products.price,
+          })
+          .from(productBundleItems)
+          .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+          .where(eq(productBundleItems.bundleProductId, item.productId));
+
+        if (bundleChildParts.length > 0) {
+          const partsToInsert = bundleChildParts.map((part) => ({
+            orderItemId: createdOrderItem.id,
+            childProductId: part.childProductId,
+            childProductNameSnapshot: part.childName,
+            unitPriceSnapshot: part.childPrice,
+            quantity: part.childQty * item.quantity,
+          }));
+
+          await db.insert(orderItemBundleParts).values(partsToInsert);
+        }
+      }
     }
 
     // 3. Insert initial status history
@@ -211,7 +345,7 @@ export async function createOrder(input: CheckoutInput) {
       }
     }
 
-    revalidatePath("/orders");
+    safeRevalidatePath("/orders");
 
     return {
       success: true,
@@ -257,7 +391,7 @@ export async function getOrderDetails(orderId: string) {
       .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, orderId));
 
-    // Fetch primary images for these items
+    // Fetch primary images & bundle parts for these items
     const itemsWithImages = await Promise.all(
       rawItems.map(async (item) => {
         let imageUrl: string | null = null;
@@ -270,9 +404,16 @@ export async function getOrderDetails(orderId: string) {
             .limit(1);
           imageUrl = img?.secureUrl || null;
         }
+
+        const bundleParts = await db
+          .select()
+          .from(orderItemBundleParts)
+          .where(eq(orderItemBundleParts.orderItemId, item.id));
+
         return {
           ...item,
           imageUrl,
+          bundleParts,
         };
       })
     );
@@ -371,12 +512,16 @@ export async function confirmMockPayment(orderId: string) {
       note: "ชำระเงินสำเร็จผ่าน PromptPay QR Code (Mockup Payment Approved)",
     });
 
-    // 3. Decrement product stock
+    // 3. Decrement product stock (single products & bundle child parts)
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
     for (const item of items) {
       if (item.productId) {
+        // Decrement the direct product item
         const [prod] = await db
-          .select({ stockQuantity: products.stockQuantity })
+          .select({
+            stockQuantity: products.stockQuantity,
+            productType: products.productType,
+          })
           .from(products)
           .where(eq(products.id, item.productId))
           .limit(1);
@@ -385,15 +530,54 @@ export async function confirmMockPayment(orderId: string) {
           const newStock = Math.max(0, prod.stockQuantity - item.quantity);
           await db
             .update(products)
-            .set({ stockQuantity: newStock, updatedAt: new Date() })
+            .set({
+              stockQuantity: newStock,
+              status: newStock === 0 ? "out_of_stock" : undefined,
+              updatedAt: new Date(),
+            })
             .where(eq(products.id, item.productId));
+        }
+
+        // Decrement bundle child parts if any exist for this order item
+        const bundleParts = await db
+          .select()
+          .from(orderItemBundleParts)
+          .where(eq(orderItemBundleParts.orderItemId, item.id));
+
+        for (const part of bundleParts) {
+          if (part.childProductId) {
+            const [childProd] = await db
+              .select({ stockQuantity: products.stockQuantity })
+              .from(products)
+              .where(eq(products.id, part.childProductId))
+              .limit(1);
+
+            if (childProd) {
+              const newChildStock = Math.max(0, childProd.stockQuantity - part.quantity);
+              await db
+                .update(products)
+                .set({
+                  stockQuantity: newChildStock,
+                  status: newChildStock === 0 ? "out_of_stock" : undefined,
+                  updatedAt: new Date(),
+                })
+                .where(eq(products.id, part.childProductId));
+            }
+          }
         }
       }
     }
 
-    revalidatePath(`/orders/${orderId}`);
-    revalidatePath(`/checkout/payment/${orderId}`);
-    revalidatePath("/orders");
+    // 4. Send Order Confirmation Email via Resend (non-blocking)
+    try {
+      await sendOrderConfirmationEmail(orderId);
+    } catch (emailErr) {
+      console.warn("[confirmMockPayment] Failed to send order confirmation email:", emailErr);
+    }
+
+    safeRevalidatePath(`/orders/${orderId}`);
+    safeRevalidatePath(`/checkout/payment/${orderId}`);
+    safeRevalidatePath("/orders");
 
     return { success: true, message: "ชำระเงินสำเร็จเรียบร้อยแล้ว!" };
   } catch (error) {
@@ -436,9 +620,9 @@ export async function rejectMockPayment(orderId: string, reason = "ผู้ใ�
       note: `การชำระเงินถูกปฏิเสธ: ${reason} (Mockup Payment Rejected)`,
     });
 
-    revalidatePath(`/orders/${orderId}`);
-    revalidatePath(`/checkout/payment/${orderId}`);
-    revalidatePath("/orders");
+    safeRevalidatePath(`/orders/${orderId}`);
+    safeRevalidatePath(`/checkout/payment/${orderId}`);
+    safeRevalidatePath("/orders");
 
     return { success: true, message: "การชำระเงินถูกปฏิเสธ/ยกเลิกเรียบร้อยแล้ว" };
   } catch (error) {
