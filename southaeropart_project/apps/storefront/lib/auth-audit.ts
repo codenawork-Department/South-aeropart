@@ -1,4 +1,5 @@
 import { db, users, userLoginLogs, eq } from "@repo/db";
+import { syncUserWithClerk } from "./user-sync";
 
 export interface RecordUserLoginParams {
   userId: string;
@@ -33,33 +34,24 @@ export async function recordUserLogin(params: RecordUserLoginParams): Promise<vo
   try {
     const now = new Date();
 
-    // 1. Ensure user exists or upsert user profile
+    // 1. Ensure user exists or upsert user profile safely
     if (email) {
+      await syncUserWithClerk({
+        userId,
+        email,
+        fullName,
+        avatarUrl,
+      });
+
       await db
-        .insert(users)
-        .values({
-          id: userId,
-          email,
-          fullName: fullName || null,
-          avatarUrl: avatarUrl || null,
+        .update(users)
+        .set({
           lastLoginAt: now,
-          lastLoginIp: ipAddress || null,
+          ...(ipAddress ? { lastLoginIp: ipAddress } : {}),
           lastLoginMethod: loginMethod,
-          createdAt: now,
           updatedAt: now,
         })
-        .onConflictDoUpdate({
-          target: users.id,
-          set: {
-            email,
-            ...(fullName ? { fullName } : {}),
-            ...(avatarUrl ? { avatarUrl } : {}),
-            lastLoginAt: now,
-            ...(ipAddress ? { lastLoginIp: ipAddress } : {}),
-            lastLoginMethod: loginMethod,
-            updatedAt: now,
-          },
-        });
+        .where(eq(users.id, userId));
     } else {
       // If email is not provided, update existing user record
       await db
