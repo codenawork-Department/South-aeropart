@@ -33,6 +33,7 @@ export const orders = pgTable("orders", {
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
   paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
   omiseChargeId: text("omise_charge_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
   subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
   shippingFee: numeric("shipping_fee", { precision: 12, scale: 2 }).notNull().default("0"),
   taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }).notNull().default("0"),

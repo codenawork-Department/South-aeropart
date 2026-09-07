@@ -60,6 +60,10 @@ export function CheckoutClient() {
     async function loadUserData() {
       try {
         const res = await getSavedCheckoutAddresses();
+        // Always pre-fill email with signed-in account email if available
+        if (res.userProfile?.email) {
+          setEmail((prev) => prev || res.userProfile!.email);
+        }
         if (res.success && res.addresses && res.addresses.length > 0) {
           setSavedAddresses(res.addresses);
           const defaultAddr = res.addresses.find((a) => a.isDefault) || res.addresses[0];
@@ -68,9 +72,8 @@ export function CheckoutClient() {
             applyAddress(defaultAddr);
           }
         } else if (res.userProfile) {
-          setRecipientName(res.userProfile.fullName || "");
-          setEmail(res.userProfile.email || "");
-          setPhone(res.userProfile.phone || "");
+          setRecipientName((prev) => prev || res.userProfile!.fullName || "");
+          setPhone((prev) => prev || res.userProfile!.phone || "");
         }
       } catch (err) {
         console.warn("[Checkout] Failed to load saved addresses", err);

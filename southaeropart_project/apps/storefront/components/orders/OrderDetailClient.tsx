@@ -18,13 +18,18 @@ import {
   FileText,
   Wrench,
   Check,
+  Mail,
 } from "lucide-react";
-import type { Order, OrderItem, OrderStatusHistory } from "@repo/db";
+import type { Order, OrderItem, OrderItemBundlePart, OrderStatusHistory } from "@repo/db";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface OrderDetailClientProps {
   order: Order;
-  items: (OrderItem & { imageUrl?: string | null; slug?: string | null })[];
+  items: (OrderItem & {
+    imageUrl?: string | null;
+    slug?: string | null;
+    bundleParts?: OrderItemBundlePart[];
+  })[];
   history: OrderStatusHistory[];
 }
 
@@ -359,6 +364,26 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
                   <p className="text-xs text-[var(--text-muted)] font-mono mt-0.5">
                     Qty: {it.quantity} × {currency === "THB" ? `฿${parseFloat(it.unitPrice).toLocaleString()} THB` : formatPrice(it.unitPrice, { showCode: true })}
                   </p>
+
+                  {/* Included Bundle Parts if item is a Kit */}
+                  {it.bundleParts && it.bundleParts.length > 0 && (
+                    <div className="mt-2 p-2.5 bg-[#171717] border-l-2 border-[var(--accent-red)] rounded-r-lg">
+                      <p className="text-[0.65rem] font-heading font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                        ชิ้นส่วนในชุดแต่ง (INCLUDED KIT PARTS):
+                      </p>
+                      <ul className="space-y-0.5 text-[0.7rem] text-neutral-300">
+                        {it.bundleParts.map((part) => (
+                          <li key={part.id} className="flex items-center gap-1.5">
+                            <span className="w-1 h-1 rounded-full bg-[var(--accent-red)]" />
+                            <span>{part.childProductNameSnapshot}</span>
+                            <span className="text-[var(--text-muted)] font-mono text-[0.65rem]">
+                              × {part.quantity}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-right">
@@ -436,6 +461,12 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
                 {order.shippingAddress.subDistrict}, {order.shippingAddress.district},{" "}
                 {order.shippingAddress.province} {order.shippingAddress.postalCode}
               </p>
+              {order.shippingAddress.email && (
+                <div className="pt-2 mt-2 border-t border-white/5 flex items-center gap-1.5 text-neutral-300">
+                  <Mail size={13} className="text-[var(--accent-red)] flex-shrink-0" />
+                  <span className="font-mono text-[0.75rem] text-white">{order.shippingAddress.email}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -455,10 +486,30 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
               <div>
                 <span className="text-[var(--text-muted)] block text-[0.7rem] uppercase">PAYMENT METHOD:</span>
                 <span className="text-white font-medium flex items-center gap-1.5 mt-0.5">
-                  <QrCode size={14} className="text-[var(--accent-red)]" />
-                  {order.paymentMethod === "promptpay" ? "PromptPay QR Code (Mockup)" : "Credit Card"}
+                  {order.stripePaymentIntentId ? (
+                    <>
+                      <CreditCard size={14} className="text-[var(--accent-red)]" />
+                      Stripe Payment Gateway (Card / PromptPay)
+                    </>
+                  ) : order.paymentMethod === "credit_card" ? (
+                    <>
+                      <CreditCard size={14} className="text-[var(--accent-red)]" />
+                      Credit Card
+                    </>
+                  ) : (
+                    <>
+                      <QrCode size={14} className="text-[var(--accent-red)]" />
+                      PromptPay QR Code (Mockup)
+                    </>
+                  )}
                 </span>
               </div>
+              {order.stripePaymentIntentId && (
+                <div>
+                  <span className="text-[var(--text-muted)] block text-[0.7rem] uppercase">STRIPE REF (TRANSACTION ID):</span>
+                  <span className="text-gray-300 font-mono text-[0.7rem]">{order.stripePaymentIntentId}</span>
+                </div>
+              )}
               {order.omiseChargeId && (
                 <div>
                   <span className="text-[var(--text-muted)] block text-[0.7rem] uppercase">TRANSACTION REF:</span>
