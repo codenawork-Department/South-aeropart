@@ -18,6 +18,7 @@ import {
   orders,
   newsletterSubscribers,
 } from "@repo/db";
+import { syncUserWithClerk } from "@/lib/user-sync";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -85,30 +86,19 @@ export async function getUserProfile() {
   try {
     let [userRow] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
-    // If user record does not exist yet (e.g. sync delay), auto-create from Clerk
+    // If user record does not exist yet (e.g. sync delay or guest checkout previously), auto-create or migrate from Clerk
     if (!userRow) {
       const clerkUser = await currentUser();
       if (clerkUser) {
         const email = clerkUser.emailAddresses[0]?.emailAddress ?? "";
         const fullName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null;
-        const [created] = await db
-          .insert(users)
-          .values({
-            id: userId,
-            email,
-            fullName,
-            avatarUrl: clerkUser.imageUrl || null,
-          })
-          .onConflictDoUpdate({
-            target: users.id,
-            set: {
-              fullName: fullName || undefined,
-              avatarUrl: clerkUser.imageUrl || undefined,
-              updatedAt: new Date(),
-            },
-          })
-          .returning();
-        userRow = created;
+        userRow = await syncUserWithClerk({
+          userId,
+          email,
+          fullName,
+          avatarUrl: clerkUser.imageUrl || null,
+          phone: clerkUser.phoneNumbers?.[0]?.phoneNumber || null,
+        });
       }
     }
 
