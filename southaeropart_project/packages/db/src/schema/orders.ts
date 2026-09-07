@@ -16,6 +16,7 @@ export const paymentStatusEnum = pgEnum("payment_status", [
 export type Address = {
   recipientName: string;
   phone: string;
+  email?: string;
   line1: string;
   line2?: string;
   subDistrict: string;

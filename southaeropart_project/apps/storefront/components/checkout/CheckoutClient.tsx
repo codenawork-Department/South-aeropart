@@ -228,9 +228,22 @@ export function CheckoutClient() {
       </div>
 
       {errorMsg && (
-        <div className="mb-8 p-4 bg-red-950/40 border border-red-800 rounded-lg flex items-start gap-3 text-red-200 text-sm">
-          <AlertCircle size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
-          <span>{errorMsg}</span>
+        <div className="mb-8 p-4 bg-red-950/50 border border-red-800 rounded-xl flex items-start gap-3.5 text-red-200 text-sm shadow-xl">
+          <AlertCircle size={20} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span className="font-heading font-bold text-white text-xs uppercase tracking-wider block mb-1">
+              ไม่สามารถดำเนินการสั่งซื้อได้ (INSUFFICIENT STOCK / ORDER BLOCKED)
+            </span>
+            <span className="leading-relaxed text-xs sm:text-sm text-gray-200">{errorMsg}</span>
+            <div className="mt-3">
+              <Link
+                href="/cart"
+                className="inline-flex items-center gap-1.5 text-xs font-heading font-bold text-[var(--accent-red)] hover:text-red-400 uppercase tracking-wider underline transition-colors"
+              >
+                <ShoppingCart size={13} /> กลับไปแก้ไขจำนวนสินค้าในตะกร้า (RETURN TO CART) &rarr;
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
@@ -685,6 +698,13 @@ export function CheckoutClient() {
                 </p>
               )}
             </div>
+
+            {errorMsg && (
+              <div className="p-3 bg-red-950/40 border border-red-800 rounded-lg text-xs text-red-300 flex items-start gap-2">
+                <AlertCircle size={15} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
+                <span className="leading-snug">{errorMsg}</span>
+              </div>
+            )}
 
             {/* Submit Action */}
             <button
