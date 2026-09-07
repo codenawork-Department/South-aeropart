@@ -57,7 +57,7 @@ export async function uploadCanvasImageAction(dataUrl: string): Promise<ActionRe
     };
   } catch (error: any) {
     console.error("[uploadCanvasImageAction] Error:", error);
-    return { success: false, error: error?.message || "อัปโหลดรูปภาพไม่สำเร็จ" };
+    return { success: false, error: "อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง" };
   }
 }
 
