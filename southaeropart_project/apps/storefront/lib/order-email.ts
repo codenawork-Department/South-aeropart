@@ -3,20 +3,26 @@ import {
   db,
   orders,
   orderItems,
+  orderItemBundleParts,
   users,
   eq,
   type Order,
   type OrderItem,
+  type OrderItemBundlePart,
 } from "@repo/db";
+
+export type OrderItemWithParts = OrderItem & {
+  bundleParts?: OrderItemBundlePart[];
+};
 
 interface SendOrderEmailParams {
   order: Order;
-  items: OrderItem[];
+  items: OrderItemWithParts[];
   customerEmail?: string | null;
 }
 
 /**
- * Generate a responsive, dark-mode premium HTML email template for South Aero orders.
+ * Generate a responsive, dark-mode premium HTML email template for South Aero order receipts.
  */
 function generateOrderEmailHtml({
   order,
@@ -36,7 +42,7 @@ function generateOrderEmailHtml({
   const address = order.shippingAddress;
   const addressParts = [
     address.recipientName,
-    address.phone,
+    address.phone ? `โทร: ${address.phone}` : null,
     address.line1,
     address.line2,
     `${address.subDistrict}, ${address.district}`,
@@ -44,20 +50,53 @@ function generateOrderEmailHtml({
   ].filter(Boolean);
   const addressStr = addressParts.join("<br/>");
 
+  const totalNum = parseFloat(order.total);
+  const vatAmount = (totalNum * 7) / 107; // 7% VAT included in price
+  const subtotalNum = parseFloat(order.subtotal);
+  const shippingNum = parseFloat(order.shippingFee);
+
+  const paymentMethodLabel = order.stripePaymentIntentId
+    ? "Stripe Payment Gateway (Card / PromptPay)"
+    : order.paymentMethod === "credit_card"
+      ? "บัตรเครดิต / เดบิต (Credit Card)"
+      : "PromptPay QR Code";
+
   const itemsRows = items
-    .map(
-      (item) => `
+    .map((item) => {
+      const partsHtml =
+        item.bundleParts && item.bundleParts.length > 0
+          ? `
+            <div style="margin-top: 8px; padding: 8px 12px; background-color: #191919; border-left: 2px solid #D60000; border-radius: 4px;">
+              <span style="font-size: 11px; color: #A3A3A3; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">
+                ชิ้นส่วนในชุดแต่ง (Included Kit Parts):
+              </span>
+              <ul style="margin: 0; padding-left: 18px; font-size: 11px; color: #D4D4D4; line-height: 1.6;">
+                ${item.bundleParts
+                  .map(
+                    (part) =>
+                      `<li>${part.childProductNameSnapshot} &times; ${part.quantity} ชิ้น</li>`
+                  )
+                  .join("")}
+              </ul>
+            </div>
+          `
+          : "";
+
+      return `
       <tr>
-        <td style="padding: 12px 0; border-bottom: 1px solid #222222; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #FFFFFF;">
-          <strong style="color: #FFFFFF; font-size: 14px; text-transform: uppercase;">${item.productNameSnapshot}</strong>
-          <div style="color: #888888; font-size: 12px; margin-top: 2px;">จำนวน: ${item.quantity} ชิ้น &times; ฿${parseFloat(item.unitPrice).toLocaleString()} THB</div>
+        <td style="padding: 14px 0; border-bottom: 1px solid #222222; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #FFFFFF; vertical-align: top;">
+          <strong style="color: #FFFFFF; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">${item.productNameSnapshot}</strong>
+          <div style="color: #888888; font-size: 12px; margin-top: 3px;">
+            จำนวน: ${item.quantity} ชิ้น &times; ฿${parseFloat(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
+          </div>
+          ${partsHtml}
         </td>
-        <td style="padding: 12px 0; border-bottom: 1px solid #222222; text-align: right; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: bold; color: #FFFFFF;">
+        <td style="padding: 14px 0; border-bottom: 1px solid #222222; text-align: right; vertical-align: top; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: bold; color: #FFFFFF;">
           ฿${parseFloat(item.lineTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </td>
       </tr>
-    `
-    )
+      `;
+    })
     .join("");
 
   return `
@@ -66,7 +105,7 @@ function generateOrderEmailHtml({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ยืนยันคำสั่งซื้อ #${order.orderNumber} - SOUTH AERO</title>
+  <title>ใบเสร็จและยืนยันคำสั่งซื้อ #${order.orderNumber} - SOUTH AERO</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #0A0A0A; color: #E5E5E5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
   <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0A0A0A; padding: 30px 15px;">
@@ -82,39 +121,55 @@ function generateOrderEmailHtml({
                 SOUTH <span style="color: #D60000;">AERO</span>
               </div>
               <div style="font-size: 10px; letter-spacing: 2px; color: #888888; text-transform: uppercase; margin-top: 4px;">
-                HIGH-PERFORMANCE AERODYNAMICS
+                HIGH-PERFORMANCE AERODYNAMICS &bull; OFFICIAL RECEIPT
               </div>
             </td>
           </tr>
 
-          <!-- Success Banner -->
+          <!-- Success & Payment Banner -->
           <tr>
-            <td style="padding: 32px 32px 20px 32px; text-align: center;">
-              <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 50%; background-color: rgba(16, 185, 129, 0.15); border: 2px solid #10B981; color: #10B981; font-size: 28px; margin-bottom: 16px;">
+            <td style="padding: 32px 32px 18px 32px; text-align: center;">
+              <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 50%; background-color: rgba(16, 185, 129, 0.15); border: 2px solid #10B981; color: #10B981; font-size: 28px; margin-bottom: 14px;">
                 &#10003;
               </div>
               <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #FFFFFF;">
-                การชำระเงินสำเร็จ
+                การชำระเงินสำเร็จ (PAYMENT CONFIRMED)
               </h1>
-              <p style="margin: 0; font-size: 14px; color: #9CA3AF; line-height: 1.5;">
+              <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
                 ขอบคุณสำหรับการสั่งซื้อชิ้นส่วนแอโรพาร์ทกับ South Aero เราได้รับยอดเงินและกำลังเตรียมจัดส่งสินค้าให้ท่าน
               </p>
             </td>
           </tr>
+
+          <!-- Receipt Destination Banner -->
+          ${customerEmail ? `
+          <tr>
+            <td style="padding: 0 32px 16px 32px;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #161616; border: 1px solid #282828; border-radius: 10px; padding: 12px 16px;">
+                <tr>
+                  <td style="font-size: 12px; color: #888888;">
+                    ใบเสร็จรับเงินและเอกสารยืนยันถูกส่งไปยัง: 
+                    <span style="color: #FFFFFF; font-weight: bold; font-family: monospace;">${customerEmail}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          ` : ""}
 
           <!-- Order Meta Card -->
           <tr>
             <td style="padding: 0 32px 20px 32px;">
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #181818; border: 1px solid #2A2A2A; border-radius: 12px; padding: 18px 20px;">
                 <tr>
-                  <td width="50%" style="font-size: 12px; color: #737373; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">
-                    หมายเลขคำสั่งซื้อ:
+                  <td width="50%" style="font-size: 11px; color: #737373; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">
+                    หมายเลขคำสั่งซื้อ (ORDER NO):
                     <div style="font-size: 15px; color: #D60000; font-family: monospace; font-weight: bold; margin-top: 4px;">
                       ${order.orderNumber}
                     </div>
                   </td>
-                  <td width="50%" align="right" style="font-size: 12px; color: #737373; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">
-                    วันที่ทำรายการ:
+                  <td width="50%" align="right" style="font-size: 11px; color: #737373; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">
+                    วันที่และเวลาทำรายการ:
                     <div style="font-size: 13px; color: #E5E5E5; margin-top: 4px;">
                       ${orderDate}
                     </div>
@@ -128,7 +183,7 @@ function generateOrderEmailHtml({
           <tr>
             <td style="padding: 10px 32px 20px 32px;">
               <div style="font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #737373; margin-bottom: 12px;">
-                รายการสินค้าที่สั่งซื้อ (${items.length} รายการ)
+                รายการชิ้นส่วนแอโรพาร์ทที่สั่งซื้อ (${items.length} รายการ)
               </div>
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 ${itemsRows}
@@ -136,24 +191,44 @@ function generateOrderEmailHtml({
             </td>
           </tr>
 
-          <!-- Totals Summary -->
+          <!-- Totals Summary & Tax Invoice Details -->
           <tr>
             <td style="padding: 10px 32px 24px 32px;">
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-top: 2px solid #262626; padding-top: 14px;">
                 <tr>
-                  <td style="padding: 4px 0; font-size: 13px; color: #9CA3AF;">ยอดรวมสินค้า (Subtotal):</td>
-                  <td align="right" style="padding: 4px 0; font-size: 13px; color: #E5E5E5; font-family: monospace;">฿${parseFloat(order.subtotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td style="padding: 5px 0; font-size: 13px; color: #9CA3AF;">ยอดรวมสินค้า (Subtotal):</td>
+                  <td align="right" style="padding: 5px 0; font-size: 13px; color: #E5E5E5; font-family: monospace;">฿${subtotalNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 4px 0; font-size: 13px; color: #9CA3AF;">ค่าจัดส่ง (${order.shippingCarrier || "Standard"}):</td>
-                  <td align="right" style="padding: 4px 0; font-size: 13px; color: #E5E5E5; font-family: monospace;">
-                    ${parseFloat(order.shippingFee) > 0 ? `฿${parseFloat(order.shippingFee).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "<span style='color:#10B981;'>ฟรี (FREE)</span>"}
+                  <td style="padding: 5px 0; font-size: 13px; color: #9CA3AF;">ค่าจัดส่ง (${order.shippingCarrier || "South Aero Standard Logistics"}):</td>
+                  <td align="right" style="padding: 5px 0; font-size: 13px; color: #E5E5E5; font-family: monospace;">
+                    ${shippingNum > 0 ? `฿${shippingNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "<span style='color:#10B981;'>ฟรี (FREE)</span>"}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 12px 0 0 0; font-size: 15px; font-weight: bold; color: #FFFFFF; text-transform: uppercase;">ยอดชำระสุทธิ (Total):</td>
-                  <td align="right" style="padding: 12px 0 0 0; font-size: 20px; font-weight: 800; color: #FFFFFF; font-family: monospace;">
-                    ฿${parseFloat(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
+                  <td style="padding: 5px 0; font-size: 12px; color: #737373;">ภาษีมูลค่าเพิ่ม (VAT 7% - รวมในราคาสินค้า):</td>
+                  <td align="right" style="padding: 5px 0; font-size: 12px; color: #888888; font-family: monospace;">
+                    ฿${vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; font-size: 12px; color: #737373;">วิธีการชำระเงิน (Payment Method):</td>
+                  <td align="right" style="padding: 5px 0; font-size: 12px; color: #D4D4D4;">
+                    ${paymentMethodLabel}
+                  </td>
+                </tr>
+                ${order.stripePaymentIntentId ? `
+                <tr>
+                  <td style="padding: 4px 0; font-size: 11px; color: #666666;">รหัสอ้างอิงธุรกรรม Stripe (Ref ID):</td>
+                  <td align="right" style="padding: 4px 0; font-size: 11px; color: #888888; font-family: monospace;">
+                    ${order.stripePaymentIntentId}
+                  </td>
+                </tr>
+                ` : ""}
+                <tr>
+                  <td style="padding: 14px 0 0 0; font-size: 15px; font-weight: bold; color: #FFFFFF; text-transform: uppercase;">ยอดชำระสุทธิ (Total Amount):</td>
+                  <td align="right" style="padding: 14px 0 0 0; font-size: 20px; font-weight: 800; color: #FFFFFF; font-family: monospace;">
+                    ฿${totalNum.toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
                   </td>
                 </tr>
               </table>
@@ -167,7 +242,7 @@ function generateOrderEmailHtml({
                 <tr>
                   <td>
                     <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #737373; letter-spacing: 1px; margin-bottom: 6px;">
-                      ที่อยู่สำหรับจัดส่งพัสดุ
+                      ข้อมูลและที่อยู่สำหรับการจัดส่งพัสดุ
                     </div>
                     <div style="font-size: 13px; color: #D4D4D4; line-height: 1.6;">
                       ${addressStr}
@@ -194,7 +269,7 @@ function generateOrderEmailHtml({
           <tr>
             <td style="padding: 24px 32px; background-color: #0E0E0E; border-top: 1px solid #1F1F1F; text-align: center; font-size: 11px; color: #555555; line-height: 1.5;">
               &copy; ${new Date().getFullYear()} SOUTH AERO PARTS CO., LTD. ALL RIGHTS RESERVED.<br/>
-              อีเมลฉบับนี้เป็นการแจ้งข้อมูลโดยอัตโนมัติ กรุณาอย่าตอบกลับอีเมลนี้โดยตรง
+              อีเมลฉบับนี้เป็นการแจ้งข้อมูลใบเสร็จรับเงินโดยอัตโนมัติ หากมีข้อสงสัยกรุณาติดต่อฝ่ายบริการลูกค้า
             </td>
           </tr>
 
@@ -208,7 +283,7 @@ function generateOrderEmailHtml({
 }
 
 /**
- * Sends order confirmation email to the customer using Resend.
+ * Sends order confirmation email and receipt to the customer using Resend.
  * Gracefully logs and returns isSimulated if RESEND_API_KEY is not configured.
  */
 export async function sendOrderConfirmationEmail(orderId: string) {
@@ -224,14 +299,28 @@ export async function sendOrderConfirmationEmail(orderId: string) {
       return { success: false, error: "Order not found" };
     }
 
-    // 2. Fetch order items
-    const items = await db
+    // 2. Fetch order items with their bundle parts snapshot
+    const rawItems = await db
       .select()
       .from(orderItems)
       .where(eq(orderItems.orderId, orderId));
 
-    // 3. Determine recipient email
-    let recipientEmail = order.shippingAddress?.email;
+    const itemsWithParts: OrderItemWithParts[] = await Promise.all(
+      rawItems.map(async (item) => {
+        const bundleParts = await db
+          .select()
+          .from(orderItemBundleParts)
+          .where(eq(orderItemBundleParts.orderItemId, item.id));
+
+        return {
+          ...item,
+          bundleParts,
+        };
+      })
+    );
+
+    // 3. Determine recipient email: prioritize shippingAddress.email, fallback to user account email
+    let recipientEmail = order.shippingAddress?.email?.trim();
 
     if (!recipientEmail && order.userId) {
       const [user] = await db
@@ -241,7 +330,7 @@ export async function sendOrderConfirmationEmail(orderId: string) {
         .limit(1);
 
       if (user?.email && !user.email.includes("@southaero.local")) {
-        recipientEmail = user.email;
+        recipientEmail = user.email.trim();
       }
     }
 
@@ -255,17 +344,17 @@ export async function sendOrderConfirmationEmail(orderId: string) {
       };
     }
 
-    // 4. Generate HTML content
+    // 4. Generate HTML receipt content
     const emailHtml = generateOrderEmailHtml({
       order,
-      items,
+      items: itemsWithParts,
       customerEmail: recipientEmail,
     });
 
     // 5. Send via Resend
     const result = await sendEmail({
       to: recipientEmail,
-      subject: `[SOUTH AERO] ยืนยันคำสั่งซื้อและการชำระเงิน #${order.orderNumber}`,
+      subject: `[SOUTH AERO] ใบเสร็จและยืนยันการชำระเงิน #${order.orderNumber}`,
       html: emailHtml,
     });
 

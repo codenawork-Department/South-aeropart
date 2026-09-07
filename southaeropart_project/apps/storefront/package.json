@@ -18,6 +18,8 @@
     "@repo/db": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@stripe/react-stripe-js": "^6.9.0",
+    "@stripe/stripe-js": "^9.15.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "drizzle-orm": "^0.33.0",

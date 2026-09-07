@@ -27,6 +27,11 @@ import {
   Address,
 } from "@repo/db";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
+import {
+  createPaymentIntent,
+  retrievePaymentIntent,
+  updatePaymentIntentReceiptEmail,
+} from "@repo/lib";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -473,14 +478,23 @@ export async function getOrderStatus(orderId: string) {
   }
 }
 
+export interface FulfillPaymentParams {
+  method: "stripe" | "mock" | "promptpay" | "credit_card";
+  chargeId?: string;
+  note?: string;
+}
+
 /**
- * Confirms mock QR payment:
- * - Updates order.paymentStatus = "paid"
- * - Updates order.status = "paid"
- * - Inserts into order_status_history
- * - Decrements stockQuantity for products in the order
+ * Authoritative fulfillment for order payments (used by both Webhook and Mock payments):
+ * - Idempotency guard: checks if order is already paid.
+ * - Updates order.paymentStatus = "paid", status = "paid", stripePaymentIntentId.
+ * - Inserts into orderStatusHistory.
+ * - Decrements stockQuantity for single products and constituent bundle parts.
+ * - Sets status = "out_of_stock" if stock reaches 0.
+ * - Sends Resend Order Confirmation Email (non-blocking).
+ * - Revalidates paths.
  */
-export async function confirmMockPayment(orderId: string) {
+export async function fulfillOrderPayment(orderId: string, params: FulfillPaymentParams) {
   try {
     z.string().uuid().parse(orderId);
 
@@ -493,30 +507,34 @@ export async function confirmMockPayment(orderId: string) {
       return { success: true, message: "Order is already paid" };
     }
 
-    // Update order directly (neon-http compatible)
-    // 1. Update order
+    // 1. Update order status
     await db
       .update(orders)
       .set({
         status: "paid",
         paymentStatus: "paid",
-        omiseChargeId: `mock_qr_${Date.now()}`,
+        stripePaymentIntentId: params.method === "stripe" ? params.chargeId : (order.stripePaymentIntentId || null),
+        omiseChargeId: params.method !== "stripe" ? (params.chargeId || `mock_qr_${Date.now()}`) : order.omiseChargeId,
         updatedAt: new Date(),
       })
       .where(eq(orders.id, orderId));
 
     // 2. Insert into history
+    const historyNote = params.note || (params.method === "stripe"
+      ? `ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (PaymentIntent: ${params.chargeId || "N/A"})`
+      : "ชำระเงินสำเร็จ (Payment Approved)");
+
     await db.insert(orderStatusHistory).values({
       orderId,
       status: "paid",
-      note: "ชำระเงินสำเร็จผ่าน PromptPay QR Code (Mockup Payment Approved)",
+      note: historyNote,
     });
 
     // 3. Decrement product stock (single products & bundle child parts)
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
     for (const item of items) {
       if (item.productId) {
-        // Decrement the direct product item
+        // Decrement direct product
         const [prod] = await db
           .select({
             stockQuantity: products.stockQuantity,
@@ -538,7 +556,7 @@ export async function confirmMockPayment(orderId: string) {
             .where(eq(products.id, item.productId));
         }
 
-        // Decrement bundle child parts if any exist for this order item
+        // Decrement bundle child parts
         const bundleParts = await db
           .select()
           .from(orderItemBundleParts)
@@ -572,7 +590,7 @@ export async function confirmMockPayment(orderId: string) {
     try {
       await sendOrderConfirmationEmail(orderId);
     } catch (emailErr) {
-      console.warn("[confirmMockPayment] Failed to send order confirmation email:", emailErr);
+      console.warn("[fulfillOrderPayment] Failed to send order confirmation email:", emailErr);
     }
 
     safeRevalidatePath(`/orders/${orderId}`);
@@ -581,8 +599,193 @@ export async function confirmMockPayment(orderId: string) {
 
     return { success: true, message: "ชำระเงินสำเร็จเรียบร้อยแล้ว!" };
   } catch (error) {
-    console.error("[confirmMockPayment] Error:", error);
-    return { success: false, error: "Failed to confirm payment" };
+    console.error("[fulfillOrderPayment] Error:", error);
+    return { success: false, error: "Failed to fulfill payment" };
+  }
+}
+
+/**
+ * Confirms mock QR payment (wraps authoritative fulfillOrderPayment)
+ */
+export async function confirmMockPayment(orderId: string) {
+  return fulfillOrderPayment(orderId, {
+    method: "mock",
+    note: "ชำระเงินสำเร็จผ่าน PromptPay QR Code (Mockup Payment Approved)",
+  });
+}
+
+/**
+ * Creates or retrieves a Stripe PaymentIntent for the given order.
+ * Returns clientSecret to initialize Stripe Payment Element on the frontend.
+ */
+export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
+  success: boolean;
+  clientSecret?: string;
+  publishableKey?: string;
+  isAlreadyPaid?: boolean;
+  redirectUrl?: string;
+  error?: string;
+}> {
+  try {
+    z.string().uuid().parse(orderId);
+
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    if (!order) {
+      return { success: false, error: "Order not found" };
+    }
+
+    if (order.paymentStatus === "paid" || order.status === "paid") {
+      return {
+        success: true,
+        isAlreadyPaid: true,
+        redirectUrl: `/orders/${order.id}?paid=true`,
+      };
+    }
+
+    const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      return { success: false, error: "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not configured" };
+    }
+
+    // Check if there is an existing payment intent for this order
+    if (order.stripePaymentIntentId) {
+      try {
+        const existingIntent = await retrievePaymentIntent(order.stripePaymentIntentId);
+        
+        // If the existing intent has already succeeded, fulfill the order and redirect!
+        if (existingIntent && existingIntent.status === "succeeded") {
+          console.log(`[createOrGetStripePaymentIntent] PaymentIntent ${existingIntent.id} is already SUCCEEDED. Fulfilling order...`);
+          await fulfillOrderPayment(order.id, {
+            method: "stripe",
+            chargeId: existingIntent.id,
+            note: "ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Auto-recovered in createOrGetStripePaymentIntent)",
+          });
+          return {
+            success: true,
+            isAlreadyPaid: true,
+            redirectUrl: `/orders/${order.id}?paid=true`,
+          };
+        }
+
+        // Only reuse clientSecret if intent is in a pending/submittable state
+        if (
+          existingIntent &&
+          existingIntent.status !== "canceled" &&
+          existingIntent.status !== "succeeded" &&
+          existingIntent.client_secret
+        ) {
+          return {
+            success: true,
+            clientSecret: existingIntent.client_secret,
+            publishableKey,
+          };
+        }
+      } catch (e) {
+        console.warn("[createOrGetStripePaymentIntent] Could not retrieve existing intent, creating a new one:", e);
+      }
+    }
+
+    // Determine customer receipt email: prioritize order.shippingAddress.email, fallback to user account email
+    let customerEmail = (order.shippingAddress as Address)?.email?.trim();
+    if (!customerEmail && order.userId) {
+      const [userRow] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, order.userId))
+        .limit(1);
+      if (userRow?.email && !userRow.email.includes("@southaero.local")) {
+        customerEmail = userRow.email.trim();
+      }
+    }
+
+    const intent = await createPaymentIntent({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      amountNumeric: order.total,
+      currency: order.currency || "THB",
+      receiptEmail: customerEmail,
+      metadata: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        userId: order.userId,
+      },
+    });
+
+    if (!intent.client_secret) {
+      return { success: false, error: "Failed to obtain client secret from Stripe" };
+    }
+
+    // Save stripePaymentIntentId on the order
+    await db
+      .update(orders)
+      .set({
+        stripePaymentIntentId: intent.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, orderId));
+
+    return {
+      success: true,
+      clientSecret: intent.client_secret,
+      publishableKey,
+    };
+  } catch (error) {
+    console.error("[createOrGetStripePaymentIntent] Error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to initialize Stripe payment",
+    };
+  }
+}
+
+/**
+ * Updates the customer receipt email on an existing order.
+ * Also synchronizes Stripe PaymentIntent's receipt_email if stripePaymentIntentId exists.
+ */
+export async function updateOrderReceiptEmail(orderId: string, email: string) {
+  try {
+    z.string().uuid().parse(orderId);
+    const validatedEmail = z.string().trim().email("กรุณากรอกรูปแบบอีเมลที่ถูกต้อง").parse(email);
+
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    if (!order) {
+      return { success: false, error: "ไม่พบข้อมูลคำสั่งซื้อในระบบ" };
+    }
+
+    const currentShippingAddress = (order.shippingAddress || {}) as Address;
+    const updatedShippingAddress: Address = {
+      ...currentShippingAddress,
+      email: validatedEmail,
+    };
+
+    await db
+      .update(orders)
+      .set({
+        shippingAddress: updatedShippingAddress,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, orderId));
+
+    // Also update Stripe PaymentIntent receipt_email if intent exists
+    if (order.stripePaymentIntentId) {
+      try {
+        await updatePaymentIntentReceiptEmail(order.stripePaymentIntentId, validatedEmail);
+        console.log(`[updateOrderReceiptEmail] Synced receipt_email ${validatedEmail} with Stripe Intent ${order.stripePaymentIntentId}`);
+      } catch (stripeErr) {
+        console.warn("[updateOrderReceiptEmail] Warning: Could not update Stripe receipt email:", stripeErr);
+      }
+    }
+
+    safeRevalidatePath(`/checkout/payment/${orderId}`);
+    safeRevalidatePath(`/orders/${orderId}`);
+
+    return { success: true, email: validatedEmail };
+  } catch (error) {
+    console.error("[updateOrderReceiptEmail] Error:", error);
+    return {
+      success: false,
+      error: error instanceof z.ZodError ? error.errors[0]?.message : "ไม่สามารถอัปเดตอีเมลสำหรับรับใบเสร็จได้",
+    };
   }
 }
 
@@ -687,10 +890,35 @@ export async function getSavedCheckoutAddresses() {
 
     const [userRow] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
+    let userProfile = userRow || null;
+    if (!userProfile?.email || userProfile.email.includes("@southaero.local")) {
+      try {
+        const clerkUser = await currentUser();
+        const clerkEmail = clerkUser?.emailAddresses?.[0]?.emailAddress;
+        if (clerkEmail) {
+          userProfile = {
+            ...(userProfile || {
+              id: userId,
+              fullName: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null,
+              phone: null,
+              avatarUrl: clerkUser.imageUrl || null,
+              role: "customer" as const,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              metadata: null,
+            }),
+            email: clerkEmail,
+          };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     return {
       success: true,
       addresses,
-      userProfile: userRow || null,
+      userProfile,
     };
   } catch (error) {
     console.error("[getSavedCheckoutAddresses] Error:", error);
