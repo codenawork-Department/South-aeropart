@@ -19,6 +19,7 @@ import {
   asc,
   inArray,
 } from "@repo/db";
+import { syncUserWithClerk } from "@/lib/user-sync";
 
 export interface WishlistItem {
   id: string; // userInterests ID
@@ -59,22 +60,13 @@ async function ensureUserInDb(userId: string) {
       const fullName =
         [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
         null;
-      await db
-        .insert(users)
-        .values({
-          id: userId,
-          email,
-          fullName,
-          avatarUrl: clerkUser.imageUrl || null,
-        })
-        .onConflictDoUpdate({
-          target: users.id,
-          set: {
-            fullName: fullName || undefined,
-            avatarUrl: clerkUser.imageUrl || undefined,
-            updatedAt: new Date(),
-          },
-        });
+      await syncUserWithClerk({
+        userId,
+        email,
+        fullName,
+        avatarUrl: clerkUser.imageUrl || null,
+        phone: clerkUser.phoneNumbers?.[0]?.phoneNumber || null,
+      });
     }
   }
 }

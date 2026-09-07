@@ -32,6 +32,7 @@ import {
   retrievePaymentIntent,
   updatePaymentIntentReceiptEmail,
 } from "@repo/lib";
+import { syncUserWithClerk } from "@/lib/user-sync";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -101,15 +102,12 @@ export async function createOrder(input: CheckoutInput) {
         const email = clerkUser?.emailAddresses?.[0]?.emailAddress || validated.shippingAddress.email || `user_${orderUserId}@example.com`;
         const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || validated.shippingAddress.recipientName;
         
-        await db.insert(users).values({
-          id: orderUserId,
+        await syncUserWithClerk({
+          userId: orderUserId,
           email,
           fullName,
           phone: validated.shippingAddress.phone,
           avatarUrl: clerkUser?.imageUrl || null,
-        }).onConflictDoUpdate({
-          target: users.id,
-          set: { updatedAt: new Date() },
         });
       }
     } else {

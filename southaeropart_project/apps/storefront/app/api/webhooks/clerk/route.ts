@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { db, users, userLoginLogs, eq } from "@repo/db";
+import { syncUserWithClerk } from "@/lib/user-sync";
 
 /**
  * Clerk webhook handler — syncs Clerk users and login sessions into Neon.tech PostgreSQL.
@@ -79,27 +80,13 @@ async function handleEvent(payload: Record<string, unknown>) {
         const fullName = [first_name, last_name].filter(Boolean).join(" ") || null;
         const phone = phone_numbers?.[0]?.phone_number || null;
 
-        await db
-          .insert(users)
-          .values({
-            id,
-            email,
-            fullName,
-            phone,
-            avatarUrl: image_url || null,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: users.id,
-            set: {
-              email,
-              ...(fullName ? { fullName } : {}),
-              ...(image_url ? { avatarUrl: image_url } : {}),
-              ...(phone ? { phone } : {}),
-              updatedAt: now,
-            },
-          });
+        await syncUserWithClerk({
+          userId: id,
+          email,
+          fullName,
+          phone,
+          avatarUrl: image_url || null,
+        });
 
         console.log(`Clerk webhook: synced user.created ${id} (${email}) to Neon`);
         break;
