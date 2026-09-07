@@ -727,7 +727,7 @@ export async function createBundleAction(
     console.error("Error inserting bundle:", error);
     return {
       success: false,
-      message: `เกิดข้อผิดพลาดในการบันทึกชุดเซ็ต: ${error?.message || "Internal Server Error"}`,
+      message: "เกิดข้อผิดพลาดในการบันทึกชุดเซ็ต กรุณาลองใหม่อีกครั้ง",
     };
   }
 }
@@ -1006,7 +1006,7 @@ export async function updateBundleAction(
     console.error("Error updating bundle:", error);
     return {
       success: false,
-      message: `เกิดข้อผิดพลาดในการอัปเดตชุดเซ็ต: ${error?.message || "Internal Server Error"}`,
+      message: "เกิดข้อผิดพลาดในการอัปเดตชุดเซ็ต กรุณาลองใหม่อีกครั้ง",
     };
   }
 }
@@ -1064,7 +1064,7 @@ export async function deleteBundleAction(id: string): Promise<ActionResult> {
     console.error("Error deleting bundle:", error);
     return {
       success: false,
-      message: `ไม่สามารถลบชุดเซ็ตได้: ${error?.message || "Internal Server Error"}`,
+      message: "ไม่สามารถลบชุดเซ็ตได้ กรุณาลองใหม่อีกครั้ง",
     };
   }
 }
@@ -1166,7 +1166,7 @@ export async function toggleBundleFeaturedAction(
     console.error("Error toggling bundle featured:", error);
     return {
       success: false,
-      message: `เกิดข้อผิดพลาดในการเปลี่ยนสถานะเซ็ตแนะนำ: ${error?.message || "Internal Server Error"}`,
+      message: "เกิดข้อผิดพลาดในการเปลี่ยนสถานะเซ็ตแนะนำ",
     };
   }
 }
@@ -1261,7 +1261,7 @@ export async function updateBundleStatusAction(
     console.error("Error updating bundle status:", error);
     return {
       success: false,
-      message: error?.message || "เกิดข้อผิดพลาดในการเปลี่ยนสถานะชุดเซ็ต",
+      message: "เกิดข้อผิดพลาดในการเปลี่ยนสถานะชุดเซ็ต",
     };
   }
 }

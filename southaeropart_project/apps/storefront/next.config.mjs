@@ -33,6 +33,7 @@ const nextConfig = {
     ],
   },
   experimental: {
+    serverComponentsExternalPackages: ["@repo/db", "drizzle-orm", "@neondatabase/serverless"],
     optimizePackageImports: [
       "lucide-react",
       "@react-three/drei",

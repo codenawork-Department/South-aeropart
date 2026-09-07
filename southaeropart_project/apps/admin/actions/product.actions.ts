@@ -828,7 +828,7 @@ export async function createProductAction(
     }
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการสร้างสินค้า",
+      message: "เกิดข้อผิดพลาดในการสร้างสินค้า กรุณาลองใหม่อีกครั้ง",
     };
   }
 }
@@ -1432,7 +1432,7 @@ export async function toggleProductFeaturedAction(
     console.error("Error toggling product featured:", error);
     return {
       success: false,
-      message: error?.message || "เกิดข้อผิดพลาดในการเปลี่ยนสถานะสินค้าแนะนำ",
+      message: "เกิดข้อผิดพลาดในการเปลี่ยนสถานะสินค้าแนะนำ",
     };
   }
 }
@@ -1501,7 +1501,7 @@ export async function updateProductStatusAction(
     console.error("Error updating product status:", error);
     return {
       success: false,
-      message: error?.message || "เกิดข้อผิดพลาดในการเปลี่ยนสถานะสินค้า",
+      message: "เกิดข้อผิดพลาดในการเปลี่ยนสถานะสินค้า",
     };
   }
 }

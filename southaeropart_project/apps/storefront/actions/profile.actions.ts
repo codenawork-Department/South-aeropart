@@ -529,6 +529,11 @@ export async function deleteUserAddress(addressId: string) {
     return { success: false, error: "Unauthorized" };
   }
 
+  const idParsed = z.string().uuid().safeParse(addressId);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid address ID" };
+  }
+
   try {
     await db
       .delete(userAddresses)
@@ -554,6 +559,12 @@ export async function setDefaultAddress(addressId: string, type: "shipping" | "b
   const { userId } = auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
+  }
+
+  const idParsed = z.string().uuid().safeParse(addressId);
+  const typeParsed = z.enum(["shipping", "billing"]).safeParse(type);
+  if (!idParsed.success || !typeParsed.success) {
+    return { success: false, error: "Invalid input" };
   }
 
   try {
@@ -665,6 +676,11 @@ export async function deleteUserVehicle(vehicleId: string) {
     return { success: false, error: "Unauthorized" };
   }
 
+  const idParsed = z.string().uuid().safeParse(vehicleId);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid vehicle ID" };
+  }
+
   try {
     await db
       .delete(userVehicles)
@@ -692,6 +708,11 @@ export async function setDefaultVehicle(vehicleId: string) {
   const { userId } = auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
+  }
+
+  const idParsed = z.string().uuid().safeParse(vehicleId);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid vehicle ID" };
   }
 
   try {

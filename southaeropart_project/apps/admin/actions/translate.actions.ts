@@ -1,5 +1,7 @@
 "use server";
 
+import { validateSession } from "@/lib/auth";
+
 /**
  * Translate a single text string from English to Thai using Google Translate engine
  */
@@ -8,6 +10,9 @@ export async function translateText(
   from: string = "en",
   to: string = "th"
 ): Promise<string> {
+  const admin = await validateSession();
+  if (!admin) return "";
+
   const clean = text?.trim();
   if (!clean) return "";
 
@@ -61,6 +66,11 @@ export async function translateProductAction(payload: {
   };
   error?: string;
 }> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, error: "Unauthorized" };
+  }
+
   try {
     const { nameEn, shortDescriptionEn, descriptionEn, features = [] } = payload;
 
@@ -115,6 +125,11 @@ export async function translateBundleAction(payload: {
   };
   error?: string;
 }> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, error: "Unauthorized" };
+  }
+
   try {
     const { nameEn, shortDescriptionEn, descriptionEn } = payload;
 
