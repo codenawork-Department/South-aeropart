@@ -13,6 +13,10 @@ export default async function MockMobilePayPage({
 }: {
   params: { orderId: string };
 }) {
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   const { orderId } = params;
   const res = await getOrderDetails(orderId);
 

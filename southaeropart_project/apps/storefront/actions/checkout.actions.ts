@@ -133,12 +133,26 @@ export async function createOrder(input: CheckoutInput) {
       throw new Error("Unable to determine customer identity");
     }
 
-    // Pre-flight Stock & Status Verification
+    // Pre-flight Stock, Price & Status Verification
+    interface VerifiedItem {
+      productId: string;
+      productName: string;
+      variant?: string;
+      quantity: number;
+      unitPrice: string;
+      lineTotal: string;
+      productType: "single" | "bundle";
+    }
+
+    const verifiedItems: VerifiedItem[] = [];
+    let subtotalNum = 0;
+
     for (const item of validated.items) {
       const [productRow] = await db
         .select({
           id: products.id,
           name: products.name,
+          price: products.price,
           status: products.status,
           stockQuantity: products.stockQuantity,
           productType: products.productType,
@@ -209,12 +223,22 @@ export async function createOrder(input: CheckoutInput) {
           }
         }
       }
-    }
 
-    // Calculate subtotal
-    const subtotalNum = validated.items.reduce((acc, item) => {
-      return acc + parseFloat(item.unitPrice) * item.quantity;
-    }, 0);
+      // Authoritative server-side price calculation (SEC-01 Price Tampering Guard)
+      const authoritativeUnitPrice = productRow.price;
+      const itemTotalNum = parseFloat(authoritativeUnitPrice) * item.quantity;
+      subtotalNum += itemTotalNum;
+
+      verifiedItems.push({
+        productId: productRow.id,
+        productName: productRow.name,
+        variant: item.variant,
+        quantity: item.quantity,
+        unitPrice: authoritativeUnitPrice,
+        lineTotal: itemTotalNum.toFixed(2),
+        productType: productRow.productType as "single" | "bundle",
+      });
+    }
 
     // Calculate shipping fee
     let shippingFeeNum = 0;
@@ -275,7 +299,7 @@ export async function createOrder(input: CheckoutInput) {
     }).returning();
 
     // 2. Insert order items and bundle child part snapshots
-    for (const item of validated.items) {
+    for (const item of verifiedItems) {
       const [createdOrderItem] = await db
         .insert(orderItems)
         .values({
@@ -284,18 +308,12 @@ export async function createOrder(input: CheckoutInput) {
           productNameSnapshot: `${item.productName}${item.variant ? ` (${item.variant})` : ""}`,
           unitPrice: item.unitPrice,
           quantity: item.quantity,
-          lineTotal: (parseFloat(item.unitPrice) * item.quantity).toFixed(2),
+          lineTotal: item.lineTotal,
         })
         .returning();
 
       // If this item is a bundle, snapshot its child parts into orderItemBundleParts
-      const [prodHeader] = await db
-        .select({ productType: products.productType })
-        .from(products)
-        .where(eq(products.id, item.productId))
-        .limit(1);
-
-      if (prodHeader?.productType === "bundle") {
+      if (item.productType === "bundle") {
         const bundleChildParts = await db
           .select({
             childProductId: productBundleItems.childProductId,
@@ -376,6 +394,20 @@ export async function getOrderDetails(orderId: string) {
     const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
     if (!order) {
       return { success: false, error: "Order not found", data: null };
+    }
+
+    // IDOR Security Guard: Registered user orders must only be accessed by the account owner
+    if (!order.userId.startsWith("guest_")) {
+      let currentUserId: string | null = null;
+      try {
+        currentUserId = auth().userId;
+      } catch {
+        currentUserId = null;
+      }
+
+      if (!currentUserId || currentUserId !== order.userId) {
+        return { success: false, error: "Unauthorized access to order details", data: null };
+      }
     }
 
     // Fetch order items with product details & primary image
@@ -483,6 +515,47 @@ export interface FulfillPaymentParams {
 }
 
 /**
+ * Synchronizes bundle stockQuantity and status for all bundles containing the given child product.
+ */
+export async function syncBundleStockForChildPart(childProductId: string) {
+  try {
+    const parentBundles = await db
+      .select({ bundleProductId: productBundleItems.bundleProductId })
+      .from(productBundleItems)
+      .where(eq(productBundleItems.childProductId, childProductId));
+
+    for (const { bundleProductId } of parentBundles) {
+      const bundleParts = await db
+        .select({
+          childId: productBundleItems.childProductId,
+          partQty: productBundleItems.quantity,
+          childStock: products.stockQuantity,
+        })
+        .from(productBundleItems)
+        .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+        .where(eq(productBundleItems.bundleProductId, bundleProductId));
+
+      if (bundleParts.length === 0) continue;
+
+      const minAvailableSets = Math.min(
+        ...bundleParts.map((p) => Math.floor(Math.max(0, p.childStock) / (p.partQty || 1)))
+      );
+
+      await db
+        .update(products)
+        .set({
+          stockQuantity: minAvailableSets,
+          status: minAvailableSets === 0 ? "out_of_stock" : "active",
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, bundleProductId));
+    }
+  } catch (err) {
+    console.error("[syncBundleStockForChildPart] Error syncing bundle stock:", err);
+  }
+}
+
+/**
  * Authoritative fulfillment for order payments (used by both Webhook and Mock payments):
  * - Idempotency guard: checks if order is already paid.
  * - Updates order.paymentStatus = "paid", status = "paid", stripePaymentIntentId.
@@ -495,6 +568,14 @@ export interface FulfillPaymentParams {
 export async function fulfillOrderPayment(orderId: string, params: FulfillPaymentParams) {
   try {
     z.string().uuid().parse(orderId);
+
+    // SEC-02: Guard mock payments against execution in production
+    if (params.method === "mock" && process.env.NODE_ENV === "production") {
+      return {
+        success: false,
+        error: "Mock payment simulator is disabled in production environment.",
+      };
+    }
 
     const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
     if (!order) {
@@ -552,6 +633,11 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
               updatedAt: new Date(),
             })
             .where(eq(products.id, item.productId));
+
+          // If this was a single product, sync any parent bundles containing it
+          if (prod.productType === "single") {
+            await syncBundleStockForChildPart(item.productId);
+          }
         }
 
         // Decrement bundle child parts
@@ -578,6 +664,9 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
                   updatedAt: new Date(),
                 })
                 .where(eq(products.id, part.childProductId));
+
+              // Sync parent bundles containing this child part
+              await syncBundleStockForChildPart(part.childProductId);
             }
           }
         }
@@ -606,6 +695,12 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
  * Confirms mock QR payment (wraps authoritative fulfillOrderPayment)
  */
 export async function confirmMockPayment(orderId: string) {
+  if (process.env.NODE_ENV === "production") {
+    return {
+      success: false,
+      error: "Mock payment simulator is disabled in production environment.",
+    };
+  }
   return fulfillOrderPayment(orderId, {
     method: "mock",
     note: "ชำระเงินสำเร็จผ่าน PromptPay QR Code (Mockup Payment Approved)",
@@ -796,6 +891,13 @@ export async function updateOrderReceiptEmail(orderId: string, email: string) {
 export async function rejectMockPayment(orderId: string, reason = "ผู้ใช้ปฏิเสธการชำระเงิน / ยกเลิกคำสั่งซื้อ") {
   try {
     z.string().uuid().parse(orderId);
+
+    if (process.env.NODE_ENV === "production") {
+      return {
+        success: false,
+        error: "Mock payment simulator is disabled in production environment.",
+      };
+    }
 
     const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
     if (!order) {

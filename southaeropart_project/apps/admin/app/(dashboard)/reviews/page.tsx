@@ -1,27 +1,11 @@
-import { Star } from "lucide-react";
+import { getAdminReviewsAction } from "@/actions/review.actions";
+import { ReviewsClient } from "@/components/reviews/ReviewsClient";
 
-export default function ReviewsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-          รีวิวและคะแนนสินค้า (Customer Reviews)
-        </h1>
-        <p className="text-xs sm:text-sm text-gray-400 mt-1">
-          ตรวจสอบและอนุมัติความคิดเห็นจากลูกค้าที่ซื้อสินค้า
-        </p>
-      </div>
+export const dynamic = "force-dynamic";
 
-      <div className="bg-[#121212] border border-[#222222] rounded-xl sm:rounded-2xl p-8 sm:p-12 text-center">
-        <div className="w-12 h-12 rounded-full bg-[#1A1A1A] text-gray-400 mx-auto flex items-center justify-center mb-3">
-          <Star size={24} />
-        </div>
-        <h3 className="text-sm sm:text-base font-bold text-white mb-1">ยังไม่มีรีวิวที่รอการอนุมัติ</h3>
-        <p className="text-xs text-gray-400 max-w-sm mx-auto">
-          รีวิวจากลูกค้าจะถูกส่งมาตรวจสอบที่นี่ก่อนแสดงบนหน้า Storefront
-        </p>
-      </div>
-    </div>
-  );
+export default async function ReviewsPage() {
+  const res = await getAdminReviewsAction();
+  const initialReviews = res.success && res.data ? (res.data as any) : [];
+
+  return <ReviewsClient initialReviews={initialReviews} />;
 }
-

@@ -33,6 +33,7 @@ import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { getLocalizedField } from "@/lib/i18n-helpers";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { KitIncludedParts } from "@/components/products/KitIncludedParts";
+import { ProductReviewsSection } from "@/components/products/ProductReviewsSection";
 import { toggleWishlist, checkIsWishlisted } from "@/actions/wishlist.actions";
 
 export function ProductDetailClient({ product }: { product: MockProduct }) {
@@ -567,7 +568,10 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
       {/* 5. Feature Badges */}
       <FeatureBadges />
 
-      {/* 6. Lightbox Modal */}
+      {/* 6. Customer Reviews */}
+      <ProductReviewsSection productId={product.id} />
+
+      {/* 7. Lightbox Modal */}
       {lightboxOpen && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
           <button

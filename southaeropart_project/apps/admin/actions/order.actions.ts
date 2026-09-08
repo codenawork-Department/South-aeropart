@@ -7,6 +7,8 @@ import {
   orders,
   orderItems,
   orderStatusHistory,
+  orderItemBundleParts,
+  productBundleItems,
   adminUsers,
   users,
   products,
@@ -381,10 +383,23 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
       updates.paymentStatus = "failed";
     }
 
+    const isPreviousPaid =
+      existing.status === "paid" ||
+      existing.status === "processing" ||
+      existing.status === "shipped" ||
+      existing.paymentStatus === "paid";
+
+    const isNowCancelled = status === "cancelled" || status === "refunded";
+
     // 1. Update order
     await db.update(orders).set(updates).where(eq(orders.id, orderId));
 
-    // 2. Insert into history
+    // 2. If order was paid and is now cancelled/refunded, restore stock (INV-02 Guard)
+    if (isPreviousPaid && isNowCancelled) {
+      await restoreOrderStock(orderId);
+    }
+
+    // 3. Insert into history
     await db.insert(orderStatusHistory).values({
       orderId,
       status,
@@ -392,7 +407,7 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
       changedByAdminId: admin.id,
     });
 
-    // 3. Log Audit Event
+    // 4. Log Audit Event
     await logAuditEvent({
       adminId: admin.id,
       action: "order.status_updated",
@@ -413,6 +428,122 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
   } catch (error) {
     console.error("[updateOrderStatusAction] Error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Failed to update status" };
+  }
+}
+
+/**
+ * Restores inventory stock for products and bundle parts when an order is cancelled/refunded.
+ */
+async function restoreOrderStock(orderId: string) {
+  try {
+    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+
+    for (const item of items) {
+      if (item.productId) {
+        // Restore single product stock
+        const [prod] = await db
+          .select({
+            stockQuantity: products.stockQuantity,
+            productType: products.productType,
+            status: products.status,
+          })
+          .from(products)
+          .where(eq(products.id, item.productId))
+          .limit(1);
+
+        if (prod) {
+          const restoredStock = prod.stockQuantity + item.quantity;
+          await db
+            .update(products)
+            .set({
+              stockQuantity: restoredStock,
+              status: prod.status === "out_of_stock" ? "active" : prod.status,
+              updatedAt: new Date(),
+            })
+            .where(eq(products.id, item.productId));
+
+          if (prod.productType === "single") {
+            await syncAdminBundleStockForChild(item.productId);
+          }
+        }
+
+        // Restore bundle child parts
+        const bundleParts = await db
+          .select()
+          .from(orderItemBundleParts)
+          .where(eq(orderItemBundleParts.orderItemId, item.id));
+
+        for (const part of bundleParts) {
+          if (part.childProductId) {
+            const [childProd] = await db
+              .select({
+                stockQuantity: products.stockQuantity,
+                status: products.status,
+              })
+              .from(products)
+              .where(eq(products.id, part.childProductId))
+              .limit(1);
+
+            if (childProd) {
+              const restoredChildStock = childProd.stockQuantity + part.quantity;
+              await db
+                .update(products)
+                .set({
+                  stockQuantity: restoredChildStock,
+                  status: childProd.status === "out_of_stock" ? "active" : childProd.status,
+                  updatedAt: new Date(),
+                })
+                .where(eq(products.id, part.childProductId));
+
+              await syncAdminBundleStockForChild(part.childProductId);
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[restoreOrderStock] Error restoring stock for order:", orderId, err);
+  }
+}
+
+/**
+ * Recalculates and updates bundle stock based on child parts in admin context.
+ */
+async function syncAdminBundleStockForChild(childProductId: string) {
+  try {
+    const parentBundles = await db
+      .select({ bundleProductId: productBundleItems.bundleProductId })
+      .from(productBundleItems)
+      .where(eq(productBundleItems.childProductId, childProductId));
+
+    for (const { bundleProductId } of parentBundles) {
+      const bundleParts = await db
+        .select({
+          childId: productBundleItems.childProductId,
+          partQty: productBundleItems.quantity,
+          childStock: products.stockQuantity,
+        })
+        .from(productBundleItems)
+        .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+        .where(eq(productBundleItems.bundleProductId, bundleProductId));
+
+      if (bundleParts.length === 0) continue;
+
+      const minSets = Math.min(
+        ...bundleParts.map((p) => Math.floor(Math.max(0, p.childStock) / (p.partQty || 1)))
+      );
+
+      await db
+        .update(products)
+        .set({
+          stockQuantity: minSets,
+          status: minSets === 0 ? "out_of_stock" : "active",
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, bundleProductId));
+    }
+  } catch (err) {
+    console.error("[syncAdminBundleStockForChild] Error syncing bundle stock:", err);
   }
 }
 
