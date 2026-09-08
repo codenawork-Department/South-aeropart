@@ -7,7 +7,9 @@
     "dev:webpack": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify": "tsx scripts/verify_loop.ts",
+    "verify:stripe": "tsx scripts/verify_stripe_loop.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.3.0",
@@ -46,6 +48,7 @@
     "eslint-config-next": "^14.2.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
+    "tsx": "^4.23.13",
     "typescript": "^5.5.0"
   }
 }

@@ -707,7 +707,7 @@ export async function seedInitialCatalogAction(): Promise<CatalogActionResult> {
     console.error("[seedInitialCatalogAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการโหลดข้อมูลตั้งต้น",
+      message: "เกิดข้อผิดพลาดในการโหลดข้อมูลตั้งต้น",
     };
   }
 }
@@ -803,7 +803,7 @@ export async function createMaterialAction(
     console.error("[createMaterialAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการเพิ่มวัสดุ",
+      message: "เกิดข้อผิดพลาดในการเพิ่มวัสดุ",
     };
   }
 }
@@ -860,7 +860,7 @@ export async function updateMaterialAction(
     console.error("[updateMaterialAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการแก้ไขวัสดุ",
+      message: "เกิดข้อผิดพลาดในการแก้ไขวัสดุ",
     };
   }
 }
@@ -908,7 +908,7 @@ export async function deleteMaterialAction(id: string): Promise<CatalogActionRes
     console.error("[deleteMaterialAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการลบวัสดุ",
+      message: "เกิดข้อผิดพลาดในการลบวัสดุ",
     };
   }
 }
@@ -1003,7 +1003,7 @@ export async function createInstallationAction(
     console.error("[createInstallationAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการเพิ่มวิธีการติดตั้ง",
+      message: "เกิดข้อผิดพลาดในการเพิ่มวิธีการติดตั้ง",
     };
   }
 }
@@ -1060,7 +1060,7 @@ export async function updateInstallationAction(
     console.error("[updateInstallationAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการแก้ไขวิธีการติดตั้ง",
+      message: "เกิดข้อผิดพลาดในการแก้ไขวิธีการติดตั้ง",
     };
   }
 }
@@ -1108,7 +1108,7 @@ export async function deleteInstallationAction(id: string): Promise<CatalogActio
     console.error("[deleteInstallationAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการลบวิธีการติดตั้ง",
+      message: "เกิดข้อผิดพลาดในการลบวิธีการติดตั้ง",
     };
   }
 }

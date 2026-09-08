@@ -3,12 +3,16 @@ import Stripe from "stripe";
 let stripeInstance: Stripe | null = null;
 
 /**
- * Returns a cached instance of the Stripe client initialized with STRIPE_SECRET_KEY.
+/**
+ * Audit #18: Returns a Stripe client, accepting an explicit secret key or using STRIPE_SECRET_KEY.
  */
-export function getStripe(): Stripe {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+export function getStripe(apiKey?: string): Stripe {
+  const secretKey = apiKey || process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
     throw new Error("STRIPE_SECRET_KEY is not configured in environment variables");
+  }
+  if (apiKey) {
+    return new Stripe(apiKey, { typescript: true });
   }
   if (!stripeInstance) {
     stripeInstance = new Stripe(secretKey, {
@@ -28,6 +32,21 @@ export interface CreatePaymentIntentParams {
 }
 
 /**
+ * Audit #17: Accurately converts a monetary amount (e.g. "35000.15" or 35000) to the smallest unit (satang)
+ * without floating-point precision loss.
+ */
+export function toSmallestCurrencyUnit(amount: string | number): number {
+  const str = String(amount).trim();
+  const [integerPart, decimalPart = ""] = str.split(".");
+  const paddedDecimal = (decimalPart + "00").slice(0, 2);
+  const isNegative = str.startsWith("-");
+  const absInt = integerPart.replace(/^-/, "") || "0";
+  const satangStr = `${absInt}${paddedDecimal}`;
+  const result = parseInt(satangStr, 10);
+  return isNegative ? -result : result;
+}
+
+/**
  * Creates a Stripe PaymentIntent with automatic payment methods (Card, PromptPay, Apple Pay, Google Pay).
  * Correctly converts numeric amounts to satang / smallest currency unit.
  */
@@ -41,9 +60,8 @@ export async function createPaymentIntent({
 }: CreatePaymentIntentParams): Promise<Stripe.PaymentIntent> {
   const stripe = getStripe();
 
-  // Convert to smallest currency unit (e.g. 100 THB = 10000 satang)
-  const numericVal = typeof amountNumeric === "number" ? amountNumeric : parseFloat(amountNumeric);
-  const amountInSmallestUnit = Math.round(numericVal * 100);
+  // Audit #17: Use exact integer conversion instead of parseFloat * 100
+  const amountInSmallestUnit = toSmallestCurrencyUnit(amountNumeric);
 
   const intent = await stripe.paymentIntents.create({
     amount: amountInSmallestUnit,

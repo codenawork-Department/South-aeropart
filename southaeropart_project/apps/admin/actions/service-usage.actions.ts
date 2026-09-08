@@ -108,7 +108,7 @@ export interface CloudinaryMetrics {
   message: string;
 }
 
-export interface OmiseMetrics {
+export interface StripeMetrics {
   configured: boolean;
   isPlaceholder: boolean;
   status: "healthy" | "unconfigured";
@@ -143,7 +143,7 @@ export interface ServiceUsageReport {
   neon: NeonMetrics;
   clerk: ClerkMetrics;
   cloudinary: CloudinaryMetrics;
-  omise: OmiseMetrics;
+  stripe: StripeMetrics;
   hosting: HostingMetrics;
 }
 
@@ -512,25 +512,25 @@ async function fetchCloudinaryMetrics(): Promise<CloudinaryMetrics> {
   return cloudinaryMetrics;
 }
 
-function fetchOmiseMetrics(): OmiseMetrics {
-  const omiseSecret = process.env.OMISE_SECRET_KEY || "";
-  const omisePublic = process.env.OMISE_PUBLIC_KEY || "";
-  const isOmisePlaceholder = !omiseSecret || omiseSecret.includes("skey_test_xxx") || !omisePublic;
-  const isTestMode = omisePublic.startsWith("pkey_test") || omiseSecret.startsWith("skey_test");
+function fetchStripeMetrics(): StripeMetrics {
+  const stripeSecret = process.env.STRIPE_SECRET_KEY || "";
+  const stripePublic = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
+  const isStripePlaceholder = !stripeSecret || stripeSecret.includes("sk_test_xxx") || !stripePublic;
+  const isTestMode = stripePublic.startsWith("pk_test") || stripeSecret.startsWith("sk_test");
 
   return {
-    configured: !isOmisePlaceholder,
-    isPlaceholder: isOmisePlaceholder,
-    status: isOmisePlaceholder ? "unconfigured" : "healthy",
-    mode: isOmisePlaceholder ? "Not Configured" : isTestMode ? "Test / Sandbox" : "Live Mode",
-    publicKeyPrefix: omisePublic ? `${omisePublic.slice(0, 9)}...` : "—",
+    configured: !isStripePlaceholder,
+    isPlaceholder: isStripePlaceholder,
+    status: isStripePlaceholder ? "unconfigured" : "healthy",
+    mode: isStripePlaceholder ? "Not Configured" : isTestMode ? "Test / Sandbox" : "Live Mode",
+    publicKeyPrefix: stripePublic ? `${stripePublic.slice(0, 8)}...` : "—",
     monthlyFee: "0 THB / เดือน (ไม่มีค่าบริการรายเดือน)",
-    transactionFee: "บัตรเครดิต: 3.65% + VAT | PromptPay: ~15 THB",
-    message: isOmisePlaceholder
-      ? "ยังไม่ได้ตั้งค่า Omise API Key จริง (พร้อมเชื่อมต่อเมื่อต้องการรับชำระเงิน)"
+    transactionFee: "บัตรเครดิต: 3.65% + 10 THB | PromptPay: 1.5%",
+    message: isStripePlaceholder
+      ? "ยังไม่ได้ตั้งค่า Stripe API Key จริง (พร้อมเชื่อมต่อเมื่อต้องการรับชำระเงิน)"
       : isTestMode
-      ? "เชื่อมต่อ Omise Sandbox (โหมดทดสอบ) พร้อมรับชำระเงินทดสอบแบบไม่มีค่าใช้จ่าย"
-      : "เชื่อมต่อ Omise Live พร้อมรับชำระเงินจริง คิดค่าธรรมเนียมตามรายการใช้งาน",
+      ? "เชื่อมต่อ Stripe Test Mode พร้อมรับชำระเงินทดสอบ (Cards, PromptPay QR, Apple/Google Pay)"
+      : "เชื่อมต่อ Stripe Live Mode พร้อมรับชำระเงินจริง คิดค่าธรรมเนียมตามรายการใช้งาน",
   };
 }
 
@@ -559,11 +559,11 @@ async function fetchAllServiceMetrics(): Promise<ServiceUsageReport> {
     fetchCloudinaryMetrics(),
   ]);
 
-  const omiseMetrics = fetchOmiseMetrics();
+  const stripeMetrics = fetchStripeMetrics();
   const hostingMetrics = fetchHostingMetrics();
 
   // Calculate summary
-  const allServices = [neonMetrics.status, clerkMetrics.status, cloudinaryMetrics.status];
+  const allServices = [neonMetrics.status, clerkMetrics.status, cloudinaryMetrics.status, stripeMetrics.status];
   const criticalServices = allServices.filter((s) => s === "critical").length;
   const warningServices = allServices.filter((s) => s === "warning").length;
   const healthyServices = allServices.filter((s) => s === "healthy").length;
@@ -584,7 +584,7 @@ async function fetchAllServiceMetrics(): Promise<ServiceUsageReport> {
     neon: neonMetrics,
     clerk: clerkMetrics,
     cloudinary: cloudinaryMetrics,
-    omise: omiseMetrics,
+    stripe: stripeMetrics,
     hosting: hostingMetrics,
   };
 }

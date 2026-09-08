@@ -35,10 +35,29 @@ const nextConfig = {
     ],
   },
   async headers() {
+    const cspHeader = `
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.southaeropart.com https://js.stripe.com https://cdn.jsdelivr.net;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      img-src 'self' blob: data: https://res.cloudinary.com https://img.clerk.com https://images.unsplash.com https://avatars.githubusercontent.com https://*.stripe.com;
+      font-src 'self' data: https://fonts.gstatic.com;
+      connect-src 'self' https://*.clerk.accounts.dev https://clerk.southaeropart.com https://api.stripe.com https://maps.googleapis.com https://res.cloudinary.com https://raw.githubusercontent.com;
+      frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://js.stripe.com https://hooks.stripe.com;
+      media-src 'self' https://res.cloudinary.com blob:;
+      worker-src 'self' blob:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    `.replace(/\s{2,}/g, " ").trim();
+
     return [
       {
         source: "/(.*)",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspHeader,
+          },
           {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
