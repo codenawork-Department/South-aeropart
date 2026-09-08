@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { z } from "zod";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
@@ -13,6 +14,7 @@ function safeRevalidatePath(path: string) {
 }
 import {
   db,
+  rawSql,
   orders,
   orderItems,
   orderStatusHistory,
@@ -23,7 +25,11 @@ import {
   products,
   productImages,
   eq,
+  sql,
   desc,
+  and,
+  gte,
+  inArray,
   Address,
 } from "@repo/db";
 import { sendOrderConfirmationEmail } from "@/lib/order-email";
@@ -133,7 +139,10 @@ export async function createOrder(input: CheckoutInput) {
       throw new Error("Unable to determine customer identity");
     }
 
-    // Pre-flight Stock, Price & Status Verification
+    // Pre-flight Price, Status & Stock Verification
+    // NOTE (Audit #2): Stock availability is checked here for UX (early error),
+    // but the authoritative stock reservation happens atomically AFTER order insert
+    // using UPDATE ... WHERE stock_quantity >= $qty to prevent race conditions.
     interface VerifiedItem {
       productId: string;
       productName: string;
@@ -175,26 +184,18 @@ export async function createOrder(input: CheckoutInput) {
         };
       }
 
-      // 1. Single Product Check
-      if (productRow.productType === "single") {
-        if (productRow.stockQuantity < item.quantity) {
-          return {
-            success: false,
-            error: `สินค้า "${productRow.name}" มีสต็อกคงเหลือไม่เพียงพอ (คงเหลือ ${productRow.stockQuantity} ชิ้น, ท่านสั่งซื้อ ${item.quantity} ชิ้น)`,
-          };
-        }
+      // Non-authoritative stock check for early UX feedback
+      if (productRow.stockQuantity < item.quantity) {
+        const label = productRow.productType === "bundle" ? "ชุดแต่ง" : "สินค้า";
+        const unit = productRow.productType === "bundle" ? "ชุด" : "ชิ้น";
+        return {
+          success: false,
+          error: `${label} "${productRow.name}" มีสต็อกคงเหลือไม่เพียงพอ (คงเหลือ ${productRow.stockQuantity} ${unit}, ท่านสั่งซื้อ ${item.quantity} ${unit})`,
+        };
       }
 
-      // 2. Bundle Product Check (check bundle header stock and all child items)
+      // Bundle child parts: check status and stock (non-authoritative)
       if (productRow.productType === "bundle") {
-        if (productRow.stockQuantity < item.quantity) {
-          return {
-            success: false,
-            error: `ชุดแต่ง "${productRow.name}" มีสต็อกคงเหลือไม่เพียงพอ (คงเหลือ ${productRow.stockQuantity} ชุด, ท่านสั่งซื้อ ${item.quantity} ชุด)`,
-          };
-        }
-
-        // Query constituent child parts from productBundleItems
         const bundleChildParts = await db
           .select({
             childId: productBundleItems.childProductId,
@@ -251,9 +252,9 @@ export async function createOrder(input: CheckoutInput) {
 
     const totalNum = subtotalNum + shippingFeeNum;
 
-    // Generate Order Number: e.g. SA-20260903-8492
+    // Audit #16: Cryptographically random 8-char hex suffix prevents collision (4.3B combinations/day)
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const randomSuffix = randomBytes(4).toString("hex").toUpperCase();
     const orderNumber = `SA-${dateStr}-${randomSuffix}`;
 
     const formattedShippingAddress: Address = {
@@ -339,6 +340,63 @@ export async function createOrder(input: CheckoutInput) {
       }
     }
 
+    // ── Audit #2: Atomic stock reservation ──────────────────────────────────
+    // Use atomic UPDATE ... WHERE stock_quantity >= $qty to prevent overselling.
+    // If any reservation fails, delete the order (rollback) and return error.
+    for (const item of verifiedItems) {
+      // Atomically decrement the product's own stock
+      const [reserved] = await db
+        .update(products)
+        .set({
+          stockQuantity: sql`${products.stockQuantity} - ${item.quantity}`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(products.id, item.productId),
+            gte(products.stockQuantity, item.quantity)
+          )
+        )
+        .returning({ id: products.id, stockQuantity: products.stockQuantity });
+
+      if (!reserved) {
+        // Rollback: delete order items, bundle parts, and order
+        const createdItemIds = await db
+          .select({ id: orderItems.id })
+          .from(orderItems)
+          .where(eq(orderItems.orderId, createdOrder.id));
+        for (const oi of createdItemIds) {
+          await db.delete(orderItemBundleParts).where(eq(orderItemBundleParts.orderItemId, oi.id));
+        }
+        await db.delete(orderItems).where(eq(orderItems.orderId, createdOrder.id));
+        await db.delete(orders).where(eq(orders.id, createdOrder.id));
+        // Restore previously decremented stock for items that were already reserved
+        for (const prev of verifiedItems) {
+          if (prev.productId === item.productId) break; // stop at the failed item
+          await db
+            .update(products)
+            .set({
+              stockQuantity: sql`${products.stockQuantity} + ${prev.quantity}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(products.id, prev.productId));
+        }
+        return {
+          success: false,
+          error: `สินค้า "${item.productName}" มีสต็อกคงเหลือไม่เพียงพอ กรุณาลองใหม่อีกครั้ง`,
+        };
+      }
+
+      // Auto-set out_of_stock status when stock reaches 0
+      if (reserved.stockQuantity === 0) {
+        await db
+          .update(products)
+          .set({ status: "out_of_stock", updatedAt: new Date() })
+          .where(eq(products.id, item.productId));
+      }
+    }
+    // ── End atomic stock reservation ────────────────────────────────────────
+
     // 3. Insert initial status history
     await db.insert(orderStatusHistory).values({
       orderId: createdOrder.id,
@@ -379,7 +437,7 @@ export async function createOrder(input: CheckoutInput) {
     console.error("[createOrder] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง",
+      error: "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง",
     };
   }
 }
@@ -426,32 +484,51 @@ export async function getOrderDetails(orderId: string) {
       .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, orderId));
 
-    // Fetch primary images & bundle parts for these items
-    const itemsWithImages = await Promise.all(
-      rawItems.map(async (item) => {
-        let imageUrl: string | null = null;
-        if (item.productId) {
-          const [img] = await db
-            .select({ secureUrl: productImages.secureUrl })
-            .from(productImages)
-            .where(eq(productImages.productId, item.productId))
-            .orderBy(desc(productImages.isPrimary))
-            .limit(1);
-          imageUrl = img?.secureUrl || null;
+    // Audit #14: Batch-fetch all productImages and bundleParts in single queries to eliminate N+1
+    const productIds = Array.from(new Set(rawItems.map((i) => i.productId).filter(Boolean))) as string[];
+    const itemIds = rawItems.map((i) => i.id);
+
+    // Fetch primary images in batch
+    const imageMap = new Map<string, string>();
+    if (productIds.length > 0) {
+      const allImages = await db
+        .select({
+          productId: productImages.productId,
+          secureUrl: productImages.secureUrl,
+          isPrimary: productImages.isPrimary,
+        })
+        .from(productImages)
+        .where(inArray(productImages.productId, productIds))
+        .orderBy(desc(productImages.isPrimary));
+
+      for (const img of allImages) {
+        if (!imageMap.has(img.productId)) {
+          imageMap.set(img.productId, img.secureUrl);
         }
+      }
+    }
 
-        const bundleParts = await db
-          .select()
-          .from(orderItemBundleParts)
-          .where(eq(orderItemBundleParts.orderItemId, item.id));
+    // Fetch bundle parts in batch
+    type BundlePartItem = typeof orderItemBundleParts.$inferSelect;
+    const bundlePartsMap = new Map<string, BundlePartItem[]>();
+    if (itemIds.length > 0) {
+      const allBundleParts = await db
+        .select()
+        .from(orderItemBundleParts)
+        .where(inArray(orderItemBundleParts.orderItemId, itemIds));
 
-        return {
-          ...item,
-          imageUrl,
-          bundleParts,
-        };
-      })
-    );
+      for (const part of allBundleParts) {
+        const list = bundlePartsMap.get(part.orderItemId) || [];
+        list.push(part);
+        bundlePartsMap.set(part.orderItemId, list);
+      }
+    }
+
+    const itemsWithImages = rawItems.map((item) => ({
+      ...item,
+      imageUrl: item.productId ? imageMap.get(item.productId) || null : null,
+      bundleParts: bundlePartsMap.get(item.id) || [],
+    }));
 
     // Fetch status history
     const history = await db
@@ -484,6 +561,7 @@ export async function getOrderStatus(orderId: string) {
     const [order] = await db
       .select({
         id: orders.id,
+        userId: orders.userId,
         status: orders.status,
         paymentStatus: orders.paymentStatus,
         orderNumber: orders.orderNumber,
@@ -494,6 +572,20 @@ export async function getOrderStatus(orderId: string) {
 
     if (!order) {
       return { success: false, error: "Order not found" };
+    }
+
+    // Audit #8: IDOR Security Guard: Registered user orders must only be accessed by the account owner
+    if (!order.userId.startsWith("guest_")) {
+      let currentUserId: string | null = null;
+      try {
+        currentUserId = auth().userId;
+      } catch {
+        currentUserId = null;
+      }
+
+      if (!currentUserId || currentUserId !== order.userId) {
+        return { success: false, error: "Unauthorized access to order status" };
+      }
     }
 
     return {
@@ -582,12 +674,9 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
       return { success: false, error: "Order not found" };
     }
 
-    if (order.paymentStatus === "paid") {
-      return { success: true, message: "Order is already paid" };
-    }
-
-    // 1. Update order status
-    await db
+    // Audit #3: Atomic idempotency guard — UPDATE only if not already paid.
+    // If 0 rows returned, another concurrent call already fulfilled this order.
+    const [updatedOrder] = await db
       .update(orders)
       .set({
         status: "paid",
@@ -596,7 +685,17 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
         omiseChargeId: params.method !== "stripe" ? (params.chargeId || `mock_qr_${Date.now()}`) : order.omiseChargeId,
         updatedAt: new Date(),
       })
-      .where(eq(orders.id, orderId));
+      .where(
+        and(
+          eq(orders.id, orderId),
+          sql`${orders.paymentStatus} != 'paid'`
+        )
+      )
+      .returning({ id: orders.id });
+
+    if (!updatedOrder) {
+      return { success: true, message: "Order is already paid" };
+    }
 
     // 2. Insert into history
     const historyNote = params.note || (params.method === "stripe"
@@ -610,66 +709,66 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
     });
 
     // 3. Decrement product stock (single products & bundle child parts)
+    // 3. Audit #15: Decrement product stock in batch upfront to eliminate N+1 cascade
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-    for (const item of items) {
-      if (item.productId) {
-        // Decrement direct product
-        const [prod] = await db
-          .select({
-            stockQuantity: products.stockQuantity,
-            productType: products.productType,
-          })
-          .from(products)
-          .where(eq(products.id, item.productId))
-          .limit(1);
+    const itemIds = items.map((i) => i.id);
 
-        if (prod) {
-          const newStock = Math.max(0, prod.stockQuantity - item.quantity);
-          await db
-            .update(products)
-            .set({
-              stockQuantity: newStock,
-              status: newStock === 0 ? "out_of_stock" : undefined,
-              updatedAt: new Date(),
-            })
-            .where(eq(products.id, item.productId));
-
-          // If this was a single product, sync any parent bundles containing it
-          if (prod.productType === "single") {
-            await syncBundleStockForChildPart(item.productId);
-          }
-        }
-
-        // Decrement bundle child parts
-        const bundleParts = await db
+    // Batch-fetch all bundle parts for all items in 1 query
+    const allBundleParts = itemIds.length > 0
+      ? await db
           .select()
           .from(orderItemBundleParts)
-          .where(eq(orderItemBundleParts.orderItemId, item.id));
+          .where(inArray(orderItemBundleParts.orderItemId, itemIds))
+      : [];
 
-        for (const part of bundleParts) {
-          if (part.childProductId) {
-            const [childProd] = await db
-              .select({ stockQuantity: products.stockQuantity })
-              .from(products)
-              .where(eq(products.id, part.childProductId))
-              .limit(1);
+    // Aggregate required stock decrement per productId
+    const decrementMap = new Map<string, number>();
+    const partsToSync = new Set<string>();
 
-            if (childProd) {
-              const newChildStock = Math.max(0, childProd.stockQuantity - part.quantity);
-              await db
-                .update(products)
-                .set({
-                  stockQuantity: newChildStock,
-                  status: newChildStock === 0 ? "out_of_stock" : undefined,
-                  updatedAt: new Date(),
-                })
-                .where(eq(products.id, part.childProductId));
+    for (const item of items) {
+      if (item.productId) {
+        decrementMap.set(item.productId, (decrementMap.get(item.productId) || 0) + item.quantity);
+      }
+    }
 
-              // Sync parent bundles containing this child part
-              await syncBundleStockForChildPart(part.childProductId);
-            }
-          }
+    for (const part of allBundleParts) {
+      if (part.childProductId) {
+        decrementMap.set(part.childProductId, (decrementMap.get(part.childProductId) || 0) + part.quantity);
+        partsToSync.add(part.childProductId);
+      }
+    }
+
+    // Batch-fetch and update all impacted products
+    const targetProductIds = Array.from(decrementMap.keys());
+    if (targetProductIds.length > 0) {
+      const targetProds = await db
+        .select({
+          id: products.id,
+          stockQuantity: products.stockQuantity,
+          productType: products.productType,
+        })
+        .from(products)
+        .where(inArray(products.id, targetProductIds));
+
+      for (const prod of targetProds) {
+        if (prod.productType === "single") {
+          partsToSync.add(prod.id);
         }
+        const dec = decrementMap.get(prod.id) || 0;
+        const newStock = Math.max(0, prod.stockQuantity - dec);
+        await db
+          .update(products)
+          .set({
+            stockQuantity: newStock,
+            status: newStock === 0 ? "out_of_stock" : undefined,
+            updatedAt: new Date(),
+          })
+          .where(eq(products.id, prod.id));
+      }
+
+      // Deduplicated bundle stock synchronization (once per unique constituent part)
+      for (const partId of partsToSync) {
+        await syncBundleStockForChildPart(partId);
       }
     }
 
@@ -826,7 +925,7 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
     console.error("[createOrGetStripePaymentIntent] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to initialize Stripe payment",
+      error: "Failed to initialize Stripe payment",
     };
   }
 }

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { db, adminUsers, eq, sql } from "@repo/db";
+import { db, adminUsers, eq, sql, rawSql } from "@repo/db";
 import {
   hashPassword,
   verifyPassword,
@@ -201,19 +201,7 @@ export async function setupSuperAdminAction(
   _prevState: AuthActionResult | null,
   formData: FormData
 ): Promise<AuthActionResult> {
-  // 1) Guard: Check if any admin already exists
-  const [existingCount] = await db
-    .select({ count: sql<number>`cast(count(*) as int)` })
-    .from(adminUsers);
-
-  if (existingCount.count > 0) {
-    return {
-      success: false,
-      error: "ระบบมี Admin อยู่แล้ว ไม่สามารถสร้างซ้ำได้",
-    };
-  }
-
-  // 2) Validate input
+  // 1) Validate input first (before touching the DB)
   const raw = {
     fullName: formData.get("fullName"),
     email: formData.get("email"),
@@ -232,28 +220,33 @@ export async function setupSuperAdminAction(
 
   const { fullName, email, password } = parsed.data;
 
-  // 3) Hash the password
+  // 2) Hash the password
   const passwordHash = await hashPassword(password);
 
-  // 4) Insert the super admin
-  const [superAdmin] = await db
-    .insert(adminUsers)
-    .values({
-      email,
-      passwordHash,
-      fullName,
-      role: "super_admin",
-      isActive: true,
-      passwordChangedAt: new Date(),
-    })
-    .returning({ id: adminUsers.id });
+  // 3) Audit #4: Atomic guard — INSERT only if admin_users table is empty.
+  //    This eliminates the TOCTOU race between COUNT(*) and INSERT.
+  const result = await rawSql`
+    INSERT INTO admin_users (email, password_hash, full_name, role, is_active, password_changed_at)
+    SELECT ${email}, ${passwordHash}, ${fullName}, 'super_admin', true, NOW()
+    WHERE NOT EXISTS (SELECT 1 FROM admin_users)
+    RETURNING id
+  `;
 
-  // 5) Audit log
+  if (!result || result.length === 0) {
+    return {
+      success: false,
+      error: "ระบบมี Admin อยู่แล้ว ไม่สามารถสร้างซ้ำได้",
+    };
+  }
+
+  const superAdminId = (result[0] as { id: string }).id;
+
+  // 4) Audit log
   await logAuditEvent({
-    adminId: superAdmin.id,
+    adminId: superAdminId,
     action: "admin.super_admin_created",
     entityType: "admin_user",
-    entityId: superAdmin.id,
+    entityId: superAdminId,
     metadata: { email, fullName },
   });
 

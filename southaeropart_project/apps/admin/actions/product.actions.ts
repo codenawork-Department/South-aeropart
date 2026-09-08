@@ -1127,7 +1127,7 @@ export async function updateProductAction(
     console.error("[UpdateProductAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการอัปเดตสินค้า",
+      message: "เกิดข้อผิดพลาดในการอัปเดตสินค้า",
     };
   }
 }
@@ -1190,7 +1190,7 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
     console.error("[DeleteProductAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการลบสินค้า",
+      message: "เกิดข้อผิดพลาดในการลบสินค้า",
     };
   }
 }

@@ -25,7 +25,7 @@
 
 ---
 
-## 🌐 3. การเปิด Public Tunnel สำหรับทดสอบ Webhook (Clerk / Omise)
+## 🌐 3. การเปิด Public Tunnel สำหรับทดสอบ Webhook (Clerk / Stripe)
 
 | คำสั่ง | คำอธิบาย |
 |---|---|
@@ -71,4 +71,4 @@
 * **Storefront:** [http://localhost:3000](http://localhost:3000)
 * **Admin Dashboard:** [http://localhost:3001](http://localhost:3001)
 * **Drizzle Studio (Database GUI):** [https://local.drizzle.studio](https://local.drizzle.studio)
-* **Webhook Endpoint Path:** `/api/webhooks/clerk` (สำหรับ Clerk) และ `/api/webhooks/omise` (สำหรับ Omise)
+* **Webhook Endpoint Path:** `/api/webhooks/clerk` (สำหรับ Clerk) และ `/api/webhooks/stripe` (สำหรับ Stripe)

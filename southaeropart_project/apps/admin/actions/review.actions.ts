@@ -131,7 +131,7 @@ export async function updateReviewModerationAction(input: UpdateReviewInput) {
     console.error("[updateReviewModerationAction] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update review status",
+      error: "Failed to update review status",
     };
   }
 }

@@ -1,10 +1,10 @@
 import { Resend } from "resend";
 
 /**
- * Get Resend client instance safely with API key validation
+ * Audit #18: Get Resend client instance accepting an explicit API key or using RESEND_API_KEY
  */
-export function getResendClient(): Resend | null {
-  const apiKey = process.env.RESEND_API_KEY;
+export function getResendClient(explicitApiKey?: string): Resend | null {
+  const apiKey = explicitApiKey || process.env.RESEND_API_KEY;
   if (!apiKey) {
     return null;
   }
@@ -140,7 +140,26 @@ export async function sendBatchEmails(
           }
         }
       } else {
-        successCount += chunk.length;
+        // Audit #20: Inspect individual batch response items instead of blindly adding chunk.length
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any)?.data)
+            ? (data as any).data
+            : null;
+
+        if (items) {
+          for (let j = 0; j < chunk.length; j++) {
+            const itemRes = items[j];
+            if (itemRes && itemRes.id) {
+              successCount++;
+            } else {
+              failedCount++;
+              errors.push(`${chunk[j].to}: Batch delivery failed`);
+            }
+          }
+        } else {
+          successCount += chunk.length;
+        }
       }
     } catch (err: any) {
       // Fallback to individual send

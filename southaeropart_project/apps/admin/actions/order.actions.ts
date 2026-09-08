@@ -427,7 +427,7 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
     return { success: true, message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว` };
   } catch (error) {
     console.error("[updateOrderStatusAction] Error:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Failed to update status" };
+    return { success: false, error: "Failed to update status" };
   }
 }
 
@@ -607,7 +607,7 @@ export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput
     return { success: true, message: "บันทึกข้อมูลการจัดส่งสำเร็จ" };
   } catch (error) {
     console.error("[updateOrderFulfillmentAction] Error:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Failed to update fulfillment" };
+    return { success: false, error: "Failed to update fulfillment" };
   }
 }
 

@@ -8,6 +8,7 @@ import {
   useProgress,
   ContactShadows,
   Environment,
+  Lightformer,
 } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -323,8 +324,53 @@ export function CarScene({
         }}
         shadows
       >
-        {/* Sketchfab-Grade Balanced Studio Environment Lighting */}
-        <Environment preset="studio" environmentIntensity={0.65} />
+        {/* Studio-Grade Automotive Environment Lighting (Self-contained, zero external network fetch) */}
+        <Environment environmentIntensity={0.7}>
+          {/* Overhead Softbox */}
+          <Lightformer
+            form="rect"
+            intensity={2.2}
+            color="#ffffff"
+            scale={[12, 6, 1]}
+            position={[0, 6, 0]}
+            rotation={[-Math.PI / 2, 0, 0]}
+          />
+          {/* Key Side Soft Light Strip */}
+          <Lightformer
+            form="rect"
+            intensity={1.8}
+            color="#ffffff"
+            scale={[14, 2.5, 1]}
+            position={[-6, 2.5, 0]}
+            rotation={[0, Math.PI / 2, 0]}
+          />
+          {/* Fill Side Soft Light Strip (Subtle Cool Tint) */}
+          <Lightformer
+            form="rect"
+            intensity={1.2}
+            color="#d6e4ff"
+            scale={[14, 2.5, 1]}
+            position={[6, 2.5, 0]}
+            rotation={[0, -Math.PI / 2, 0]}
+          />
+          {/* Front Nose & Splitter Accent */}
+          <Lightformer
+            form="rect"
+            intensity={1.5}
+            color="#ffffff"
+            scale={[8, 2, 1]}
+            position={[0, 1.8, 6]}
+            rotation={[0, Math.PI, 0]}
+          />
+          {/* Rear Wing & Diffuser Soft Accent */}
+          <Lightformer
+            form="ring"
+            intensity={1.6}
+            color="#ffeedd"
+            scale={4}
+            position={[0, 2, -6]}
+          />
+        </Environment>
 
         {/* Subtle Ambient Fill for Natural Shadow Depth */}
         <ambientLight intensity={0.18} />

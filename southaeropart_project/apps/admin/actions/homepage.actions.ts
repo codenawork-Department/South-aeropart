@@ -128,7 +128,7 @@ export async function uploadHeroCardImageAction(fileBase64: string): Promise<Act
     console.error("[uploadHeroCardImageAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ",
+      message: "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ",
     };
   }
 }
@@ -204,7 +204,7 @@ export async function updateHeroCardAction(
     console.error("[updateHeroCardAction] Error:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
+      message: "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
     };
   }
 }

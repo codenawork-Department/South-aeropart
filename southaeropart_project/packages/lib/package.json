@@ -6,7 +6,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./cloudinary": "./src/cloudinary.ts",
-    "./omise": "./src/omise.ts",
     "./resend": "./src/resend.ts",
     "./stripe": "./src/stripe.ts",
     "./moderation": "./src/moderation/text-moderation.ts"

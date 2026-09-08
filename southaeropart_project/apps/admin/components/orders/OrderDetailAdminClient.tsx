@@ -533,13 +533,13 @@ export function OrderDetailAdminClient({
                   {order.paymentStatus}
                 </span>
               </div>
-              {order.omiseChargeId && (
+              {(order.stripePaymentIntentId || order.omiseChargeId) && (
                 <div className="pt-2 border-t border-[#1C1C1C]">
                   <span className="text-gray-500 block text-[0.65rem] uppercase font-mono">
-                    TRANSACTION CHARGE ID:
+                    {order.stripePaymentIntentId ? "STRIPE INTENT ID:" : "TRANSACTION ID:"}
                   </span>
                   <span className="text-gray-300 font-mono text-[0.7rem] break-all">
-                    {order.omiseChargeId}
+                    {order.stripePaymentIntentId || order.omiseChargeId}
                   </span>
                 </div>
               )}

@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Audit Issue #1: Pre-commit hook to block accidental secret commits.
+#
+# Install:
+#   git config core.hooksPath southaeropart_project/scripts/git-hooks
+# ──────────────────────────────────────────────────────────────────────────────
+
+SECRETS_PATTERN='(CLERK_SECRET_KEY|STRIPE_SECRET_KEY|OMISE_SECRET_KEY|CLOUDINARY_API_SECRET|ADMIN_SESSION_SECRET|RESEND_API_KEY|DATABASE_URL|CLERK_WEBHOOK_SECRET|STRIPE_WEBHOOK_SECRET)=[^$]'
+
+# 1. Check for .env files being staged (excluding .env.example)
+STAGED_ENV=$(git diff --cached --name-only | grep -E '\.env($|\.)' | grep -v '\.env\.example$')
+if [ -n "$STAGED_ENV" ]; then
+  echo "❌ BLOCKED: .env file(s) staged for commit:"
+  echo "$STAGED_ENV"
+  echo ""
+  echo "Remove with: git reset HEAD <file>"
+  exit 1
+fi
+
+# 2. Check staged diff contents for hardcoded secret patterns
+if git diff --cached -U0 --diff-filter=d | grep -qE "$SECRETS_PATTERN"; then
+  echo "❌ BLOCKED: Staged changes contain what appears to be a hardcoded secret."
+  echo ""
+  echo "Matches found:"
+  git diff --cached -U0 --diff-filter=d | grep -nE "$SECRETS_PATTERN" | head -10
+  echo ""
+  echo "Use environment variables or a secrets manager instead."
+  exit 1
+fi
+
+exit 0

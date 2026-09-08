@@ -1,10 +1,21 @@
 import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+/**
+ * Audit #18: Configuration function accepting explicit credentials
+ */
+export function configureCloudinary(config?: {
+  cloudName?: string;
+  apiKey?: string;
+  apiSecret?: string;
+}) {
+  cloudinary.config({
+    cloud_name: config?.cloudName || process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: config?.apiKey || process.env.CLOUDINARY_API_KEY,
+    api_secret: config?.apiSecret || process.env.CLOUDINARY_API_SECRET,
+  });
+}
+
+configureCloudinary();
 
 export interface UploadImageOptions {
   folder?: string;
@@ -74,19 +85,44 @@ export async function uploadModeratedImage(fileDataUrl: string, folder: string) 
 }
 
 /**
- * Upload multiple images concurrently
+ * Audit #19: Concurrency pool runner to bound simultaneous network requests
+ */
+async function asyncPool<T, R>(
+  limit: number,
+  items: T[],
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  const executing: Set<Promise<void>> = new Set();
+
+  for (let i = 0; i < items.length; i++) {
+    const p = Promise.resolve().then(() => fn(items[i])).then((res) => {
+      results[i] = res;
+    });
+    executing.add(p);
+    const clean = () => executing.delete(p);
+    p.then(clean, clean);
+    if (executing.size >= limit) {
+      await Promise.race(executing);
+    }
+  }
+  await Promise.all(executing);
+  return results;
+}
+
+/**
+ * Upload multiple images with concurrency limit (default 5 concurrent uploads)
  */
 export async function uploadMultipleImages(
-  files: Array<{ data: string; folder?: string; tags?: string[] }>
+  files: Array<{ data: string; folder?: string; tags?: string[] }>,
+  concurrencyLimit = 5
 ): Promise<CloudinaryUploadResult[]> {
-  const uploadPromises = files.map((file) =>
+  return asyncPool(concurrencyLimit, files, (file) =>
     uploadImage(file.data, {
       folder: file.folder || "south-aero/products",
       tags: file.tags || ["product"],
     })
   );
-
-  return Promise.all(uploadPromises);
 }
 
 /**

@@ -633,7 +633,7 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
           </div>
         </div>
 
-        {/* ── 4. OMISE + HOSTING ── */}
+        {/* ── 4. STRIPE + HOSTING ── */}
         <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-purple-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-purple-500/5 flex flex-col">
           <div className="flex items-start justify-between gap-3 mb-5">
             <div className="flex items-center gap-3">
@@ -642,29 +642,29 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white">Omise &amp; Hosting</h3>
+                  <h3 className="text-sm font-bold text-white">Stripe &amp; Hosting</h3>
                   <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
                     Pay
                   </span>
                 </div>
                 <p className="text-[0.7rem] text-gray-500 mt-0.5">
-                  PromptPay · Credit Card · Vercel Edge
+                  Cards · PromptPay QR · Apple/Google Pay
                 </p>
               </div>
             </div>
             <div className="flex gap-1.5">
-              <StatusBadge status={report.omise.status} />
+              <StatusBadge status={report.stripe.status} />
             </div>
           </div>
 
           <div className="space-y-3 mb-4">
-            {/* Omise row */}
+            {/* Stripe row */}
             <div className="bg-[#080808] border border-[#1A1A1A] rounded-xl p-3.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[0.62rem] text-gray-500 uppercase tracking-widest">Omise Gateway</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{report.omise.mode}</p>
-                  <p className="text-[0.65rem] text-gray-500 mt-0.5">{report.omise.transactionFee}</p>
+                  <p className="text-[0.62rem] text-gray-500 uppercase tracking-widest">Stripe Gateway</p>
+                  <p className="text-sm font-semibold text-white mt-0.5">{report.stripe.mode}</p>
+                  <p className="text-[0.65rem] text-gray-500 mt-0.5">{report.stripe.transactionFee}</p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
@@ -717,7 +717,7 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
           </div>
 
           <div className="mt-auto pt-4 border-t border-[#181818]">
-            <p className="text-[0.68rem] text-gray-500">{report.omise.message}</p>
+            <p className="text-[0.68rem] text-gray-500">{report.stripe.message}</p>
           </div>
         </div>
       </div>
