@@ -1,41 +1,46 @@
-// Custom blocklist patterns (supplement thai-bad-words)
+// Custom blocklist patterns for profanity, spam, and abusive language (Thai & English)
 const CUSTOM_BLOCKLIST_PATTERNS: RegExp[] = [
-  // Add custom patterns as needed
+  /fuck/i,
+  /shit/i,
+  /bitch/i,
+  /bastard/i,
+  /asshole/i,
+  /dick/i,
+  /cunt/i,
+  /scam/i,
+  /ควย/i,
+  /เหี้ย/i,
+  /สัตว์นรก/i,
+  /เย็ด/i,
+  /จังไร/i,
+  /ระยำ/i,
+  /กวนส้น/i,
+  /ชาติหมา/i,
+  /หน้าตัวเมีย/i,
+  /ส้นตีน/i,
+  /หอกหัก/i,
 ];
 
 /**
  * Check text content for profanity and inappropriate language.
- * Uses thai-bad-words for Thai language and custom regex patterns.
  * Returns { clean: boolean, reason?: string }
  */
 export async function moderateText(text: string): Promise<{
   clean: boolean;
   reason?: string;
 }> {
-  // Check custom patterns first
+  if (!text || typeof text !== "string") {
+    return { clean: true };
+  }
+
+  // Check blocklist patterns
   for (const pattern of CUSTOM_BLOCKLIST_PATTERNS) {
     if (pattern.test(text)) {
       return {
         clean: false,
-        reason: "Text contains inappropriate content (custom filter)",
+        reason: "ข้อความมีถ้อยคำที่ไม่สุภาพหรือไม่เหมาะสมตามนโยบายของระบบ (Detected Profanity/Abuse)",
       };
     }
-  }
-
-  // Thai bad words check (dynamic import for ESM compatibility)
-  try {
-    const thaiBadWords = await import("thai-bad-words");
-    const checker = thaiBadWords.default || thaiBadWords;
-
-    if (typeof checker.isProfane === "function" && checker.isProfane(text)) {
-      return {
-        clean: false,
-        reason: "Text contains inappropriate Thai language",
-      };
-    }
-  } catch {
-    // thai-bad-words not installed — skip this check
-    console.warn("thai-bad-words not available, skipping Thai profanity check");
   }
 
   return { clean: true };

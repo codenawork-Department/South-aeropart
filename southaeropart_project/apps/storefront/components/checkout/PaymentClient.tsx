@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import type { Order, OrderItem, Address } from "@repo/db";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { useCart } from "@/components/providers/CartProvider";
 import { StripePaymentForm } from "./StripePaymentForm";
 
 interface PaymentClientProps {
@@ -42,11 +43,29 @@ interface PaymentClientProps {
 export function PaymentClient({ order, items, accountEmail }: PaymentClientProps) {
   const router = useRouter();
   const { formatPrice, currency } = useCurrency();
+  const { clearCart } = useCart();
+
+  // Clear cart only after reaching payment screen if coming from checkout
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const shouldClear = sessionStorage.getItem("southaero_clear_cart");
+        if (shouldClear) {
+          sessionStorage.removeItem("southaero_clear_cart");
+          clearCart();
+        }
+      }
+    } catch {
+      // ignore sessionStorage error
+    }
+  }, [clearCart]);
 
   // Receipt Email state: Pre-filled with order's shipping address email or user's account email
   const initialEmail =
     (order.shippingAddress as Address)?.email?.trim() || accountEmail?.trim() || "";
   const [receiptEmail, setReceiptEmail] = useState<string>(initialEmail);
+
+  const isProduction = process.env.NODE_ENV === "production";
 
   // Active Tab: "stripe" (default) or "simulator" (developer/tester)
   const [activeTab, setActiveTab] = useState<"stripe" | "simulator">("stripe");
@@ -277,34 +296,36 @@ export function PaymentClient({ order, items, accountEmail }: PaymentClientProps
         </p>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="max-w-4xl mx-auto mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <button
-          onClick={() => setActiveTab("stripe")}
-          type="button"
-          className={`w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-heading text-xs uppercase tracking-wider font-bold transition-all cursor-pointer ${
-            activeTab === "stripe"
-              ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30 border border-red-500"
-              : "bg-[#141414] text-neutral-400 hover:text-white border border-white/10 hover:border-white/20"
-          }`}
-        >
-          <CreditCard className="h-4 w-4" />
-          <span>STRIPE SECURE PAYMENT (CARD / PROMPTPAY / WALLET)</span>
-        </button>
+      {/* Tabs Navigation (Development / Testing Only) */}
+      {!isProduction && (
+        <div className="max-w-4xl mx-auto mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => setActiveTab("stripe")}
+            type="button"
+            className={`w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-heading text-xs uppercase tracking-wider font-bold transition-all cursor-pointer ${
+              activeTab === "stripe"
+                ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30 border border-red-500"
+                : "bg-[#141414] text-neutral-400 hover:text-white border border-white/10 hover:border-white/20"
+            }`}
+          >
+            <CreditCard className="h-4 w-4" />
+            <span>STRIPE SECURE PAYMENT (CARD / PROMPTPAY / WALLET)</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab("simulator")}
-          type="button"
-          className={`w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-heading text-xs uppercase tracking-wider font-bold transition-all cursor-pointer ${
-            activeTab === "simulator"
-              ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30 border border-red-500"
-              : "bg-[#141414] text-neutral-400 hover:text-white border border-white/10 hover:border-white/20"
-          }`}
-        >
-          <Smartphone className="h-4 w-4" />
-          <span>PROMPTPAY QR / TESTER SIMULATOR</span>
-        </button>
-      </div>
+          <button
+            onClick={() => setActiveTab("simulator")}
+            type="button"
+            className={`w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-heading text-xs uppercase tracking-wider font-bold transition-all cursor-pointer ${
+              activeTab === "simulator"
+                ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30 border border-red-500"
+                : "bg-[#141414] text-neutral-400 hover:text-white border border-white/10 hover:border-white/20"
+            }`}
+          >
+            <Smartphone className="h-4 w-4" />
+            <span>PROMPTPAY QR / TESTER SIMULATOR</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Grid */}
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
@@ -464,8 +485,8 @@ export function PaymentClient({ order, items, accountEmail }: PaymentClientProps
             </div>
           )}
 
-          {/* TAB 2: SIMULATOR & PROMPTPAY QR */}
-          {activeTab === "simulator" && (
+          {/* TAB 2: SIMULATOR & PROMPTPAY QR (Development / Testing Only) */}
+          {!isProduction && activeTab === "simulator" && (
             <div className="space-y-6">
               {/* QR Code Card */}
               <div className="bg-[#121212] border border-[#222222] rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center relative overflow-hidden">

@@ -15,15 +15,13 @@ import { syncUserWithClerk } from "@/lib/user-sync";
 export async function POST(req: NextRequest) {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
 
-  // If webhook secret is not configured or is placeholder, log and accept
+  // Verify webhook secret configuration (Fail-closed to prevent unverified payload injection)
   if (!webhookSecret || webhookSecret.startsWith("whsec_xxx")) {
-    console.warn("CLERK_WEBHOOK_SECRET not properly configured — parsing payload directly");
-    try {
-      const body = await req.json();
-      return handleEvent(body);
-    } catch {
-      return NextResponse.json({ error: "invalid json" }, { status: 400 });
-    }
+    console.error("[Clerk Webhook] CLERK_WEBHOOK_SECRET is not properly configured. Rejecting request to prevent unverified execution.");
+    return NextResponse.json(
+      { error: "Webhook signature secret is not configured" },
+      { status: 500 }
+    );
   }
 
   // Verify webhook signature via Svix

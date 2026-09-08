@@ -49,6 +49,7 @@ export function CheckoutClient() {
 
   // State flags
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const subtotalNum = parseFloat(subtotal || "0");
@@ -166,9 +167,15 @@ export function CheckoutClient() {
       });
 
       if (res.success && res.orderId) {
-        // Clear cart in local storage
-        clearCart();
-        // Redirect to payment screen
+        setIsRedirecting(true);
+        try {
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("southaero_clear_cart", "1");
+          }
+        } catch {
+          // ignore sessionStorage error
+        }
+        // Redirect directly to payment screen without flashing empty cart
         router.push(`/checkout/payment/${res.orderId}`);
       } else {
         setErrorMsg(res.error || "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง");
@@ -185,7 +192,7 @@ export function CheckoutClient() {
     return <CheckoutPageSkeleton />;
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && !isRedirecting) {
     return (
       <div className="container-main py-16 md:py-24 text-center">
         <div className="max-w-md mx-auto bg-[#121212] border border-[#222222] rounded-xl p-8 sm:p-10 shadow-2xl">
@@ -712,11 +719,16 @@ export function CheckoutClient() {
             {/* Submit Action */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isRedirecting}
               id="place-order-btn"
               className="btn-primary w-full justify-center gap-2 py-4 text-xs tracking-widest font-heading font-bold uppercase shadow-xl shadow-[var(--accent-red)]/20 disabled:opacity-50"
             >
-              {loading ? (
+              {isRedirecting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>REDIRECTING TO PAYMENT...</span>
+                </div>
+              ) : loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>CREATING ORDER...</span>
