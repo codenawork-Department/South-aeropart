@@ -8,13 +8,22 @@ import {
   useProgress,
   ContactShadows,
   Environment,
-  Lightformer,
 } from "@react-three/drei";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  BrightnessContrast,
+  HueSaturation,
+  ChromaticAberration,
+  SMAA,
+} from "@react-three/postprocessing";
 import * as THREE from "three";
 
 type OrbitControlsElement = React.ElementRef<typeof OrbitControls>;
 
 export type CameraPreset = "hero" | "front" | "side" | "rear" | "top";
+export type PostFilterPreset = "studio" | "cinematic" | "midnight" | "off";
 
 const PRESET_POSITIONS: Record<CameraPreset, [number, number, number]> = {
   hero: [3.8, 1.4, 4.0],
@@ -86,7 +95,7 @@ function CarModel({ onLoaded }: MustangModelProps) {
               mat instanceof THREE.MeshStandardMaterial ||
               mat instanceof THREE.MeshPhysicalMaterial
             ) {
-              // 1. Windshield & Window Glass: Fix Blender opaque grey export to transparent tinted automotive glass
+              // 1. Windshield & Window Glass: Transparent tinted automotive glass
               if (
                 matName.includes("glassmtl") ||
                 matName.includes("window") ||
@@ -100,75 +109,124 @@ function CarModel({ onLoaded }: MustangModelProps) {
                 mat.envMapIntensity = 1.2;
                 mat.depthWrite = false;
               }
-              // 2. Red Glass (Taillight covers)
-              else if (matName.includes("glassred")) {
+              // 2. Red Glass & Taillights (with specular emissive glow for Bloom)
+              else if (
+                matName.includes("glassred") ||
+                matName.includes("taillight") ||
+                meshName.includes("taillight")
+              ) {
                 mat.transparent = true;
-                mat.opacity = 0.6;
-                mat.color.set("#d90429");
+                mat.opacity = 0.85;
+                mat.color.set("#ff1744");
                 mat.roughness = 0.08;
-                mat.metalness = 0.3;
+                mat.metalness = 0.2;
+                mat.emissive = new THREE.Color("#ff002e");
+                mat.emissiveIntensity = 2.4;
                 mat.depthWrite = false;
               }
-              // 3. Headlights and Lens covers
-              else if (matName.includes("light") || meshName.includes("light")) {
-                mat.envMapIntensity = 0.95;
-                mat.roughness = 0.12;
-                mat.metalness = 0.1;
-                if (mat.emissive && mat.emissive.getHex() > 0) {
-                  mat.emissiveIntensity = Math.min(mat.emissiveIntensity, 2.5);
+              // 3. Headlights and Lens covers (crisp Xenon/LED glow)
+              else if (
+                matName.includes("light") ||
+                meshName.includes("light") ||
+                matName.includes("led")
+              ) {
+                mat.envMapIntensity = 1.25;
+                mat.roughness = 0.08;
+                mat.metalness = 0.15;
+                if (
+                  meshName.includes("front") ||
+                  matName.includes("front") ||
+                  matName.includes("head") ||
+                  meshName.includes("drl")
+                ) {
+                  mat.emissive = new THREE.Color("#f0f7ff");
+                  mat.emissiveIntensity = 2.6;
+                } else if (mat.emissive && mat.emissive.getHex() > 0) {
+                  mat.emissiveIntensity = Math.min(Math.max(mat.emissiveIntensity, 1.8), 2.8);
                 }
               }
-              // 4. Carbon fiber aero parts (diffuser, splitters, side skirts)
+              // 4. Carbon fiber aero parts (diffuser, splitters, side skirts, GT wing)
+              // Hardened fallback color: never render white on low-power devices!
               else if (matName.includes("carbon")) {
-                mat.envMapIntensity = 0.8;
-                mat.roughness = 0.32;
-                mat.metalness = 0.15;
+                mat.color.set("#1a1a1a");
+                mat.envMapIntensity = 0.95;
+                mat.roughness = 0.26;
+                mat.metalness = 0.2;
+                if ("clearcoat" in mat) {
+                  (mat as THREE.MeshPhysicalMaterial).clearcoat = 0.8;
+                  (mat as THREE.MeshPhysicalMaterial).clearcoatRoughness = 0.1;
+                }
               }
-              // 5. Rubber Tires & Matte Trim: Keep deep black, no plastic shine
+              // 5. Rubber Tires & Wheels: Hardened fallback color to satin dark grey/black
+              // Even if texture binding fails or is delayed on mobile/onboard GPU, tires are NEVER white!
               else if (
                 matName.includes("plastic_black") ||
                 matName.includes("mat_568") ||
                 matName.includes("mat_571") ||
                 matName.includes("tire") ||
                 matName.includes("rubber") ||
+                matName.includes("wheel1a") ||
                 meshName.includes("tire") ||
                 meshName.includes("wheel")
               ) {
+                mat.color.set("#181818");
                 mat.envMapIntensity = 0.25;
-                mat.roughness = 0.8;
-                mat.metalness = 0.05;
+                mat.roughness = 0.82;
+                mat.metalness = 0.08;
               }
-              // 6. Main Car Body Paint (Paint, Coloured, Base)
+              // 6. Grilles & Front Intakes: Deep black mesh
+              else if (
+                matName.includes("grille") ||
+                meshName.includes("grille") ||
+                meshName.includes("intake")
+              ) {
+                mat.color.set("#111111");
+                mat.envMapIntensity = 0.35;
+                mat.roughness = 0.6;
+                mat.metalness = 0.15;
+              }
+              // 7. Interior, Seats & Cockpit Engine: Charcoal interior
+              else if (
+                matName.includes("interior") ||
+                matName.includes("engine") ||
+                meshName.includes("seat")
+              ) {
+                mat.color.set("#202020");
+                mat.envMapIntensity = 0.45;
+                mat.roughness = 0.55;
+              }
+              // 8. Main Car Body Paint (Rosso Corsa depth with high-grade clearcoat sheen)
               else if (
                 matName.includes("paint") ||
                 matName.includes("coloured") ||
                 matName.includes("base") ||
                 matName.includes("body")
               ) {
-                mat.envMapIntensity = 0.88;
-                mat.roughness = 0.18;
-                mat.metalness = 0.15;
+                mat.envMapIntensity = 1.15;
+                mat.roughness = 0.14;
+                mat.metalness = 0.24;
+                if ("clearcoat" in mat) {
+                  (mat as THREE.MeshPhysicalMaterial).clearcoat = 1.0;
+                  (mat as THREE.MeshPhysicalMaterial).clearcoatRoughness = 0.07;
+                }
               }
-              // 7. Chrome / Badges / Calipers / Wheels
+              // 9. Chrome / Badges / Calipers / Wheels / Rotors
               else if (
                 matName.includes("badge") ||
                 matName.includes("caliper") ||
                 matName.includes("mirror") ||
-                matName.includes("plate")
+                matName.includes("plate") ||
+                matName.includes("rim")
               ) {
-                mat.envMapIntensity = 0.95;
-                mat.metalness = 0.9;
-                mat.roughness = 0.15;
+                mat.envMapIntensity = 1.3;
+                mat.metalness = 0.92;
+                mat.roughness = 0.12;
               }
-              // 8. Cockpit Interior & Engine
-              else if (matName.includes("interior") || matName.includes("engine")) {
-                mat.envMapIntensity = 0.45;
-                mat.roughness = 0.55;
-              }
-              // 9. General parts
+              // 10. General parts: Neutral dark fallback
               else {
-                mat.envMapIntensity = 0.65;
-                mat.roughness = 0.4;
+                mat.color.set("#222222");
+                mat.envMapIntensity = 0.7;
+                mat.roughness = 0.38;
               }
 
               mat.needsUpdate = true;
@@ -268,9 +326,167 @@ function ProgressWatcher({ onProgress }: { onProgress: (pct: number) => void }) 
   return null;
 }
 
+interface FilterConfig {
+  bloomThreshold: number;
+  bloomSmoothing: number;
+  bloomIntensity: number;
+  contrast: number;
+  brightness: number;
+  saturation: number;
+  hue: number;
+  vignetteDarkness: number;
+  vignetteOffset: number;
+  chromaticAberrationOffset: [number, number];
+}
+
+const FILTER_CONFIGS: Record<Exclude<PostFilterPreset, "off">, FilterConfig> = {
+  studio: {
+    bloomThreshold: 0.88,
+    bloomSmoothing: 0.25,
+    bloomIntensity: 0.65,
+    contrast: 0.08,
+    brightness: 0.02,
+    saturation: 0.12,
+    hue: 0,
+    vignetteDarkness: 0.45,
+    vignetteOffset: 0.35,
+    chromaticAberrationOffset: [0.0004, 0.0004],
+  },
+  cinematic: {
+    bloomThreshold: 0.82,
+    bloomSmoothing: 0.3,
+    bloomIntensity: 1.0,
+    contrast: 0.16,
+    brightness: 0.01,
+    saturation: 0.22,
+    hue: -0.015,
+    vignetteDarkness: 0.65,
+    vignetteOffset: 0.25,
+    chromaticAberrationOffset: [0.0008, 0.0008],
+  },
+  midnight: {
+    bloomThreshold: 0.76,
+    bloomSmoothing: 0.25,
+    bloomIntensity: 1.35,
+    contrast: 0.22,
+    brightness: -0.02,
+    saturation: 0.28,
+    hue: 0.035,
+    vignetteDarkness: 0.75,
+    vignetteOffset: 0.2,
+    chromaticAberrationOffset: [0.0006, 0.0006],
+  },
+};
+
+function CarPostProcessing({
+  preset,
+  isMobile,
+  isLowTierGPU,
+}: {
+  preset: PostFilterPreset;
+  isMobile: boolean;
+  isLowTierGPU: boolean;
+}) {
+  const config = preset !== "off" ? FILTER_CONFIGS[preset] : null;
+
+  const aberrationOffset = useMemo(() => {
+    if (!config) return new THREE.Vector2(0, 0);
+    return new THREE.Vector2(...config.chromaticAberrationOffset);
+  }, [config]);
+
+  if (preset === "off" || !config) {
+    return null;
+  }
+
+  // Optimize multisampling: 0 on mobile/integrated GPUs to preserve high framerate & memory
+  const multisampling = isMobile || isLowTierGPU ? 0 : 4;
+
+  return (
+    <EffectComposer multisampling={multisampling} enableNormalPass={false}>
+      <Bloom
+        luminanceThreshold={config.bloomThreshold}
+        luminanceSmoothing={config.bloomSmoothing}
+        intensity={isMobile ? config.bloomIntensity * 0.75 : config.bloomIntensity}
+        mipmapBlur
+      />
+      <BrightnessContrast
+        brightness={config.brightness}
+        contrast={config.contrast}
+      />
+      <HueSaturation
+        saturation={config.saturation}
+        hue={config.hue}
+      />
+      <Vignette
+        offset={config.vignetteOffset}
+        darkness={config.vignetteDarkness}
+        eskil={false}
+      />
+      <ChromaticAberration
+        offset={aberrationOffset}
+        radialModulation
+        modulationOffset={0.5}
+        opacity={isMobile ? 0 : 1}
+      />
+      <SMAA opacity={isMobile || isLowTierGPU ? 0 : 1} />
+    </EffectComposer>
+  );
+}
+
+// Adaptive device detection hook
+function useDeviceTier() {
+  const [tier, setTier] = useState<{
+    isMobile: boolean;
+    isLowTierGPU: boolean;
+  }>({
+    isMobile: false,
+    isLowTierGPU: false,
+  });
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent || "";
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) ||
+      (navigator.maxTouchPoints > 1 && /Macintosh/i.test(userAgent)); // iPads reporting as Mac
+
+    let isLowTierGPU = false;
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (gl) {
+        const debugInfo = (gl as WebGLRenderingContext).getExtension("WEBGL_debug_renderer_info");
+        if (debugInfo) {
+          const renderer = (gl as WebGLRenderingContext)
+            .getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+            .toLowerCase();
+          if (
+            renderer.includes("intel") ||
+            renderer.includes("uhd") ||
+            renderer.includes("iris") ||
+            renderer.includes("swiftshader") ||
+            renderer.includes("llvmpipe") ||
+            renderer.includes("basic render") ||
+            renderer.includes("mali") ||
+            renderer.includes("adreno")
+          ) {
+            isLowTierGPU = true;
+          }
+        }
+      }
+    } catch {
+      // Graceful fallback
+    }
+
+    setTier({ isMobile, isLowTierGPU });
+  }, []);
+
+  return tier;
+}
+
 export interface CarSceneProps {
   cameraPreset: CameraPreset;
   autoRotate: boolean;
+  filterPreset?: PostFilterPreset;
   onProgress?: (pct: number) => void;
   onLoaded?: () => void;
 }
@@ -278,12 +494,14 @@ export interface CarSceneProps {
 export function CarScene({
   cameraPreset,
   autoRotate,
+  filterPreset = "studio",
   onProgress,
   onLoaded,
 }: CarSceneProps) {
   const controlsRef = useRef<OrbitControlsElement>(null);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const { isMobile, isLowTierGPU } = useDeviceTier();
 
   const handlePointerDown = () => {
     setIsUserInteracting(true);
@@ -314,7 +532,7 @@ export function CarScene({
     >
       <Canvas
         camera={{ position: PRESET_POSITIONS.hero, fov: 40 }}
-        dpr={[1, 2]}
+        dpr={isMobile ? [1, 1.35] : isLowTierGPU ? [1, 1.5] : [1, 2]}
         gl={{
           antialias: true,
           alpha: true,
@@ -324,64 +542,21 @@ export function CarScene({
         }}
         shadows
       >
-        {/* Studio-Grade Automotive Environment Lighting (Self-contained, zero external network fetch) */}
-        <Environment environmentIntensity={0.7}>
-          {/* Overhead Softbox */}
-          <Lightformer
-            form="rect"
-            intensity={2.2}
-            color="#ffffff"
-            scale={[12, 6, 1]}
-            position={[0, 6, 0]}
-            rotation={[-Math.PI / 2, 0, 0]}
-          />
-          {/* Key Side Soft Light Strip */}
-          <Lightformer
-            form="rect"
-            intensity={1.8}
-            color="#ffffff"
-            scale={[14, 2.5, 1]}
-            position={[-6, 2.5, 0]}
-            rotation={[0, Math.PI / 2, 0]}
-          />
-          {/* Fill Side Soft Light Strip (Subtle Cool Tint) */}
-          <Lightformer
-            form="rect"
-            intensity={1.2}
-            color="#d6e4ff"
-            scale={[14, 2.5, 1]}
-            position={[6, 2.5, 0]}
-            rotation={[0, -Math.PI / 2, 0]}
-          />
-          {/* Front Nose & Splitter Accent */}
-          <Lightformer
-            form="rect"
-            intensity={1.5}
-            color="#ffffff"
-            scale={[8, 2, 1]}
-            position={[0, 1.8, 6]}
-            rotation={[0, Math.PI, 0]}
-          />
-          {/* Rear Wing & Diffuser Soft Accent */}
-          <Lightformer
-            form="ring"
-            intensity={1.6}
-            color="#ffeedd"
-            scale={4}
-            position={[0, 2, -6]}
-          />
-        </Environment>
+        <color attach="background" args={["#0a0a0a"]} />
+
+        {/* Universal Automotive Studio Environment Lighting (Self-contained, local HDR, 100% device compatible) */}
+        <Environment files="/environments/studio.hdr" environmentIntensity={0.7} />
 
         {/* Subtle Ambient Fill for Natural Shadow Depth */}
-        <ambientLight intensity={0.18} />
+        <ambientLight intensity={0.22} />
 
         {/* Balanced Key Sunlight for Natural Highlights & Sharp Shadows */}
         <directionalLight
           position={[5, 9, 5]}
           intensity={0.95}
           castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+          shadow-mapSize-width={isMobile ? 512 : 1024}
+          shadow-mapSize-height={isMobile ? 512 : 1024}
           shadow-camera-near={0.5}
           shadow-camera-far={25}
           shadow-camera-left={-6}
@@ -402,7 +577,7 @@ export function CarScene({
           scale={10.5}
           blur={1.8}
           far={2.5}
-          resolution={1024}
+          resolution={isMobile ? 512 : 1024}
           color="#000000"
         />
 
@@ -417,7 +592,15 @@ export function CarScene({
           isUserInteracting={isUserInteracting}
           controlsRef={controlsRef}
         />
+
+        {/* Photorealistic Automotive Post-Processing Pipeline (Adaptive) */}
+        <CarPostProcessing
+          preset={filterPreset}
+          isMobile={isMobile}
+          isLowTierGPU={isLowTierGPU}
+        />
       </Canvas>
     </div>
   );
 }
+

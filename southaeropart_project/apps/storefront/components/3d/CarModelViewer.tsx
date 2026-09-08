@@ -9,8 +9,11 @@ import {
   Maximize2,
   Minimize2,
   Compass,
+  Sparkles,
+  ChevronDown,
+  Check,
 } from "lucide-react";
-import { CameraPreset } from "./CarScene";
+import { CameraPreset, PostFilterPreset } from "./CarScene";
 import { CarLoadingFallback } from "./CarLoadingFallback";
 
 const DynamicCarScene = dynamic(
@@ -21,8 +24,42 @@ const DynamicCarScene = dynamic(
   }
 );
 
+const FILTER_OPTIONS: {
+  id: PostFilterPreset;
+  label: string;
+  badge: string;
+  description: string;
+}[] = [
+  {
+    id: "studio",
+    label: "Studio Real",
+    badge: "RECOMMENDED",
+    description: "Photorealistic automotive studio with specular bloom & rich Rosso Corsa",
+  },
+  {
+    id: "cinematic",
+    label: "Cinematic HDR",
+    badge: "HIGH CONTRAST",
+    description: "Punchy film lighting, deep carbon shadows & vivid aerodynamic reflections",
+  },
+  {
+    id: "midnight",
+    label: "Midnight Cyber",
+    badge: "NEON GLOW",
+    description: "Moody night aesthetic with vibrant LED glow on DRLs & taillights",
+  },
+  {
+    id: "off",
+    label: "Raw WebGL",
+    badge: "NO POST-FX",
+    description: "Standard 3D render without post-processing filters",
+  },
+];
+
 export function CarModelViewer() {
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("hero");
+  const [filterPreset, setFilterPreset] = useState<PostFilterPreset>("studio");
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [loadProgress, setLoadProgress] = useState(0);
@@ -30,6 +67,7 @@ export function CarModelViewer() {
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleFullscreen = async () => {
     if (!containerRef.current) return;
@@ -50,6 +88,20 @@ export function CarModelViewer() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowFilterMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleLoaded = () => {
     setIsLoading(false);
   };
@@ -61,6 +113,8 @@ export function CarModelViewer() {
     }
   };
 
+  const currentFilter = FILTER_OPTIONS.find((f) => f.id === filterPreset) || FILTER_OPTIONS[0];
+
   return (
     <div
       ref={containerRef}
@@ -71,10 +125,11 @@ export function CarModelViewer() {
       }`}
       onPointerDown={() => setHasInteracted(true)}
     >
-      {/* 3D Scene */}
+      {/* 3D Scene with Post-Processing Filters */}
       <DynamicCarScene
         cameraPreset={cameraPreset}
         autoRotate={autoRotate}
+        filterPreset={filterPreset}
         onProgress={handleProgress}
         onLoaded={handleLoaded}
       />
@@ -104,8 +159,97 @@ export function CarModelViewer() {
           </div>
         </div>
 
-        {/* Right Action Icons (Auto Rotate, Fullscreen) */}
+        {/* Right Action Icons (Post Filter Preset, Auto Rotate, Fullscreen) */}
         <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Post Filter Preset Dropdown */}
+          <div className="relative" ref={filterDropdownRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowFilterMenu((prev) => !prev);
+                setHasInteracted(true);
+              }}
+              className={`p-2 sm:px-2.5 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${
+                filterPreset !== "off"
+                  ? "bg-amber-500/15 border-amber-500/60 text-amber-300 hover:bg-amber-500/25"
+                  : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
+              }`}
+              title="Select Post-Processing Filter"
+            >
+              <Sparkles
+                size={13}
+                className={filterPreset !== "off" ? "text-amber-400 animate-pulse" : "text-white/40"}
+              />
+              <span className="text-[0.65rem] tracking-wider uppercase font-bold hidden xs:inline sm:inline">
+                {currentFilter.label}
+              </span>
+              <ChevronDown
+                size={11}
+                className={`transition-transform duration-200 text-white/60 ${
+                  showFilterMenu ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {showFilterMenu && (
+              <div className="absolute right-0 top-full mt-1.5 w-64 sm:w-72 p-1.5 rounded-sm bg-[#101010]/95 border border-[#2E2E2E] shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-2 py-1 text-[0.6rem] font-heading font-bold text-white/40 uppercase tracking-wider border-b border-[#222] mb-1 flex items-center justify-between">
+                  <span>POST FILTER PRESETS</span>
+                  <span className="text-amber-400 font-mono text-[0.55rem]">REAL-TIME FX</span>
+                </div>
+                {FILTER_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setFilterPreset(opt.id);
+                      setShowFilterMenu(false);
+                      setHasInteracted(true);
+                    }}
+                    className={`w-full text-left p-2 rounded-sm transition-all flex items-start justify-between gap-2 group mb-0.5 ${
+                      filterPreset === opt.id
+                        ? "bg-[#1C1C1C] text-white border border-[#3E3E3E]"
+                        : "hover:bg-[#161616] text-white/70 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`text-xs font-heading font-bold transition-colors ${
+                            filterPreset === opt.id
+                              ? "text-amber-300"
+                              : "text-white group-hover:text-[var(--accent-red)]"
+                          }`}
+                        >
+                          {opt.label}
+                        </span>
+                        <span
+                          className={`text-[0.52rem] px-1 py-0.2 rounded font-mono font-semibold ${
+                            opt.id === "studio"
+                              ? "bg-amber-500/20 text-amber-300"
+                              : opt.id === "cinematic"
+                              ? "bg-red-500/20 text-red-300"
+                              : opt.id === "midnight"
+                              ? "bg-blue-500/20 text-blue-300"
+                              : "bg-white/10 text-white/50"
+                          }`}
+                        >
+                          {opt.badge}
+                        </span>
+                      </div>
+                      <p className="text-[0.62rem] text-white/50 mt-0.5 leading-snug">
+                        {opt.description}
+                      </p>
+                    </div>
+                    {filterPreset === opt.id && (
+                      <Check size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Auto Rotate Toggle */}
           <button
             type="button"
@@ -190,3 +334,4 @@ export function CarModelViewer() {
     </div>
   );
 }
+
