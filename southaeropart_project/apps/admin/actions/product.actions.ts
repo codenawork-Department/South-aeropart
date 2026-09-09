@@ -28,7 +28,7 @@ import {
   deleteImage,
   renameImage,
 } from "@repo/lib/cloudinary";
-import { validateSession, logAuditEvent } from "@/lib/auth";
+import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
 import {
   BRAND_CODE_MAP,
   MODEL_CODE_MAP,
@@ -1141,6 +1141,10 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
     return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
   }
 
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return { success: false, message: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
+  }
+
   const [product] = await db
     .select({ id: products.id, sku: products.sku, name: products.name })
     .from(products)
@@ -1219,6 +1223,11 @@ export async function generateSuggestedSkuAction(params: {
   carModelId?: string | null;
   categoryId?: string | null;
 }): Promise<ActionResult<SkuSuggestionResult>> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
   try {
     let brandSlug = "universal";
     let brandName = "Universal";
@@ -1324,6 +1333,11 @@ export async function checkSkuAvailabilityAction(
   sku: string,
   excludeProductId?: string
 ): Promise<{ isAvailable: boolean; message: string; existingName?: string }> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { isAvailable: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
   try {
     const trimmed = sku.trim().toUpperCase();
     if (!trimmed) {

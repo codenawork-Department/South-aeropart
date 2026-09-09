@@ -103,7 +103,7 @@ export async function translateProductAction(payload: {
     console.error("[translateProductAction Error]:", err);
     return {
       success: false,
-      error: err.message || "เกิดข้อผิดพลาดในการแปลภาษา",
+      error: "เกิดข้อผิดพลาดในการแปลภาษา กรุณาลองใหม่อีกครั้ง",
     };
   }
 }
@@ -151,7 +151,7 @@ export async function translateBundleAction(payload: {
     console.error("[translateBundleAction Error]:", err);
     return {
       success: false,
-      error: err.message || "เกิดข้อผิดพลาดในการแปลภาษา",
+      error: "เกิดข้อผิดพลาดในการแปลภาษา กรุณาลองใหม่อีกครั้ง",
     };
   }
 }

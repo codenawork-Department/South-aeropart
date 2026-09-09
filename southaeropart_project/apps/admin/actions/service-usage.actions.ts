@@ -599,14 +599,103 @@ const getCachedMetrics = unstable_cache(
   { revalidate: 60, tags: ["service-usage"] }
 );
 
+function getUnauthorizedServiceUsageReport(): ServiceUsageReport {
+  return {
+    summary: {
+      overallStatus: "critical",
+      lastUpdated: new Date().toISOString(),
+      servicesMonitored: 5,
+      healthyServices: 0,
+      warningServices: 0,
+      criticalServices: 5,
+    },
+    neon: {
+      configured: false,
+      status: "unconfigured",
+      usedBytes: 0,
+      usedPretty: "0 B",
+      clusterTotalBytes: 0,
+      clusterTotalPretty: "0 B",
+      clusterTotalGb: "0",
+      limitBytes: 0,
+      limitPretty: "0 B",
+      limitGb: "0",
+      percentUsed: 0,
+      percentClusterUsed: 0,
+      dbName: "",
+      pgVersion: "",
+      host: "",
+      region: "",
+      computeLimit: "",
+      totalTables: 0,
+      totalRows: 0,
+      tables: [],
+      message: "สิทธิ์การเข้าถึงไม่ถูกต้อง กรุณาเข้าสู่ระบบ",
+    },
+    clerk: {
+      configured: false,
+      status: "unconfigured",
+      totalUsers: 0,
+      limitUsers: 0,
+      limitPretty: "0",
+      percentUsed: 0,
+      dbSyncedUsers: 0,
+      tierName: "",
+      oauthProviders: [],
+      recentUsers: [],
+      message: "สิทธิ์การเข้าถึงไม่ถูกต้อง กรุณาเข้าสู่ระบบ",
+    },
+    cloudinary: {
+      configured: false,
+      isPlaceholder: true,
+      status: "unconfigured",
+      cloudName: "",
+      limitCredits: 0,
+      limitStorageGb: 0,
+      limitBandwidthGb: 0,
+      limitTransformations: 0,
+      liveUsage: {},
+      message: "สิทธิ์การเข้าถึงไม่ถูกต้อง กรุณาเข้าสู่ระบบ",
+    },
+    stripe: {
+      configured: false,
+      isPlaceholder: true,
+      status: "unconfigured",
+      mode: "Not Configured",
+      publicKeyPrefix: "—",
+      monthlyFee: "—",
+      transactionFee: "—",
+      message: "สิทธิ์การเข้าถึงไม่ถูกต้อง กรุณาเข้าสู่ระบบ",
+    },
+    hosting: {
+      isDeployed: false,
+      platform: "Localhost",
+      tier: "",
+      bandwidthLimit: "",
+      serverlessLimit: "",
+      edgeInvocationsLimit: "",
+      nodeVersion: process.version,
+      status: "local",
+      statusLabel: "สิทธิ์การเข้าถึงไม่ถูกต้อง",
+    },
+  };
+}
+
 // ─── Public API (auth guard + cached data) ───
 
 export async function getServiceUsageMetrics(): Promise<ServiceUsageReport> {
   const admin = await validateSession();
   if (!admin) {
-    throw new Error("Unauthorized: Please log in as admin");
+    console.error("[getServiceUsageMetrics] Unauthorized access attempt");
+    return getUnauthorizedServiceUsageReport();
   }
-  return getCachedMetrics();
+  try {
+    return await getCachedMetrics();
+  } catch (err) {
+    console.error("[getServiceUsageMetrics] Error fetching cached metrics:", err);
+    return getUnauthorizedServiceUsageReport();
+  }
 }
 
 export const getCachedServiceUsageMetrics = getServiceUsageMetrics;
+

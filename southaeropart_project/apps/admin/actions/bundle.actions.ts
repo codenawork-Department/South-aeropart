@@ -29,7 +29,7 @@ import {
   deleteImage,
   renameImage,
 } from "@repo/lib/cloudinary";
-import { validateSession, logAuditEvent } from "@/lib/auth";
+import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
 import { notifyStorefrontCatalogChange } from "@/lib/realtime-notifier";
 
 // ─── Types & Schemas ──────────────────────────────────────────────────────────
@@ -634,71 +634,75 @@ export async function createBundleAction(
     }
   }
 
-  // 4. Save to Database
+  // 4. Save to Database (in a transaction for atomicity)
   try {
-    const [newBundle] = await db
-      .insert(products)
-      .values({
-        sku: data.sku,
-        slug,
-        name: effectiveName,
-        nameEn: effectiveNameEn,
-        productType: "bundle",
-        description: data.description || null,
-        descriptionEn: data.descriptionEn ? data.descriptionEn.trim() : null,
-        shortDescription: data.shortDescription || null,
-        shortDescriptionEn: data.shortDescriptionEn ? data.shortDescriptionEn.trim() : null,
-        brandId: data.brandId,
-        carModelId: data.carModelId,
-        materialId: data.materialId || null,
-        installationId: data.installationId || null,
-        price: totalPrice.toFixed(2),
-        stockQuantity: minStock,
-        status: data.status,
-        isFeatured: data.isFeatured,
-        downforceN: totalDownforce.toFixed(2),
-        dragN: totalDrag.toFixed(2),
-        isCustomCfd: data.isCustomCfd,
-        customDownforceN: data.isCustomCfd && data.customDownforceN ? data.customDownforceN : null,
-        customDragN: data.isCustomCfd && data.customDragN ? data.customDragN : null,
-      })
-      .returning({ id: products.id });
+    const newBundle = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(products)
+        .values({
+          sku: data.sku,
+          slug,
+          name: effectiveName,
+          nameEn: effectiveNameEn,
+          productType: "bundle",
+          description: data.description || null,
+          descriptionEn: data.descriptionEn ? data.descriptionEn.trim() : null,
+          shortDescription: data.shortDescription || null,
+          shortDescriptionEn: data.shortDescriptionEn ? data.shortDescriptionEn.trim() : null,
+          brandId: data.brandId,
+          carModelId: data.carModelId,
+          materialId: data.materialId || null,
+          installationId: data.installationId || null,
+          price: totalPrice.toFixed(2),
+          stockQuantity: minStock,
+          status: data.status,
+          isFeatured: data.isFeatured,
+          downforceN: totalDownforce.toFixed(2),
+          dragN: totalDrag.toFixed(2),
+          isCustomCfd: data.isCustomCfd,
+          customDownforceN: data.isCustomCfd && data.customDownforceN ? data.customDownforceN : null,
+          customDragN: data.isCustomCfd && data.customDragN ? data.customDragN : null,
+        })
+        .returning({ id: products.id });
 
-    // Insert bundle items
-    if (data.childProductIds.length > 0) {
-      await db.insert(productBundleItems).values(
-        data.childProductIds.map((childId, idx) => ({
-          bundleProductId: newBundle.id,
-          childProductId: childId,
-          quantity: 1,
-          position: idx,
-        }))
-      );
-    }
+      // Insert bundle items
+      if (data.childProductIds.length > 0) {
+        await tx.insert(productBundleItems).values(
+          data.childProductIds.map((childId, idx) => ({
+            bundleProductId: created.id,
+            childProductId: childId,
+            quantity: 1,
+            position: idx,
+          }))
+        );
+      }
 
-    // Insert bundle images
-    if (uploadedImages.length > 0) {
-      await db.insert(productImages).values(
-        uploadedImages.map((img) => ({
-          productId: newBundle.id,
-          cloudinaryPublicId: img.publicId,
-          secureUrl: img.secureUrl,
-          position: img.position,
-          isPrimary: img.isPrimary,
-        }))
-      );
-    }
+      // Insert bundle images
+      if (uploadedImages.length > 0) {
+        await tx.insert(productImages).values(
+          uploadedImages.map((img) => ({
+            productId: created.id,
+            cloudinaryPublicId: img.publicId,
+            secureUrl: img.secureUrl,
+            position: img.position,
+            isPrimary: img.isPrimary,
+          }))
+        );
+      }
 
-    // Add compatibility (use actual brand name and car model year range from DB)
-    if (modelRow) {
-      await db.insert(productCompatibility).values({
-        productId: newBundle.id,
-        make: modelRow.brandName || brandSlug,
-        model: modelRow.name,
-        yearFrom: modelRow.yearFrom || new Date().getFullYear() - 5,
-        yearTo: modelRow.yearTo || new Date().getFullYear(),
-      });
-    }
+      // Add compatibility (use actual brand name and car model year range from DB)
+      if (modelRow) {
+        await tx.insert(productCompatibility).values({
+          productId: created.id,
+          make: modelRow.brandName || brandSlug,
+          model: modelRow.name,
+          yearFrom: modelRow.yearFrom || new Date().getFullYear() - 5,
+          yearTo: modelRow.yearTo || new Date().getFullYear(),
+        });
+      }
+
+      return created;
+    });
 
     await logAuditEvent({
       adminId: admin.id,
@@ -912,71 +916,75 @@ export async function updateBundleAction(
   }
 
   try {
-    // Update bundle product master
-    await db
-      .update(products)
-      .set({
-        sku: data.sku,
-        slug,
-        name: effectiveName,
-        nameEn: effectiveNameEn,
-        description: data.description || null,
-        descriptionEn: data.descriptionEn ? data.descriptionEn.trim() : null,
-        shortDescription: data.shortDescription || null,
-        shortDescriptionEn: data.shortDescriptionEn ? data.shortDescriptionEn.trim() : null,
-        brandId: data.brandId,
-        carModelId: data.carModelId,
-        materialId: data.materialId || null,
-        installationId: data.installationId || null,
-        price: totalPrice.toFixed(2),
-        stockQuantity: minStock,
-        status: data.status,
-        isFeatured: data.isFeatured,
-        downforceN: totalDownforce.toFixed(2),
-        dragN: totalDrag.toFixed(2),
-        isCustomCfd: data.isCustomCfd,
-        customDownforceN: data.isCustomCfd && data.customDownforceN ? data.customDownforceN : null,
-        customDragN: data.isCustomCfd && data.customDragN ? data.customDragN : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(products.id, id));
+    await db.transaction(async (tx) => {
+      // Update bundle product master
+      await tx
+        .update(products)
+        .set({
+          sku: data.sku,
+          slug,
+          name: effectiveName,
+          nameEn: effectiveNameEn,
+          description: data.description || null,
+          descriptionEn: data.descriptionEn ? data.descriptionEn.trim() : null,
+          shortDescription: data.shortDescription || null,
+          shortDescriptionEn: data.shortDescriptionEn ? data.shortDescriptionEn.trim() : null,
+          brandId: data.brandId,
+          carModelId: data.carModelId,
+          materialId: data.materialId || null,
+          installationId: data.installationId || null,
+          price: totalPrice.toFixed(2),
+          stockQuantity: minStock,
+          status: data.status,
+          isFeatured: data.isFeatured,
+          downforceN: totalDownforce.toFixed(2),
+          dragN: totalDrag.toFixed(2),
+          isCustomCfd: data.isCustomCfd,
+          customDownforceN: data.isCustomCfd && data.customDownforceN ? data.customDownforceN : null,
+          customDragN: data.isCustomCfd && data.customDragN ? data.customDragN : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, id));
 
-    // Replace bundle items
-    await db.delete(productBundleItems).where(eq(productBundleItems.bundleProductId, id));
-    await db.insert(productBundleItems).values(
-      data.childProductIds.map((childId, idx) => ({
-        bundleProductId: id,
-        childProductId: childId,
-        quantity: 1,
-        position: idx,
-      }))
-    );
+      // Replace bundle items
+      await tx.delete(productBundleItems).where(eq(productBundleItems.bundleProductId, id));
+      if (data.childProductIds.length > 0) {
+        await tx.insert(productBundleItems).values(
+          data.childProductIds.map((childId, idx) => ({
+            bundleProductId: id,
+            childProductId: childId,
+            quantity: 1,
+            position: idx,
+          }))
+        );
+      }
 
-    // Sync compatibility (delete old + insert updated)
-    await db.delete(productCompatibility).where(eq(productCompatibility.productId, id));
-    if (modelRow) {
-      await db.insert(productCompatibility).values({
-        productId: id,
-        make: modelRow.brandName || brandSlug,
-        model: modelRow.name,
-        yearFrom: modelRow.yearFrom || new Date().getFullYear() - 5,
-        yearTo: modelRow.yearTo || new Date().getFullYear(),
-      });
-    }
-
-    // Replace images
-    await db.delete(productImages).where(eq(productImages.productId, id));
-    if (finalImages.length > 0) {
-      await db.insert(productImages).values(
-        finalImages.map((img) => ({
+      // Sync compatibility (delete old + insert updated)
+      await tx.delete(productCompatibility).where(eq(productCompatibility.productId, id));
+      if (modelRow) {
+        await tx.insert(productCompatibility).values({
           productId: id,
-          cloudinaryPublicId: img.publicId,
-          secureUrl: img.secureUrl,
-          position: img.position,
-          isPrimary: img.isPrimary,
-        }))
-      );
-    }
+          make: modelRow.brandName || brandSlug,
+          model: modelRow.name,
+          yearFrom: modelRow.yearFrom || new Date().getFullYear() - 5,
+          yearTo: modelRow.yearTo || new Date().getFullYear(),
+        });
+      }
+
+      // Replace images
+      await tx.delete(productImages).where(eq(productImages.productId, id));
+      if (finalImages.length > 0) {
+        await tx.insert(productImages).values(
+          finalImages.map((img) => ({
+            productId: id,
+            cloudinaryPublicId: img.publicId,
+            secureUrl: img.secureUrl,
+            position: img.position,
+            isPrimary: img.isPrimary,
+          }))
+        );
+      }
+    });
 
     await logAuditEvent({
       adminId: admin.id,
@@ -1018,6 +1026,10 @@ export async function deleteBundleAction(id: string): Promise<ActionResult> {
   const admin = await validateSession();
   if (!admin) {
     return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return { success: false, message: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
   }
 
   try {
@@ -1175,6 +1187,11 @@ export async function toggleBundleFeaturedAction(
  * Get current count of featured bundles
  */
 export async function getFeaturedBundlesCountAction(): Promise<{ count: number; max: number }> {
+  const admin = await validateSession();
+  if (!admin) {
+    return { count: 0, max: 4 };
+  }
+
   try {
     const [countRes] = await db
       .select({ count: count() })

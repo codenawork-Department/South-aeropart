@@ -13,7 +13,7 @@ import {
   or,
   sql,
 } from "@repo/db";
-import { validateSession, logAuditEvent } from "@/lib/auth";
+import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
 import { uploadImage } from "@repo/lib";
 
 // ─── Types & Schemas ──────────────────────────────────────────────────────────
@@ -241,6 +241,10 @@ export async function deleteIconAction(id: string): Promise<ActionResult> {
   const session = await validateSession();
   if (!session) {
     return { success: false, message: "กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+  }
+
+  if (!hasRequiredRole(session, ["admin", "super_admin"])) {
+    return { success: false, message: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
   }
 
   try {

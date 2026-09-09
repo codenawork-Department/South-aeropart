@@ -83,30 +83,26 @@ export async function getOrderStatsAction() {
       return { success: false, error: "Unauthorized", data: null };
     }
 
-    const all = await db.select().from(orders);
-
-    const totalOrders = all.length;
-    const pendingOrders = all.filter((o) => o.status === "pending" || o.paymentStatus === "pending").length;
-    const paidOrProcessing = all.filter(
-      (o) => o.status === "paid" || o.status === "processing"
-    ).length;
-    const shippedOrDelivered = all.filter((o) => o.status === "shipped" || o.status === "delivered").length;
-    const cancelledOrders = all.filter((o) => o.status === "cancelled" || o.paymentStatus === "failed").length;
-
-    // Calculate revenue from paid/completed orders
-    const totalRevenue = all
-      .filter((o) => o.paymentStatus === "paid")
-      .reduce((sum, o) => sum + parseFloat(o.total || "0"), 0);
+    const [stats] = await db
+      .select({
+        totalOrders: sql<number>`count(*)::int`,
+        pendingOrders: sql<number>`count(*) filter (where ${orders.status} = 'pending' or ${orders.paymentStatus} = 'pending')::int`,
+        paidOrProcessing: sql<number>`count(*) filter (where ${orders.status} in ('paid', 'processing'))::int`,
+        shippedOrDelivered: sql<number>`count(*) filter (where ${orders.status} in ('shipped', 'delivered'))::int`,
+        cancelledOrders: sql<number>`count(*) filter (where ${orders.status} = 'cancelled' or ${orders.paymentStatus} = 'failed')::int`,
+        totalRevenue: sql<number>`coalesce(sum(${orders.total}::numeric) filter (where ${orders.paymentStatus} = 'paid'), 0)::float`,
+      })
+      .from(orders);
 
     return {
       success: true,
       data: {
-        totalOrders,
-        pendingOrders,
-        paidOrProcessing,
-        shippedOrDelivered,
-        cancelledOrders,
-        totalRevenue,
+        totalOrders: stats?.totalOrders || 0,
+        pendingOrders: stats?.pendingOrders || 0,
+        paidOrProcessing: stats?.paidOrProcessing || 0,
+        shippedOrDelivered: stats?.shippedOrDelivered || 0,
+        cancelledOrders: stats?.cancelledOrders || 0,
+        totalRevenue: stats?.totalRevenue || 0,
       },
     };
   } catch (error) {
@@ -365,7 +361,17 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
 
     const { orderId, status, paymentStatus, note } = updateStatusSchema.parse(input);
 
-    const [existing] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    const [existing] = await db
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        status: orders.status,
+        paymentStatus: orders.paymentStatus,
+      })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
     if (!existing) {
       return { success: false, error: "Order not found" };
     }
@@ -379,32 +385,33 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
       updates.paymentStatus = paymentStatus;
     } else if (status === "paid") {
       updates.paymentStatus = "paid";
-    } else if (status === "cancelled") {
-      updates.paymentStatus = "failed";
     }
 
     const isPreviousPaid =
       existing.status === "paid" ||
       existing.status === "processing" ||
       existing.status === "shipped" ||
+      existing.status === "delivered" ||
       existing.paymentStatus === "paid";
 
     const isNowCancelled = status === "cancelled" || status === "refunded";
 
-    // 1. Update order
-    await db.update(orders).set(updates).where(eq(orders.id, orderId));
+    await db.transaction(async (tx) => {
+      // 1. Update order
+      await tx.update(orders).set(updates).where(eq(orders.id, orderId));
 
-    // 2. If order was paid and is now cancelled/refunded, restore stock (INV-02 Guard)
-    if (isPreviousPaid && isNowCancelled) {
-      await restoreOrderStock(orderId);
-    }
+      // 2. If order was paid and is now cancelled/refunded, restore stock (INV-02 Guard)
+      if (isPreviousPaid && isNowCancelled) {
+        await restoreOrderStock(orderId, tx);
+      }
 
-    // 3. Insert into history
-    await db.insert(orderStatusHistory).values({
-      orderId,
-      status,
-      note: note || `สถานะถูกอัปเดตเป็น ${status} โดย ${admin.fullName}`,
-      changedByAdminId: admin.id,
+      // 3. Insert into history
+      await tx.insert(orderStatusHistory).values({
+        orderId,
+        status,
+        note: note || `สถานะถูกอัปเดตเป็น ${status} โดย ${admin.fullName}`,
+        changedByAdminId: admin.id,
+      });
     });
 
     // 4. Log Audit Event
@@ -434,14 +441,14 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
 /**
  * Restores inventory stock for products and bundle parts when an order is cancelled/refunded.
  */
-async function restoreOrderStock(orderId: string) {
+async function restoreOrderStock(orderId: string, tx: any = db) {
   try {
-    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+    const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
 
     for (const item of items) {
       if (item.productId) {
         // Restore single product stock
-        const [prod] = await db
+        const [prod] = await tx
           .select({
             stockQuantity: products.stockQuantity,
             productType: products.productType,
@@ -453,7 +460,7 @@ async function restoreOrderStock(orderId: string) {
 
         if (prod) {
           const restoredStock = prod.stockQuantity + item.quantity;
-          await db
+          await tx
             .update(products)
             .set({
               stockQuantity: restoredStock,
@@ -463,19 +470,19 @@ async function restoreOrderStock(orderId: string) {
             .where(eq(products.id, item.productId));
 
           if (prod.productType === "single") {
-            await syncAdminBundleStockForChild(item.productId);
+            await syncAdminBundleStockForChild(item.productId, tx);
           }
         }
 
         // Restore bundle child parts
-        const bundleParts = await db
+        const bundleParts = await tx
           .select()
           .from(orderItemBundleParts)
           .where(eq(orderItemBundleParts.orderItemId, item.id));
 
         for (const part of bundleParts) {
           if (part.childProductId) {
-            const [childProd] = await db
+            const [childProd] = await tx
               .select({
                 stockQuantity: products.stockQuantity,
                 status: products.status,
@@ -486,7 +493,7 @@ async function restoreOrderStock(orderId: string) {
 
             if (childProd) {
               const restoredChildStock = childProd.stockQuantity + part.quantity;
-              await db
+              await tx
                 .update(products)
                 .set({
                   stockQuantity: restoredChildStock,
@@ -495,7 +502,7 @@ async function restoreOrderStock(orderId: string) {
                 })
                 .where(eq(products.id, part.childProductId));
 
-              await syncAdminBundleStockForChild(part.childProductId);
+              await syncAdminBundleStockForChild(part.childProductId, tx);
             }
           }
         }
@@ -509,15 +516,15 @@ async function restoreOrderStock(orderId: string) {
 /**
  * Recalculates and updates bundle stock based on child parts in admin context.
  */
-async function syncAdminBundleStockForChild(childProductId: string) {
+async function syncAdminBundleStockForChild(childProductId: string, tx: any = db) {
   try {
-    const parentBundles = await db
+    const parentBundles = await tx
       .select({ bundleProductId: productBundleItems.bundleProductId })
       .from(productBundleItems)
       .where(eq(productBundleItems.childProductId, childProductId));
 
     for (const { bundleProductId } of parentBundles) {
-      const bundleParts = await db
+      const bundleParts = await tx
         .select({
           childId: productBundleItems.childProductId,
           partQty: productBundleItems.quantity,
@@ -530,10 +537,10 @@ async function syncAdminBundleStockForChild(childProductId: string) {
       if (bundleParts.length === 0) continue;
 
       const minSets = Math.min(
-        ...bundleParts.map((p) => Math.floor(Math.max(0, p.childStock) / (p.partQty || 1)))
+        ...bundleParts.map((p: any) => Math.floor(Math.max(0, p.childStock) / (p.partQty || 1)))
       );
 
-      await db
+      await tx
         .update(products)
         .set({
           stockQuantity: minSets,
@@ -576,15 +583,17 @@ export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput
       updates.status = "shipped";
     }
 
-    // 1. Update order
-    await db.update(orders).set(updates).where(eq(orders.id, orderId));
+    await db.transaction(async (tx) => {
+      // 1. Update order
+      await tx.update(orders).set(updates).where(eq(orders.id, orderId));
 
-    // 2. Insert into history
-    await db.insert(orderStatusHistory).values({
-      orderId,
-      status: newStatus,
-      note: `อัปเดตการจัดส่ง: ขนส่ง ${shippingCarrier} เลขพัสดุ ${trackingNumber}${note ? ` (${note})` : ""}`,
-      changedByAdminId: admin.id,
+      // 2. Insert into history
+      await tx.insert(orderStatusHistory).values({
+        orderId,
+        status: newStatus,
+        note: `อัปเดตการจัดส่ง: ขนส่ง ${shippingCarrier} เลขพัสดุ ${trackingNumber}${note ? ` (${note})` : ""}`,
+        changedByAdminId: admin.id,
+      });
     });
 
     // 3. Log Audit Event
@@ -630,6 +639,14 @@ export async function assignAdminToOrderAction(input: { orderId: string; adminId
         updatedAt: new Date(),
       })
       .where(eq(orders.id, orderId));
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "order.assigned_admin",
+      entityType: "order",
+      entityId: orderId,
+      metadata: { assignedAdminId: adminId },
+    });
 
     revalidatePath("/orders");
     revalidatePath(`/orders/${orderId}`);

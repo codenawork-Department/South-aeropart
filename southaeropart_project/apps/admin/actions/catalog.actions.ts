@@ -17,7 +17,7 @@ import {
   count,
   sql,
 } from "@repo/db";
-import { validateSession, logAuditEvent } from "@/lib/auth";
+import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -223,6 +223,9 @@ export async function updateBrandAction(
 export async function deleteBrandAction(id: string): Promise<CatalogActionResult> {
   const admin = await validateSession();
   if (!admin) return { success: false, message: "Unauthorized" };
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return { success: false, message: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
+  }
 
   const [brand] = await db.select().from(brands).where(eq(brands.id, id)).limit(1);
   if (!brand) return { success: false, message: "ไม่พบแบรนด์ในระบบ" };
@@ -393,6 +396,9 @@ export async function updateCarModelAction(
 export async function deleteCarModelAction(id: string): Promise<CatalogActionResult> {
   const admin = await validateSession();
   if (!admin) return { success: false, message: "Unauthorized" };
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return { success: false, message: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
+  }
 
   const [model] = await db.select().from(carModels).where(eq(carModels.id, id)).limit(1);
   if (!model) return { success: false, message: "ไม่พบรุ่นรถในระบบ" };
@@ -542,6 +548,9 @@ export async function updateCategoryAction(
 export async function deleteCategoryAction(id: string): Promise<CatalogActionResult> {
   const admin = await validateSession();
   if (!admin) return { success: false, message: "Unauthorized" };
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return { success: false, message: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
+  }
 
   const [cat] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
   if (!cat) return { success: false, message: "ไม่พบหมวดหมู่ในระบบ" };
@@ -868,6 +877,9 @@ export async function updateMaterialAction(
 export async function deleteMaterialAction(id: string): Promise<CatalogActionResult> {
   const admin = await validateSession();
   if (!admin) return { success: false, message: "Unauthorized" };
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return { success: false, message: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
+  }
 
   try {
     const [existing] = await db
@@ -1068,6 +1080,9 @@ export async function updateInstallationAction(
 export async function deleteInstallationAction(id: string): Promise<CatalogActionResult> {
   const admin = await validateSession();
   if (!admin) return { success: false, message: "Unauthorized" };
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return { success: false, message: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
+  }
 
   try {
     const [existing] = await db

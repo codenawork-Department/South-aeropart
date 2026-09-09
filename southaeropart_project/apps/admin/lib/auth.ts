@@ -275,3 +275,18 @@ export async function logAuditEvent(params: {
     ipAddress: params.ipAddress ?? null,
   });
 }
+
+// ─── RBAC Role Enforcement ───
+
+/**
+ * Check if the admin user has one of the allowed roles.
+ * Defaults to ["admin", "super_admin"] for privileged / destructive operations.
+ */
+export function hasRequiredRole(
+  admin: AdminUser | null | undefined,
+  allowedRoles: Array<AdminUser["role"]> = ["admin", "super_admin"]
+): boolean {
+  if (!admin) return false;
+  return allowedRoles.includes(admin.role);
+}
+
