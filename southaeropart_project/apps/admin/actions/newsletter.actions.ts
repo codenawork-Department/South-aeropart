@@ -20,7 +20,7 @@ import {
   EmailCanvasDesignState,
 } from "@repo/db";
 import { uploadImage, sendEmail, sendBatchEmails } from "@repo/lib";
-import { validateSession, logAuditEvent } from "@/lib/auth";
+import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -315,6 +315,15 @@ export async function saveCampaignDraftAction(data: {
         .returning();
 
       revalidatePath("/newsletters");
+
+      await logAuditEvent({
+        adminId: admin.id,
+        action: "newsletter.update_draft",
+        entityType: "newsletter_campaign",
+        entityId: updated.id,
+        metadata: { subject: data.subject, title: data.title },
+      });
+
       return { success: true, message: "บันทึกแบบร่างสำเร็จ", data: updated };
     } else {
       // Create new
@@ -333,6 +342,15 @@ export async function saveCampaignDraftAction(data: {
         .returning();
 
       revalidatePath("/newsletters");
+
+      await logAuditEvent({
+        adminId: admin.id,
+        action: "newsletter.create_draft",
+        entityType: "newsletter_campaign",
+        entityId: created.id,
+        metadata: { subject: data.subject, title: data.title },
+      });
+
       return { success: true, message: "สร้างแคมเปญข่าวสารใหม่สำเร็จ", data: created };
     }
   } catch (error) {
@@ -513,12 +531,24 @@ export async function deleteCampaignAction(id: string): Promise<ActionResult> {
     return { success: false, error: "Unauthorized" };
   }
 
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return { success: false, error: "สิทธิ์การเข้าถึงไม่เพียงพอ ต้องเป็นระดับ Admin หรือ Super Admin เท่านั้น" };
+  }
+
   if (!id || !UUID_REGEX.test(id)) {
     return { success: false, error: "รหัสแคมเปญไม่ถูกต้อง" };
   }
 
   try {
     await db.delete(newsletterCampaigns).where(eq(newsletterCampaigns.id, id));
+
+    await logAuditEvent({
+      adminId: admin.id,
+      action: "newsletter.delete_campaign",
+      entityType: "newsletter_campaign",
+      entityId: id,
+    });
+
     revalidatePath("/newsletters");
     return { success: true, message: "ลบแคมเปญเรียบร้อยแล้ว" };
   } catch (error) {
