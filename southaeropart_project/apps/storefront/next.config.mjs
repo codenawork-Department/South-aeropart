@@ -35,9 +35,14 @@ const nextConfig = {
     ],
   },
   async headers() {
+    const isProd = process.env.NODE_ENV === "production";
+    const scriptSrc = isProd
+      ? "'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.southaeropart.com https://js.stripe.com https://cdn.jsdelivr.net"
+      : "'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.southaeropart.com https://js.stripe.com https://cdn.jsdelivr.net";
+
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.southaeropart.com https://js.stripe.com https://cdn.jsdelivr.net;
+      script-src ${scriptSrc};
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' blob: data: https://res.cloudinary.com https://img.clerk.com https://images.unsplash.com https://avatars.githubusercontent.com https://*.stripe.com;
       font-src 'self' data: https://fonts.gstatic.com;
@@ -57,6 +62,10 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value: cspHeader,
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
           },
           {
             key: "X-Frame-Options",

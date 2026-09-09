@@ -626,7 +626,7 @@ export async function getFeaturedBundles(): Promise<FeaturedBundleData[]> {
  * ดึงข้อมูลชุดเซ็ตทั้งหมดที่สถานะพร้อมขาย (status = 'active') สำหรับหน้า Collection (/collection)
  * เรียงตามลำดับล่าสุดที่อัปเดต/สร้าง
  */
-export async function getActiveBundles(): Promise<FeaturedBundleData[]> {
+export async function getActiveBundles(limit: number = 50): Promise<FeaturedBundleData[]> {
   try {
     const rawBundles = await db
       .select({
@@ -670,7 +670,8 @@ export async function getActiveBundles(): Promise<FeaturedBundleData[]> {
           eq(products.status, "active")
         )
       )
-      .orderBy(desc(products.updatedAt), desc(products.createdAt));
+      .orderBy(desc(products.updatedAt), desc(products.createdAt))
+      .limit(limit);
 
     if (!rawBundles || rawBundles.length === 0) {
       return [];

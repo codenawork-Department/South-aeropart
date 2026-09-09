@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config({ path: "../../.env" });
+
 import {
   db,
   products,
@@ -21,14 +24,30 @@ async function runVerification() {
   // POINT 2: Single Product Stock Guard
   // -------------------------------------------------------------
   console.log("\n>>> POINT 2: Testing Single Product Stock Guard...");
-  const [singleProduct] = await db
+  let [singleProduct] = await db
     .select()
     .from(products)
-    .where(eq(products.productType, "single"))
+    .where(and(eq(products.productType, "single"), eq(products.status, "active")))
     .limit(1);
 
   if (!singleProduct) {
-    throw new Error("Point 2 Failed: No single product found in DB to test");
+    // If none active, find any single product and make it active
+    const [anySingle] = await db
+      .select()
+      .from(products)
+      .where(eq(products.productType, "single"))
+      .limit(1);
+    if (anySingle) {
+      await db.update(products).set({ status: "active", stockQuantity: 10 }).where(eq(products.id, anySingle.id));
+      singleProduct = { ...anySingle, status: "active", stockQuantity: 10 };
+    } else {
+      throw new Error("Point 2 Failed: No single product found in DB to test");
+    }
+  }
+
+  if (singleProduct.stockQuantity < 1) {
+    await db.update(products).set({ stockQuantity: 10 }).where(eq(products.id, singleProduct.id));
+    singleProduct.stockQuantity = 10;
   }
 
   const excessiveQty = singleProduct.stockQuantity + 500;

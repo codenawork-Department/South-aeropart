@@ -13,12 +13,13 @@ import {
   EffectComposer,
   Bloom,
   Vignette,
-  BrightnessContrast,
-  HueSaturation,
+  ToneMapping,
   ChromaticAberration,
   SMAA,
 } from "@react-three/postprocessing";
+import { ToneMappingMode } from "postprocessing";
 import * as THREE from "three";
+import { MinimalistGarage } from "./MinimalistGarage";
 
 type OrbitControlsElement = React.ElementRef<typeof OrbitControls>;
 
@@ -55,7 +56,31 @@ function CarModel({ onLoaded }: MustangModelProps) {
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
 
-    // 1. Ensure initial animation pose (e.g. door closed) is set cleanly
+    // 1. Force the driver's door and hinges into the exact mathematically closed pose
+    clone.traverse((child) => {
+      const name = child.name;
+      if (name === "Animate_Door_FrontLeft") {
+        child.quaternion.set(0.026201, 0.000823, 0.0314, 0.999163);
+        child.position.set(0.900995, 0.444162, 0.661111);
+        child.updateMatrix();
+      } else if (name === "Animate_Door_FrontLeft_Hinge_1") {
+        child.quaternion.set(0.020725, -0.169017, 0.003159, 0.98539);
+        child.position.set(0.834848, 0.424862, 0.635625);
+        child.updateMatrix();
+      } else if (name === "Target_Door_FrontLeft_Hinge_1") {
+        child.quaternion.set(-0.00697, -0.170418, -0.043005, 0.984408);
+        child.position.set(-0.059551, -0.017073, -0.04625);
+        child.updateMatrix();
+      } else if (name === "Animate_DoorWindow_FrontLeft") {
+        child.quaternion.set(-0.100472, 0.001375, 0.260027, 0.960359);
+        child.position.set(-0.085385, 0.263413, -0.762663);
+        child.updateMatrix();
+      } else if (name === "Trigger_Door_FrontLeft") {
+        child.quaternion.set(-0.026164, -0.000822, -0.0314, 0.999164);
+        child.updateMatrix();
+      }
+    });
+
     if (animations && animations.length > 0) {
       const mixer = new THREE.AnimationMixer(clone);
       animations.forEach((clip) => {
@@ -63,11 +88,11 @@ function CarModel({ onLoaded }: MustangModelProps) {
         action.clampWhenFinished = true;
         action.loop = THREE.LoopOnce;
         action.play();
-        // Advance to final keyframe so doors and panels are in closed position
         mixer.setTime(clip.duration);
-        mixer.update(0);
+        mixer.update(0.01);
       });
     }
+    clone.updateMatrixWorld(true);
 
     const box = new THREE.Box3().setFromObject(clone);
     const center = box.getCenter(new THREE.Vector3());
@@ -95,21 +120,21 @@ function CarModel({ onLoaded }: MustangModelProps) {
               mat instanceof THREE.MeshStandardMaterial ||
               mat instanceof THREE.MeshPhysicalMaterial
             ) {
-              // 1. Windshield & Window Glass: Transparent tinted automotive glass
+              // 1. Windshield & Window Glass: Transparent tinted automotive glass (dielectric, non-glare)
               if (
                 matName.includes("glassmtl") ||
                 matName.includes("window") ||
                 isWindowOrGlassMesh
               ) {
                 mat.transparent = true;
-                mat.opacity = 0.22;
-                mat.color.set("#111827"); // luxury subtle dark tint
-                mat.roughness = 0.05;
-                mat.metalness = 0.9;
-                mat.envMapIntensity = 1.2;
+                mat.opacity = 0.38;
+                mat.color.set("#11171d"); // luxury subtle dark smoke tint
+                mat.roughness = 0.22; // smooth laminated glass that softly diffuses reflections
+                mat.metalness = 0.0; // PBR physical dielectric glass! Never metal
+                mat.envMapIntensity = 0.22; // Controlled reflection, no glare hotspot
                 mat.depthWrite = false;
               }
-              // 2. Red Glass & Taillights (with specular emissive glow for Bloom)
+              // 2. Red Glass & Taillights (controlled specular glow for Bloom)
               else if (
                 matName.includes("glassred") ||
                 matName.includes("taillight") ||
@@ -118,10 +143,10 @@ function CarModel({ onLoaded }: MustangModelProps) {
                 mat.transparent = true;
                 mat.opacity = 0.85;
                 mat.color.set("#ff1744");
-                mat.roughness = 0.08;
-                mat.metalness = 0.2;
-                mat.emissive = new THREE.Color("#ff002e");
-                mat.emissiveIntensity = 2.4;
+                mat.roughness = 0.12;
+                mat.metalness = 0.1;
+                mat.emissive = new THREE.Color("#e51d24");
+                mat.emissiveIntensity = 1.35;
                 mat.depthWrite = false;
               }
               // 3. Headlights and Lens covers (crisp Xenon/LED glow)
@@ -130,9 +155,9 @@ function CarModel({ onLoaded }: MustangModelProps) {
                 meshName.includes("light") ||
                 matName.includes("led")
               ) {
-                mat.envMapIntensity = 1.25;
-                mat.roughness = 0.08;
-                mat.metalness = 0.15;
+                mat.envMapIntensity = 0.6;
+                mat.roughness = 0.15;
+                mat.metalness = 0.1;
                 if (
                   meshName.includes("front") ||
                   matName.includes("front") ||
@@ -140,25 +165,31 @@ function CarModel({ onLoaded }: MustangModelProps) {
                   meshName.includes("drl")
                 ) {
                   mat.emissive = new THREE.Color("#f0f7ff");
-                  mat.emissiveIntensity = 2.6;
+                  mat.emissiveIntensity = 1.4;
                 } else if (mat.emissive && mat.emissive.getHex() > 0) {
-                  mat.emissiveIntensity = Math.min(Math.max(mat.emissiveIntensity, 1.8), 2.8);
+                  mat.emissiveIntensity = Math.min(Math.max(mat.emissiveIntensity, 1.0), 1.5);
                 }
               }
-              // 4. Carbon fiber aero parts (diffuser, splitters, side skirts, GT wing)
+              // 4. Base Material: Chassis composite, inner hood & interior structural base
+              else if (matName === "base" || matName.startsWith("base")) {
+                mat.color.set("#181818"); // Dark charcoal composite, NOT white!
+                mat.envMapIntensity = 0.35;
+                mat.roughness = 0.65;
+                mat.metalness = 0.1;
+              }
+              // 5. Carbon fiber aero parts (diffuser, splitters, side skirts, GT wing)
               // Hardened fallback color: never render white on low-power devices!
               else if (matName.includes("carbon")) {
                 mat.color.set("#1a1a1a");
-                mat.envMapIntensity = 0.95;
-                mat.roughness = 0.26;
+                mat.envMapIntensity = 0.75;
+                mat.roughness = 0.28;
                 mat.metalness = 0.2;
                 if ("clearcoat" in mat) {
-                  (mat as THREE.MeshPhysicalMaterial).clearcoat = 0.8;
-                  (mat as THREE.MeshPhysicalMaterial).clearcoatRoughness = 0.1;
+                  (mat as THREE.MeshPhysicalMaterial).clearcoat = 0.7;
+                  (mat as THREE.MeshPhysicalMaterial).clearcoatRoughness = 0.12;
                 }
               }
-              // 5. Rubber Tires & Wheels: Hardened fallback color to satin dark grey/black
-              // Even if texture binding fails or is delayed on mobile/onboard GPU, tires are NEVER white!
+              // 6. Rubber Tires & Wheels: Hardened fallback color to satin dark grey/black
               else if (
                 matName.includes("plastic_black") ||
                 matName.includes("mat_568") ||
@@ -174,7 +205,7 @@ function CarModel({ onLoaded }: MustangModelProps) {
                 mat.roughness = 0.82;
                 mat.metalness = 0.08;
               }
-              // 6. Grilles & Front Intakes: Deep black mesh
+              // 7. Grilles & Front Intakes: Deep black mesh
               else if (
                 matName.includes("grille") ||
                 meshName.includes("grille") ||
@@ -185,7 +216,7 @@ function CarModel({ onLoaded }: MustangModelProps) {
                 mat.roughness = 0.6;
                 mat.metalness = 0.15;
               }
-              // 7. Interior, Seats & Cockpit Engine: Charcoal interior
+              // 8. Interior, Seats & Cockpit Engine: Charcoal interior
               else if (
                 matName.includes("interior") ||
                 matName.includes("engine") ||
@@ -195,22 +226,21 @@ function CarModel({ onLoaded }: MustangModelProps) {
                 mat.envMapIntensity = 0.45;
                 mat.roughness = 0.55;
               }
-              // 8. Main Car Body Paint (Rosso Corsa depth with high-grade clearcoat sheen)
+              // 9. Main Car Body Paint (Deep metallic finish with high-grade clearcoat sheen)
               else if (
                 matName.includes("paint") ||
                 matName.includes("coloured") ||
-                matName.includes("base") ||
                 matName.includes("body")
               ) {
-                mat.envMapIntensity = 1.15;
-                mat.roughness = 0.14;
-                mat.metalness = 0.24;
+                mat.envMapIntensity = 0.95;
+                mat.roughness = 0.16;
+                mat.metalness = 0.25;
                 if ("clearcoat" in mat) {
-                  (mat as THREE.MeshPhysicalMaterial).clearcoat = 1.0;
-                  (mat as THREE.MeshPhysicalMaterial).clearcoatRoughness = 0.07;
+                  (mat as THREE.MeshPhysicalMaterial).clearcoat = 0.9;
+                  (mat as THREE.MeshPhysicalMaterial).clearcoatRoughness = 0.08;
                 }
               }
-              // 9. Chrome / Badges / Calipers / Wheels / Rotors
+              // 10. Chrome / Badges / Calipers / Wheels / Rotors
               else if (
                 matName.includes("badge") ||
                 matName.includes("caliper") ||
@@ -218,15 +248,15 @@ function CarModel({ onLoaded }: MustangModelProps) {
                 matName.includes("plate") ||
                 matName.includes("rim")
               ) {
-                mat.envMapIntensity = 1.3;
+                mat.envMapIntensity = 1.0;
                 mat.metalness = 0.92;
-                mat.roughness = 0.12;
+                mat.roughness = 0.15;
               }
-              // 10. General parts: Neutral dark fallback
+              // 11. General parts: Neutral dark fallback
               else {
                 mat.color.set("#222222");
-                mat.envMapIntensity = 0.7;
-                mat.roughness = 0.38;
+                mat.envMapIntensity = 0.5;
+                mat.roughness = 0.45;
               }
 
               mat.needsUpdate = true;
@@ -330,10 +360,6 @@ interface FilterConfig {
   bloomThreshold: number;
   bloomSmoothing: number;
   bloomIntensity: number;
-  contrast: number;
-  brightness: number;
-  saturation: number;
-  hue: number;
   vignetteDarkness: number;
   vignetteOffset: number;
   chromaticAberrationOffset: [number, number];
@@ -341,40 +367,28 @@ interface FilterConfig {
 
 const FILTER_CONFIGS: Record<Exclude<PostFilterPreset, "off">, FilterConfig> = {
   studio: {
-    bloomThreshold: 0.88,
-    bloomSmoothing: 0.25,
-    bloomIntensity: 0.65,
-    contrast: 0.08,
-    brightness: 0.02,
-    saturation: 0.12,
-    hue: 0,
-    vignetteDarkness: 0.45,
-    vignetteOffset: 0.35,
-    chromaticAberrationOffset: [0.0004, 0.0004],
+    bloomThreshold: 1.18,
+    bloomSmoothing: 0.08,
+    bloomIntensity: 0.22,
+    vignetteDarkness: 0.35,
+    vignetteOffset: 0.38,
+    chromaticAberrationOffset: [0.0003, 0.0003],
   },
   cinematic: {
-    bloomThreshold: 0.82,
-    bloomSmoothing: 0.3,
-    bloomIntensity: 1.0,
-    contrast: 0.16,
-    brightness: 0.01,
-    saturation: 0.22,
-    hue: -0.015,
-    vignetteDarkness: 0.65,
-    vignetteOffset: 0.25,
-    chromaticAberrationOffset: [0.0008, 0.0008],
+    bloomThreshold: 1.15,
+    bloomSmoothing: 0.08,
+    bloomIntensity: 0.35,
+    vignetteDarkness: 0.45,
+    vignetteOffset: 0.30,
+    chromaticAberrationOffset: [0.0004, 0.0004],
   },
   midnight: {
-    bloomThreshold: 0.76,
-    bloomSmoothing: 0.25,
-    bloomIntensity: 1.35,
-    contrast: 0.22,
-    brightness: -0.02,
-    saturation: 0.28,
-    hue: 0.035,
-    vignetteDarkness: 0.75,
-    vignetteOffset: 0.2,
-    chromaticAberrationOffset: [0.0006, 0.0006],
+    bloomThreshold: 1.10,
+    bloomSmoothing: 0.08,
+    bloomIntensity: 0.50,
+    vignetteDarkness: 0.55,
+    vignetteOffset: 0.25,
+    chromaticAberrationOffset: [0.0005, 0.0005],
   },
 };
 
@@ -403,30 +417,27 @@ function CarPostProcessing({
 
   return (
     <EffectComposer multisampling={multisampling} enableNormalPass={false}>
+      {/* 1. Bloom: captures real emissive light sources with no clipping */}
       <Bloom
         luminanceThreshold={config.bloomThreshold}
         luminanceSmoothing={config.bloomSmoothing}
         intensity={isMobile ? config.bloomIntensity * 0.75 : config.bloomIntensity}
         mipmapBlur
       />
-      <BrightnessContrast
-        brightness={config.brightness}
-        contrast={config.contrast}
-      />
-      <HueSaturation
-        saturation={config.saturation}
-        hue={config.hue}
-      />
+      {/* 2. Filmic ACES Tone Mapping: smoothly maps HDR specular highlights without clipping/artifacts */}
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      {/* 3. Subtle Vignette */}
       <Vignette
         offset={config.vignetteOffset}
         darkness={config.vignetteDarkness}
         eskil={false}
       />
+      {/* 4. Subtle Chromatic Aberration */}
       <ChromaticAberration
         offset={aberrationOffset}
         radialModulation
         modulationOffset={0.5}
-        opacity={isMobile ? 0 : 1}
+        opacity={isMobile ? 0 : 0.4}
       />
       <SMAA opacity={isMobile || isLowTierGPU ? 0 : 1} />
     </EffectComposer>
@@ -538,22 +549,25 @@ export function CarScene({
           alpha: true,
           powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.0,
+          toneMappingExposure: 0.96,
         }}
         shadows
       >
-        <color attach="background" args={["#0a0a0a"]} />
+        <color attach="background" args={["#f0f4f8"]} />
 
-        {/* Universal Automotive Studio Environment Lighting (Self-contained, local HDR, 100% device compatible) */}
-        <Environment files="/environments/studio.hdr" environmentIntensity={0.7} />
+        {/* Minimalist Supercar Garage Showroom Architecture (White & Glass) */}
+        <MinimalistGarage />
 
-        {/* Subtle Ambient Fill for Natural Shadow Depth */}
-        <ambientLight intensity={0.22} />
+        {/* Universal Automotive Studio Environment Lighting (Balanced fill) */}
+        <Environment files="/environments/studio.hdr" environmentIntensity={0.25} />
 
-        {/* Balanced Key Sunlight for Natural Highlights & Sharp Shadows */}
+        {/* Soft daylight ambient fill */}
+        <ambientLight intensity={0.45} color="#ffffff" />
+
+        {/* Key Studio Light for Crisp Supercar Highlights & Soft Floor Shadows */}
         <directionalLight
-          position={[5, 9, 5]}
-          intensity={0.95}
+          position={[5.5, 8.5, 3]}
+          intensity={0.65}
           castShadow
           shadow-mapSize-width={isMobile ? 512 : 1024}
           shadow-mapSize-height={isMobile ? 512 : 1024}
@@ -568,12 +582,15 @@ export function CarScene({
         />
 
         {/* Soft Cool Fill from Opposite Side */}
-        <directionalLight position={[-5, 4, 3]} intensity={0.3} color="#e8f0fe" />
+        <directionalLight position={[-5, 6, -2]} intensity={0.3} color="#edf2f7" />
+
+        {/* Rear Rim Light to Accentuate GT Aero Wing & Silhouette */}
+        <directionalLight position={[0, 3.5, -6]} intensity={0.3} color="#ffffff" />
 
         {/* Realistic Ground Floor Contact Shadows Under Tires at y = 0 */}
         <ContactShadows
-          position={[0, 0, 0]}
-          opacity={0.75}
+          position={[0, 0.001, 0]}
+          opacity={0.55}
           scale={10.5}
           blur={1.8}
           far={2.5}

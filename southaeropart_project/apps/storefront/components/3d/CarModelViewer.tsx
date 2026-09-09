@@ -34,19 +34,19 @@ const FILTER_OPTIONS: {
     id: "studio",
     label: "Studio Real",
     badge: "RECOMMENDED",
-    description: "Photorealistic automotive studio with specular bloom & rich Rosso Corsa",
+    description: "Photorealistic white showroom with soft specular highlights and clean reflection",
   },
   {
     id: "cinematic",
     label: "Cinematic HDR",
-    badge: "HIGH CONTRAST",
-    description: "Punchy film lighting, deep carbon shadows & vivid aerodynamic reflections",
+    badge: "FILMIC ACES",
+    description: "Punchy film lighting with smooth ACES filmic roll-off and aerodynamic highlights",
   },
   {
     id: "midnight",
     label: "Midnight Cyber",
     badge: "NEON GLOW",
-    description: "Moody night aesthetic with vibrant LED glow on DRLs & taillights",
+    description: "High-glow aesthetic with vibrant LED illumination on DRLs & taillights",
   },
   {
     id: "off",
@@ -137,9 +137,8 @@ export function CarModelViewer() {
       {/* Loading Screen Overlay */}
       {isLoading && <CarLoadingFallback progress={loadProgress} />}
 
-      {/* Subtle Studio Radial Background & Gradients (pointer-events-none) */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] h-[65%] bg-[radial-gradient(ellipse_at_center,rgba(229,29,36,0.05)_0%,transparent_70%)] pointer-events-none blur-2xl" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-black/40 pointer-events-none" />
+      {/* Subtle Showroom Edge Vignette (pointer-events-none) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/20 pointer-events-none" />
 
       {/* TOP BAR OVERLAYS */}
       <div className="absolute top-3 left-3 right-3 md:top-5 md:left-5 md:right-5 flex justify-between items-start pointer-events-none z-20">

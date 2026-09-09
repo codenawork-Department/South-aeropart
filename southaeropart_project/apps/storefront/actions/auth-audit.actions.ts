@@ -1,7 +1,18 @@
 "use server";
 //
 import { headers } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 import { recordUserLogin, RecordUserLoginParams } from "@/lib/auth-audit";
+
+const logLoginSchema = z.object({
+  userId: z.string().min(1),
+  email: z.string().email().nullable().optional(),
+  fullName: z.string().nullable().optional(),
+  avatarUrl: z.string().url().nullable().optional().or(z.literal("")),
+  loginMethod: z.enum(["google", "email_password", "oauth", "sso", "unknown", "clerk_session"]),
+  metadata: z.record(z.unknown()).optional(),
+});
 
 export interface LogLoginActionParams {
   userId: string;
@@ -14,10 +25,31 @@ export interface LogLoginActionParams {
 
 /**
  * Server action to record customer login from client-side authentication flows.
- * Automatically inspects incoming request headers for client IP and User-Agent.
+ * Enforces session authentication and validates input to prevent log spoofing.
  */
 export async function recordLoginAction(params: LogLoginActionParams): Promise<{ success: boolean }> {
   try {
+    const validated = logLoginSchema.parse(params);
+
+    // HIGH-05: Check server-side session to prevent user spoofing
+    let authUserId: string | null = null;
+    try {
+      authUserId = auth().userId;
+    } catch {
+      authUserId = null;
+    }
+
+    // If an authenticated session exists, enforce that it matches params.userId
+    if (authUserId && authUserId !== validated.userId) {
+      console.warn(`[recordLoginAction] User ID mismatch: session=${authUserId}, params=${validated.userId}`);
+      return { success: false };
+    }
+
+    const finalUserId = authUserId || validated.userId;
+    if (!finalUserId) {
+      return { success: false };
+    }
+
     const headersList = headers();
     
     // Extract client IP address (supporting proxies / CDN / Vercel)
@@ -28,7 +60,9 @@ export async function recordLoginAction(params: LogLoginActionParams): Promise<{
     const userAgent = headersList.get("user-agent") ?? null;
 
     await recordUserLogin({
-      ...params,
+      ...validated,
+      userId: finalUserId,
+      avatarUrl: validated.avatarUrl || null,
       ipAddress,
       userAgent,
     });

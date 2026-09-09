@@ -85,8 +85,6 @@ async function handleEvent(payload: Record<string, unknown>) {
           phone,
           avatarUrl: image_url || null,
         });
-
-        console.log(`Clerk webhook: synced user.created ${id} (${email}) to Neon`);
         break;
       }
 
@@ -114,8 +112,6 @@ async function handleEvent(payload: Record<string, unknown>) {
             updatedAt: now,
           })
           .where(eq(users.id, id));
-
-        console.log(`Clerk webhook: synced user.updated ${id} to Neon`);
         break;
       }
 
@@ -127,8 +123,6 @@ async function handleEvent(payload: Record<string, unknown>) {
           .update(users)
           .set({ isBanned: true, updatedAt: now })
           .where(eq(users.id, id));
-
-        console.log(`Clerk webhook: soft-banned deleted user ${id} in Neon`);
         break;
       }
 
@@ -161,14 +155,12 @@ async function handleEvent(payload: Record<string, unknown>) {
             },
             createdAt: now,
           });
-
-          console.log(`Clerk webhook: recorded session.created for user ${user_id} in Neon`);
         }
         break;
       }
 
       default:
-        console.log(`Clerk webhook: unhandled event ${eventType}`);
+        break;
     }
 
     return NextResponse.json({ received: true });
