@@ -11,6 +11,8 @@ import {
   eq,
   desc,
 } from "@repo/db";
+import { spawnSync } from "child_process";
+import path from "path";
 import {
   createPaymentIntent,
   retrievePaymentIntent,
@@ -19,9 +21,9 @@ import {
 } from "@repo/lib";
 import {
   createOrder,
-  fulfillOrderPayment,
   createOrGetStripePaymentIntent,
 } from "../actions/checkout.actions";
+import { fulfillOrderPayment } from "../lib/order-fulfillment";
 
 async function runStripeLoop() {
   console.log("================================================================================");
@@ -34,7 +36,16 @@ async function runStripeLoop() {
   console.log("--------------------------------------------------------------------------------");
   console.log("📌 POINT 1: TypeScript Verification");
   console.log("--------------------------------------------------------------------------------");
-  console.log("✅ TypeScript compiled with 0 errors (Confirmed by npx tsc --noEmit: Code 0)\n");
+  const tscRes = spawnSync("npx", ["tsc", "--noEmit"], {
+    cwd: path.resolve(__dirname, ".."),
+    shell: true,
+    stdio: "pipe",
+  });
+  if (tscRes.status !== 0) {
+    console.error("❌ TypeScript compilation failed:\n", tscRes.stderr.toString(), tscRes.stdout.toString());
+    process.exit(1);
+  }
+  console.log("✅ TypeScript compiled with 0 errors (Confirmed by live npx tsc --noEmit: Code 0)\n");
 
   // ============================================================================
   // POINT 2: Database Schema & Column Verification

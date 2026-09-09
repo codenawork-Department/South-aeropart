@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import { getOrderDetails, fulfillOrderPayment } from "@/actions/checkout.actions";
+import { getOrderDetails } from "@/actions/checkout.actions";
+import { fulfillOrderPayment } from "@/lib/order-fulfillment";
 import { retrievePaymentIntent } from "@repo/lib";
 import { PaymentClient } from "@/components/checkout/PaymentClient";
 

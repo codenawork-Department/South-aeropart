@@ -39,6 +39,7 @@ import {
   updatePaymentIntentReceiptEmail,
 } from "@repo/lib";
 import { syncUserWithClerk } from "@/lib/user-sync";
+import { fulfillOrderPayment, syncBundleStockForChildPart } from "@/lib/order-fulfillment";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -97,7 +98,12 @@ export async function createOrder(input: CheckoutInput) {
 
     // If signed in, ensure user exists in the database
     if (orderUserId) {
-      const [existing] = await db.select().from(users).where(eq(users.id, orderUserId)).limit(1);
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, orderUserId))
+        .limit(1);
+
       if (!existing) {
         let clerkUser = null;
         try {
@@ -119,18 +125,46 @@ export async function createOrder(input: CheckoutInput) {
     } else {
       // Guest customer handling: Create or reuse a guest record to maintain FK
       const guestEmail = validated.shippingAddress.email || `guest_${Date.now()}@southaero.local`;
-      const [existingGuest] = await db.select().from(users).where(eq(users.email, guestEmail)).limit(1);
+
+      // CRIT-03: Rate limit guest orders (Max 5 guest orders per 15 minutes)
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      const recentGuestOrders = await db
+        .select({ id: orders.id })
+        .from(orders)
+        .where(
+          and(
+            sql`${orders.userId} LIKE 'guest_%'`,
+            gte(orders.createdAt, fifteenMinutesAgo),
+            sql`${orders.shippingAddress}->>'email' = ${guestEmail}`
+          )
+        );
+
+      if (recentGuestOrders.length >= 5) {
+        return {
+          success: false,
+          error: "คุณสร้างคำสั่งซื้อเกินจำนวนที่กำหนดสำหรับลูกค้าทั่วไป กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ",
+        };
+      }
+
+      const [existingGuest] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, guestEmail))
+        .limit(1);
 
       if (existingGuest) {
         orderUserId = existingGuest.id;
       } else {
         const generatedGuestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        const [createdGuest] = await db.insert(users).values({
-          id: generatedGuestId,
-          email: guestEmail,
-          fullName: validated.shippingAddress.recipientName,
-          phone: validated.shippingAddress.phone,
-        }).returning();
+        const [createdGuest] = await db
+          .insert(users)
+          .values({
+            id: generatedGuestId,
+            email: guestEmail,
+            fullName: validated.shippingAddress.recipientName,
+            phone: validated.shippingAddress.phone,
+          })
+          .returning({ id: users.id });
         orderUserId = createdGuest.id;
       }
     }
@@ -139,10 +173,7 @@ export async function createOrder(input: CheckoutInput) {
       throw new Error("Unable to determine customer identity");
     }
 
-    // Pre-flight Price, Status & Stock Verification
-    // NOTE (Audit #2): Stock availability is checked here for UX (early error),
-    // but the authoritative stock reservation happens atomically AFTER order insert
-    // using UPDATE ... WHERE stock_quantity >= $qty to prevent race conditions.
+    // Pre-flight Price, Status & Stock Verification (MED-03: Batch queries)
     interface VerifiedItem {
       productId: string;
       productName: string;
@@ -156,19 +187,46 @@ export async function createOrder(input: CheckoutInput) {
     const verifiedItems: VerifiedItem[] = [];
     let subtotalNum = 0;
 
+    const itemProductIds = Array.from(new Set(validated.items.map((i) => i.productId)));
+    const productRows = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        price: products.price,
+        status: products.status,
+        stockQuantity: products.stockQuantity,
+        productType: products.productType,
+      })
+      .from(products)
+      .where(inArray(products.id, itemProductIds));
+
+    const productMap = new Map(productRows.map((p) => [p.id, p]));
+
+    const bundleIds = productRows.filter((p) => p.productType === "bundle").map((p) => p.id);
+    const bundleParts = bundleIds.length > 0
+      ? await db
+          .select({
+            bundleProductId: productBundleItems.bundleProductId,
+            childId: productBundleItems.childProductId,
+            partQtyInBundle: productBundleItems.quantity,
+            childName: products.name,
+            childStock: products.stockQuantity,
+            childStatus: products.status,
+          })
+          .from(productBundleItems)
+          .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+          .where(inArray(productBundleItems.bundleProductId, bundleIds))
+      : [];
+
+    const bundlePartsMap = new Map<string, typeof bundleParts>();
+    for (const bp of bundleParts) {
+      const list = bundlePartsMap.get(bp.bundleProductId) || [];
+      list.push(bp);
+      bundlePartsMap.set(bp.bundleProductId, list);
+    }
+
     for (const item of validated.items) {
-      const [productRow] = await db
-        .select({
-          id: products.id,
-          name: products.name,
-          price: products.price,
-          status: products.status,
-          stockQuantity: products.stockQuantity,
-          productType: products.productType,
-        })
-        .from(products)
-        .where(eq(products.id, item.productId))
-        .limit(1);
+      const productRow = productMap.get(item.productId);
 
       if (!productRow) {
         return {
@@ -196,19 +254,8 @@ export async function createOrder(input: CheckoutInput) {
 
       // Bundle child parts: check status and stock (non-authoritative)
       if (productRow.productType === "bundle") {
-        const bundleChildParts = await db
-          .select({
-            childId: productBundleItems.childProductId,
-            partQtyInBundle: productBundleItems.quantity,
-            childName: products.name,
-            childStock: products.stockQuantity,
-            childStatus: products.status,
-          })
-          .from(productBundleItems)
-          .innerJoin(products, eq(productBundleItems.childProductId, products.id))
-          .where(eq(productBundleItems.bundleProductId, item.productId));
-
-        for (const childPart of bundleChildParts) {
+        const childParts = bundlePartsMap.get(item.productId) || [];
+        for (const childPart of childParts) {
           if (childPart.childStatus !== "active") {
             return {
               success: false,
@@ -281,148 +328,130 @@ export async function createOrder(input: CheckoutInput) {
       postalCode: validated.billingAddress.postalCode,
     } : undefined;
 
-    // Insert order, items, and status history (neon-http driver executes per-request)
-    // 1. Insert order
-    const [createdOrder] = await db.insert(orders).values({
-      orderNumber,
-      userId: orderUserId,
-      status: "pending",
-      paymentMethod: validated.paymentMethod,
-      paymentStatus: "pending",
-      subtotal: subtotalNum.toFixed(2),
-      shippingFee: shippingFeeNum.toFixed(2),
-      taxAmount: "0.00", // Tax included in prices
-      total: totalNum.toFixed(2),
-      currency: "THB",
-      shippingCarrier: validated.shippingMethod === "express" ? "South Aero Express Crated Logistics" : "South Aero Standard Logistics",
-      shippingAddress: formattedShippingAddress,
-      billingAddress: formattedBillingAddress,
-    }).returning();
-
-    // 2. Insert order items and bundle child part snapshots
-    for (const item of verifiedItems) {
-      const [createdOrderItem] = await db
-        .insert(orderItems)
+    // ── Audit #2 & CRIT-01: Atomic Multi-Table Transaction ─────────────────────
+    const createdOrder = await db.transaction(async (tx) => {
+      // 1. Insert order
+      const [newOrder] = await tx
+        .insert(orders)
         .values({
-          orderId: createdOrder.id,
-          productId: item.productId,
-          productNameSnapshot: `${item.productName}${item.variant ? ` (${item.variant})` : ""}`,
-          unitPrice: item.unitPrice,
-          quantity: item.quantity,
-          lineTotal: item.lineTotal,
+          orderNumber,
+          userId: orderUserId,
+          status: "pending",
+          paymentMethod: validated.paymentMethod,
+          paymentStatus: "pending",
+          subtotal: subtotalNum.toFixed(2),
+          shippingFee: shippingFeeNum.toFixed(2),
+          taxAmount: "0.00", // Tax included in prices
+          total: totalNum.toFixed(2),
+          currency: "THB",
+          shippingCarrier:
+            validated.shippingMethod === "express"
+              ? "South Aero Express Crated Logistics"
+              : "South Aero Standard Logistics",
+          shippingAddress: formattedShippingAddress,
+          billingAddress: formattedBillingAddress,
         })
         .returning();
 
-      // If this item is a bundle, snapshot its child parts into orderItemBundleParts
-      if (item.productType === "bundle") {
-        const bundleChildParts = await db
-          .select({
-            childProductId: productBundleItems.childProductId,
-            childQty: productBundleItems.quantity,
-            childName: products.name,
-            childPrice: products.price,
+      // 2. Insert order items and bundle child part snapshots
+      for (const item of verifiedItems) {
+        const [createdOrderItem] = await tx
+          .insert(orderItems)
+          .values({
+            orderId: newOrder.id,
+            productId: item.productId,
+            productNameSnapshot: `${item.productName}${item.variant ? ` (${item.variant})` : ""}`,
+            unitPrice: item.unitPrice,
+            quantity: item.quantity,
+            lineTotal: item.lineTotal,
           })
-          .from(productBundleItems)
-          .innerJoin(products, eq(productBundleItems.childProductId, products.id))
-          .where(eq(productBundleItems.bundleProductId, item.productId));
+          .returning();
 
-        if (bundleChildParts.length > 0) {
-          const partsToInsert = bundleChildParts.map((part) => ({
-            orderItemId: createdOrderItem.id,
-            childProductId: part.childProductId,
-            childProductNameSnapshot: part.childName,
-            unitPriceSnapshot: part.childPrice,
-            quantity: part.childQty * item.quantity,
-          }));
-
-          await db.insert(orderItemBundleParts).values(partsToInsert);
-        }
-      }
-    }
-
-    // ── Audit #2: Atomic stock reservation ──────────────────────────────────
-    // Use atomic UPDATE ... WHERE stock_quantity >= $qty to prevent overselling.
-    // If any reservation fails, delete the order (rollback) and return error.
-    for (const item of verifiedItems) {
-      // Atomically decrement the product's own stock
-      const [reserved] = await db
-        .update(products)
-        .set({
-          stockQuantity: sql`${products.stockQuantity} - ${item.quantity}`,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(products.id, item.productId),
-            gte(products.stockQuantity, item.quantity)
-          )
-        )
-        .returning({ id: products.id, stockQuantity: products.stockQuantity });
-
-      if (!reserved) {
-        // Rollback: delete order items, bundle parts, and order
-        const createdItemIds = await db
-          .select({ id: orderItems.id })
-          .from(orderItems)
-          .where(eq(orderItems.orderId, createdOrder.id));
-        for (const oi of createdItemIds) {
-          await db.delete(orderItemBundleParts).where(eq(orderItemBundleParts.orderItemId, oi.id));
-        }
-        await db.delete(orderItems).where(eq(orderItems.orderId, createdOrder.id));
-        await db.delete(orders).where(eq(orders.id, createdOrder.id));
-        // Restore previously decremented stock for items that were already reserved
-        for (const prev of verifiedItems) {
-          if (prev.productId === item.productId) break; // stop at the failed item
-          await db
-            .update(products)
-            .set({
-              stockQuantity: sql`${products.stockQuantity} + ${prev.quantity}`,
-              updatedAt: new Date(),
+        // If this item is a bundle, snapshot its child parts into orderItemBundleParts
+        if (item.productType === "bundle") {
+          const bundleChildParts = await tx
+            .select({
+              childProductId: productBundleItems.childProductId,
+              childQty: productBundleItems.quantity,
+              childName: products.name,
+              childPrice: products.price,
             })
-            .where(eq(products.id, prev.productId));
+            .from(productBundleItems)
+            .innerJoin(products, eq(productBundleItems.childProductId, products.id))
+            .where(eq(productBundleItems.bundleProductId, item.productId));
+
+          if (bundleChildParts.length > 0) {
+            const partsToInsert = bundleChildParts.map((part) => ({
+              orderItemId: createdOrderItem.id,
+              childProductId: part.childProductId,
+              childProductNameSnapshot: part.childName,
+              unitPriceSnapshot: part.childPrice,
+              quantity: part.childQty * item.quantity,
+            }));
+
+            await tx.insert(orderItemBundleParts).values(partsToInsert);
+          }
         }
-        return {
-          success: false,
-          error: `สินค้า "${item.productName}" มีสต็อกคงเหลือไม่เพียงพอ กรุณาลองใหม่อีกครั้ง`,
-        };
       }
 
-      // Auto-set out_of_stock status when stock reaches 0
-      if (reserved.stockQuantity === 0) {
-        await db
+      // 3. Atomic stock reservation
+      for (const item of verifiedItems) {
+        const [reserved] = await tx
           .update(products)
-          .set({ status: "out_of_stock", updatedAt: new Date() })
-          .where(eq(products.id, item.productId));
-      }
-    }
-    // ── End atomic stock reservation ────────────────────────────────────────
+          .set({
+            stockQuantity: sql`${products.stockQuantity} - ${item.quantity}`,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(products.id, item.productId),
+              gte(products.stockQuantity, item.quantity)
+            )
+          )
+          .returning({ id: products.id, stockQuantity: products.stockQuantity });
 
-    // 3. Insert initial status history
-    await db.insert(orderStatusHistory).values({
-      orderId: createdOrder.id,
-      status: "pending",
-      note: "สร้างคำสั่งซื้อสำเร็จ รอการชำระเงินผ่าน PromptPay QR Code (Order placed, awaiting payment)",
+        if (!reserved) {
+          throw new Error(`สินค้า "${item.productName}" มีสต็อกคงเหลือไม่เพียงพอ กรุณาลองใหม่อีกครั้ง`);
+        }
+
+        // Auto-set out_of_stock status when stock reaches 0
+        if (reserved.stockQuantity === 0) {
+          await tx
+            .update(products)
+            .set({ status: "out_of_stock", updatedAt: new Date() })
+            .where(eq(products.id, item.productId));
+        }
+      }
+
+      // 4. Insert initial status history
+      await tx.insert(orderStatusHistory).values({
+        orderId: newOrder.id,
+        status: "pending",
+        note: "สร้างคำสั่งซื้อสำเร็จ รอการชำระเงินผ่าน PromptPay QR Code (Order placed, awaiting payment)",
+      });
+
+      // 5. Optionally save address to user's address book if signed in
+      if (clerkUserId && validated.saveAddress) {
+        try {
+          await tx.insert(userAddresses).values({
+            userId: clerkUserId,
+            recipientName: validated.shippingAddress.recipientName,
+            phone: validated.shippingAddress.phone,
+            line1: validated.shippingAddress.line1,
+            line2: validated.shippingAddress.line2 || null,
+            subDistrict: validated.shippingAddress.subDistrict,
+            district: validated.shippingAddress.district,
+            province: validated.shippingAddress.province,
+            postalCode: validated.shippingAddress.postalCode,
+            isDefault: true,
+          });
+        } catch (addrErr) {
+          console.warn("[createOrder] Failed to save address for user", addrErr);
+        }
+      }
+
+      return newOrder;
     });
-
-    // Optionally save address to user's address book if signed in
-    if (clerkUserId && validated.saveAddress) {
-      try {
-        await db.insert(userAddresses).values({
-          userId: clerkUserId,
-          recipientName: validated.shippingAddress.recipientName,
-          phone: validated.shippingAddress.phone,
-          line1: validated.shippingAddress.line1,
-          line2: validated.shippingAddress.line2 || null,
-          subDistrict: validated.shippingAddress.subDistrict,
-          district: validated.shippingAddress.district,
-          province: validated.shippingAddress.province,
-          postalCode: validated.shippingAddress.postalCode,
-          isDefault: true,
-        });
-      } catch (addrErr) {
-        console.warn("[createOrder] Failed to save address for user", addrErr);
-      }
-    }
 
     safeRevalidatePath("/orders");
 
@@ -437,7 +466,10 @@ export async function createOrder(input: CheckoutInput) {
     console.error("[createOrder] Error:", error);
     return {
       success: false,
-      error: "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง",
+      error:
+        error instanceof Error && error.message.startsWith("สินค้า")
+          ? error.message
+          : "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง",
     };
   }
 }
@@ -449,7 +481,11 @@ export async function getOrderDetails(orderId: string) {
   try {
     z.string().uuid().parse(orderId);
 
-    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
     if (!order) {
       return { success: false, error: "Order not found", data: null };
     }
@@ -600,206 +636,42 @@ export async function getOrderStatus(orderId: string) {
   }
 }
 
-export interface FulfillPaymentParams {
-  method: "stripe" | "mock" | "promptpay" | "credit_card";
-  chargeId?: string;
-  note?: string;
-}
-
 /**
- * Synchronizes bundle stockQuantity and status for all bundles containing the given child product.
- */
-export async function syncBundleStockForChildPart(childProductId: string) {
-  try {
-    const parentBundles = await db
-      .select({ bundleProductId: productBundleItems.bundleProductId })
-      .from(productBundleItems)
-      .where(eq(productBundleItems.childProductId, childProductId));
-
-    for (const { bundleProductId } of parentBundles) {
-      const bundleParts = await db
-        .select({
-          childId: productBundleItems.childProductId,
-          partQty: productBundleItems.quantity,
-          childStock: products.stockQuantity,
-        })
-        .from(productBundleItems)
-        .innerJoin(products, eq(productBundleItems.childProductId, products.id))
-        .where(eq(productBundleItems.bundleProductId, bundleProductId));
-
-      if (bundleParts.length === 0) continue;
-
-      const minAvailableSets = Math.min(
-        ...bundleParts.map((p) => Math.floor(Math.max(0, p.childStock) / (p.partQty || 1)))
-      );
-
-      await db
-        .update(products)
-        .set({
-          stockQuantity: minAvailableSets,
-          status: minAvailableSets === 0 ? "out_of_stock" : "active",
-          updatedAt: new Date(),
-        })
-        .where(eq(products.id, bundleProductId));
-    }
-  } catch (err) {
-    console.error("[syncBundleStockForChildPart] Error syncing bundle stock:", err);
-  }
-}
-
-/**
- * Authoritative fulfillment for order payments (used by both Webhook and Mock payments):
- * - Idempotency guard: checks if order is already paid.
- * - Updates order.paymentStatus = "paid", status = "paid", stripePaymentIntentId.
- * - Inserts into orderStatusHistory.
- * - Decrements stockQuantity for single products and constituent bundle parts.
- * - Sets status = "out_of_stock" if stock reaches 0.
- * - Sends Resend Order Confirmation Email (non-blocking).
- * - Revalidates paths.
- */
-export async function fulfillOrderPayment(orderId: string, params: FulfillPaymentParams) {
-  try {
-    z.string().uuid().parse(orderId);
-
-    // SEC-02: Guard mock payments against execution in production
-    if (params.method === "mock" && process.env.NODE_ENV === "production") {
-      return {
-        success: false,
-        error: "Mock payment simulator is disabled in production environment.",
-      };
-    }
-
-    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
-    if (!order) {
-      return { success: false, error: "Order not found" };
-    }
-
-    // Audit #3: Atomic idempotency guard — UPDATE only if not already paid.
-    // If 0 rows returned, another concurrent call already fulfilled this order.
-    const [updatedOrder] = await db
-      .update(orders)
-      .set({
-        status: "paid",
-        paymentStatus: "paid",
-        stripePaymentIntentId: params.method === "stripe" ? params.chargeId : (order.stripePaymentIntentId || null),
-        omiseChargeId: params.method !== "stripe" ? (params.chargeId || `mock_qr_${Date.now()}`) : order.omiseChargeId,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(orders.id, orderId),
-          sql`${orders.paymentStatus} != 'paid'`
-        )
-      )
-      .returning({ id: orders.id });
-
-    if (!updatedOrder) {
-      return { success: true, message: "Order is already paid" };
-    }
-
-    // 2. Insert into history
-    const historyNote = params.note || (params.method === "stripe"
-      ? `ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (PaymentIntent: ${params.chargeId || "N/A"})`
-      : "ชำระเงินสำเร็จ (Payment Approved)");
-
-    await db.insert(orderStatusHistory).values({
-      orderId,
-      status: "paid",
-      note: historyNote,
-    });
-
-    // 3. Decrement product stock (single products & bundle child parts)
-    // 3. Audit #15: Decrement product stock in batch upfront to eliminate N+1 cascade
-    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-    const itemIds = items.map((i) => i.id);
-
-    // Batch-fetch all bundle parts for all items in 1 query
-    const allBundleParts = itemIds.length > 0
-      ? await db
-          .select()
-          .from(orderItemBundleParts)
-          .where(inArray(orderItemBundleParts.orderItemId, itemIds))
-      : [];
-
-    // Aggregate required stock decrement per productId
-    const decrementMap = new Map<string, number>();
-    const partsToSync = new Set<string>();
-
-    for (const item of items) {
-      if (item.productId) {
-        decrementMap.set(item.productId, (decrementMap.get(item.productId) || 0) + item.quantity);
-      }
-    }
-
-    for (const part of allBundleParts) {
-      if (part.childProductId) {
-        decrementMap.set(part.childProductId, (decrementMap.get(part.childProductId) || 0) + part.quantity);
-        partsToSync.add(part.childProductId);
-      }
-    }
-
-    // Batch-fetch and update all impacted products
-    const targetProductIds = Array.from(decrementMap.keys());
-    if (targetProductIds.length > 0) {
-      const targetProds = await db
-        .select({
-          id: products.id,
-          stockQuantity: products.stockQuantity,
-          productType: products.productType,
-        })
-        .from(products)
-        .where(inArray(products.id, targetProductIds));
-
-      for (const prod of targetProds) {
-        if (prod.productType === "single") {
-          partsToSync.add(prod.id);
-        }
-        const dec = decrementMap.get(prod.id) || 0;
-        const newStock = Math.max(0, prod.stockQuantity - dec);
-        await db
-          .update(products)
-          .set({
-            stockQuantity: newStock,
-            status: newStock === 0 ? "out_of_stock" : undefined,
-            updatedAt: new Date(),
-          })
-          .where(eq(products.id, prod.id));
-      }
-
-      // Deduplicated bundle stock synchronization (once per unique constituent part)
-      for (const partId of partsToSync) {
-        await syncBundleStockForChildPart(partId);
-      }
-    }
-
-    // 4. Send Order Confirmation Email via Resend (non-blocking)
-    try {
-      await sendOrderConfirmationEmail(orderId);
-    } catch (emailErr) {
-      console.warn("[fulfillOrderPayment] Failed to send order confirmation email:", emailErr);
-    }
-
-    safeRevalidatePath(`/orders/${orderId}`);
-    safeRevalidatePath(`/checkout/payment/${orderId}`);
-    safeRevalidatePath("/orders");
-
-    return { success: true, message: "ชำระเงินสำเร็จเรียบร้อยแล้ว!" };
-  } catch (error) {
-    console.error("[fulfillOrderPayment] Error:", error);
-    return { success: false, error: "Failed to fulfill payment" };
-  }
-}
-
-/**
- * Confirms mock QR payment (wraps authoritative fulfillOrderPayment)
+ * Confirms mock QR payment (wraps authoritative fulfillOrderPayment with IDOR protection)
  */
 export async function confirmMockPayment(orderId: string) {
+  z.string().uuid().parse(orderId);
+
   if (process.env.NODE_ENV === "production") {
     return {
       success: false,
       error: "Mock payment simulator is disabled in production environment.",
     };
   }
+
+  // IDOR check: Registered user orders can only be mock-paid by the owner
+  const [order] = await db
+    .select({ id: orders.id, userId: orders.userId })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
+  if (!order) {
+    return { success: false, error: "Order not found" };
+  }
+
+  // IDOR check: If logged in, registered user orders can only be mock-paid by the owner
+  let currentUserId: string | null = null;
+  try {
+    currentUserId = auth().userId;
+  } catch {
+    currentUserId = null;
+  }
+
+  if (currentUserId && !order.userId.startsWith("guest_") && currentUserId !== order.userId) {
+    return { success: false, error: "Unauthorized access to order" };
+  }
+
   return fulfillOrderPayment(orderId, {
     method: "mock",
     note: "ชำระเงินสำเร็จผ่าน PromptPay QR Code (Mockup Payment Approved)",
@@ -821,9 +693,39 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
   try {
     z.string().uuid().parse(orderId);
 
-    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    const [order] = await db
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        userId: orders.userId,
+        status: orders.status,
+        paymentStatus: orders.paymentStatus,
+        stripePaymentIntentId: orders.stripePaymentIntentId,
+        total: orders.total,
+        currency: orders.currency,
+        shippingAddress: orders.shippingAddress,
+      })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
     if (!order) {
       return { success: false, error: "Order not found" };
+    }
+
+    // IDOR Security Guard: Registered user orders must only be accessed by the owner
+    let currentUserId: string | null = null;
+    let isOutsideRequestContext = false;
+    try {
+      currentUserId = auth().userId;
+    } catch {
+      isOutsideRequestContext = true;
+    }
+
+    if (!isOutsideRequestContext && !order.userId.startsWith("guest_")) {
+      if (!currentUserId || currentUserId !== order.userId) {
+        return { success: false, error: "Unauthorized access to order" };
+      }
     }
 
     if (order.paymentStatus === "paid" || order.status === "paid") {
@@ -846,7 +748,6 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
         
         // If the existing intent has already succeeded, fulfill the order and redirect!
         if (existingIntent && existingIntent.status === "succeeded") {
-          console.log(`[createOrGetStripePaymentIntent] PaymentIntent ${existingIntent.id} is already SUCCEEDED. Fulfilling order...`);
           await fulfillOrderPayment(order.id, {
             method: "stripe",
             chargeId: existingIntent.id,
@@ -939,9 +840,34 @@ export async function updateOrderReceiptEmail(orderId: string, email: string) {
     z.string().uuid().parse(orderId);
     const validatedEmail = z.string().trim().email("กรุณากรอกรูปแบบอีเมลที่ถูกต้อง").parse(email);
 
-    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    const [order] = await db
+      .select({
+        id: orders.id,
+        userId: orders.userId,
+        shippingAddress: orders.shippingAddress,
+        stripePaymentIntentId: orders.stripePaymentIntentId,
+      })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
     if (!order) {
       return { success: false, error: "ไม่พบข้อมูลคำสั่งซื้อในระบบ" };
+    }
+
+    // IDOR Security Guard
+    let currentUserId: string | null = null;
+    let isOutsideRequestContext = false;
+    try {
+      currentUserId = auth().userId;
+    } catch {
+      isOutsideRequestContext = true;
+    }
+
+    if (!isOutsideRequestContext && !order.userId.startsWith("guest_")) {
+      if (!currentUserId || currentUserId !== order.userId) {
+        return { success: false, error: "Unauthorized access to order" };
+      }
     }
 
     const currentShippingAddress = (order.shippingAddress || {}) as Address;
@@ -962,7 +888,6 @@ export async function updateOrderReceiptEmail(orderId: string, email: string) {
     if (order.stripePaymentIntentId) {
       try {
         await updatePaymentIntentReceiptEmail(order.stripePaymentIntentId, validatedEmail);
-        console.log(`[updateOrderReceiptEmail] Synced receipt_email ${validatedEmail} with Stripe Intent ${order.stripePaymentIntentId}`);
       } catch (stripeErr) {
         console.warn("[updateOrderReceiptEmail] Warning: Could not update Stripe receipt email:", stripeErr);
       }
@@ -998,9 +923,33 @@ export async function rejectMockPayment(orderId: string, reason = "ผู้ใ�
       };
     }
 
-    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    const [order] = await db
+      .select({
+        id: orders.id,
+        userId: orders.userId,
+        status: orders.status,
+      })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
     if (!order) {
       return { success: false, error: "Order not found" };
+    }
+
+    // IDOR Security Guard
+    let currentUserId: string | null = null;
+    let isOutsideRequestContext = false;
+    try {
+      currentUserId = auth().userId;
+    } catch {
+      isOutsideRequestContext = true;
+    }
+
+    if (!isOutsideRequestContext && !order.userId.startsWith("guest_")) {
+      if (!currentUserId || currentUserId !== order.userId) {
+        return { success: false, error: "Unauthorized access to order" };
+      }
     }
 
     if (order.status === "cancelled") {
@@ -1049,20 +998,29 @@ export async function getUserOrders() {
       .where(eq(orders.userId, userId))
       .orderBy(desc(orders.createdAt));
 
-    // Get item counts for each order
-    const ordersWithCounts = await Promise.all(
-      userOrders.map(async (order) => {
-        const items = await db
-          .select({ quantity: orderItems.quantity })
-          .from(orderItems)
-          .where(eq(orderItems.orderId, order.id));
-        const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-        return {
-          ...order,
-          itemCount: totalQuantity,
-        };
+    if (userOrders.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // MED-01: Batch query all items for user's orders to eliminate N+1
+    const orderIds = userOrders.map((o) => o.id);
+    const allItems = await db
+      .select({
+        orderId: orderItems.orderId,
+        quantity: orderItems.quantity,
       })
-    );
+      .from(orderItems)
+      .where(inArray(orderItems.orderId, orderIds));
+
+    const countMap = new Map<string, number>();
+    for (const item of allItems) {
+      countMap.set(item.orderId, (countMap.get(item.orderId) || 0) + item.quantity);
+    }
+
+    const ordersWithCounts = userOrders.map((order) => ({
+      ...order,
+      itemCount: countMap.get(order.id) || 0,
+    }));
 
     return { success: true, data: ordersWithCounts };
   } catch (error) {
@@ -1087,7 +1045,11 @@ export async function getSavedCheckoutAddresses() {
       .where(eq(userAddresses.userId, userId))
       .orderBy(desc(userAddresses.isDefault), desc(userAddresses.createdAt));
 
-    const [userRow] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [userRow] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     let userProfile = userRow || null;
     if (!userProfile?.email || userProfile.email.includes("@southaero.local")) {
@@ -1098,10 +1060,14 @@ export async function getSavedCheckoutAddresses() {
           userProfile = {
             ...(userProfile || {
               id: userId,
+              email: clerkEmail,
               fullName: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null,
               phone: null,
               avatarUrl: clerkUser.imageUrl || null,
-              role: "customer" as const,
+              isBanned: false,
+              lastLoginAt: null,
+              lastLoginIp: null,
+              lastLoginMethod: null,
               createdAt: new Date(),
               updatedAt: new Date(),
               metadata: null,

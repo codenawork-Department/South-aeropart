@@ -99,8 +99,8 @@ export default function SignInPage() {
               await (signIn as unknown as { prepareSecondFactor: (params: { strategy: string }) => Promise<unknown> }).prepareSecondFactor({
                 strategy: "email_code",
               });
-            } catch (err) {
-              console.log("[SignIn] prepareSecondFactor email_code:", err);
+            } catch {
+              // ignore preparation error; fallback handled in verification
             }
             setPendingVerification(true);
           } else if (phoneFactor) {
@@ -116,8 +116,8 @@ export default function SignInPage() {
                   strategy: "phone_code",
                 });
               }
-            } catch (err) {
-              console.log("[SignIn] prepareSecondFactor phone_code:", err);
+            } catch {
+              // ignore preparation error; fallback handled in verification
             }
             setPendingVerification(true);
           } else if (totpFactor) {
@@ -171,8 +171,8 @@ export default function SignInPage() {
                 strategy: "email_code",
                 emailAddressId: emailFactor.emailAddressId,
               });
-            } catch (err) {
-              console.log("[SignIn] prepareFirstFactor email_code:", err);
+            } catch {
+              // ignore preparation error; fallback handled in verification
             }
             setPendingVerification(true);
           } else if (phoneFactor?.phoneNumberId) {
@@ -181,8 +181,8 @@ export default function SignInPage() {
                 strategy: "phone_code",
                 phoneNumberId: phoneFactor.phoneNumberId,
               });
-            } catch (err) {
-              console.log("[SignIn] prepareFirstFactor phone_code:", err);
+            } catch {
+              // ignore preparation error; fallback handled in verification
             }
             setPendingVerification(true);
           } else if (supportedFactors.length > 0) {

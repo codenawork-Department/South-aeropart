@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "verify": "tsx scripts/verify_loop.ts",
-    "verify:stripe": "tsx scripts/verify_stripe_loop.ts"
+    "verify": "tsx -r dotenv/config scripts/verify_loop.ts dotenv_config_path=../../.env",
+    "verify:stripe": "tsx -r dotenv/config scripts/verify_stripe_loop.ts dotenv_config_path=../../.env"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.3.0",

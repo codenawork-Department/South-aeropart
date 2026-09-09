@@ -15,7 +15,7 @@ import { InfoSections } from "@/components/home/InfoSections";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const [vehicleData, garageVehicles, heroCards, featuredBundles, featuredProducts] =
