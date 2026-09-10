@@ -18,7 +18,18 @@ import {
   DollarSign,
   Package,
   RotateCcw,
+  Eye,
+  MapPin,
+  User,
 } from "lucide-react";
+
+interface OrderItemPreview {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: string;
+  lineTotal: string;
+}
 
 interface OrderRow {
   id: string;
@@ -37,16 +48,17 @@ interface OrderRow {
     recipientName: string;
     phone: string;
     line1: string;
-    subDistrict: string;
-    district: string;
-    province: string;
-    postalCode: string;
+    subDistrict?: string;
+    district?: string;
+    province?: string;
+    postalCode?: string;
   };
   assignedAdminId: string | null;
   assignedAdminName: string | null;
   createdAt: Date;
   updatedAt: Date;
   itemCount: number;
+  itemsPreview?: OrderItemPreview[];
 }
 
 interface StatsData {
@@ -94,6 +106,11 @@ export function OrdersDashboardClient({
 
   const [search, setSearch] = useState(currentSearch);
   const [status, setStatus] = useState(currentStatus);
+  const [hoveredOrder, setHoveredOrder] = useState<{
+    order: OrderRow;
+    x: number;
+    y: number;
+  } | null>(null);
 
   function handleFilterChange(newStatus: string) {
     setStatus(newStatus);
@@ -301,16 +318,35 @@ export function OrdersDashboardClient({
                     const isCancelled = ord.status === "cancelled";
 
                     return (
-                      <tr key={ord.id} className="hover:bg-white/[0.02] transition-colors">
+                      <tr
+                        key={ord.id}
+                        className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
+                        onMouseEnter={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setHoveredOrder({
+                            order: ord,
+                            x: rect.left,
+                            y: rect.bottom,
+                          });
+                        }}
+                        onMouseLeave={() => setHoveredOrder(null)}
+                        onClick={() => router.push(`/orders/${ord.id}`)}
+                      >
                         {/* Order Number */}
                         <td className="px-5 py-4">
-                          <Link
-                            href={`/orders/${ord.id}`}
-                            className="font-mono font-bold text-white hover:text-red-500 transition-colors flex items-center gap-1"
-                          >
-                            <span>{ord.orderNumber}</span>
-                            <ChevronRight size={12} className="text-gray-500" />
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/orders/${ord.id}`}
+                              className="font-mono font-bold text-white hover:text-red-500 transition-colors flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <span>{ord.orderNumber}</span>
+                              <ChevronRight size={12} className="text-gray-500" />
+                            </Link>
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-red-400 bg-red-950/40 px-1 py-0.5 rounded border border-red-800/40 font-mono">
+                              ชี้ดูสรุป
+                            </span>
+                          </div>
                         </td>
 
                         {/* Customer */}
@@ -458,6 +494,177 @@ export function OrdersDashboardClient({
           </>
         )}
       </div>
+      {/* ─── FLOATING HOVER QUICK PREVIEW CARD (GLASSMORPHIC POPOVER) ─── */}
+      {hoveredOrder && (
+        <div
+          className="fixed z-50 pointer-events-none w-80 sm:w-96 p-4 rounded-2xl bg-[#141414]/95 backdrop-blur-xl border border-white/20 shadow-[0_25px_50px_rgba(0,0,0,0.85)] text-xs space-y-3 transition-all duration-150 animate-in fade-in zoom-in-95"
+          style={{
+            left: Math.max(
+              16,
+              Math.min(
+                hoveredOrder.x + 30,
+                typeof window !== "undefined" ? window.innerWidth - 410 : 800
+              )
+            ),
+            top: Math.max(
+              20,
+              hoveredOrder.y - 120 < 0
+                ? hoveredOrder.y + 15
+                : Math.min(
+                    hoveredOrder.y - 120,
+                    typeof window !== "undefined" ? window.innerHeight - 390 : 600
+                  )
+            ),
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3 pb-2.5 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-bold text-white text-sm">
+                  {hoveredOrder.order.orderNumber}
+                </span>
+                <span className="text-[10px] text-gray-400 font-mono">
+                  {new Date(hoveredOrder.order.createdAt).toLocaleDateString("th-TH", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-1 text-[11px] text-gray-300">
+                <User size={12} className="text-gray-400" />
+                <span className="font-semibold text-white">
+                  {hoveredOrder.order.shippingAddress?.recipientName || "ลูกค้าทั่วไป"}
+                </span>
+                {hoveredOrder.order.shippingAddress?.phone && (
+                  <>
+                    <span className="text-gray-500">•</span>
+                    <span className="font-mono text-gray-400 text-[10px]">
+                      {hoveredOrder.order.shippingAddress.phone}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Status Badge */}
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${
+                hoveredOrder.order.status === "delivered"
+                  ? "bg-emerald-950/60 border-emerald-800 text-emerald-400"
+                  : hoveredOrder.order.status === "shipped"
+                  ? "bg-blue-950/60 border-blue-800 text-blue-400"
+                  : hoveredOrder.order.status === "processing"
+                  ? "bg-indigo-950/60 border-indigo-800 text-indigo-400"
+                  : hoveredOrder.order.status === "paid"
+                  ? "bg-emerald-950/60 border-emerald-800 text-emerald-400"
+                  : hoveredOrder.order.status === "cancelled"
+                  ? "bg-red-950/60 border-red-800 text-red-400"
+                  : "bg-amber-950/60 border-amber-800 text-amber-400"
+              }`}
+            >
+              {hoveredOrder.order.status}
+            </span>
+          </div>
+
+          {/* Shipping Destination */}
+          <div className="p-2.5 rounded-xl bg-[#1A1A1A] border border-white/5 space-y-1">
+            <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+              <MapPin size={11} className="text-red-400" />
+              ที่อยู่จัดส่งพัสดุ
+            </span>
+            <p className="text-[11px] text-gray-300 leading-tight">
+              {[
+                hoveredOrder.order.shippingAddress?.line1,
+                hoveredOrder.order.shippingAddress?.subDistrict,
+                hoveredOrder.order.shippingAddress?.district,
+                hoveredOrder.order.shippingAddress?.province,
+                hoveredOrder.order.shippingAddress?.postalCode,
+              ]
+                .filter(Boolean)
+                .join(" ") || "ไม่มีข้อมูลที่อยู่"}
+            </p>
+            <div className="flex items-center justify-between text-[10px] font-mono text-gray-400 pt-1 border-t border-white/5 mt-1">
+              <span>ขนส่ง: {hoveredOrder.order.shippingCarrier || "Standard Delivery"}</span>
+              <span className="text-gray-200 font-bold">
+                {hoveredOrder.order.trackingNumber || "ยังไม่ออก Tracking"}
+              </span>
+            </div>
+          </div>
+
+          {/* Items Preview */}
+          <div className="p-2.5 rounded-xl bg-[#181818] border border-white/5 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="font-bold text-gray-300 flex items-center gap-1">
+                <Package size={11} className="text-indigo-400" />
+                รายการสินค้าในออเดอร์ ({hoveredOrder.order.itemCount} ชิ้น)
+              </span>
+            </div>
+
+            {hoveredOrder.order.itemsPreview && hoveredOrder.order.itemsPreview.length > 0 ? (
+              <div className="space-y-1">
+                {hoveredOrder.order.itemsPreview.slice(0, 3).map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between text-[11px] text-gray-200"
+                  >
+                    <span className="truncate max-w-[210px] text-gray-300">
+                      • {item.name}
+                    </span>
+                    <span className="font-mono text-gray-400 text-[10px] whitespace-nowrap">
+                      x{item.quantity} (฿{parseFloat(item.lineTotal || "0").toLocaleString()})
+                    </span>
+                  </div>
+                ))}
+                {hoveredOrder.order.itemsPreview.length > 3 && (
+                  <div className="text-[10px] text-gray-500 italic text-right">
+                    + อีก {hoveredOrder.order.itemsPreview.length - 3} รายการ...
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-[11px] text-gray-400">
+                คำสั่งซื้อรวม {hoveredOrder.order.itemCount} ชิ้นส่วน
+              </div>
+            )}
+          </div>
+
+          {/* Financials & Payment Method */}
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="p-2 rounded-xl bg-[#1A1A1A] border border-white/5 space-y-0.5">
+              <span className="text-[10px] text-gray-400 block">ชำระเงิน</span>
+              <div className="flex items-center gap-1 font-medium text-white">
+                {hoveredOrder.order.paymentMethod === "promptpay" ? (
+                  <QrCode size={11} className="text-red-400" />
+                ) : (
+                  <CreditCard size={11} className="text-blue-400" />
+                )}
+                <span className="capitalize">{hoveredOrder.order.paymentMethod}</span>
+              </div>
+              <span className="text-[9px] font-mono text-emerald-400 block">
+                สถานะ: {hoveredOrder.order.paymentStatus}
+              </span>
+            </div>
+
+            <div className="p-2 rounded-xl bg-[#1A1A1A] border border-white/5 space-y-0.5 text-right">
+              <span className="text-[10px] text-gray-400 block">ยอดชำระสุทธิ</span>
+              <span className="font-extrabold text-white text-sm font-mono block">
+                ฿{parseFloat(hoveredOrder.order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+              <span className="text-[9px] font-mono text-gray-400 block">
+                (ค่าส่ง ฿{parseFloat(hoveredOrder.order.shippingFee || "0").toLocaleString()})
+              </span>
+            </div>
+          </div>
+
+          {/* Action Hint */}
+          <div className="text-[10px] text-gray-500 text-center font-sans pt-0.5">
+            👉 คลิกที่แถวเพื่อเปิดดูรายละเอียดเต็มและจัดการออเดอร์
+          </div>
+        </div>
+      )}
     </div>
   );
 }

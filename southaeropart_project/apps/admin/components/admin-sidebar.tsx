@@ -77,8 +77,7 @@ export function AdminSidebar({
       sublabel: "Homepage 3D & 3 Cards",
       href: "/homepage",
       icon: Sparkles,
-      badge: "NEW",
-      badgeColor: "bg-red-500/20 text-red-400 border border-red-500/30",
+      badge: null,
     },
     {
       label: "Products",
@@ -92,8 +91,7 @@ export function AdminSidebar({
       sublabel: "Full Body Kits & Sets",
       href: "/bundles",
       icon: Boxes,
-      badge: "KIT",
-      badgeColor: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+      badge: null,
     },
     {
       label: "แคตตาล็อก & หมวดหมู่",
@@ -119,8 +117,7 @@ export function AdminSidebar({
       sublabel: "Subscribers & Email Drops",
       href: "/newsletters",
       icon: Mail,
-      badge: "NEW",
-      badgeColor: "bg-red-500/20 text-red-400 border border-red-500/30",
+      badge: null,
     },
     {
       label: "สถานะบริการ & โควต้า",

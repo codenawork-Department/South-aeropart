@@ -1,18 +1,15 @@
-import { Suspense } from "react";
 import { DashboardViewController } from "@/components/dashboard/dashboard-view-controller";
-import { ServiceUsageBanner } from "@/components/dashboard/service-usage-banner";
-import { ServiceUsageSkeleton } from "@/components/dashboard/service-usage-skeleton";
+import { getFullDashboardAnalytics } from "@/actions/analytics.actions";
 
-export default function AdminDashboard() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboard() {
+  const analyticsData = await getFullDashboardAnalytics();
+
   return (
-    <div className="space-y-8 pb-10">
-      {/* Interactive Business Analytics Cockpit (Renders instantly) */}
-      <DashboardViewController />
-
-      {/* Service Usage & Quota Banner Widget (Streamed concurrently via Suspense) */}
-      <Suspense fallback={<ServiceUsageSkeleton />}>
-        <ServiceUsageBanner />
-      </Suspense>
+    <div className="pb-10">
+      <DashboardViewController initialData={analyticsData} />
     </div>
   );
 }
+
