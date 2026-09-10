@@ -38,9 +38,10 @@ interface PaymentClientProps {
   order: Order;
   items: (OrderItem & { imageUrl?: string | null; slug?: string | null })[];
   accountEmail?: string | null;
+  guestToken?: string;
 }
 
-export function PaymentClient({ order, items, accountEmail }: PaymentClientProps) {
+export function PaymentClient({ order, items, accountEmail, guestToken }: PaymentClientProps) {
   const router = useRouter();
   const { formatPrice, currency } = useCurrency();
   const { clearCart } = useCart();
@@ -97,14 +98,15 @@ export function PaymentClient({ order, items, accountEmail }: PaymentClientProps
     try {
       setStripeLoading(true);
       setStripeError(null);
-      const res = await createOrGetStripePaymentIntent(order.id);
+      const res = await createOrGetStripePaymentIntent(order.id, guestToken);
       if (res.isAlreadyPaid || res.redirectUrl) {
         setActionMessage({
           type: "success",
           text: "คำสั่งซื้อนี้ได้รับการชำระเงินเรียบร้อยแล้ว กำลังนำคุณไปยังหน้าคำสั่งซื้อ...",
         });
+        const targetUrl = res.redirectUrl || (guestToken ? `/orders/${order.id}?paid=true&token=${guestToken}` : `/orders/${order.id}?paid=true`);
         setTimeout(() => {
-          router.replace(res.redirectUrl || `/orders/${order.id}?paid=true`);
+          router.replace(targetUrl);
         }, 600);
         return;
       }
@@ -196,7 +198,7 @@ export function PaymentClient({ order, items, accountEmail }: PaymentClientProps
 
     const interval = setInterval(async () => {
       try {
-        const res = await getOrderStatus(order.id);
+        const res = await getOrderStatus(order.id, guestToken);
         if (res.success && res.paymentStatus && res.status) {
           if (res.paymentStatus !== currentPaymentStatus || res.status !== currentStatus) {
             setCurrentStatus(res.status);
@@ -204,8 +206,9 @@ export function PaymentClient({ order, items, accountEmail }: PaymentClientProps
 
             if (res.paymentStatus === "paid") {
               setActionMessage({ type: "success", text: "ชำระเงินสำเร็จแล้ว! กำลังนำคุณไปยังหน้ารายละเอียดคำสั่งซื้อ..." });
+              const paidUrl = guestToken ? `/orders/${order.id}?paid=true&token=${guestToken}` : `/orders/${order.id}?paid=true`;
               setTimeout(() => {
-                router.push(`/orders/${order.id}?paid=true`);
+                router.push(paidUrl);
               }, 1800);
             } else if (res.status === "cancelled") {
               setActionMessage({ type: "error", text: "การชำระเงินถูกปฏิเสธหรือยกเลิกเรียบร้อยแล้ว" });
@@ -218,7 +221,7 @@ export function PaymentClient({ order, items, accountEmail }: PaymentClientProps
     }, 2500);
 
     return () => clearInterval(interval);
-  }, [order.id, currentPaymentStatus, currentStatus, router]);
+  }, [order.id, currentPaymentStatus, currentStatus, router, guestToken]);
 
   // Confirm Payment (In-Page Tester Action)
   async function handleConfirmPayment() {
@@ -227,18 +230,19 @@ export function PaymentClient({ order, items, accountEmail }: PaymentClientProps
     try {
       if (receiptEmail && receiptEmail.trim()) {
         try {
-          await updateOrderReceiptEmail(order.id, receiptEmail.trim());
+          await updateOrderReceiptEmail(order.id, receiptEmail.trim(), guestToken);
         } catch (emailErr) {
           console.warn("[PaymentClient] Could not update receipt email:", emailErr);
         }
       }
-      const res = await confirmMockPayment(order.id);
+      const res = await confirmMockPayment(order.id, guestToken);
       if (res.success) {
         setCurrentPaymentStatus("paid");
         setCurrentStatus("paid");
         setActionMessage({ type: "success", text: "ยืนยันการชำระเงินสำเร็จแล้ว! กำลังไปยังหน้าคำสั่งซื้อ..." });
+        const paidUrl = guestToken ? `/orders/${order.id}?paid=true&token=${guestToken}` : `/orders/${order.id}?paid=true`;
         setTimeout(() => {
-          router.push(`/orders/${order.id}?paid=true`);
+          router.push(paidUrl);
         }, 1500);
       } else {
         setActionMessage({ type: "error", text: res.error || "เกิดข้อผิดพลาดในการยืนยัน" });
@@ -255,7 +259,7 @@ export function PaymentClient({ order, items, accountEmail }: PaymentClientProps
     setIsProcessing(true);
     setActionMessage(null);
     try {
-      const res = await rejectMockPayment(order.id, "ผู้ทดสอบปฏิเสธการชำระเงินบนหน้าจอ");
+      const res = await rejectMockPayment(order.id, "ผู้ทดสอบปฏิเสธการชำระเงินบนหน้าจอ", guestToken);
       if (res.success) {
         setCurrentPaymentStatus("failed");
         setCurrentStatus("cancelled");

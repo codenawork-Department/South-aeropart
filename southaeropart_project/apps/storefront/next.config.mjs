@@ -53,6 +53,7 @@ const nextConfig = {
       object-src 'none';
       base-uri 'self';
       form-action 'self';
+      frame-ancestors 'self';
     `.replace(/\s{2,}/g, " ").trim();
 
     return [

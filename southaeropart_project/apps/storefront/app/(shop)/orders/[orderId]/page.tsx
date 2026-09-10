@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getOrderDetails } from "@/actions/checkout.actions";
 import { fulfillOrderPayment } from "@/lib/order-fulfillment";
-import { retrievePaymentIntent } from "@repo/lib";
+import { retrievePaymentIntent, toSmallestCurrencyUnit } from "@repo/lib";
 import { OrderDetailClient } from "@/components/orders/OrderDetailClient";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,7 @@ export default async function OrderDetailPage({
 }: {
   params: { orderId: string };
   searchParams?: {
+    token?: string;
     payment_status?: string;
     payment_intent?: string;
     payment_intent_client_secret?: string;
@@ -26,7 +27,8 @@ export default async function OrderDetailPage({
   };
 }) {
   const { orderId } = params;
-  let res = await getOrderDetails(orderId);
+  const guestToken = searchParams?.token;
+  let res = await getOrderDetails(orderId, guestToken);
 
   if (!res.success || !res.data) {
     notFound();
@@ -38,7 +40,7 @@ export default async function OrderDetailPage({
   const isOrderPaid = res.data.order.paymentStatus === "paid" || res.data.order.status === "paid";
 
   if (!isOrderPaid) {
-    const paymentIntentId = searchParams?.payment_intent || res.data.order.stripePaymentIntentId;
+    const paymentIntentId = res.data.order.stripePaymentIntentId || searchParams?.payment_intent;
 
     if (paymentIntentId) {
       try {
@@ -46,19 +48,45 @@ export default async function OrderDetailPage({
         const stripeIntent = await retrievePaymentIntent(paymentIntentId);
 
         if (stripeIntent && stripeIntent.status === "succeeded") {
-          console.log(`[OrderDetailPage] Stripe PaymentIntent ${paymentIntentId} is SUCCEEDED! Executing instant fulfillment...`);
-          const fulfillRes = await fulfillOrderPayment(orderId, {
-            method: "stripe",
-            chargeId: stripeIntent.id,
-            note: `ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Instant Fallback Confirmation, Amount: ${(stripeIntent.amount / 100).toFixed(2)} ${stripeIntent.currency.toUpperCase()})`,
-          });
+          // Security checks (SEC §5.3):
+          // 1. Verify PaymentIntent is associated with this exact order
+          const isAssociatedWithOrder =
+            stripeIntent.metadata?.orderId === orderId ||
+            paymentIntentId === res.data.order.stripePaymentIntentId;
 
-          if (fulfillRes.success) {
-            console.log(`[OrderDetailPage] Order ${orderId} successfully marked as PAID via instant fallback.`);
-            // Reload fresh order details after fulfillment
-            res = await getOrderDetails(orderId);
+          // 2. Verify amount & currency
+          const expectedAmount = toSmallestCurrencyUnit(res.data.order.total);
+          const receivedAmount = stripeIntent.amount_received || stripeIntent.amount;
+          const expectedCurrency = (res.data.order.currency || "THB").toLowerCase();
+          const receivedCurrency = (stripeIntent.currency || "").toLowerCase();
+
+          const isAmountValid =
+            expectedAmount === receivedAmount &&
+            expectedCurrency === receivedCurrency;
+
+          // 3. Verify livemode in production
+          const isModeValid =
+            process.env.NODE_ENV !== "production" || stripeIntent.livemode;
+
+          if (isAssociatedWithOrder && isAmountValid && isModeValid) {
+            console.log(`[OrderDetailPage] Stripe PaymentIntent ${paymentIntentId} verified. Executing instant fulfillment...`);
+            const fulfillRes = await fulfillOrderPayment(orderId, {
+              method: "stripe",
+              chargeId: stripeIntent.id,
+              note: `ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Instant Fallback Confirmation, Amount: ${(receivedAmount / 100).toFixed(2)} ${receivedCurrency.toUpperCase()})`,
+            });
+
+            if (fulfillRes.success) {
+              console.log(`[OrderDetailPage] Order ${orderId} successfully marked as PAID via instant fallback.`);
+              // Reload fresh order details after fulfillment
+              res = await getOrderDetails(orderId, guestToken);
+            } else {
+              console.error(`[OrderDetailPage] Failed to fulfill order ${orderId}:`, fulfillRes.error);
+            }
           } else {
-            console.error(`[OrderDetailPage] Failed to fulfill order ${orderId}:`, fulfillRes.error);
+            console.warn(
+              `[OrderDetailPage Security] Refusing instant fulfillment: binding=${isAssociatedWithOrder}, amount=${isAmountValid}, mode=${isModeValid}`
+            );
           }
         } else {
           console.log(`[OrderDetailPage] Stripe PaymentIntent ${paymentIntentId} status is: ${stripeIntent?.status}`);

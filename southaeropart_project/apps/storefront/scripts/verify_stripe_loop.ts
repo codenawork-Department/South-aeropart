@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
+import { assertTestIsolation } from "./test-guard";
+assertTestIsolation({ requireStripe: true });
+
 import {
   db,
   products,

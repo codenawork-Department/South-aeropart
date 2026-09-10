@@ -3,12 +3,12 @@
 import { useState } from "react";
 import Image from "next/image";
 import { User, ShieldCheck, Car, MapPin, Calendar, Globe } from "lucide-react";
-import { User as DbUser } from "@repo/db";
+import { SanitizedUserProfile } from "@/actions/profile.actions";
 import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface ProfileHeaderProps {
-  user: DbUser;
+  user: SanitizedUserProfile;
   addressCount: number;
   vehicleCount: number;
   language?: ProfileLanguage;

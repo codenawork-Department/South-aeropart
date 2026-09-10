@@ -14,10 +14,26 @@ import {
   XCircle,
   Truck,
 } from "lucide-react";
-import type { Order } from "@repo/db";
+import type { Address } from "@repo/db";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
-interface OrderWithCount extends Order {
+export interface OrderWithCount {
+  id: string;
+  orderNumber: string;
+  userId: string;
+  status: "pending" | "paid" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded";
+  paymentMethod: "credit_card" | "promptpay";
+  paymentStatus: "pending" | "authorized" | "paid" | "failed" | "refunded";
+  subtotal: string;
+  shippingFee: string;
+  taxAmount: string;
+  total: string;
+  currency: string;
+  trackingNumber: string | null;
+  shippingCarrier: string | null;
+  shippingAddress: Address;
+  createdAt: Date;
+  updatedAt: Date;
   itemCount: number;
 }
 
