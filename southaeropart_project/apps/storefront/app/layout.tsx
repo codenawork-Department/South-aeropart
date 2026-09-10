@@ -73,7 +73,12 @@ export default async function RootLayout({
   }
 
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
+    >
       <html lang={initialLang} className={`${inter.variable} ${oswald.variable}`}>
         <body className="min-h-screen flex flex-col">
           <AuthSessionTracker />

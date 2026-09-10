@@ -29,6 +29,7 @@ import {
   renameImage,
 } from "@repo/lib/cloudinary";
 import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
+import { validateBase64Image } from "@/lib/upload-validator";
 import {
   BRAND_CODE_MAP,
   MODEL_CODE_MAP,
@@ -706,6 +707,13 @@ export async function createProductAction(
     for (let i = 0; i < validImagesToUpload.length; i++) {
       const img = validImagesToUpload[i];
       if (img.data) {
+        const validation = validateBase64Image(img.data);
+        if (!validation.valid) {
+          return {
+            success: false,
+            message: `รูปภาพลำดับที่ ${i + 1} ไม่ถูกต้อง: ${validation.error}`,
+          };
+        }
         const uploaded = await uploadImage(img.data, {
           folder: cloudinaryFolder,
           tags: ["south-aero", "product", brandSlug, modelSlug, categorySlug, data.sku],
@@ -727,7 +735,7 @@ export async function createProductAction(
       uploadedCloudinaryImages[0].isPrimary = true;
     }
 
-    // 2. Insert into products table
+    // 2. Insert into products table, images, compatibility, and audit log atomically
     const mappedFeatures: ProductFeatureItem[] = (data.features || []).map((f) => ({
       title: f.title?.trim() || f.titleEn?.trim() || "",
       titleEn: f.titleEn?.trim() || null,
@@ -737,86 +745,94 @@ export async function createProductAction(
       iconId: f.iconId || null,
     }));
 
-    const [newProduct] = await db
-      .insert(products)
-      .values({
-        sku: data.sku,
-        slug,
-        name: effectiveName,
-        nameEn: effectiveNameEn,
-        description: data.description ?? null,
-        descriptionEn: data.descriptionEn ?? null,
-        shortDescription: data.shortDescription ?? null,
-        shortDescriptionEn: data.shortDescriptionEn ?? null,
-        price: data.price,
-        compareAtPrice: data.compareAtPrice ?? null,
-        stockQuantity: data.stockQuantity,
-        status: data.status,
-        isFeatured: data.isFeatured ?? false,
-        weightKg: data.weightKg ?? null,
-        installation: data.installation ?? null,
-        installationEn: data.installationEn ?? null,
-        installationId: data.installationId ?? null,
-        categoryId: data.categoryId ?? null,
-        brandId: data.brandId ?? null,
-        carModelId: data.carModelId ?? null,
-        materialId: data.materialId ?? null,
-        downforceN: data.downforceN ?? null,
-        dragN: data.dragN ?? null,
-        downforceBefore: data.downforceBefore ?? null,
-        downforceAfter: data.downforceAfter ?? null,
-        dragBefore: data.dragBefore ?? null,
-        dragAfter: data.dragAfter ?? null,
-        features: mappedFeatures,
-      })
-      .returning({ id: products.id });
+    let newProductId = "";
+    await db.transaction(async (tx) => {
+      const [newProduct] = await tx
+        .insert(products)
+        .values({
+          sku: data.sku,
+          slug,
+          name: effectiveName,
+          nameEn: effectiveNameEn,
+          description: data.description ?? null,
+          descriptionEn: data.descriptionEn ?? null,
+          shortDescription: data.shortDescription ?? null,
+          shortDescriptionEn: data.shortDescriptionEn ?? null,
+          price: data.price,
+          compareAtPrice: data.compareAtPrice ?? null,
+          stockQuantity: data.stockQuantity,
+          status: data.status,
+          isFeatured: data.isFeatured ?? false,
+          weightKg: data.weightKg ?? null,
+          installation: data.installation ?? null,
+          installationEn: data.installationEn ?? null,
+          installationId: data.installationId ?? null,
+          categoryId: data.categoryId ?? null,
+          brandId: data.brandId ?? null,
+          carModelId: data.carModelId ?? null,
+          materialId: data.materialId ?? null,
+          downforceN: data.downforceN ?? null,
+          dragN: data.dragN ?? null,
+          downforceBefore: data.downforceBefore ?? null,
+          downforceAfter: data.downforceAfter ?? null,
+          dragBefore: data.dragBefore ?? null,
+          dragAfter: data.dragAfter ?? null,
+          features: mappedFeatures,
+        })
+        .returning({ id: products.id });
 
-    // 3. Insert product_images
-    if (uploadedCloudinaryImages.length > 0) {
-      await db.insert(productImages).values(
-        uploadedCloudinaryImages.map((img) => ({
-          productId: newProduct.id,
-          cloudinaryPublicId: img.publicId,
-          secureUrl: img.secureUrl,
-          position: img.position,
-          isPrimary: img.isPrimary,
-        }))
+      newProductId = newProduct.id;
+
+      // 3. Insert product_images
+      if (uploadedCloudinaryImages.length > 0) {
+        await tx.insert(productImages).values(
+          uploadedCloudinaryImages.map((img) => ({
+            productId: newProduct.id,
+            cloudinaryPublicId: img.publicId,
+            secureUrl: img.secureUrl,
+            position: img.position,
+            isPrimary: img.isPrimary,
+          }))
+        );
+      }
+
+      // 4. Insert product_compatibility
+      if (data.compatibility && data.compatibility.length > 0) {
+        await tx.insert(productCompatibility).values(
+          data.compatibility.map((c) => ({
+            productId: newProduct.id,
+            make: c.make,
+            model: c.model,
+            yearFrom: c.yearFrom,
+            yearTo: c.yearTo,
+          }))
+        );
+      }
+
+      // 5. Audit Log inside transaction
+      await logAuditEvent(
+        {
+          adminId: admin.id,
+          action: "product.created",
+          entityType: "product",
+          entityId: newProduct.id,
+          metadata: {
+            sku: data.sku,
+            name: data.name,
+            cloudinaryFolder,
+            imagesCount: uploadedCloudinaryImages.length,
+          },
+        },
+        tx
       );
-    }
-
-    // 4. Insert product_compatibility
-    if (data.compatibility && data.compatibility.length > 0) {
-      await db.insert(productCompatibility).values(
-        data.compatibility.map((c) => ({
-          productId: newProduct.id,
-          make: c.make,
-          model: c.model,
-          yearFrom: c.yearFrom,
-          yearTo: c.yearTo,
-        }))
-      );
-    }
-
-    // 5. Audit Log
-    await logAuditEvent({
-      adminId: admin.id,
-      action: "product.created",
-      entityType: "product",
-      entityId: newProduct.id,
-      metadata: {
-        sku: data.sku,
-        name: data.name,
-        cloudinaryFolder,
-        imagesCount: uploadedCloudinaryImages.length,
-      },
     });
 
     revalidatePath("/products");
-    notifyStorefrontCatalogChange("product.created", { id: newProduct.id });
+    notifyStorefrontCatalogChange("product.created", { id: newProductId });
     return {
       success: true,
       message: "สร้างสินค้าใหม่พร้อมจัดเก็บรูปภาพตามหมวดหมู่สำเร็จ",
-      data: { productId: newProduct.id },
+      data: { productId: newProductId },
     };
   } catch (error) {
     console.error("[CreateProductAction] Error:", error);
@@ -940,6 +956,13 @@ export async function updateProductAction(
     for (let i = 0; i < newImagesToUpload.length; i++) {
       const img = newImagesToUpload[i];
       if (img.data) {
+        const validation = validateBase64Image(img.data);
+        if (!validation.valid) {
+          return {
+            success: false,
+            message: `รูปภาพใหม่ลำดับที่ ${i + 1} ไม่ถูกต้อง: ${validation.error}`,
+          };
+        }
         const uploaded = await uploadImage(img.data, {
           folder: cloudinaryFolder,
           tags: ["south-aero", "product", brandSlug, modelSlug, categorySlug, data.sku],
@@ -951,19 +974,6 @@ export async function updateProductAction(
           isPrimary: img.isPrimary ?? false,
         });
       }
-    }
-
-    // 3. Insert newly uploaded images into product_images
-    if (newlyUploadedImages.length > 0) {
-      await db.insert(productImages).values(
-        newlyUploadedImages.map((img) => ({
-          productId,
-          cloudinaryPublicId: img.publicId,
-          secureUrl: img.secureUrl,
-          position: img.position,
-          isPrimary: img.isPrimary,
-        }))
-      );
     }
 
     // 4. Update existing image positions, isPrimary flags, and auto-relocate to new folder hierarchy
@@ -1011,23 +1021,6 @@ export async function updateProductAction(
       }
     }
 
-    // Batch all DB image updates in parallel (was 1 UPDATE per image)
-    if (imageUpdateOps.length > 0) {
-      await Promise.all(
-        imageUpdateOps.map((op) =>
-          db
-            .update(productImages)
-            .set({
-              position: op.position,
-              isPrimary: op.isPrimary,
-              cloudinaryPublicId: op.publicId,
-              secureUrl: op.secureUrl,
-            })
-            .where(eq(productImages.id, op.id))
-        )
-      );
-    }
-
     // 5. Update main product info (including slug if name changed)
     const effectiveNameEn = data.nameEn?.trim() || null;
     const effectiveName = data.name?.trim() || effectiveNameEn || "Untitled Product";
@@ -1057,65 +1050,101 @@ export async function updateProductAction(
       iconId: f.iconId || null,
     }));
 
-    await db
-      .update(products)
-      .set({
-        sku: data.sku,
-        slug: newSlug,
-        name: effectiveName,
-        nameEn: effectiveNameEn,
-        description: data.description ?? null,
-        descriptionEn: data.descriptionEn ?? null,
-        shortDescription: data.shortDescription ?? null,
-        shortDescriptionEn: data.shortDescriptionEn ?? null,
-        price: data.price,
-        compareAtPrice: data.compareAtPrice ?? null,
-        stockQuantity: data.stockQuantity,
-        status: data.status,
-        isFeatured: data.isFeatured ?? false,
-        weightKg: data.weightKg ?? null,
-        installation: data.installation ?? null,
-        installationEn: data.installationEn ?? null,
-        installationId: data.installationId ?? null,
-        categoryId: data.categoryId ?? null,
-        brandId: data.brandId ?? null,
-        carModelId: data.carModelId ?? null,
-        materialId: data.materialId ?? null,
-        downforceN: data.downforceN ?? null,
-        dragN: data.dragN ?? null,
-        downforceBefore: data.downforceBefore ?? null,
-        downforceAfter: data.downforceAfter ?? null,
-        dragBefore: data.dragBefore ?? null,
-        dragAfter: data.dragAfter ?? null,
-        features: mappedFeatures,
-        updatedAt: new Date(),
-      })
-      .where(eq(products.id, productId));
+    await db.transaction(async (tx) => {
+      // 3. Insert newly uploaded images into product_images
+      if (newlyUploadedImages.length > 0) {
+        await tx.insert(productImages).values(
+          newlyUploadedImages.map((img) => ({
+            productId,
+            cloudinaryPublicId: img.publicId,
+            secureUrl: img.secureUrl,
+            position: img.position,
+            isPrimary: img.isPrimary,
+          }))
+        );
+      }
 
-    // 6. Update product_compatibility (replace with new list)
-    await db
-      .delete(productCompatibility)
-      .where(eq(productCompatibility.productId, productId));
+      // 4. Batch all DB image updates in parallel
+      if (imageUpdateOps.length > 0) {
+        await Promise.all(
+          imageUpdateOps.map((op) =>
+            tx
+              .update(productImages)
+              .set({
+                position: op.position,
+                isPrimary: op.isPrimary,
+                cloudinaryPublicId: op.publicId,
+                secureUrl: op.secureUrl,
+              })
+              .where(eq(productImages.id, op.id))
+          )
+        );
+      }
 
-    if (data.compatibility && data.compatibility.length > 0) {
-      await db.insert(productCompatibility).values(
-        data.compatibility.map((c) => ({
-          productId,
-          make: c.make,
-          model: c.model,
-          yearFrom: c.yearFrom,
-          yearTo: c.yearTo,
-        }))
+      // 5. Update main product info
+      await tx
+        .update(products)
+        .set({
+          sku: data.sku,
+          slug: newSlug,
+          name: effectiveName,
+          nameEn: effectiveNameEn,
+          description: data.description ?? null,
+          descriptionEn: data.descriptionEn ?? null,
+          shortDescription: data.shortDescription ?? null,
+          shortDescriptionEn: data.shortDescriptionEn ?? null,
+          price: data.price,
+          compareAtPrice: data.compareAtPrice ?? null,
+          stockQuantity: data.stockQuantity,
+          status: data.status,
+          isFeatured: data.isFeatured ?? false,
+          weightKg: data.weightKg ?? null,
+          installation: data.installation ?? null,
+          installationEn: data.installationEn ?? null,
+          installationId: data.installationId ?? null,
+          categoryId: data.categoryId ?? null,
+          brandId: data.brandId ?? null,
+          carModelId: data.carModelId ?? null,
+          materialId: data.materialId ?? null,
+          downforceN: data.downforceN ?? null,
+          dragN: data.dragN ?? null,
+          downforceBefore: data.downforceBefore ?? null,
+          downforceAfter: data.downforceAfter ?? null,
+          dragBefore: data.dragBefore ?? null,
+          dragAfter: data.dragAfter ?? null,
+          features: mappedFeatures,
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, productId));
+
+      // 6. Update product_compatibility (replace with new list)
+      await tx
+        .delete(productCompatibility)
+        .where(eq(productCompatibility.productId, productId));
+
+      if (data.compatibility && data.compatibility.length > 0) {
+        await tx.insert(productCompatibility).values(
+          data.compatibility.map((c) => ({
+            productId,
+            make: c.make,
+            model: c.model,
+            yearFrom: c.yearFrom,
+            yearTo: c.yearTo,
+          }))
+        );
+      }
+
+      // 7. Audit Log inside transaction
+      await logAuditEvent(
+        {
+          adminId: admin.id,
+          action: "product.updated",
+          entityType: "product",
+          entityId: productId,
+          metadata: { sku: data.sku, name: data.name, cloudinaryFolder },
+        },
+        tx
       );
-    }
-
-    // 7. Audit Log
-    await logAuditEvent({
-      adminId: admin.id,
-      action: "product.updated",
-      entityType: "product",
-      entityId: productId,
-      metadata: { sku: data.sku, name: data.name, cloudinaryFolder },
     });
 
     revalidatePath("/products");
@@ -1171,20 +1200,23 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
       await deleteMultipleImages(publicIds);
     }
 
-    // 3. Delete product (Postgres foreign keys with CASCADE will remove product_images & product_compatibility)
-    await db.delete(products).where(eq(products.id, productId));
-
-    // 4. Audit Log
-    await logAuditEvent({
-      adminId: admin.id,
-      action: "product.deleted",
-      entityType: "product",
-      entityId: productId,
-      metadata: {
-        sku: product.sku,
-        name: product.name,
-        deletedImagesCount: publicIds.length,
-      },
+    // 3. Delete product and log audit event atomically
+    await db.transaction(async (tx) => {
+      await tx.delete(products).where(eq(products.id, productId));
+      await logAuditEvent(
+        {
+          adminId: admin.id,
+          action: "product.deleted",
+          entityType: "product",
+          entityId: productId,
+          metadata: {
+            sku: product.sku,
+            name: product.name,
+            deletedImagesCount: publicIds.length,
+          },
+        },
+        tx
+      );
     });
 
     revalidatePath("/products");

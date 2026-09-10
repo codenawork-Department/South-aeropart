@@ -12,6 +12,7 @@ import {
 } from "@repo/db";
 import { uploadImage } from "@repo/lib";
 import { validateSession, logAuditEvent } from "@/lib/auth";
+import { validateBase64Image } from "@/lib/upload-validator";
 
 const heroCardSchema = z.object({
   title: z.string().min(1, "กรุณากรอกหัวข้อของการ์ด").max(120),
@@ -109,6 +110,11 @@ export async function getHeroCardsAdminAction() {
 export async function uploadHeroCardImageAction(fileBase64: string): Promise<ActionResult<{ secureUrl: string; publicId: string }>> {
   const admin = await validateSession();
   if (!admin) return { success: false, message: "Unauthorized: กรุณาเข้าสู่ระบบก่อน" };
+
+  const validation = validateBase64Image(fileBase64);
+  if (!validation.valid) {
+    return { success: false, message: validation.error || "ไฟล์รูปภาพไม่ถูกต้อง" };
+  }
 
   try {
     const uploadRes = await uploadImage(fileBase64, {

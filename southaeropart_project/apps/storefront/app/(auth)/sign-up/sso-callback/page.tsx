@@ -10,6 +10,9 @@ export default function SSOCallbackPage() {
         </p>
       </div>
       <AuthenticateWithRedirectCallback
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        continueSignUpUrl="/sign-up"
         signInFallbackRedirectUrl="/"
         signUpFallbackRedirectUrl="/"
       />

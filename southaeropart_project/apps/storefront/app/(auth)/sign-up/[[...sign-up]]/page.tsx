@@ -240,7 +240,7 @@ export default function SignUpPage() {
                     autoComplete="one-time-code"
                     inputMode="numeric"
                     maxLength={6}
-                    className="input-dark rounded-sm text-center text-lg tracking-[0.3em] font-heading"
+                    className="input-dark w-full rounded-sm text-center text-lg tracking-[0.3em] font-heading"
                   />
                 </div>
 
@@ -336,7 +336,7 @@ export default function SignUpPage() {
                       placeholder="John"
                       required
                       autoComplete="given-name"
-                      className="input-dark rounded-sm"
+                      className="input-dark w-full rounded-sm"
                     />
                   </div>
                   <div>
@@ -354,7 +354,7 @@ export default function SignUpPage() {
                       placeholder="Doe"
                       required
                       autoComplete="family-name"
-                      className="input-dark rounded-sm"
+                      className="input-dark w-full rounded-sm"
                     />
                   </div>
                 </div>
@@ -375,7 +375,7 @@ export default function SignUpPage() {
                     placeholder="your@email.com"
                     required
                     autoComplete="email"
-                    className="input-dark rounded-sm"
+                    className="input-dark w-full rounded-sm"
                   />
                 </div>
 
@@ -397,7 +397,7 @@ export default function SignUpPage() {
                       required
                       minLength={8}
                       autoComplete="new-password"
-                      className="input-dark rounded-sm pr-10"
+                      className="input-dark w-full rounded-sm pr-10"
                     />
                     <button
                       type="button"

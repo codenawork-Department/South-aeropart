@@ -30,6 +30,7 @@ import {
   renameImage,
 } from "@repo/lib/cloudinary";
 import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
+import { validateBase64Image } from "@/lib/upload-validator";
 import { notifyStorefrontCatalogChange } from "@/lib/realtime-notifier";
 
 // ─── Types & Schemas ──────────────────────────────────────────────────────────
@@ -614,6 +615,13 @@ export async function createBundleAction(
     if (img.isDeleted) continue;
 
     if (img.data) {
+      const validation = validateBase64Image(img.data);
+      if (!validation.valid) {
+        return {
+          success: false,
+          message: `รูปภาพลำดับที่ ${i + 1} ไม่ถูกต้อง: ${validation.error}`,
+        };
+      }
       const uploadRes = await uploadImage(img.data, {
         folder: cloudinaryFolder,
         tags: ["south-aero", "bundle", brandSlug, modelSlug, slug],
@@ -895,6 +903,13 @@ export async function updateBundleAction(
     if (img.isDeleted) continue;
 
     if (img.data) {
+      const validation = validateBase64Image(img.data);
+      if (!validation.valid) {
+        return {
+          success: false,
+          message: `รูปภาพลำดับที่ ${i + 1} ไม่ถูกต้อง: ${validation.error}`,
+        };
+      }
       const uploadRes = await uploadImage(img.data, {
         folder: cloudinaryFolder,
         tags: ["south-aero", "bundle", brandSlug, modelSlug, slug],

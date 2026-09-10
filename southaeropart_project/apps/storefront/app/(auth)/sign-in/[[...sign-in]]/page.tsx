@@ -443,7 +443,7 @@ export default function SignInPage() {
                     autoComplete="one-time-code"
                     maxLength={secondFactorStrategy === "backup_code" ? 16 : 8}
                     autoFocus
-                    className="input-dark rounded-sm text-center text-lg tracking-[0.3em] font-heading uppercase"
+                    className="input-dark w-full rounded-sm text-center text-lg tracking-[0.3em] font-heading uppercase"
                   />
                 </div>
 
@@ -531,7 +531,7 @@ export default function SignInPage() {
                     placeholder="your@email.com"
                     required
                     autoComplete="email"
-                    className="input-dark rounded-sm"
+                    className="input-dark w-full rounded-sm"
                   />
                 </div>
 
@@ -563,7 +563,7 @@ export default function SignInPage() {
                       placeholder="••••••••"
                       required
                       autoComplete="current-password"
-                      className="input-dark rounded-sm pr-10"
+                      className="input-dark w-full rounded-sm pr-10"
                     />
                     <button
                       type="button"

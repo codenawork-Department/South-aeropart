@@ -44,9 +44,22 @@ function getSessionSecret(): Uint8Array {
 }
 
 export async function middleware(request: NextRequest) {
-  const ip = request.ip || request.headers.get("x-forwarded-for") || "unknown";
+  // Extract client IP (handle comma-separated proxies in x-forwarded-for securely)
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const ip =
+    request.ip ||
+    (forwardedFor ? forwardedFor.split(",")[0].trim() : null) ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+
   if (isRateLimited(ip)) {
-    return new NextResponse("Too Many Requests", { status: 429 });
+    return new NextResponse("Too Many Requests", {
+      status: 429,
+      headers: {
+        "Retry-After": "60",
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
   }
 
   const { pathname } = request.nextUrl;
