@@ -34,7 +34,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing svix headers" }, { status: 400 });
   }
 
+  const MAX_WEBHOOK_SIZE = 1024 * 1024; // 1MB payload limit
+  const contentLength = req.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_WEBHOOK_SIZE) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
   const body = await req.text();
+  if (body.length > MAX_WEBHOOK_SIZE) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
 
   let payload: Record<string, unknown>;
   try {

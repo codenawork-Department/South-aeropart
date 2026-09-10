@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { constructStripeWebhookEvent, Stripe } from "@repo/lib";
+import { constructStripeWebhookEvent, toSmallestCurrencyUnit, Stripe } from "@repo/lib";
 import { fulfillOrderPayment } from "@/lib/order-fulfillment";
 import { db, orders, orderStatusHistory, eq } from "@repo/db";
 
 export const dynamic = "force-dynamic";
 
+const MAX_WEBHOOK_SIZE = 1024 * 1024; // 1MB payload limit
+
 export async function POST(req: NextRequest) {
   try {
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > MAX_WEBHOOK_SIZE) {
+      console.warn("[Stripe Webhook] Request body exceeds 1MB limit");
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+
     const rawBody = await req.text();
+    if (rawBody.length > MAX_WEBHOOK_SIZE) {
+      console.warn("[Stripe Webhook] Raw body exceeds 1MB limit");
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+
     const signature = req.headers.get("stripe-signature");
 
     if (!signature) {
@@ -63,10 +76,69 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Order not found for PaymentIntent" }, { status: 404 });
         }
 
+        // Authoritative Database Lookup before fulfillment
+        const [targetOrder] = await db
+          .select({
+            id: orders.id,
+            total: orders.total,
+            currency: orders.currency,
+            status: orders.status,
+            paymentStatus: orders.paymentStatus,
+            stripePaymentIntentId: orders.stripePaymentIntentId,
+          })
+          .from(orders)
+          .where(eq(orders.id, orderId))
+          .limit(1);
+
+        if (!targetOrder) {
+          console.error(`[Stripe Webhook] Order ${orderId} not found in database.`);
+          return NextResponse.json({ error: "Order not found" }, { status: 404 });
+        }
+
+        // Idempotency check: if order is already marked paid, return success immediately
+        if (targetOrder.paymentStatus === "paid") {
+          console.log(`[Stripe Webhook] Order ${orderId} already fulfilled. Skipping redundant processing.`);
+          return NextResponse.json({ received: true, alreadyPaid: true });
+        }
+
+        // Mode verification (SEC §5.3): Refuse test-mode events in production
+        if (process.env.NODE_ENV === "production" && !event.livemode) {
+          console.error(`[Stripe Webhook Security] Test-mode event received in production for order ${orderId}!`);
+          return NextResponse.json({ error: "Test-mode event not permitted in production" }, { status: 400 });
+        }
+
+        // Amount & Currency Verification (SEC §5.3: Server-authoritative totals)
+        const expectedAmount = toSmallestCurrencyUnit(targetOrder.total);
+        const receivedAmount = paymentIntent.amount_received || paymentIntent.amount;
+        const expectedCurrency = (targetOrder.currency || "THB").toLowerCase();
+        const receivedCurrency = (paymentIntent.currency || "").toLowerCase();
+
+        if (expectedAmount !== receivedAmount || expectedCurrency !== receivedCurrency) {
+          console.error(
+            `[Stripe Webhook Security] CRITICAL: Amount or currency mismatch on order ${orderId}! ` +
+            `Expected: ${expectedAmount} ${expectedCurrency}, Received: ${receivedAmount} ${receivedCurrency}`
+          );
+
+          await db.insert(orderStatusHistory).values({
+            orderId,
+            status: targetOrder.status,
+            note: `[Security Alert] ยอดเงินไม่ตรงกับออเดอร์: คาดหวัง ${targetOrder.total} ${expectedCurrency.toUpperCase()}, ได้รับ ${(receivedAmount / 100).toFixed(2)} ${receivedCurrency.toUpperCase()} (PaymentIntent: ${paymentIntent.id})`,
+          });
+
+          return NextResponse.json({ error: "Payment amount or currency mismatch" }, { status: 400 });
+        }
+
+        // Payment binding check: If a payment intent was already recorded on the order, ensure it matches
+        if (targetOrder.stripePaymentIntentId && targetOrder.stripePaymentIntentId !== paymentIntent.id) {
+          console.warn(
+            `[Stripe Webhook Security] PaymentIntent ID mismatch for order ${orderId}. Bound: ${targetOrder.stripePaymentIntentId}, Event: ${paymentIntent.id}`
+          );
+        }
+
         const fulfillmentResult = await fulfillOrderPayment(orderId, {
           method: "stripe",
           chargeId: paymentIntent.id,
-          note: `ชำระเงินสำเร็จผ่าน Stripe Webhook (PaymentIntent: ${paymentIntent.id}, Amount: ${(paymentIntent.amount / 100).toFixed(2)} ${paymentIntent.currency.toUpperCase()})`,
+          note: `ชำระเงินสำเร็จผ่าน Stripe Webhook (PaymentIntent: ${paymentIntent.id}, Amount: ${(receivedAmount / 100).toFixed(2)} ${receivedCurrency.toUpperCase()})`,
         });
 
         if (!fulfillmentResult.success) {

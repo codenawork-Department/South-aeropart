@@ -37,9 +37,16 @@ import {
   createPaymentIntent,
   retrievePaymentIntent,
   updatePaymentIntentReceiptEmail,
+  toSmallestCurrencyUnit,
 } from "@repo/lib";
 import { syncUserWithClerk } from "@/lib/user-sync";
 import { fulfillOrderPayment, syncBundleStockForChildPart } from "@/lib/order-fulfillment";
+import {
+  generateGuestOrderToken,
+  verifyGuestOrderToken,
+  getGuestTokenFromCookie,
+  setGuestTokenCookie,
+} from "@/lib/guest-order-token";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -185,7 +192,7 @@ export async function createOrder(input: CheckoutInput) {
     }
 
     const verifiedItems: VerifiedItem[] = [];
-    let subtotalNum = 0;
+    let subtotalSatang = 0;
 
     const itemProductIds = Array.from(new Set(validated.items.map((i) => i.productId)));
     const productRows = await db
@@ -272,10 +279,11 @@ export async function createOrder(input: CheckoutInput) {
         }
       }
 
-      // Authoritative server-side price calculation (SEC-01 Price Tampering Guard)
+      // Authoritative server-side price calculation (SEC-01 & decimal-safe satang arithmetic)
       const authoritativeUnitPrice = productRow.price;
-      const itemTotalNum = parseFloat(authoritativeUnitPrice) * item.quantity;
-      subtotalNum += itemTotalNum;
+      const unitPriceSatang = toSmallestCurrencyUnit(authoritativeUnitPrice);
+      const itemTotalSatang = unitPriceSatang * item.quantity;
+      subtotalSatang += itemTotalSatang;
 
       verifiedItems.push({
         productId: productRow.id,
@@ -283,21 +291,24 @@ export async function createOrder(input: CheckoutInput) {
         variant: item.variant,
         quantity: item.quantity,
         unitPrice: authoritativeUnitPrice,
-        lineTotal: itemTotalNum.toFixed(2),
+        lineTotal: (itemTotalSatang / 100).toFixed(2),
         productType: productRow.productType as "single" | "bundle",
       });
     }
 
-    // Calculate shipping fee
-    let shippingFeeNum = 0;
+    // Calculate shipping fee using exact satang units
+    let shippingFeeSatang = 0;
     if (validated.shippingMethod === "express") {
-      shippingFeeNum = 450;
+      shippingFeeSatang = 450 * 100;
     } else {
-      // Standard: 150 THB, free if subtotal >= 15,000 THB
-      shippingFeeNum = subtotalNum >= 15000 ? 0 : 150;
+      // Standard: 150 THB, free if subtotal >= 15,000 THB (1,500,000 satang)
+      shippingFeeSatang = subtotalSatang >= 15000 * 100 ? 0 : 150 * 100;
     }
 
-    const totalNum = subtotalNum + shippingFeeNum;
+    const totalSatang = subtotalSatang + shippingFeeSatang;
+    const subtotalStr = (subtotalSatang / 100).toFixed(2);
+    const shippingFeeStr = (shippingFeeSatang / 100).toFixed(2);
+    const totalStr = (totalSatang / 100).toFixed(2);
 
     // Audit #16: Cryptographically random 8-char hex suffix prevents collision (4.3B combinations/day)
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -339,10 +350,10 @@ export async function createOrder(input: CheckoutInput) {
           status: "pending",
           paymentMethod: validated.paymentMethod,
           paymentStatus: "pending",
-          subtotal: subtotalNum.toFixed(2),
-          shippingFee: shippingFeeNum.toFixed(2),
+          subtotal: subtotalStr,
+          shippingFee: shippingFeeStr,
           taxAmount: "0.00", // Tax included in prices
-          total: totalNum.toFixed(2),
+          total: totalStr,
           currency: "THB",
           shippingCarrier:
             validated.shippingMethod === "express"
@@ -455,12 +466,28 @@ export async function createOrder(input: CheckoutInput) {
 
     safeRevalidatePath("/orders");
 
+    // SEC §5.1: Generate cryptographic guest order token if guest checkout
+    let guestToken: string | undefined;
+    if (createdOrder.userId.startsWith("guest_")) {
+      guestToken = generateGuestOrderToken(
+        createdOrder.id,
+        createdOrder.userId,
+        createdOrder.createdAt
+      );
+      setGuestTokenCookie(createdOrder.id, guestToken);
+    }
+
+    const redirectUrl = guestToken
+      ? `/checkout/payment/${createdOrder.id}?token=${guestToken}`
+      : `/checkout/payment/${createdOrder.id}`;
+
     return {
       success: true,
       orderId: createdOrder.id,
       orderNumber: createdOrder.orderNumber,
       total: createdOrder.total,
-      redirectUrl: `/checkout/payment/${createdOrder.id}`,
+      guestToken,
+      redirectUrl,
     };
   } catch (error) {
     console.error("[createOrder] Error:", error);
@@ -477,7 +504,7 @@ export async function createOrder(input: CheckoutInput) {
 /**
  * Retrieves full order details including items, products, and status history.
  */
-export async function getOrderDetails(orderId: string) {
+export async function getOrderDetails(orderId: string, guestToken?: string) {
   try {
     z.string().uuid().parse(orderId);
 
@@ -490,7 +517,8 @@ export async function getOrderDetails(orderId: string) {
       return { success: false, error: "Order not found", data: null };
     }
 
-    // IDOR Security Guard: Registered user orders must only be accessed by the account owner
+    // IDOR Security Guard (SEC §5.1):
+    // 1. Registered user orders must only be accessed by the account owner
     if (!order.userId.startsWith("guest_")) {
       let currentUserId: string | null = null;
       try {
@@ -501,6 +529,19 @@ export async function getOrderDetails(orderId: string) {
 
       if (!currentUserId || currentUserId !== order.userId) {
         return { success: false, error: "Unauthorized access to order details", data: null };
+      }
+    } else {
+      // 2. Guest orders must present a valid cryptographic access token (via param or HttpOnly cookie)
+      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const isTokenValid = verifyGuestOrderToken(
+        effectiveToken,
+        order.id,
+        order.userId,
+        order.createdAt
+      );
+
+      if (!isTokenValid) {
+        return { success: false, error: "Unauthorized access to guest order details", data: null };
       }
     }
 
@@ -591,7 +632,7 @@ export async function getOrderDetails(orderId: string) {
 /**
  * Fast check for order payment status (used for Polling on the payment page).
  */
-export async function getOrderStatus(orderId: string) {
+export async function getOrderStatus(orderId: string, guestToken?: string) {
   try {
     z.string().uuid().parse(orderId);
     const [order] = await db
@@ -601,6 +642,7 @@ export async function getOrderStatus(orderId: string) {
         status: orders.status,
         paymentStatus: orders.paymentStatus,
         orderNumber: orders.orderNumber,
+        createdAt: orders.createdAt,
       })
       .from(orders)
       .where(eq(orders.id, orderId))
@@ -610,7 +652,7 @@ export async function getOrderStatus(orderId: string) {
       return { success: false, error: "Order not found" };
     }
 
-    // Audit #8: IDOR Security Guard: Registered user orders must only be accessed by the account owner
+    // IDOR Security Guard (SEC §5.1): Registered users check ownership; guests check cryptographic token
     if (!order.userId.startsWith("guest_")) {
       let currentUserId: string | null = null;
       try {
@@ -620,6 +662,17 @@ export async function getOrderStatus(orderId: string) {
       }
 
       if (!currentUserId || currentUserId !== order.userId) {
+        return { success: false, error: "Unauthorized access to order status" };
+      }
+    } else {
+      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const isTokenValid = verifyGuestOrderToken(
+        effectiveToken,
+        order.id,
+        order.userId,
+        order.createdAt
+      );
+      if (!isTokenValid) {
         return { success: false, error: "Unauthorized access to order status" };
       }
     }
@@ -639,7 +692,7 @@ export async function getOrderStatus(orderId: string) {
 /**
  * Confirms mock QR payment (wraps authoritative fulfillOrderPayment with IDOR protection)
  */
-export async function confirmMockPayment(orderId: string) {
+export async function confirmMockPayment(orderId: string, guestToken?: string) {
   z.string().uuid().parse(orderId);
 
   if (process.env.NODE_ENV === "production") {
@@ -649,9 +702,9 @@ export async function confirmMockPayment(orderId: string) {
     };
   }
 
-  // IDOR check: Registered user orders can only be mock-paid by the owner
+  // IDOR check (SEC §5.1): Registered user orders can only be mock-paid by the owner; guest orders require token
   const [order] = await db
-    .select({ id: orders.id, userId: orders.userId })
+    .select({ id: orders.id, userId: orders.userId, createdAt: orders.createdAt })
     .from(orders)
     .where(eq(orders.id, orderId))
     .limit(1);
@@ -660,16 +713,28 @@ export async function confirmMockPayment(orderId: string) {
     return { success: false, error: "Order not found" };
   }
 
-  // IDOR check: If logged in, registered user orders can only be mock-paid by the owner
-  let currentUserId: string | null = null;
-  try {
-    currentUserId = auth().userId;
-  } catch {
-    currentUserId = null;
-  }
+  if (!order.userId.startsWith("guest_")) {
+    let currentUserId: string | null = null;
+    try {
+      currentUserId = auth().userId;
+    } catch {
+      currentUserId = null;
+    }
 
-  if (currentUserId && !order.userId.startsWith("guest_") && currentUserId !== order.userId) {
-    return { success: false, error: "Unauthorized access to order" };
+    if (!currentUserId || currentUserId !== order.userId) {
+      return { success: false, error: "Unauthorized access to order" };
+    }
+  } else {
+    const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+    const isTokenValid = verifyGuestOrderToken(
+      effectiveToken,
+      order.id,
+      order.userId,
+      order.createdAt
+    );
+    if (!isTokenValid) {
+      return { success: false, error: "Unauthorized access to order" };
+    }
   }
 
   return fulfillOrderPayment(orderId, {
@@ -682,7 +747,10 @@ export async function confirmMockPayment(orderId: string) {
  * Creates or retrieves a Stripe PaymentIntent for the given order.
  * Returns clientSecret to initialize Stripe Payment Element on the frontend.
  */
-export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
+export async function createOrGetStripePaymentIntent(
+  orderId: string,
+  guestToken?: string
+): Promise<{
   success: boolean;
   clientSecret?: string;
   publishableKey?: string;
@@ -704,6 +772,7 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
         total: orders.total,
         currency: orders.currency,
         shippingAddress: orders.shippingAddress,
+        createdAt: orders.createdAt,
       })
       .from(orders)
       .where(eq(orders.id, orderId))
@@ -713,7 +782,7 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
       return { success: false, error: "Order not found" };
     }
 
-    // IDOR Security Guard: Registered user orders must only be accessed by the owner
+    // IDOR Security Guard (SEC §5.1): Registered user orders require owner session; guest orders require cryptographic token
     let currentUserId: string | null = null;
     let isOutsideRequestContext = false;
     try {
@@ -722,8 +791,19 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
       isOutsideRequestContext = true;
     }
 
-    if (!isOutsideRequestContext && !order.userId.startsWith("guest_")) {
-      if (!currentUserId || currentUserId !== order.userId) {
+    if (!order.userId.startsWith("guest_")) {
+      if (!isOutsideRequestContext && (!currentUserId || currentUserId !== order.userId)) {
+        return { success: false, error: "Unauthorized access to order" };
+      }
+    } else {
+      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const isTokenValid = verifyGuestOrderToken(
+        effectiveToken,
+        order.id,
+        order.userId,
+        order.createdAt
+      );
+      if (!isTokenValid) {
         return { success: false, error: "Unauthorized access to order" };
       }
     }
@@ -746,18 +826,29 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
       try {
         const existingIntent = await retrievePaymentIntent(order.stripePaymentIntentId);
         
-        // If the existing intent has already succeeded, fulfill the order and redirect!
+        // If the existing intent has already succeeded, verify amount & currency before fulfilling!
         if (existingIntent && existingIntent.status === "succeeded") {
-          await fulfillOrderPayment(order.id, {
-            method: "stripe",
-            chargeId: existingIntent.id,
-            note: "ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Auto-recovered in createOrGetStripePaymentIntent)",
-          });
-          return {
-            success: true,
-            isAlreadyPaid: true,
-            redirectUrl: `/orders/${order.id}?paid=true`,
-          };
+          const expectedAmount = toSmallestCurrencyUnit(order.total);
+          const receivedAmount = existingIntent.amount_received || existingIntent.amount;
+          const expectedCurrency = (order.currency || "THB").toLowerCase();
+          const receivedCurrency = (existingIntent.currency || "").toLowerCase();
+
+          if (expectedAmount === receivedAmount && expectedCurrency === receivedCurrency) {
+            await fulfillOrderPayment(order.id, {
+              method: "stripe",
+              chargeId: existingIntent.id,
+              note: "ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Auto-recovered in createOrGetStripePaymentIntent)",
+            });
+            return {
+              success: true,
+              isAlreadyPaid: true,
+              redirectUrl: `/orders/${order.id}?paid=true`,
+            };
+          } else {
+            console.warn(
+              `[createOrGetStripePaymentIntent Security] Existing succeeded intent amount/currency mismatch on order ${order.id}. Expected ${expectedAmount} ${expectedCurrency}, got ${receivedAmount} ${receivedCurrency}`
+            );
+          }
         }
 
         // Only reuse clientSecret if intent is in a pending/submittable state
@@ -797,6 +888,7 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
       amountNumeric: order.total,
       currency: order.currency || "THB",
       receiptEmail: customerEmail,
+      idempotencyKey: `pi_order_${order.id}`,
       metadata: {
         orderId: order.id,
         orderNumber: order.orderNumber,
@@ -835,7 +927,11 @@ export async function createOrGetStripePaymentIntent(orderId: string): Promise<{
  * Updates the customer receipt email on an existing order.
  * Also synchronizes Stripe PaymentIntent's receipt_email if stripePaymentIntentId exists.
  */
-export async function updateOrderReceiptEmail(orderId: string, email: string) {
+export async function updateOrderReceiptEmail(
+  orderId: string,
+  email: string,
+  guestToken?: string
+) {
   try {
     z.string().uuid().parse(orderId);
     const validatedEmail = z.string().trim().email("กรุณากรอกรูปแบบอีเมลที่ถูกต้อง").parse(email);
@@ -846,6 +942,7 @@ export async function updateOrderReceiptEmail(orderId: string, email: string) {
         userId: orders.userId,
         shippingAddress: orders.shippingAddress,
         stripePaymentIntentId: orders.stripePaymentIntentId,
+        createdAt: orders.createdAt,
       })
       .from(orders)
       .where(eq(orders.id, orderId))
@@ -855,7 +952,7 @@ export async function updateOrderReceiptEmail(orderId: string, email: string) {
       return { success: false, error: "ไม่พบข้อมูลคำสั่งซื้อในระบบ" };
     }
 
-    // IDOR Security Guard
+    // IDOR Security Guard (SEC §5.1)
     let currentUserId: string | null = null;
     let isOutsideRequestContext = false;
     try {
@@ -864,8 +961,19 @@ export async function updateOrderReceiptEmail(orderId: string, email: string) {
       isOutsideRequestContext = true;
     }
 
-    if (!isOutsideRequestContext && !order.userId.startsWith("guest_")) {
-      if (!currentUserId || currentUserId !== order.userId) {
+    if (!order.userId.startsWith("guest_")) {
+      if (!isOutsideRequestContext && (!currentUserId || currentUserId !== order.userId)) {
+        return { success: false, error: "Unauthorized access to order" };
+      }
+    } else {
+      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const isTokenValid = verifyGuestOrderToken(
+        effectiveToken,
+        order.id,
+        order.userId,
+        order.createdAt
+      );
+      if (!isTokenValid) {
         return { success: false, error: "Unauthorized access to order" };
       }
     }
@@ -912,7 +1020,11 @@ export async function updateOrderReceiptEmail(orderId: string, email: string) {
  * - Updates order.status = "cancelled"
  * - Inserts into order_status_history
  */
-export async function rejectMockPayment(orderId: string, reason = "ผู้ใช้ปฏิเสธการชำระเงิน / ยกเลิกคำสั่งซื้อ") {
+export async function rejectMockPayment(
+  orderId: string,
+  reason = "ผู้ใช้ปฏิเสธการชำระเงิน / ยกเลิกคำสั่งซื้อ",
+  guestToken?: string
+) {
   try {
     z.string().uuid().parse(orderId);
 
@@ -928,6 +1040,7 @@ export async function rejectMockPayment(orderId: string, reason = "ผู้ใ�
         id: orders.id,
         userId: orders.userId,
         status: orders.status,
+        createdAt: orders.createdAt,
       })
       .from(orders)
       .where(eq(orders.id, orderId))
@@ -937,7 +1050,7 @@ export async function rejectMockPayment(orderId: string, reason = "ผู้ใ�
       return { success: false, error: "Order not found" };
     }
 
-    // IDOR Security Guard
+    // IDOR Security Guard (SEC §5.1)
     let currentUserId: string | null = null;
     let isOutsideRequestContext = false;
     try {
@@ -946,8 +1059,19 @@ export async function rejectMockPayment(orderId: string, reason = "ผู้ใ�
       isOutsideRequestContext = true;
     }
 
-    if (!isOutsideRequestContext && !order.userId.startsWith("guest_")) {
-      if (!currentUserId || currentUserId !== order.userId) {
+    if (!order.userId.startsWith("guest_")) {
+      if (!isOutsideRequestContext && (!currentUserId || currentUserId !== order.userId)) {
+        return { success: false, error: "Unauthorized access to order" };
+      }
+    } else {
+      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const isTokenValid = verifyGuestOrderToken(
+        effectiveToken,
+        order.id,
+        order.userId,
+        order.createdAt
+      );
+      if (!isTokenValid) {
         return { success: false, error: "Unauthorized access to order" };
       }
     }
@@ -993,7 +1117,24 @@ export async function getUserOrders() {
     }
 
     const userOrders = await db
-      .select()
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        userId: orders.userId,
+        status: orders.status,
+        paymentMethod: orders.paymentMethod,
+        paymentStatus: orders.paymentStatus,
+        subtotal: orders.subtotal,
+        shippingFee: orders.shippingFee,
+        taxAmount: orders.taxAmount,
+        total: orders.total,
+        currency: orders.currency,
+        trackingNumber: orders.trackingNumber,
+        shippingCarrier: orders.shippingCarrier,
+        shippingAddress: orders.shippingAddress,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+      })
       .from(orders)
       .where(eq(orders.userId, userId))
       .orderBy(desc(orders.createdAt));

@@ -70,6 +70,18 @@ const saveVehicleSchema = z.object({
 export type SaveAddressInput = z.infer<typeof saveAddressSchema>;
 export type SaveVehicleInput = z.infer<typeof saveVehicleSchema>;
 
+export type SanitizedUserProfile = {
+  id: string;
+  email: string;
+  fullName: string | null;
+  phone: string | null;
+  avatarUrl: string | null;
+  metadata: UserMetadata | null;
+  lastLoginAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 /* =========================================================================
    PROFILE ACTIONS
    ========================================================================= */
@@ -137,11 +149,23 @@ export async function getUserProfile() {
       .where(eq(userVehicles.userId, userId))
       .orderBy(desc(userVehicles.isDefault), desc(userVehicles.createdAt));
 
+    const sanitizedUser = {
+      id: userRow.id,
+      email: userRow.email,
+      fullName: userRow.fullName,
+      phone: userRow.phone,
+      avatarUrl: userRow.avatarUrl,
+      metadata: userRow.metadata,
+      lastLoginAt: userRow.lastLoginAt,
+      createdAt: userRow.createdAt,
+      updatedAt: userRow.updatedAt,
+    };
+
     return {
       success: true,
       error: null,
       data: {
-        user: userRow,
+        user: sanitizedUser,
         addresses,
         vehicles,
       },

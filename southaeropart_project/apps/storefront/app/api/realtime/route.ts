@@ -182,6 +182,14 @@ export async function POST(request: NextRequest) {
     );
   }
   // ────────────────────────────────────────────────────────────────────────
+  const MAX_REALTIME_BODY_SIZE = 64 * 1024; // 64KB max payload
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_REALTIME_BODY_SIZE) {
+    return NextResponse.json(
+      { success: false, error: "Payload too large" },
+      { status: 413 }
+    );
+  }
 
   try {
     const body = await request.json().catch(() => ({}));

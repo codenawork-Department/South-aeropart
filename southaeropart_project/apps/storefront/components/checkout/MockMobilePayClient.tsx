@@ -21,9 +21,10 @@ import { useCurrency } from "@/components/providers/CurrencyProvider";
 interface MockMobilePayClientProps {
   order: Order;
   items: OrderItem[];
+  guestToken?: string;
 }
 
-export function MockMobilePayClient({ order, items }: MockMobilePayClientProps) {
+export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayClientProps) {
   const { formatPrice, currency } = useCurrency();
   const [status, setStatus] = useState<"idle" | "authorizing" | "paid" | "cancelled">("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +35,7 @@ export function MockMobilePayClient({ order, items }: MockMobilePayClientProps) 
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      const res = await confirmMockPayment(order.id);
+      const res = await confirmMockPayment(order.id, guestToken);
       if (res.success) {
         setStatus("paid");
         setTxRef(`SA-SLIP-${Math.random().toString(36).substring(2, 9).toUpperCase()}`);
@@ -52,7 +53,7 @@ export function MockMobilePayClient({ order, items }: MockMobilePayClientProps) 
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      const res = await rejectMockPayment(order.id, "ผู้ทดสอบปฏิเสธผ่านมือถือ");
+      const res = await rejectMockPayment(order.id, "ผู้ทดสอบปฏิเสธผ่านมือถือ", guestToken);
       if (res.success) {
         setStatus("cancelled");
       } else {

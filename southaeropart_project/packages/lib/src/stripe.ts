@@ -29,6 +29,7 @@ export interface CreatePaymentIntentParams {
   currency?: string; // default "THB"
   receiptEmail?: string;
   metadata?: Record<string, string>;
+  idempotencyKey?: string;
 }
 
 /**
@@ -49,6 +50,7 @@ export function toSmallestCurrencyUnit(amount: string | number): number {
 /**
  * Creates a Stripe PaymentIntent with automatic payment methods (Card, PromptPay, Apple Pay, Google Pay).
  * Correctly converts numeric amounts to satang / smallest currency unit.
+ * Passes idempotencyKey to prevent duplicate charges upon retries.
  */
 export async function createPaymentIntent({
   orderId,
@@ -57,25 +59,32 @@ export async function createPaymentIntent({
   currency = "THB",
   receiptEmail,
   metadata = {},
+  idempotencyKey,
 }: CreatePaymentIntentParams): Promise<Stripe.PaymentIntent> {
   const stripe = getStripe();
 
   // Audit #17: Use exact integer conversion instead of parseFloat * 100
   const amountInSmallestUnit = toSmallestCurrencyUnit(amountNumeric);
+  const effectiveIdempotencyKey = idempotencyKey || `pi_order_${orderId}`;
 
-  const intent = await stripe.paymentIntents.create({
-    amount: amountInSmallestUnit,
-    currency: currency.toLowerCase(),
-    automatic_payment_methods: {
-      enabled: true,
+  const intent = await stripe.paymentIntents.create(
+    {
+      amount: amountInSmallestUnit,
+      currency: currency.toLowerCase(),
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      receipt_email: receiptEmail || undefined,
+      metadata: {
+        orderId,
+        orderNumber,
+        ...metadata,
+      },
     },
-    receipt_email: receiptEmail || undefined,
-    metadata: {
-      orderId,
-      orderNumber,
-      ...metadata,
-    },
-  });
+    {
+      idempotencyKey: effectiveIdempotencyKey,
+    }
+  );
 
   return intent;
 }

@@ -26,7 +26,7 @@ import {
   Database,
   CheckCircle2,
 } from "lucide-react";
-import { User as DbUser, UserAddress } from "@repo/db";
+import { UserAddress } from "@repo/db";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { Currency } from "@/lib/currency";
@@ -39,6 +39,7 @@ import {
   deleteUserVehicle,
   setDefaultVehicle,
   exportUserData,
+  SanitizedUserProfile,
 } from "@/actions/profile.actions";
 import { AddressModal } from "./AddressModal";
 import { GarageModal } from "./GarageModal";
@@ -47,7 +48,7 @@ import { ProfileHeader } from "./ProfileHeader";
 import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";
 
 interface ProfileTabsProps {
-  user: DbUser;
+  user: SanitizedUserProfile;
   addresses: UserAddress[];
   vehicles: Array<{
     id: string;
