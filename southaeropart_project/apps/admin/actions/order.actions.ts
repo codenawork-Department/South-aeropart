@@ -189,17 +189,30 @@ export async function getOrdersAction(params?: Partial<GetOrdersParams>) {
       .limit(limit)
       .offset(offset);
 
-    // Get item counts for each order
+    // Get item counts and items preview for each order
     const ordersWithCounts = await Promise.all(
       rows.map(async (row) => {
         const items = await db
-          .select({ quantity: orderItems.quantity })
+          .select({
+            id: orderItems.id,
+            productName: orderItems.productNameSnapshot,
+            unitPrice: orderItems.unitPrice,
+            quantity: orderItems.quantity,
+            lineTotal: orderItems.lineTotal,
+          })
           .from(orderItems)
           .where(eq(orderItems.orderId, row.id));
         const totalItemsCount = items.reduce((acc, curr) => acc + curr.quantity, 0);
         return {
           ...row,
           itemCount: totalItemsCount,
+          itemsPreview: items.map((i) => ({
+            id: i.id,
+            name: i.productName,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            lineTotal: i.lineTotal,
+          })),
         };
       })
     );
