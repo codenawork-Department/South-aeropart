@@ -8,7 +8,8 @@
     "./cloudinary": "./src/cloudinary.ts",
     "./resend": "./src/resend.ts",
     "./stripe": "./src/stripe.ts",
-    "./moderation": "./src/moderation/text-moderation.ts"
+    "./moderation": "./src/moderation/text-moderation.ts",
+    "./carrier": "./src/carrier.ts"
   },
   "dependencies": {
     "cloudinary": "^2.4.0",

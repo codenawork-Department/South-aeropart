@@ -1,6 +1,7 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback, useTransition } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -19,8 +20,13 @@ import {
   Wrench,
   Check,
   Mail,
+  Copy,
+  ExternalLink,
+  RefreshCw,
+  ShieldCheck,
 } from "lucide-react";
 import type { Order, OrderItem, OrderItemBundlePart, OrderStatusHistory } from "@repo/db";
+import { getCarrierTrackingUrl } from "@repo/lib/carrier";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface OrderDetailClientProps {
@@ -36,7 +42,56 @@ interface OrderDetailClientProps {
 export function OrderDetailClient({ order, items, history }: OrderDetailClientProps) {
   const { formatPrice, currency } = useCurrency();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isJustPaid = searchParams.get("paid") === "true";
+
+  const [isPending, startTransition] = useTransition();
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [isCopied, setIsCopied] = useState(false);
+
+  const carrierTrackingUrl = getCarrierTrackingUrl(order.shippingCarrier, order.trackingNumber);
+
+  const handleCopyTracking = useCallback((trackingNum: string) => {
+    if (!trackingNum) return;
+    navigator.clipboard.writeText(trackingNum);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2500);
+  }, []);
+
+  const handleManualRefresh = useCallback(() => {
+    startTransition(() => {
+      router.refresh();
+      setLastRefreshed(new Date());
+    });
+  }, [router]);
+
+  // Real-time live auto-refresh (6s for in-progress orders, 15s for delivered/cancelled)
+  useEffect(() => {
+    const isTerminal = order.status === "delivered" || order.status === "cancelled";
+    const intervalMs = isTerminal ? 15000 : 6000;
+
+    const intervalId = setInterval(() => {
+      startTransition(() => {
+        router.refresh();
+        setLastRefreshed(new Date());
+      });
+    }, intervalMs);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        startTransition(() => {
+          router.refresh();
+          setLastRefreshed(new Date());
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [order.status, router]);
 
   const isPaid = order.paymentStatus === "paid" || order.status === "paid";
   const isCancelled = order.status === "cancelled";
@@ -199,16 +254,37 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
               </p>
             </div>
 
-            {/* Current Active Step Chip */}
-            <div className="flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-full bg-[#1C1C1C] border border-[#333333] shadow-inner">
-              <span className="text-[0.65rem] font-mono text-[var(--text-muted)] uppercase tracking-wider">
-                STEP {currentStep + 1} OF 5
-              </span>
-              <span className="w-1 h-1 rounded-full bg-gray-600" />
-              <span className="text-[0.7rem] font-heading font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                {steps[currentStep]?.label || "IN PROGRESS"}
-              </span>
+            {/* Live Indicator & Active Step Chip */}
+            <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+              {/* Real-Time Live Sync Beacon */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 text-[0.65rem] font-mono shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="font-bold tracking-wider uppercase">LIVE TRACKING</span>
+                <button
+                  type="button"
+                  onClick={handleManualRefresh}
+                  disabled={isPending}
+                  title="คลิกเพื่อรีเฟรชข้อมูลสถานะล่าสุด"
+                  className="p-1 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw size={11} className={isPending ? "animate-spin text-white" : ""} />
+                </button>
+              </div>
+
+              {/* Current Active Step Chip */}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1C1C1C] border border-[#333333] shadow-inner">
+                <span className="text-[0.65rem] font-mono text-[var(--text-muted)] uppercase tracking-wider">
+                  STEP {currentStep + 1} OF 5
+                </span>
+                <span className="w-1 h-1 rounded-full bg-gray-600" />
+                <span className="text-[0.7rem] font-heading font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                  {steps[currentStep]?.label || "IN PROGRESS"}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -297,13 +373,45 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
                           {step.thLabel}
                         </p>
 
-                        <p className="text-[0.7rem] text-[var(--text-muted)] mt-1 hidden md:block leading-tight line-clamp-2">
-                          {step.desc}
-                        </p>
+                        {/* Step Description / Glowing Tracking Pill */}
+                        {step.key === "shipped" && order.trackingNumber ? (
+                          <div className="mt-2 flex flex-col items-start md:items-center">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyTracking(order.trackingNumber!);
+                              }}
+                              title="คลิกเพื่อคัดลอกเลขพัสดุ"
+                              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-950/80 hover:bg-red-900 border border-red-500/60 hover:border-red-400 text-white shadow-[0_0_12px_rgba(239,68,68,0.35)] transition-all cursor-pointer"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
+                              <span className="font-mono text-[0.7rem] font-extrabold tracking-wider text-red-200">
+                                {order.trackingNumber}
+                              </span>
+                              {isCopied ? (
+                                <Check size={12} className="text-emerald-400 ml-0.5" />
+                              ) : (
+                                <Copy size={12} className="text-red-300 opacity-80 group-hover:opacity-100 ml-0.5" />
+                              )}
+                            </button>
+                            <span className="text-[0.6rem] text-red-400 font-sans mt-0.5 hidden md:block">
+                              {isCopied ? "คัดลอกสำเร็จ!" : "(คลิกเพื่อคัดลอก)"}
+                            </span>
+                          </div>
+                        ) : (
+                          <p className="text-[0.7rem] text-[var(--text-muted)] mt-1 hidden md:block leading-tight line-clamp-2">
+                            {step.desc}
+                          </p>
+                        )}
 
                         {/* Mobile Status Tag */}
                         <div className="mt-1.5 md:hidden">
-                          {isCurrent ? (
+                          {step.key === "shipped" && order.trackingNumber ? (
+                            <span className="text-[0.65rem] text-red-400 font-mono">
+                              {order.shippingCarrier || "ขนส่งพัสดุ"}
+                            </span>
+                          ) : isCurrent ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.65rem] font-bold bg-red-950/60 border border-red-800 text-red-400">
                               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> กำลังดำเนินการ
                             </span>
@@ -322,6 +430,80 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
                   );
                 })}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* High-Impact Dedicated Shipment Tracking Card (When Tracking Number is Available) */}
+      {order.trackingNumber && (
+        <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#171717] via-[#121212] to-[#1C1414] border-2 border-red-600/50 p-5 sm:p-7 shadow-[0_10px_35px_rgba(220,38,38,0.2)]">
+          {/* Ambient Red Glows */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-60 h-60 bg-red-600/5 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            {/* Left: Carrier info & Prominent Monospace Code */}
+            <div className="space-y-3 flex-1">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/80 border border-red-500/50 text-red-300 font-heading text-xs font-bold uppercase tracking-wider shadow-sm">
+                  <Truck size={14} className="text-red-400" />
+                  {order.status === "delivered" ? "DELIVERED (จัดส่งสำเร็จ)" : "SHIPPED & IN TRANSIT (จัดส่งพัสดุแล้ว)"}
+                </span>
+                <span className="text-xs text-[var(--text-muted)] font-mono">
+                  บริษัทขนส่ง: <strong className="text-white font-heading uppercase tracking-wider">{order.shippingCarrier || "South Aero Logistics"}</strong>
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[0.7rem] font-heading font-extrabold uppercase tracking-widest text-red-400 block mb-1.5">
+                  หมายเลขติดตามพัสดุ (TRACKING NUMBER)
+                </span>
+                <div className="inline-flex flex-wrap items-center gap-3 bg-[#0A0A0A] border-2 border-red-500/60 rounded-xl px-4 py-3 shadow-[0_0_20px_rgba(239,68,68,0.25)]">
+                  <span className="font-mono text-xl sm:text-2xl md:text-3xl font-black text-white tracking-widest select-all">
+                    {order.trackingNumber}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyTracking(order.trackingNumber!)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 active:scale-95 text-white text-xs font-heading font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check size={14} className="text-white" />
+                        <span>คัดลอกแล้ว!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        <span>คัดลอกเลขพัสดุ</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-xs text-neutral-400 leading-relaxed flex items-start gap-1.5 pt-1">
+                <ShieldCheck size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+                <span>
+                  คำแนะนำในการตรวจรับ: ชิ้นส่วนแอโรพาร์ตได้รับการบรรจุเสริมโฟมกันกระแทกพิเศษ กรุณาถ่ายวิดีโอขณะเปิดแกะกล่องพัสดุไว้เป็นหลักฐานเพื่อการรับประกันคุณภาพ
+                </span>
+              </p>
+            </div>
+
+            {/* Right: Direct Track Package CTA Button */}
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:items-end flex-shrink-0">
+              {carrierTrackingUrl && (
+                <a
+                  href={carrierTrackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary py-3.5 px-6 text-xs sm:text-sm font-heading uppercase tracking-wider gap-2 shadow-[0_4px_20px_rgba(220,38,38,0.4)] hover:shadow-[0_6px_25px_rgba(220,38,38,0.6)] justify-center"
+                >
+                  <ExternalLink size={16} />
+                  <span>ตรวจสอบสถานะที่ {order.shippingCarrier || "ระบบขนส่ง"}</span>
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -483,6 +665,39 @@ export function OrderDetailClient({ order, items, history }: OrderDetailClientPr
                 <span className="text-[var(--text-muted)] block text-[0.7rem] uppercase">SHIPPING CARRIER:</span>
                 <span className="text-white font-medium">{order.shippingCarrier || "South Aero Standard Logistics"}</span>
               </div>
+              {order.trackingNumber && (
+                <div className="pt-2 border-t border-white/5">
+                  <span className="text-red-400 block text-[0.7rem] font-heading font-bold uppercase tracking-wider">
+                    TRACKING NUMBER:
+                  </span>
+                  <div className="flex items-center justify-between gap-2 mt-1 bg-black/60 p-2 rounded-lg border border-red-500/30">
+                    <span className="text-white font-mono font-bold text-xs select-all">
+                      {order.trackingNumber}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTracking(order.trackingNumber!)}
+                        title="คัดลอกเลขพัสดุ"
+                        className="p-1 text-red-300 hover:text-white transition-colors cursor-pointer"
+                      >
+                        {isCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                      </button>
+                      {carrierTrackingUrl && (
+                        <a
+                          href={carrierTrackingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="ไปที่เว็บไซต์ขนส่ง"
+                          className="p-1 text-red-300 hover:text-white transition-colors"
+                        >
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <span className="text-[var(--text-muted)] block text-[0.7rem] uppercase">PAYMENT METHOD:</span>
                 <span className="text-white font-medium flex items-center gap-1.5 mt-0.5">

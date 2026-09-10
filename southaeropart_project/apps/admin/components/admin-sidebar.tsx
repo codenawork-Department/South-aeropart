@@ -21,6 +21,7 @@ import {
   Mail,
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
+import { RealtimeSyncWidget } from "@/components/ui/realtime-sync-widget";
 
 interface AdminSidebarProps {
   adminEmail?: string;
@@ -246,6 +247,7 @@ export function AdminSidebar({
         </div>
 
         <div className="flex items-center gap-2">
+          <RealtimeSyncWidget compact />
           <div className="hidden xs:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[0.62rem] text-emerald-400 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>ADMIN</span>
