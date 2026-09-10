@@ -258,15 +258,21 @@ export async function resetFailedLogins(
 
 // ─── Audit Logging ───
 
-export async function logAuditEvent(params: {
-  adminId: string | null;
-  action: string;
-  entityType?: string;
-  entityId?: string;
-  metadata?: Record<string, unknown>;
-  ipAddress?: string;
-}): Promise<void> {
-  await db.insert(adminAuditLogs).values({
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export async function logAuditEvent(
+  params: {
+    adminId: string | null;
+    action: string;
+    entityType?: string;
+    entityId?: string;
+    metadata?: Record<string, unknown>;
+    ipAddress?: string;
+  },
+  tx?: DbTransaction
+): Promise<void> {
+  const client = tx ?? db;
+  await client.insert(adminAuditLogs).values({
     adminId: params.adminId,
     action: params.action,
     entityType: params.entityType ?? null,

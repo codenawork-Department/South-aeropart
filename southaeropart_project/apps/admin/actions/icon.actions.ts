@@ -15,6 +15,7 @@ import {
 } from "@repo/db";
 import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
 import { uploadImage } from "@repo/lib";
+import { validateBase64Image } from "@/lib/upload-validator";
 
 // ─── Types & Schemas ──────────────────────────────────────────────────────────
 
@@ -503,10 +504,11 @@ export async function uploadIconImageAction(
     return { success: false, message: "กรุณาเข้าสู่ระบบก่อนทำรายการ" };
   }
 
-  if (!base64DataUrl || !base64DataUrl.startsWith("data:image/")) {
+  const validation = validateBase64Image(base64DataUrl);
+  if (!validation.valid) {
     return {
       success: false,
-      message: "รูปแบบไฟล์รูปภาพไม่ถูกต้อง (ต้องเป็น Base64 Image)",
+      message: validation.error || "รูปแบบไฟล์รูปภาพไม่ถูกต้อง (ต้องเป็น Base64 Image)",
     };
   }
 

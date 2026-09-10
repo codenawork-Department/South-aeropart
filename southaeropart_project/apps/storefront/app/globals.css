@@ -294,6 +294,7 @@ body {
   }
 
   .input-dark {
+    width: 100%;
     background-color: var(--bg-card);
     color: var(--text-primary);
     border: 1px solid var(--border-color);

@@ -21,6 +21,7 @@ import {
 } from "@repo/db";
 import { uploadImage, sendEmail, sendBatchEmails } from "@repo/lib";
 import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
+import { validateBase64Image } from "@/lib/upload-validator";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -39,8 +40,9 @@ export async function uploadCanvasImageAction(dataUrl: string): Promise<ActionRe
   }
 
   try {
-    if (!dataUrl || !dataUrl.startsWith("data:")) {
-      return { success: false, error: "รูปแบบไฟล์รูปภาพไม่ถูกต้อง" };
+    const validation = validateBase64Image(dataUrl);
+    if (!validation.valid) {
+      return { success: false, error: validation.error || "รูปแบบไฟล์รูปภาพไม่ถูกต้อง" };
     }
 
     const result = await uploadImage(dataUrl, {

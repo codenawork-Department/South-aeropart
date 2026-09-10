@@ -412,20 +412,23 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
         note: note || `สถานะถูกอัปเดตเป็น ${status} โดย ${admin.fullName}`,
         changedByAdminId: admin.id,
       });
-    });
 
-    // 4. Log Audit Event
-    await logAuditEvent({
-      adminId: admin.id,
-      action: "order.status_updated",
-      entityType: "order",
-      entityId: orderId,
-      metadata: {
-        orderNumber: existing.orderNumber,
-        previousStatus: existing.status,
-        newStatus: status,
-        note,
-      },
+      // 4. Log Audit Event inside transaction
+      await logAuditEvent(
+        {
+          adminId: admin.id,
+          action: "order.status_updated",
+          entityType: "order",
+          entityId: orderId,
+          metadata: {
+            orderNumber: existing.orderNumber,
+            previousStatus: existing.status,
+            newStatus: status,
+            note,
+          },
+        },
+        tx
+      );
     });
 
     revalidatePath("/orders");
@@ -594,20 +597,23 @@ export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput
         note: `อัปเดตการจัดส่ง: ขนส่ง ${shippingCarrier} เลขพัสดุ ${trackingNumber}${note ? ` (${note})` : ""}`,
         changedByAdminId: admin.id,
       });
-    });
 
-    // 3. Log Audit Event
-    await logAuditEvent({
-      adminId: admin.id,
-      action: "order.fulfillment_updated",
-      entityType: "order",
-      entityId: orderId,
-      metadata: {
-        orderNumber: existing.orderNumber,
-        trackingNumber,
-        shippingCarrier,
-        status: newStatus,
-      },
+      // 3. Log Audit Event inside transaction
+      await logAuditEvent(
+        {
+          adminId: admin.id,
+          action: "order.fulfillment_updated",
+          entityType: "order",
+          entityId: orderId,
+          metadata: {
+            orderNumber: existing.orderNumber,
+            trackingNumber,
+            shippingCarrier,
+            status: newStatus,
+          },
+        },
+        tx
+      );
     });
 
     revalidatePath("/orders");
@@ -632,20 +638,25 @@ export async function assignAdminToOrderAction(input: { orderId: string; adminId
 
     const { orderId, adminId } = assignAdminSchema.parse(input);
 
-    await db
-      .update(orders)
-      .set({
-        assignedAdminId: adminId,
-        updatedAt: new Date(),
-      })
-      .where(eq(orders.id, orderId));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(orders)
+        .set({
+          assignedAdminId: adminId,
+          updatedAt: new Date(),
+        })
+        .where(eq(orders.id, orderId));
 
-    await logAuditEvent({
-      adminId: admin.id,
-      action: "order.assigned_admin",
-      entityType: "order",
-      entityId: orderId,
-      metadata: { assignedAdminId: adminId },
+      await logAuditEvent(
+        {
+          adminId: admin.id,
+          action: "order.assigned_admin",
+          entityType: "order",
+          entityId: orderId,
+          metadata: { assignedAdminId: adminId },
+        },
+        tx
+      );
     });
 
     revalidatePath("/orders");
