@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -22,6 +22,7 @@ import {
   MapPin,
   User,
 } from "lucide-react";
+import { RealtimeSyncWidget } from "@/components/ui/realtime-sync-widget";
 
 interface OrderItemPreview {
   id: string;
@@ -106,11 +107,19 @@ export function OrdersDashboardClient({
 
   const [search, setSearch] = useState(currentSearch);
   const [status, setStatus] = useState(currentStatus);
+  const [currentTimeMs, setCurrentTimeMs] = useState<number>(Date.now());
   const [hoveredOrder, setHoveredOrder] = useState<{
     order: OrderRow;
     x: number;
     y: number;
   } | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimeMs(Date.now());
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   function handleFilterChange(newStatus: string) {
     setStatus(newStatus);
@@ -160,6 +169,9 @@ export function OrdersDashboardClient({
           <p className="text-xs sm:text-sm text-gray-400 mt-1">
             ตรวจสอบคำสั่งซื้อ สถานะการชำระเงิน และการจัดการจัดส่งชิ้นส่วนแอโรไดนามิก
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <RealtimeSyncWidget />
         </div>
       </div>
 
@@ -316,11 +328,17 @@ export function OrdersDashboardClient({
                   {initialOrders.map((ord) => {
                     const isPaid = ord.paymentStatus === "paid" || ord.status === "paid";
                     const isCancelled = ord.status === "cancelled";
+                    const orderAgeMs = currentTimeMs - new Date(ord.createdAt).getTime();
+                    const isUnderOneMinute = orderAgeMs >= 0 && orderAgeMs < 60000;
 
                     return (
                       <tr
                         key={ord.id}
-                        className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
+                        className={`transition-colors cursor-pointer group ${
+                          isUnderOneMinute
+                            ? "bg-gradient-to-r from-emerald-950/25 via-transparent to-transparent hover:bg-emerald-950/35 border-l-2 border-l-emerald-400"
+                            : "hover:bg-white/[0.04]"
+                        }`}
                         onMouseEnter={(e) => {
                           const rect = e.currentTarget.getBoundingClientRect();
                           setHoveredOrder({
@@ -343,6 +361,12 @@ export function OrdersDashboardClient({
                               <span>{ord.orderNumber}</span>
                               <ChevronRight size={12} className="text-gray-500" />
                             </Link>
+                            {isUnderOneMinute && (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse shadow-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                                <span>สดใหม่ (&lt; 1 นาที)</span>
+                              </span>
+                            )}
                             <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-red-400 bg-red-950/40 px-1 py-0.5 rounded border border-red-800/40 font-mono">
                               ชี้ดูสรุป
                             </span>

@@ -41,6 +41,7 @@ import { ProductsMerchandisingAnalytics } from "./products-merchandising-analyti
 import { GrowthSimulatorActionPlan } from "./growth-simulator-action-plan";
 import { RootCauseDiagnostic } from "./root-cause-diagnostic";
 import { StrategicMatrix } from "./strategic-matrix";
+import { RealtimeSyncWidget } from "@/components/ui/realtime-sync-widget";
 
 type DeepDiveTab = "sales" | "marketing" | "funnel" | "products" | "strategy";
 
@@ -249,18 +250,10 @@ export function DashboardViewController({ initialData }: DashboardViewController
             </div>
           </div>
 
-          {/* Controls: Timeframe, Market & Refresh Button */}
+          {/* Controls: Timeframe, Market & Realtime Live Sync */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            {/* Sync Database Button */}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1E1E1E] hover:bg-[#282828] border border-white/10 text-gray-200 transition-all font-medium cursor-pointer"
-              title="ดึงข้อมูลล่าสุดจากฐานข้อมูล Neon Postgres"
-            >
-              <RefreshCw size={13} className={isRefreshing ? "animate-spin text-emerald-400" : "text-gray-400"} />
-              <span>{isRefreshing ? "กำลังซิงค์..." : "ซิงค์ DB"}</span>
-            </button>
+            {/* Realtime Live Sync Controller */}
+            <RealtimeSyncWidget />
 
             {/* Timeframe Filter */}
             <div className="flex items-center gap-1.5 bg-[#181818] border border-[#303030] px-3 py-1.5 rounded-xl">

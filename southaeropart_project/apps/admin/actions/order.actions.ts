@@ -22,6 +22,7 @@ import {
   sql,
 } from "@repo/db";
 import { validateSession, logAuditEvent } from "@/lib/auth";
+import { sendShipmentNotificationEmail } from "@/lib/shipment-email";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -447,6 +448,13 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
     revalidatePath("/orders");
     revalidatePath(`/orders/${orderId}`);
 
+    // If order was transitioned to shipped, send customer shipment notification email
+    if (status === "shipped") {
+      sendShipmentNotificationEmail(orderId).catch((emailErr) => {
+        console.error("[updateOrderStatusAction] Background shipment email error:", emailErr);
+      });
+    }
+
     return { success: true, message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว` };
   } catch (error) {
     console.error("[updateOrderStatusAction] Error:", error);
@@ -631,6 +639,16 @@ export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput
 
     revalidatePath("/orders");
     revalidatePath(`/orders/${orderId}`);
+
+    // If marked as shipped or tracking number was provided, dispatch shipment notification email
+    if (markAsShipped || newStatus === "shipped") {
+      sendShipmentNotificationEmail(orderId, {
+        trackingNumber,
+        shippingCarrier,
+      }).catch((emailErr) => {
+        console.error("[updateOrderFulfillmentAction] Background shipment email error:", emailErr);
+      });
+    }
 
     return { success: true, message: "บันทึกข้อมูลการจัดส่งสำเร็จ" };
   } catch (error) {
