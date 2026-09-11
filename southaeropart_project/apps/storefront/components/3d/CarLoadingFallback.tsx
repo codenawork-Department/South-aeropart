@@ -1,13 +1,16 @@
 "use client";
 
-import { Box, Gauge, Loader2, Sparkles } from "lucide-react";
+import { Gauge, Loader2 } from "lucide-react";
 
 interface CarLoadingFallbackProps {
   progress?: number;
 }
 
 export function CarLoadingFallback({ progress }: CarLoadingFallbackProps) {
-  const displayProgress = progress !== undefined ? Math.round(progress) : null;
+  const displayProgress =
+    progress !== undefined
+      ? Math.max(0, Math.min(100, Math.round(progress)))
+      : null;
 
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0A]/95 backdrop-blur-md z-30 select-none">
@@ -46,10 +49,12 @@ export function CarLoadingFallback({ progress }: CarLoadingFallbackProps) {
           <div className="flex justify-between items-center text-[0.65rem] font-mono text-[var(--text-secondary)]">
             <span className="flex items-center gap-1">
               <Gauge size={12} className="text-[var(--accent-red)]" />
-              STREAMING ASSETS
+              {displayProgress === 100 ? "PREPARING SCENE" : "STREAMING ASSETS"}
             </span>
             <span className="text-white font-bold">
-              {displayProgress !== null ? `${displayProgress}%` : "INITIALIZING..."}
+              {displayProgress !== null
+                ? `${displayProgress}%`
+                : "INITIALIZING..."}
             </span>
           </div>
 
@@ -57,7 +62,10 @@ export function CarLoadingFallback({ progress }: CarLoadingFallbackProps) {
             <div
               className="h-full bg-gradient-to-r from-[#990000] via-[var(--accent-red)] to-[#ff6666] rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(229,29,36,0.6)]"
               style={{
-                width: displayProgress !== null ? `${Math.max(5, displayProgress)}%` : "40%",
+                width:
+                  displayProgress !== null
+                    ? `${Math.max(5, displayProgress)}%`
+                    : "40%",
               }}
             />
           </div>

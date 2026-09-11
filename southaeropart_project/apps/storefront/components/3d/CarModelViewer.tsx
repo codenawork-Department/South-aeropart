@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
@@ -13,7 +13,11 @@ import {
   ChevronDown,
   Check,
 } from "lucide-react";
-import { CameraPreset, PostFilterPreset } from "./CarScene";
+import type { CameraPreset, PostFilterPreset } from "./CarScene";
+import {
+  QUALITY_PROFILES,
+  type AdaptiveQualitySample,
+} from "./adaptiveQuality";
 import { CarLoadingFallback } from "./CarLoadingFallback";
 
 const DynamicCarScene = dynamic(
@@ -21,7 +25,7 @@ const DynamicCarScene = dynamic(
   {
     ssr: false,
     loading: () => <CarLoadingFallback />,
-  }
+  },
 );
 
 const FILTER_OPTIONS: {
@@ -34,19 +38,22 @@ const FILTER_OPTIONS: {
     id: "studio",
     label: "Studio Real",
     badge: "RECOMMENDED",
-    description: "Photorealistic white showroom with soft specular highlights and clean reflection",
+    description:
+      "Photorealistic white showroom with soft specular highlights and clean reflection",
   },
   {
     id: "cinematic",
     label: "Cinematic HDR",
     badge: "FILMIC ACES",
-    description: "Punchy film lighting with smooth ACES filmic roll-off and aerodynamic highlights",
+    description:
+      "Punchy film lighting with smooth ACES filmic roll-off and aerodynamic highlights",
   },
   {
     id: "midnight",
     label: "Midnight Cyber",
     badge: "NEON GLOW",
-    description: "High-glow aesthetic with vibrant LED illumination on DRLs & taillights",
+    description:
+      "High-glow aesthetic with vibrant LED illumination on DRLs & taillights",
   },
   {
     id: "off",
@@ -65,6 +72,8 @@ export function CarModelViewer() {
   const [loadProgress, setLoadProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [qualitySample, setQualitySample] =
+    useState<AdaptiveQualitySample | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
@@ -85,7 +94,8 @@ export function CarModelViewer() {
       setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   // Close filter dropdown on outside click
@@ -102,18 +112,17 @@ export function CarModelViewer() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLoaded = () => {
+  const handleLoaded = useCallback(() => {
+    setLoadProgress(100);
     setIsLoading(false);
-  };
+  }, []);
 
-  const handleProgress = (pct: number) => {
-    setLoadProgress(pct);
-    if (pct >= 100) {
-      setTimeout(() => setIsLoading(false), 400);
-    }
-  };
+  const handleProgress = useCallback((pct: number) => {
+    setLoadProgress(Math.max(0, Math.min(100, pct)));
+  }, []);
 
-  const currentFilter = FILTER_OPTIONS.find((f) => f.id === filterPreset) || FILTER_OPTIONS[0];
+  const currentFilter =
+    FILTER_OPTIONS.find((f) => f.id === filterPreset) || FILTER_OPTIONS[0];
 
   return (
     <div
@@ -132,6 +141,7 @@ export function CarModelViewer() {
         filterPreset={filterPreset}
         onProgress={handleProgress}
         onLoaded={handleLoaded}
+        onQualityChange={setQualitySample}
       />
 
       {/* Loading Screen Overlay */}
@@ -149,12 +159,16 @@ export function CarModelViewer() {
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] animate-pulse" />
               3D LIVE AERO
             </span>
-            <span className="text-white font-bold tracking-wider">FERRARI 296 SPECIALE A</span>
+            <span className="text-white font-bold tracking-wider">
+              FERRARI 296 SPECIALE A
+            </span>
           </div>
 
           <div className="telemetry-pill hidden sm:inline-flex backdrop-blur-md bg-[#121212]/80 border-[#2A2A2A]">
             <span className="text-[var(--success)] font-bold">+185 N</span>
-            <span className="text-[var(--text-secondary)]">DOWNFORCE (200 KM/H)</span>
+            <span className="text-[var(--text-secondary)]">
+              DOWNFORCE (200 KM/H)
+            </span>
           </div>
         </div>
 
@@ -177,7 +191,11 @@ export function CarModelViewer() {
             >
               <Sparkles
                 size={13}
-                className={filterPreset !== "off" ? "text-amber-400 animate-pulse" : "text-white/40"}
+                className={
+                  filterPreset !== "off"
+                    ? "text-amber-400 animate-pulse"
+                    : "text-white/40"
+                }
               />
               <span className="text-[0.65rem] tracking-wider uppercase font-bold hidden xs:inline sm:inline">
                 {currentFilter.label}
@@ -194,7 +212,9 @@ export function CarModelViewer() {
               <div className="absolute right-0 top-full mt-1.5 w-64 sm:w-72 p-1.5 rounded-sm bg-[#101010]/95 border border-[#2E2E2E] shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-2 py-1 text-[0.6rem] font-heading font-bold text-white/40 uppercase tracking-wider border-b border-[#222] mb-1 flex items-center justify-between">
                   <span>POST FILTER PRESETS</span>
-                  <span className="text-amber-400 font-mono text-[0.55rem]">REAL-TIME FX</span>
+                  <span className="text-amber-400 font-mono text-[0.55rem]">
+                    REAL-TIME FX
+                  </span>
                 </div>
                 {FILTER_OPTIONS.map((opt) => (
                   <button
@@ -227,10 +247,10 @@ export function CarModelViewer() {
                             opt.id === "studio"
                               ? "bg-amber-500/20 text-amber-300"
                               : opt.id === "cinematic"
-                              ? "bg-red-500/20 text-red-300"
-                              : opt.id === "midnight"
-                              ? "bg-blue-500/20 text-blue-300"
-                              : "bg-white/10 text-white/50"
+                                ? "bg-red-500/20 text-red-300"
+                                : opt.id === "midnight"
+                                  ? "bg-blue-500/20 text-blue-300"
+                                  : "bg-white/10 text-white/50"
                           }`}
                         >
                           {opt.badge}
@@ -241,7 +261,10 @@ export function CarModelViewer() {
                       </p>
                     </div>
                     {filterPreset === opt.id && (
-                      <Check size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                      <Check
+                        size={14}
+                        className="text-amber-400 shrink-0 mt-0.5"
+                      />
                     )}
                   </button>
                 ))}
@@ -260,7 +283,12 @@ export function CarModelViewer() {
             }`}
             title="Toggle Auto 360° Rotation"
           >
-            <Rotate3d size={14} className={autoRotate ? "animate-spin text-[var(--accent-red)]" : ""} />
+            <Rotate3d
+              size={14}
+              className={
+                autoRotate ? "animate-spin text-[var(--accent-red)]" : ""
+              }
+            />
             <span className="hidden md:inline text-[0.65rem]">AUTO SPIN</span>
           </button>
 
@@ -280,7 +308,10 @@ export function CarModelViewer() {
       {!hasInteracted && !isLoading && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 animate-pulse">
           <div className="px-4 py-2 rounded-full bg-black/80 border border-white/15 backdrop-blur-md text-[0.7rem] font-heading font-medium text-white/90 flex items-center gap-2 shadow-2xl">
-            <Compass size={14} className="text-[var(--accent-red)] animate-spin" />
+            <Compass
+              size={14}
+              className="text-[var(--accent-red)] animate-spin"
+            />
             <span>DRAG TO ROTATE 360° &bull; SCROLL / PINCH TO ZOOM</span>
           </div>
         </div>
@@ -321,7 +352,21 @@ export function CarModelViewer() {
         </div>
 
         {/* Bottom Right: Direct CTA */}
-        <div className="pointer-events-auto w-full sm:w-auto">
+        <div className="pointer-events-auto w-full sm:w-auto flex flex-col items-end gap-1.5">
+          {!isLoading && qualitySample && (
+            <output
+              className="rounded-sm bg-[#101010]/85 px-2 py-1 text-[0.55rem] sm:text-[0.6rem] font-mono text-white/70 backdrop-blur-md"
+              title="Visual quality adjusts automatically to measured frame rate. Target: at least 30 FPS."
+              aria-label="Adaptive rendering quality"
+            >
+              AUTO · {QUALITY_PROFILES[qualitySample.level].label.toUpperCase()}{" "}
+              ·{" "}
+              {qualitySample.fps === null
+                ? "CALIBRATING"
+                : `${Math.round(qualitySample.fps)} FPS`}
+              {qualitySample.limited && " · DEVICE LIMIT"}
+            </output>
+          )}
           <Link
             href="/products/ford-mustang-gt3-aero-package"
             className="btn-primary py-1.5 sm:py-2 px-3 sm:px-4 text-[0.7rem] sm:text-xs gap-1.5 sm:gap-2 shadow-xl whitespace-nowrap w-full sm:w-auto justify-center"
@@ -333,4 +378,3 @@ export function CarModelViewer() {
     </div>
   );
 }
-
