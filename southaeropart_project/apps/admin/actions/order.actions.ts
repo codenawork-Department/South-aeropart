@@ -23,6 +23,7 @@ import {
 } from "@repo/db";
 import { validateSession, logAuditEvent } from "@/lib/auth";
 import { sendShipmentNotificationEmail } from "@/lib/shipment-email";
+import { notifyStorefrontCatalogChange } from "@/lib/realtime-notifier";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -448,10 +449,14 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
     revalidatePath("/orders");
     revalidatePath(`/orders/${orderId}`);
 
-    // If order was transitioned to shipped, send customer shipment notification email
+    // If order was transitioned to shipped, send customer shipment notification email & notify storefront
     if (status === "shipped") {
       sendShipmentNotificationEmail(orderId).catch((emailErr) => {
         console.error("[updateOrderStatusAction] Background shipment email error:", emailErr);
+      });
+      notifyStorefrontCatalogChange("order_shipped", {
+        orderId,
+        orderNumber: existing.orderNumber,
       });
     }
 
@@ -640,13 +645,19 @@ export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput
     revalidatePath("/orders");
     revalidatePath(`/orders/${orderId}`);
 
-    // If marked as shipped or tracking number was provided, dispatch shipment notification email
+    // If marked as shipped or tracking number was provided, dispatch shipment notification email & notify storefront
     if (markAsShipped || newStatus === "shipped") {
       sendShipmentNotificationEmail(orderId, {
         trackingNumber,
         shippingCarrier,
       }).catch((emailErr) => {
         console.error("[updateOrderFulfillmentAction] Background shipment email error:", emailErr);
+      });
+      notifyStorefrontCatalogChange("order_shipped", {
+        orderId,
+        orderNumber: existing.orderNumber,
+        trackingNumber,
+        shippingCarrier,
       });
     }
 

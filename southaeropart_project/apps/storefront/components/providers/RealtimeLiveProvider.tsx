@@ -41,6 +41,16 @@ export function RealtimeLiveProvider({
               currentVersionRef.current = data.version || Date.now();
             } else if (data.type === "refresh") {
               triggerLiveRefresh(data.version);
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                  new CustomEvent("southaero:realtime", { detail: data })
+                );
+                if (data.action === "order_shipped") {
+                  window.dispatchEvent(
+                    new CustomEvent("southaero:order_shipped", { detail: data })
+                  );
+                }
+              }
             }
           } catch {
             // Ignore parse errors
