@@ -501,6 +501,18 @@ export async function createOrder(input: CheckoutInput) {
   }
 }
 
+export interface OrderItemBundlePartDetail {
+  id: string;
+  orderItemId: string;
+  childProductId: string;
+  childProductNameSnapshot: string;
+  childProductName?: string | null;
+  childProductNameEn?: string | null;
+  unitPriceSnapshot: string;
+  quantity: number;
+  createdAt: Date;
+}
+
 /**
  * Retrieves full order details including items, products, and status history.
  */
@@ -552,6 +564,8 @@ export async function getOrderDetails(orderId: string, guestToken?: string) {
         orderId: orderItems.orderId,
         productId: orderItems.productId,
         productNameSnapshot: orderItems.productNameSnapshot,
+        productName: products.name,
+        productNameEn: products.nameEn,
         unitPrice: orderItems.unitPrice,
         quantity: orderItems.quantity,
         lineTotal: orderItems.lineTotal,
@@ -586,12 +600,22 @@ export async function getOrderDetails(orderId: string, guestToken?: string) {
     }
 
     // Fetch bundle parts in batch
-    type BundlePartItem = typeof orderItemBundleParts.$inferSelect;
-    const bundlePartsMap = new Map<string, BundlePartItem[]>();
+    const bundlePartsMap = new Map<string, OrderItemBundlePartDetail[]>();
     if (itemIds.length > 0) {
       const allBundleParts = await db
-        .select()
+        .select({
+          id: orderItemBundleParts.id,
+          orderItemId: orderItemBundleParts.orderItemId,
+          childProductId: orderItemBundleParts.childProductId,
+          childProductNameSnapshot: orderItemBundleParts.childProductNameSnapshot,
+          childProductName: products.name,
+          childProductNameEn: products.nameEn,
+          unitPriceSnapshot: orderItemBundleParts.unitPriceSnapshot,
+          quantity: orderItemBundleParts.quantity,
+          createdAt: orderItemBundleParts.createdAt,
+        })
         .from(orderItemBundleParts)
+        .leftJoin(products, eq(orderItemBundleParts.childProductId, products.id))
         .where(inArray(orderItemBundleParts.orderItemId, itemIds));
 
       for (const part of allBundleParts) {
@@ -1111,6 +1135,8 @@ export interface UserOrderItemDetail {
   orderId: string;
   productId: string | null;
   productNameSnapshot: string;
+  productName?: string | null;
+  productNameEn?: string | null;
   unitPrice: string;
   quantity: number;
   lineTotal: string;
@@ -1163,11 +1189,14 @@ export async function getUserOrders() {
         orderId: orderItems.orderId,
         productId: orderItems.productId,
         productNameSnapshot: orderItems.productNameSnapshot,
+        productName: products.name,
+        productNameEn: products.nameEn,
         unitPrice: orderItems.unitPrice,
         quantity: orderItems.quantity,
         lineTotal: orderItems.lineTotal,
       })
       .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
       .where(inArray(orderItems.orderId, orderIds));
 
     // Batch query product images for unique productIds
@@ -1223,6 +1252,8 @@ export async function getUserOrders() {
         orderId: item.orderId,
         productId: item.productId,
         productNameSnapshot: item.productNameSnapshot,
+        productName: item.productName,
+        productNameEn: item.productNameEn,
         unitPrice: item.unitPrice,
         quantity: item.quantity,
         lineTotal: item.lineTotal,
@@ -1281,8 +1312,10 @@ export async function getLatestCustomerShipmentAlertAction() {
       .select({
         productId: orderItems.productId,
         productNameSnapshot: orderItems.productNameSnapshot,
+        productNameEn: products.nameEn,
       })
       .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, latestShippedOrder.id))
       .limit(1);
 
@@ -1302,6 +1335,7 @@ export async function getLatestCustomerShipmentAlertAction() {
       data: {
         ...latestShippedOrder,
         productName: firstItem?.productNameSnapshot || "สินค้าชิ้นส่วนแอโรพาร์ท South Aero",
+        productNameEn: firstItem?.productNameEn || null,
         imageUrl,
       },
     };

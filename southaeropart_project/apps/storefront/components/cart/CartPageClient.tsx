@@ -2,6 +2,7 @@
 
 import { useCart } from "@/components/providers/CartProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -23,6 +24,7 @@ const FREE_SHIPPING_THRESHOLD = 15000;
 export function CartPageClient() {
   const { items, itemCount, subtotal, removeItem, updateQuantity, clearCart, isHydrated } = useCart();
   const { formatPrice, currency } = useCurrency();
+  const { lang, t } = useLanguage();
 
   const subtotalNum = parseFloat(subtotal || "0");
   const amountToFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotalNum);
@@ -40,17 +42,17 @@ export function CartPageClient() {
             <ShoppingCart size={36} className="text-[var(--accent-red)]" />
           </div>
           <h1 className="font-heading text-2xl sm:text-3xl font-bold uppercase tracking-wider text-white">
-            YOUR CART IS EMPTY
+            {t.cartPage.emptyTitle}
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-3 max-w-md mx-auto leading-relaxed">
-            ยังไม่มีสินค้าในตะกร้าของคุณ สำรวจชุดแต่งแอโรไดนามิกคาร์บอนไฟเบอร์เกรดพรีเมียมและเริ่มตกแต่งรถของคุณได้เลย
+            {t.cartPage.emptyDesc}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/products" className="btn-primary w-full sm:w-auto px-8 py-3.5 text-xs gap-2">
-              BROWSE ACCESSORIES <ArrowRight size={16} />
+              {t.cartPage.browseParts} <ArrowRight size={16} />
             </Link>
             <Link href="/collection" className="btn-outline w-full sm:w-auto px-8 py-3.5 text-xs">
-              VIEW COLLECTIONS
+              {t.cartPage.viewCollections}
             </Link>
           </div>
         </div>
@@ -62,9 +64,9 @@ export function CartPageClient() {
     <div className="container-main py-10 md:py-16">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-xs text-[var(--text-muted)] font-heading tracking-wider uppercase">
-        <Link href="/" className="hover:text-white transition-colors">HOME</Link>
+        <Link href="/" className="hover:text-white transition-colors">{t.nav.home}</Link>
         <span>/</span>
-        <span className="text-[var(--accent-red)]">SHOPPING CART</span>
+        <span className="text-[var(--accent-red)]">{t.cartPage.cartTitle}</span>
       </nav>
 
       {/* Page Header */}
@@ -77,12 +79,12 @@ export function CartPageClient() {
             </span>
           </div>
           <h1 className="font-heading text-2xl sm:text-4xl font-extrabold uppercase tracking-wide text-white mt-1">
-            SHOPPING CART
+            {t.cartPage.cartTitle}
           </h1>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs font-heading tracking-wider uppercase text-[var(--text-muted)]">
-            TOTAL ITEMS:
+            {lang === "th" ? "จำนวนทั้งหมด: " : "TOTAL ITEMS: "}
           </span>
           <span className="font-heading text-lg font-bold text-white px-3 py-1 bg-[#1A1A1A] border border-[#2D2D2D] rounded">
             {itemCount}
@@ -97,11 +99,11 @@ export function CartPageClient() {
             <Truck size={16} className="text-[var(--accent-red)]" />
             {amountToFreeShipping > 0 ? (
               <span>
-                ซื้อเพิ่มอีก <span className="text-[var(--accent-red)] font-bold">{formatPrice(amountToFreeShipping, { showCode: true })}</span> เพื่อรับสิทธิ์จัดส่งฟรี!
+                {t.cartPage.needMoreForFreeShipping.replace("{amount}", formatPrice(amountToFreeShipping, { showCode: true }))}
               </span>
             ) : (
               <span className="text-[var(--success)] font-bold flex items-center gap-1.5">
-                <Sparkles size={14} /> คุณได้รับสิทธิ์จัดส่งฟรีทั่วประเทศแล้ว!
+                <Sparkles size={14} /> {t.cartPage.freeShippingBanner}
               </span>
             )}
           </div>
@@ -120,10 +122,10 @@ export function CartPageClient() {
         {/* Left Column: Items List */}
         <div className="md:col-span-7 lg:col-span-8 space-y-4">
           <div className="hidden sm:grid grid-cols-12 text-[0.7rem] font-heading font-bold uppercase tracking-wider text-[var(--text-muted)] pb-3 border-b border-[#222222] px-4">
-            <div className="col-span-6">PRODUCT</div>
-            <div className="col-span-2 text-center">PRICE</div>
-            <div className="col-span-2 text-center">QUANTITY</div>
-            <div className="col-span-2 text-right">TOTAL</div>
+            <div className="col-span-6">{t.cartPage.productCol}</div>
+            <div className="col-span-2 text-center">{t.cartPage.priceCol}</div>
+            <div className="col-span-2 text-center">{t.cartPage.quantityCol}</div>
+            <div className="col-span-2 text-right">{t.cartPage.totalCol}</div>
           </div>
 
           {items.map((item) => {
@@ -230,13 +232,13 @@ export function CartPageClient() {
               href="/products"
               className="inline-flex items-center gap-2 text-xs font-heading font-semibold uppercase tracking-wider text-[var(--text-secondary)] hover:text-white transition-colors"
             >
-              <ArrowLeft size={14} /> CONTINUE SHOPPING
+              <ArrowLeft size={14} /> {lang === "th" ? "เลือกซื้อสินค้าต่อ" : "CONTINUE SHOPPING"}
             </Link>
             <button
               onClick={clearCart}
               className="text-xs font-heading tracking-wider uppercase text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors"
             >
-              CLEAR SHOPPING CART
+              {t.cartPage.clearCart}
             </button>
           </div>
         </div>
@@ -245,31 +247,31 @@ export function CartPageClient() {
         <div className="md:col-span-5 lg:col-span-4 sticky top-24 md:top-28">
           <div className="bg-[#121212] border border-[#222222] rounded-xl p-6 shadow-2xl space-y-5">
             <h2 className="font-heading text-lg font-bold uppercase tracking-wider text-white pb-4 border-b border-[#222222]">
-              ORDER SUMMARY
+              {t.cartPage.orderSummary}
             </h2>
 
             {/* Price Calculations */}
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>Subtotal ({itemCount} items)</span>
+                <span>{t.cartPage.subtotal} ({itemCount} {lang === "th" ? "ชิ้น" : "items"})</span>
                 <span className="font-heading font-semibold text-white">
                   {formatPrice(subtotalNum)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>Estimated Shipping</span>
+                <span>{t.cartPage.shippingEstimate}</span>
                 <span className="font-heading font-semibold text-white">
                   {subtotalNum >= FREE_SHIPPING_THRESHOLD ? (
-                    <span className="text-[var(--success)] uppercase text-xs">FREE SHIPPING</span>
+                    <span className="text-[var(--success)] uppercase text-xs">{t.cartPage.free}</span>
                   ) : (
                     formatPrice(150, { showCode: true })
                   )}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>Estimated VAT (7%)</span>
+                <span>{lang === "th" ? "ภาษีมูลค่าเพิ่ม (VAT 7%)" : "Estimated VAT (7%)"}</span>
                 <span className="font-heading font-semibold text-[var(--text-muted)] text-xs">
-                  INCLUDED IN TOTAL
+                  {lang === "th" ? "รวมในยอดสุทธิแล้ว" : "INCLUDED IN TOTAL"}
                 </span>
               </div>
             </div>
@@ -278,9 +280,11 @@ export function CartPageClient() {
             <div className="pt-4 border-t border-[#222222] flex items-baseline justify-between">
               <div>
                 <span className="font-heading text-sm font-bold uppercase tracking-wider text-white">
-                  TOTAL
+                  {t.cartPage.total}
                 </span>
-                <p className="text-[0.65rem] text-[var(--text-muted)] uppercase">Tax included</p>
+                <p className="text-[0.65rem] text-[var(--text-muted)] uppercase">
+                  {lang === "th" ? "รวมภาษีมูลค่าเพิ่มแล้ว" : "Tax included"}
+                </p>
               </div>
               <div className="text-right">
                 <span className="font-heading text-2xl font-extrabold text-white">
@@ -296,15 +300,27 @@ export function CartPageClient() {
               id="proceed-to-checkout-btn"
               className="btn-primary w-full justify-center gap-2 py-4 text-xs tracking-widest font-heading font-bold uppercase shadow-lg shadow-[var(--accent-red)]/20"
             >
-              PROCEED TO CHECKOUT <ArrowRight size={16} />
+              {t.cartPage.proceedToCheckout} <ArrowRight size={16} />
             </Link>
 
             {/* Trust Features */}
             <div className="pt-4 border-t border-[#202020] space-y-2.5">
               {[
-                { icon: ShieldCheck, title: "GENUINE CARBON FIBER", desc: "Authentic aerospace autoclave pre-preg" },
-                { icon: Truck, title: "INSURED FREIGHT SHIPPING", desc: "Heavy-duty custom wooden crating" },
-                { icon: RotateCcw, title: "30-DAY FITMENT WARRANTY", desc: "Guaranteed perfect OEM fitment" },
+                {
+                  icon: ShieldCheck,
+                  title: lang === "th" ? "คาร์บอนไฟเบอร์แท้ 100%" : "GENUINE CARBON FIBER",
+                  desc: lang === "th" ? "กระบวนการ Autoclave Pre-preg มาตรฐานอากาศยาน" : "Authentic aerospace autoclave pre-preg",
+                },
+                {
+                  icon: Truck,
+                  title: lang === "th" ? "ระบบขนส่งรับประกันชิ้นงาน" : "INSURED FREIGHT SHIPPING",
+                  desc: lang === "th" ? "บรรจุกล่องเสริมโฟมและลังไม้กันกระแทกพิเศษ" : "Heavy-duty custom protective crating",
+                },
+                {
+                  icon: RotateCcw,
+                  title: lang === "th" ? "รับประกันความพอดีตรงรุ่น 30 วัน" : "30-DAY FITMENT WARRANTY",
+                  desc: lang === "th" ? "รับประกันติดตั้งแนบสนิทระดับ OEM+" : "Guaranteed perfect OEM+ fitment",
+                },
               ].map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="flex items-start gap-3">
                   <Icon size={16} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />

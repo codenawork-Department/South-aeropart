@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Truck, Package, X, ArrowRight, Copy, Check } from "lucide-react";
 import { getLatestCustomerShipmentAlertAction } from "@/actions/checkout.actions";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { getLocalizedOrderItemName } from "@/lib/i18n-helpers";
 
 interface ShippedOrderAlert {
   id: string;
@@ -16,6 +18,7 @@ interface ShippedOrderAlert {
   total: string;
   currency: string;
   productName: string;
+  productNameEn?: string | null;
   imageUrl: string | null;
 }
 
@@ -84,6 +87,7 @@ function playShipmentChime() {
 }
 
 export function CustomerShipmentAlertToast() {
+  const { lang, t } = useLanguage();
   const [activeAlert, setActiveAlert] = useState<ShippedOrderAlert | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const isCheckingRef = useRef(false);
@@ -98,57 +102,54 @@ export function CustomerShipmentAlertToast() {
         const order = res.data;
         const dismissed = getDismissedOrderIds();
 
-        // If forced or order has not been dismissed yet
-        if (forcedOrderId === order.id || !dismissed.includes(order.id)) {
-          setActiveAlert({
-            ...order,
-            updatedAt: order.updatedAt,
-          });
+        // If forced or not yet dismissed, display the alert
+        if (forcedOrderId || !dismissed.includes(order.id)) {
+          setActiveAlert(order);
           playShipmentChime();
         }
       }
     } catch {
-      // ignore
+      // Ignore background telemetry errors
     } finally {
       isCheckingRef.current = false;
     }
   }, []);
 
-  // Initial check on mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      checkForShipmentAlert();
-    }, 1500);
+    // Initial check on mount
+    checkForShipmentAlert();
 
-    return () => clearTimeout(timer);
-  }, [checkForShipmentAlert]);
-
-  // Realtime SSE listener
-  useEffect(() => {
-    const onRealtimeShipped = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const payload = customEvent.detail?.payload;
-      const orderId = payload?.orderId;
+    // Listen for custom shipment event dispatched by RealtimeLiveProvider SSE
+    const handleShipmentNotification = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const orderId = customEvent.detail?.payload?.orderId || customEvent.detail?.orderId;
       checkForShipmentAlert(orderId);
     };
 
-    window.addEventListener("southaero:order_shipped", onRealtimeShipped);
+    window.addEventListener("southaero:order_shipped", handleShipmentNotification);
+
+    // Periodic check every 45s for background updates
+    const interval = setInterval(() => {
+      checkForShipmentAlert();
+    }, 45000);
+
     return () => {
-      window.removeEventListener("southaero:order_shipped", onRealtimeShipped);
+      window.removeEventListener("southaero:order_shipped", handleShipmentNotification);
+      clearInterval(interval);
     };
   }, [checkForShipmentAlert]);
 
   const handleDismiss = () => {
     if (activeAlert) {
       addDismissedOrderId(activeAlert.id);
+      setActiveAlert(null);
     }
-    setActiveAlert(null);
   };
 
-  const handleCopyTracking = (e: React.MouseEvent, trackingNum: string) => {
+  const handleCopyTracking = (e: React.MouseEvent, tracking: string) => {
     e.preventDefault();
     e.stopPropagation();
-    navigator.clipboard.writeText(trackingNum);
+    navigator.clipboard.writeText(tracking);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
@@ -174,14 +175,14 @@ export function CustomerShipmentAlertToast() {
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-heading text-xs font-black uppercase tracking-wider text-red-400">
-                พัสดุของคุณจัดส่งแล้ว!
+                {t.toast.shippedTitle}
               </span>
               <span className="text-[0.65rem] font-mono font-semibold px-1.5 py-0.2 rounded bg-red-950/60 text-red-300 border border-red-500/30">
-                SHIPPED
+                {t.toast.shippedBadge}
               </span>
             </div>
             <span className="text-[0.7rem] font-mono text-neutral-400">
-              คำสั่งซื้อ #{activeAlert.orderNumber}
+              {t.toast.orderNumber}{activeAlert.orderNumber}
             </span>
           </div>
         </div>
@@ -189,7 +190,7 @@ export function CustomerShipmentAlertToast() {
         <button
           type="button"
           onClick={handleDismiss}
-          aria-label="ปิดการแจ้งเตือน"
+          aria-label="Close notification"
           className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
         >
           <X size={16} />
@@ -216,10 +217,10 @@ export function CustomerShipmentAlertToast() {
 
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-white truncate">
-            {activeAlert.productName}
+            {getLocalizedOrderItemName(activeAlert.productName, activeAlert.productNameEn, lang)}
           </p>
           <p className="text-[0.7rem] text-neutral-400 mt-0.5">
-            ขนส่ง:{" "}
+            {t.toast.carrier}{" "}
             <span className="text-neutral-200 font-medium">
               {activeAlert.shippingCarrier || "South Aero Standard Logistics"}
             </span>
@@ -231,7 +232,7 @@ export function CustomerShipmentAlertToast() {
       {activeAlert.trackingNumber && (
         <div className="relative z-10 mt-3 p-2 rounded-lg bg-[#0A0A0A] border border-white/10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="text-[0.65rem] font-mono uppercase text-neutral-400">เลขพัสดุ:</span>
+            <span className="text-[0.65rem] font-mono uppercase text-neutral-400">{t.toast.trackingCode}</span>
             <span className="font-mono text-xs font-bold text-white tracking-wider truncate select-all">
               {activeAlert.trackingNumber}
             </span>
@@ -244,12 +245,12 @@ export function CustomerShipmentAlertToast() {
             {isCopied ? (
               <>
                 <Check size={11} className="text-emerald-400" />
-                <span className="text-emerald-400 font-bold">คัดลอกแล้ว</span>
+                <span className="text-emerald-400 font-bold">{t.toast.copied}</span>
               </>
             ) : (
               <>
                 <Copy size={11} />
-                <span>คัดลอก</span>
+                <span>{t.toast.copy}</span>
               </>
             )}
           </button>
@@ -263,7 +264,7 @@ export function CustomerShipmentAlertToast() {
           onClick={handleDismiss}
           className="flex-1 btn-primary py-2 px-3 text-xs font-heading font-bold uppercase tracking-wider justify-center gap-1.5"
         >
-          <span>ดูสถานะและติดตามพัสดุ</span>
+          <span>{t.toast.trackButton}</span>
           <ArrowRight size={13} />
         </Link>
         <button
@@ -271,7 +272,7 @@ export function CustomerShipmentAlertToast() {
           onClick={handleDismiss}
           className="px-3 py-2 text-xs font-heading uppercase tracking-wider text-neutral-400 hover:text-white rounded-lg border border-white/10 hover:bg-white/5 transition-colors"
         >
-          รับทราบ
+          {t.toast.dismissButton}
         </button>
       </div>
     </div>

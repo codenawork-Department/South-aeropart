@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { WishlistItem } from "@/actions/wishlist.actions";
 import { removeFromWishlist } from "@/actions/wishlist.actions";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCart } from "@/components/providers/CartProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
@@ -27,6 +28,7 @@ interface WishlistClientProps {
 }
 
 export function WishlistClient({ initialItems }: WishlistClientProps) {
+  const { lang, t } = useLanguage();
   const [items, setItems] = useState<WishlistItem[]>(initialItems);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const { formatPrice } = useCurrency();
@@ -87,13 +89,21 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#181818] border border-[#2B2B2B] rounded-full text-[0.65rem] font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase mb-3">
                 <Heart size={12} className="fill-current text-[var(--accent-red)]" />
-                SAVED PERFORMANCE PARTS
+                {t.wishlist.badge}
               </div>
               <h1 className="heading-xl text-white">
-                MY <span className="text-[var(--accent-red)]">WISHLIST</span>
+                {lang === "th" ? (
+                  <>
+                    รายการ<span className="text-[var(--accent-red)]">ที่บันทึกไว้</span>
+                  </>
+                ) : (
+                  <>
+                    MY <span className="text-[var(--accent-red)]">WISHLIST</span>
+                  </>
+                )}
               </h1>
               <p className="body-md text-[var(--text-secondary)] mt-2">
-                รายการชิ้นส่วนและชุดเซ็ตแอโรไดนามิกส์ที่คุณบันทึกไว้สำหรับรถคู่ใจ
+                {t.wishlist.subtitle}
               </p>
             </div>
 
@@ -101,18 +111,18 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
             <div className="flex items-center gap-2.5 sm:gap-3">
               <div className="bg-[#121212] border border-[#222222] px-3 sm:px-4 py-2 sm:py-2.5 rounded-sm">
                 <span className="text-[0.6rem] sm:text-[0.65rem] font-heading text-[var(--text-muted)] tracking-wider uppercase block">
-                  TOTAL SAVED
+                  {t.wishlist.totalSaved}
                 </span>
                 <span className="text-lg sm:text-xl font-heading font-bold text-white">
-                  {items.length} <span className="text-xs font-normal text-[var(--text-secondary)]">รายการ</span>
+                  {items.length} <span className="text-xs font-normal text-[var(--text-secondary)]">{t.wishlist.items}</span>
                 </span>
               </div>
               <div className="bg-[#121212] border border-[#222222] px-3 sm:px-4 py-2 sm:py-2.5 rounded-sm">
                 <span className="text-[0.6rem] sm:text-[0.65rem] font-heading text-[var(--text-muted)] tracking-wider uppercase block">
-                  BUNDLES / ชุดเซ็ต
+                  {t.wishlist.bundles}
                 </span>
                 <span className="text-lg sm:text-xl font-heading font-bold text-[var(--accent-red)]">
-                  {bundleCount} <span className="text-xs font-normal text-[var(--text-secondary)]">เซ็ต</span>
+                  {bundleCount} <span className="text-xs font-normal text-[var(--text-secondary)]">{t.wishlist.sets}</span>
                 </span>
               </div>
             </div>
@@ -129,7 +139,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                     : "bg-[#141414] text-[var(--text-secondary)] hover:text-white border border-[#242424]"
                 }`}
               >
-                ทั้งหมด ({items.length})
+                {t.wishlist.filterAll} ({items.length})
               </button>
               <button
                 onClick={() => setFilterType("bundle")}
@@ -140,7 +150,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                 }`}
               >
                 <Boxes size={14} />
-                ชุดเซ็ต / Bundles ({bundleCount})
+                {t.wishlist.filterBundle} ({bundleCount})
               </button>
               <button
                 onClick={() => setFilterType("single")}
@@ -151,7 +161,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                 }`}
               >
                 <Layers size={14} />
-                ชิ้นส่วนเดี่ยว ({singleCount})
+                {t.wishlist.filterSingle} ({singleCount})
               </button>
             </div>
           )}
@@ -168,10 +178,10 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
             </div>
             <div className="space-y-2">
               <h2 className="heading-md text-white">
-                ยังไม่มีสินค้าใน WISHLIST ของคุณ
+                {t.wishlist.emptyTitle}
               </h2>
               <p className="body-sm text-[var(--text-secondary)] max-w-md mx-auto">
-                เลือกสำรวจชิ้นส่วนแอโรพาร์ทคาร์บอนไฟเบอร์หรือชุดแต่งแพ็กเกจเต็มระบบ แล้วกดปุ่มหัวใจเพื่อบันทึกไว้ดูภายหลัง
+                {t.wishlist.emptyDesc}
               </p>
             </div>
 
@@ -181,21 +191,21 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                 className="btn-primary gap-2 text-xs py-3 px-6 w-full sm:w-auto inline-flex justify-center"
               >
                 <Sparkles size={14} />
-                สำรวจชิ้นส่วนทั้งหมด (CATALOG)
+                {t.wishlist.browseAllCatalog}
               </Link>
               <Link
                 href="/collection"
                 className="btn-outline gap-2 text-xs py-3 px-6 w-full sm:w-auto inline-flex justify-center"
               >
                 <Boxes size={14} />
-                ดูชุดเซ็ตเต็มคัน (BUNDLES)
+                {t.wishlist.viewAllBundles}
               </Link>
             </div>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-16 text-[var(--text-secondary)]">
             <PackageOpen size={36} className="mx-auto mb-3 opacity-40" />
-            <p>ไม่พบรายการในหมวดหมู่ที่เลือก</p>
+            <p>{t.wishlist.noItemsFound}</p>
           </div>
         ) : (
           /* Wishlist Grid */
@@ -231,7 +241,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                         <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-muted)] gap-2 bg-[#141414]">
                           <PackageOpen size={32} />
                           <span className="text-[0.65rem] font-heading uppercase tracking-widest">
-                            NO IMAGE
+                            {t.wishlist.noImage}
                           </span>
                         </div>
                       )}
@@ -243,11 +253,11 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                         {isBundle ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--accent-red)] text-white text-[0.6rem] font-heading font-bold uppercase tracking-wider rounded-sm shadow-md">
                             <Boxes size={10} />
-                            AERO BUNDLE / ชุดเซ็ต
+                            {t.wishlist.fullKit}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#1E1E1E]/90 text-white text-[0.6rem] font-heading font-medium uppercase tracking-wider rounded-sm border border-[#333]">
-                            {item.categoryName || "AEROPART"}
+                            {item.categoryName || t.wishlist.singlePart}
                           </span>
                         )}
                       </div>
@@ -257,8 +267,8 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                         onClick={() => handleRemove(item.productId)}
                         disabled={isRemoving}
                         className="absolute top-2.5 right-2.5 p-2 rounded-full bg-black/70 hover:bg-[var(--accent-red)] text-white/80 hover:text-white transition-colors z-10 border border-white/10"
-                        title="ลบออกจาก Wishlist"
-                        aria-label="Remove from wishlist"
+                        title={t.wishlist.remove}
+                        aria-label={t.wishlist.remove}
                       >
                         {isRemoving ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -306,7 +316,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
 
                       {item.materialName && (
                         <p className="text-xs text-[var(--text-secondary)]">
-                          วัสดุ: {item.materialName}
+                          {t.wishlist.materialLabel} {item.materialName}
                         </p>
                       )}
                     </div>
@@ -317,7 +327,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                     <div className="flex items-baseline justify-between pt-3">
                       <div>
                         <span className="text-[0.6rem] text-[var(--text-muted)] font-heading uppercase tracking-wider block">
-                          PRICE
+                          {t.wishlist.priceLabel}
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="font-heading text-lg font-bold text-white">
@@ -338,7 +348,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                             : "text-[var(--text-muted)]"
                         }`}
                       >
-                        {item.stockQuantity > 0 ? "IN STOCK" : "MADE TO ORDER"}
+                        {item.stockQuantity > 0 ? t.wishlist.inStock : t.wishlist.madeToOrder}
                       </span>
                     </div>
 
@@ -352,12 +362,12 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                         {isAdding ? (
                           <>
                             <Check size={14} />
-                            ADDED!
+                            {t.wishlist.added}
                           </>
                         ) : (
                           <>
                             <ShoppingCart size={14} />
-                            ADD TO CART
+                            {t.wishlist.addToCart}
                           </>
                         )}
                       </button>
@@ -365,7 +375,7 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                       <Link
                         href={`/products/${item.slug}`}
                         className="p-2.5 rounded-sm bg-[#1A1A1A] hover:bg-[#252525] text-[var(--text-secondary)] hover:text-white border border-[#282828] transition-colors"
-                        title="ดูรายละเอียดสินค้า"
+                        title={lang === "th" ? "ดูรายละเอียดสินค้า" : "View product detail"}
                         aria-label="View product detail"
                       >
                         <ArrowRight size={14} />

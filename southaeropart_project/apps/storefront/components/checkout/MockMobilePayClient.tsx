@@ -16,15 +16,21 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { Order, OrderItem } from "@repo/db";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { getLocalizedOrderItemName } from "@/lib/i18n-helpers";
 
 interface MockMobilePayClientProps {
   order: Order;
-  items: OrderItem[];
+  items: (OrderItem & {
+    productName?: string | null;
+    productNameEn?: string | null;
+  })[];
   guestToken?: string;
 }
 
 export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayClientProps) {
+  const { lang } = useLanguage();
   const { formatPrice, currency } = useCurrency();
   const [status, setStatus] = useState<"idle" | "authorizing" | "paid" | "cancelled">("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,10 +46,10 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
         setStatus("paid");
         setTxRef(`SA-SLIP-${Math.random().toString(36).substring(2, 9).toUpperCase()}`);
       } else {
-        setErrorMsg(res.error || "เกิดข้อผิดพลาดในการยืนยัน");
+        setErrorMsg(res.error || (lang === "th" ? "เกิดข้อผิดพลาดในการยืนยัน" : "Error confirming payment"));
       }
     } catch (e) {
-      setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย");
+      setErrorMsg(lang === "th" ? "เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย" : "Network connection error");
     } finally {
       setIsSubmitting(false);
     }
@@ -57,10 +63,10 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
       if (res.success) {
         setStatus("cancelled");
       } else {
-        setErrorMsg(res.error || "เกิดข้อผิดพลาดในการยกเลิก");
+        setErrorMsg(res.error || (lang === "th" ? "เกิดข้อผิดพลาดในการยกเลิก" : "Error cancelling payment"));
       }
     } catch (e) {
-      setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย");
+      setErrorMsg(lang === "th" ? "เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย" : "Network connection error");
     } finally {
       setIsSubmitting(false);
     }
@@ -95,32 +101,32 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
                 <CheckCircle2 size={36} />
               </div>
               <h2 className="font-heading text-xl font-bold uppercase tracking-wide text-white">
-                PAYMENT SUCCESSFUL
+                {lang === "th" ? "ชำระเงินสำเร็จ" : "PAYMENT SUCCESSFUL"}
               </h2>
               <p className="text-xs text-emerald-400 font-medium mt-1">
-                การชำระเงินได้รับการยืนยันเรียบร้อยแล้ว
+                {lang === "th" ? "การชำระเงินได้รับการยืนยันเรียบร้อยแล้ว" : "Payment has been confirmed successfully"}
               </p>
               <p className="text-[0.7rem] text-[var(--text-muted)] mt-0.5 font-mono">
-                {new Date().toLocaleString("th-TH")}
+                {new Date().toLocaleString(lang === "th" ? "th-TH" : "en-US")}
               </p>
             </div>
 
             {/* Slip Details */}
             <div className="py-5 space-y-3 text-xs border-b border-[#222222]">
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">ผู้รับเงิน:</span>
-                <span className="font-semibold text-white">บจก. เซาท์ แอโร พาร์ท</span>
+                <span className="text-[var(--text-secondary)]">{lang === "th" ? "ผู้รับเงิน:" : "Recipient:"}</span>
+                <span className="font-semibold text-white">South Aero Co., Ltd.</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">รหัสอ้างอิง (Ref):</span>
+                <span className="text-[var(--text-secondary)]">{lang === "th" ? "รหัสอ้างอิง (Ref):" : "Ref:"}</span>
                 <span className="font-mono text-gray-300">{txRef}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">หมายเลขคำสั่งซื้อ:</span>
+                <span className="text-[var(--text-secondary)]">{lang === "th" ? "หมายเลขคำสั่งซื้อ:" : "Order #:"}</span>
                 <span className="font-mono text-[var(--accent-red)] font-bold">{order.orderNumber}</span>
               </div>
               <div className="flex justify-between items-baseline pt-2">
-                <span className="text-[var(--text-secondary)] font-heading uppercase">ยอดเงินที่โอน:</span>
+                <span className="text-[var(--text-secondary)] font-heading uppercase">{lang === "th" ? "ยอดเงินที่โอน:" : "Amount Transferred:"}</span>
                 <div className="text-right">
                   <span className="font-heading text-xl font-bold text-white">
                     ฿{parseFloat(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
@@ -136,7 +142,9 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
 
             <div className="pt-4 text-center">
               <p className="text-[0.7rem] text-[var(--text-muted)] leading-relaxed">
-                หน้าจอคอมพิวเตอร์ของคุณจะเปลี่ยนไปยังหน้ารายละเอียดคำสั่งซื้อโดยอัตโนมัติ คุณสามารถปิดหน้านี้ได้ทันที
+                {lang === "th"
+                  ? "หน้าจอคอมพิวเตอร์ของคุณจะเปลี่ยนไปยังหน้ารายละเอียดคำสั่งซื้อโดยอัตโนมัติ คุณสามารถปิดหน้านี้ได้ทันที"
+                  : "Your desktop browser will automatically redirect to order details. You may close this window."}
               </p>
             </div>
           </div>
@@ -149,13 +157,15 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
               <XCircle size={36} />
             </div>
             <h2 className="font-heading text-xl font-bold uppercase tracking-wide text-white">
-              PAYMENT CANCELLED
+              {lang === "th" ? "การชำระเงินถูกยกเลิก" : "PAYMENT CANCELLED"}
             </h2>
             <p className="text-xs text-red-400 font-medium mt-1">
-              คำสั่งซื้อนี้ถูกปฏิเสธหรือยกเลิกเรียบร้อยแล้ว
+              {lang === "th" ? "คำสั่งซื้อนี้ถูกปฏิเสธหรือยกเลิกเรียบร้อยแล้ว" : "This payment has been cancelled or rejected."}
             </p>
             <p className="text-[0.75rem] text-[var(--text-muted)] mt-4 leading-relaxed">
-              สถานะถูกอัปเดตไปยังระบบหลักแล้ว ท่านสามารถปิดหน้านี้หรือกลับไปเลือกสินค้าใหม่ได้
+              {lang === "th"
+                ? "สถานะถูกอัปเดตไปยังระบบหลักแล้ว ท่านสามารถปิดหน้านี้หรือกลับไปเลือกสินค้าใหม่ได้"
+                : "Status has been updated. You may close this tab or return to shop."}
             </p>
           </div>
         )}
@@ -170,7 +180,7 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
               </div>
               <div>
                 <span className="text-[0.65rem] text-[var(--text-muted)] uppercase tracking-wider block">
-                  MERCHANT (ผู้รับเงิน)
+                  {lang === "th" ? "ผู้รับเงิน (MERCHANT)" : "MERCHANT"}
                 </span>
                 <h3 className="font-heading text-sm font-bold uppercase text-white tracking-wide">
                   SOUTH AERO PARTS CO., LTD.
@@ -189,7 +199,7 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
             {/* Payment Summary */}
             <div className="bg-[#0D0D0D] border border-[#222222] rounded-xl p-4 text-center">
               <span className="text-[0.7rem] text-[var(--text-muted)] uppercase tracking-wider font-heading">
-                TOTAL AMOUNT (จำนวนเงินที่ต้องชำระ)
+                {lang === "th" ? "จำนวนเงินที่ต้องชำระ (TOTAL AMOUNT)" : "TOTAL AMOUNT DUE"}
               </span>
               <div className="mt-1">
                 <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white">
@@ -217,7 +227,7 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
                 {items.map((it) => (
                   <div key={it.id} className="py-2 flex justify-between">
                     <span className="text-gray-300 truncate max-w-[200px]">
-                      {it.quantity}x {it.productNameSnapshot}
+                      {it.quantity}x {getLocalizedOrderItemName(it.productNameSnapshot, it.productNameEn, lang)}
                     </span>
                     <span className="text-white font-mono">
                       {currency === "THB" ? `฿${parseFloat(it.lineTotal).toLocaleString()}` : formatPrice(it.lineTotal)}
@@ -235,7 +245,9 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
                 className="w-full py-4 px-4 bg-[var(--success)] hover:bg-emerald-600 disabled:opacity-50 text-white font-heading font-bold text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-2 transition-all"
               >
                 <CheckCircle2 size={18} />
-                {isSubmitting ? "กำลังดำเนินการ..." : "ยืนยันการชำระเงิน (CONFIRM)"}
+                {isSubmitting
+                  ? (lang === "th" ? "กำลังดำเนินการ..." : "Processing...")
+                  : (lang === "th" ? "ยืนยันการชำระเงิน (CONFIRM)" : "CONFIRM PAYMENT")}
               </button>
 
               <button
@@ -244,7 +256,7 @@ export function MockMobilePayClient({ order, items, guestToken }: MockMobilePayC
                 className="w-full py-3.5 px-4 bg-transparent hover:bg-red-950/30 border border-[#333333] hover:border-[var(--accent-red)] text-gray-400 hover:text-[var(--accent-red)] disabled:opacity-50 font-heading font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2"
               >
                 <XCircle size={16} />
-                ปฏิเสธ / ยกเลิกการชำระเงิน (REJECT)
+                {lang === "th" ? "ปฏิเสธ / ยกเลิกการชำระเงิน (REJECT)" : "REJECT / CANCEL PAYMENT"}
               </button>
             </div>
 
