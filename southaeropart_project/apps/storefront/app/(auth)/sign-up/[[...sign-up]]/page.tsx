@@ -9,8 +9,10 @@ import { AuthDivider } from "@/components/auth/AuthDivider";
 import { recordLoginAction } from "@/actions/auth-audit.actions";
 import { subscribeNewsletterAction } from "@/actions/newsletter.actions";
 import { Eye, EyeOff, AlertCircle, Loader2, ArrowLeft, Mail } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export default function SignUpPage() {
+  const { lang } = useLanguage();
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
 
@@ -429,7 +431,15 @@ export default function SignUpPage() {
                     htmlFor="sign-up-newsletter"
                     className="text-xs text-[var(--text-secondary)] leading-snug cursor-pointer select-none"
                   >
-                    <span className="font-semibold text-white">รับข่าวสารการเปิดตัวชุดแต่งใหม่</span> และรายงานผลทดสอบ CFD Aerodynamics ล่าสุดทางอีเมล
+                    {lang === "th" ? (
+                      <>
+                        <span className="font-semibold text-white">รับข่าวสารการเปิดตัวชุดแต่งใหม่</span> และรายงานผลทดสอบ CFD Aerodynamics ล่าสุดทางอีเมล
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-semibold text-white">Subscribe to new aerodynamic drops</span> and get the latest CFD test reports via email
+                      </>
+                    )}
                   </label>
                 </div>
 

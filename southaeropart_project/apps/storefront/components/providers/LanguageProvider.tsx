@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Language, DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME, SUPPORTED_LANGUAGES, sanitizeLanguage } from "@/i18n/config";
 import { th, Dictionary } from "@/i18n/dictionaries/th";
 import { en } from "@/i18n/dictionaries/en";
@@ -26,6 +27,7 @@ export function LanguageProvider({
   initialLang = DEFAULT_LANGUAGE,
   children,
 }: LanguageProviderProps) {
+  const router = useRouter();
   // Sanitize the server-supplied value so an invalid cookie can never seed state
   const [lang, setLang] = useState<Language>(() => sanitizeLanguage(initialLang));
   const [isReady, setIsReady] = useState(false);
@@ -63,6 +65,8 @@ export function LanguageProvider({
           window.dispatchEvent(
             new CustomEvent("south_aero_language_change", { detail: { lang: validated } })
           );
+          // Trigger server component revalidation with new language cookie
+          router.refresh();
         } catch {
           // Ignore storage errors
         }
@@ -73,7 +77,7 @@ export function LanguageProvider({
         });
       }
     },
-    [lang]
+    [lang, router]
   );
 
   const currentDict = dictionaries[lang] ?? dictionaries[DEFAULT_LANGUAGE];

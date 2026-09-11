@@ -30,19 +30,27 @@ import {
   Mail,
 } from "lucide-react";
 import type { Order, OrderItem, Address } from "@repo/db";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { useCart } from "@/components/providers/CartProvider";
+import { getLocalizedOrderItemName } from "@/lib/i18n-helpers";
 import { StripePaymentForm } from "./StripePaymentForm";
 
 interface PaymentClientProps {
   order: Order;
-  items: (OrderItem & { imageUrl?: string | null; slug?: string | null })[];
+  items: (OrderItem & {
+    imageUrl?: string | null;
+    slug?: string | null;
+    productName?: string | null;
+    productNameEn?: string | null;
+  })[];
   accountEmail?: string | null;
   guestToken?: string;
 }
 
 export function PaymentClient({ order, items, accountEmail, guestToken }: PaymentClientProps) {
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const { formatPrice, currency } = useCurrency();
   const { clearCart } = useCart();
 
@@ -102,7 +110,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
       if (res.isAlreadyPaid || res.redirectUrl) {
         setActionMessage({
           type: "success",
-          text: "คำสั่งซื้อนี้ได้รับการชำระเงินเรียบร้อยแล้ว กำลังนำคุณไปยังหน้าคำสั่งซื้อ...",
+          text: t.payment.paymentSuccess,
         });
         const targetUrl = res.redirectUrl || (guestToken ? `/orders/${order.id}?paid=true&token=${guestToken}` : `/orders/${order.id}?paid=true`);
         setTimeout(() => {
@@ -116,14 +124,14 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
           publishableKey: res.publishableKey,
         });
       } else {
-        setStripeError(res.error || "ไม่สามารถเชื่อมต่อระบบ Stripe ได้");
+        setStripeError(res.error || (lang === "th" ? "ไม่สามารถเชื่อมต่อระบบ Stripe ได้" : "Could not connect to Stripe"));
       }
     } catch (err) {
-      setStripeError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลด Stripe");
+      setStripeError(err instanceof Error ? err.message : (lang === "th" ? "เกิดข้อผิดพลาดในการโหลด Stripe" : "Error loading Stripe"));
     } finally {
       setStripeLoading(false);
     }
-  }, [order.id, router]);
+  }, [order.id, router, guestToken, lang, t.payment.paymentSuccess]);
 
   useEffect(() => {
     if (currentPaymentStatus === "paid" || currentStatus === "paid") {
@@ -239,17 +247,17 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
       if (res.success) {
         setCurrentPaymentStatus("paid");
         setCurrentStatus("paid");
-        setActionMessage({ type: "success", text: "ยืนยันการชำระเงินสำเร็จแล้ว! กำลังไปยังหน้าคำสั่งซื้อ..." });
+        setActionMessage({ type: "success", text: t.payment.paymentSuccess });
         const paidUrl = guestToken ? `/orders/${order.id}?paid=true&token=${guestToken}` : `/orders/${order.id}?paid=true`;
         setTimeout(() => {
           router.push(paidUrl);
         }, 1500);
       } else {
-        setActionMessage({ type: "error", text: res.error || "เกิดข้อผิดพลาดในการยืนยัน" });
+        setActionMessage({ type: "error", text: res.error || (lang === "th" ? "เกิดข้อผิดพลาดในการยืนยัน" : "Error confirming payment") });
         setIsProcessing(false);
       }
     } catch (err) {
-      setActionMessage({ type: "error", text: "เกิดข้อผิดพลาดในการเชื่อมต่อ" });
+      setActionMessage({ type: "error", text: lang === "th" ? "เกิดข้อผิดพลาดในการเชื่อมต่อ" : "Connection error" });
       setIsProcessing(false);
     }
   }
@@ -263,12 +271,12 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
       if (res.success) {
         setCurrentPaymentStatus("failed");
         setCurrentStatus("cancelled");
-        setActionMessage({ type: "error", text: "การชำระเงินถูกปฏิเสธ/ยกเลิกเรียบร้อยแล้ว" });
+        setActionMessage({ type: "error", text: t.payment.paymentCancelled });
       } else {
-        setActionMessage({ type: "error", text: res.error || "เกิดข้อผิดพลาดในการยกเลิก" });
+        setActionMessage({ type: "error", text: res.error || (lang === "th" ? "เกิดข้อผิดพลาดในการยกเลิก" : "Error cancelling payment") });
       }
     } catch (err) {
-      setActionMessage({ type: "error", text: "เกิดข้อผิดพลาดในการเชื่อมต่อ" });
+      setActionMessage({ type: "error", text: lang === "th" ? "เกิดข้อผิดพลาดในการเชื่อมต่อ" : "Connection error" });
     } finally {
       setIsProcessing(false);
     }
@@ -293,10 +301,10 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
           <ShieldCheck size={14} /> SOUTH AERO PAYMENT GATEWAY
         </div>
         <h1 className="font-heading text-2xl sm:text-4xl font-extrabold uppercase tracking-wide text-white">
-          SECURE CHECKOUT (ชำระเงิน)
+          {t.payment.title}
         </h1>
         <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2">
-          หมายเลขคำสั่งซื้อ: <span className="text-white font-mono font-bold">{order.orderNumber}</span>
+          {t.payment.orderRef} <span className="text-white font-mono font-bold">{order.orderNumber}</span>
         </p>
       </div>
 
@@ -313,7 +321,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
             }`}
           >
             <CreditCard className="h-4 w-4" />
-            <span>STRIPE SECURE PAYMENT (CARD / PROMPTPAY / WALLET)</span>
+            <span>{t.payment.tabStripe}</span>
           </button>
 
           <button
@@ -326,7 +334,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
             }`}
           >
             <Smartphone className="h-4 w-4" />
-            <span>PROMPTPAY QR / TESTER SIMULATOR</span>
+            <span>{t.payment.tabSimulator}</span>
           </button>
         </div>
       )}
@@ -360,17 +368,17 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label className="text-xs font-heading font-bold uppercase tracking-wider text-white flex items-center gap-2">
                 <Mail size={15} className="text-[var(--accent-red)]" />
-                RECEIPT &amp; CONFIRMATION EMAIL (อีเมลรับใบเสร็จและยืนยันชำระเงิน)
+                {t.payment.receiptEmail}
                 <span className="text-[var(--accent-red)]">*</span>
               </label>
               {accountEmail && receiptEmail.trim().toLowerCase() === accountEmail.trim().toLowerCase() && (
                 <span className="text-[0.65rem] px-2.5 py-0.5 rounded-full bg-red-950/60 border border-red-800/50 text-red-300 font-mono flex items-center gap-1">
-                  ✓ บัญชีของคุณ (Account Email)
+                  {lang === "th" ? "✓ บัญชีของคุณ" : "✓ Your Account"}
                 </span>
               )}
             </div>
             <p className="text-[0.75rem] text-[var(--text-secondary)] leading-relaxed">
-              เอกสารยืนยันคำสั่งซื้อ รายละเอียดชิ้นงานแอโรพาร์ท และใบเสร็จรับเงินจะถูกส่งไปยังอีเมลนี้ทันทีที่การชำระเงินเสร็จสมบูรณ์
+              {t.payment.emailReceiptHint}
             </p>
             <div className="relative">
               <input
@@ -392,16 +400,16 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                 <div className="absolute inset-0 z-20 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
                   <CheckCircle2 size={64} className="text-[var(--success)] animate-bounce mb-3" />
                   <h3 className="font-heading text-xl font-bold uppercase text-white">
-                    PAYMENT COMPLETED!
+                    {lang === "th" ? "ชำระเงินสำเร็จแล้ว!" : "PAYMENT COMPLETED!"}
                   </h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-1.5 max-w-xs">
-                    การชำระเงินได้รับการยืนยันเรียบร้อยแล้ว กำลังนำท่านไปยังหน้าสรุปคำสั่งซื้อ...
+                    {t.payment.paymentSuccess}
                   </p>
                   <Link
                     href={`/orders/${order.id}`}
                     className="btn-primary mt-6 text-xs gap-2 py-3 px-6 font-heading uppercase"
                   >
-                    VIEW ORDER DETAILS <ArrowRight size={14} />
+                    {t.orders.viewDetails} <ArrowRight size={14} />
                   </Link>
                 </div>
               )}
@@ -411,17 +419,17 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                 <div className="absolute inset-0 z-20 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
                   <XCircle size={64} className="text-[var(--accent-red)] mb-3" />
                   <h3 className="font-heading text-xl font-bold uppercase text-white">
-                    PAYMENT CANCELLED
+                    {lang === "th" ? "การชำระเงินถูกยกเลิก" : "PAYMENT CANCELLED"}
                   </h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-1.5 max-w-xs">
-                    คำสั่งซื้อนี้ถูกปฏิเสธหรือยกเลิกการชำระเงินแล้ว
+                    {t.payment.paymentCancelled}
                   </p>
                   <div className="mt-6 flex flex-col gap-2 w-full max-w-xs">
                     <Link
                       href="/products"
                       className="btn-primary text-xs gap-2 py-3 justify-center font-heading uppercase"
                     >
-                      SHOP AGAIN <ArrowRight size={14} />
+                      {t.orders.startShopping} <ArrowRight size={14} />
                     </Link>
                   </div>
                 </div>
@@ -431,7 +439,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
               <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/10">
                 <div>
                   <span className="text-[0.7rem] text-[var(--text-muted)] font-heading uppercase tracking-wider block">
-                    TOTAL AMOUNT DUE
+                    {t.payment.amountToPay}
                   </span>
                   <div className="flex items-baseline gap-1.5 mt-0.5">
                     <span className="font-heading text-2xl sm:text-3xl font-extrabold text-white">
@@ -453,7 +461,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                     CONNECTING TO STRIPE ENCRYPTED GATEWAY...
                   </p>
                   <p className="text-[0.75rem] text-neutral-500">
-                    กำลังโหลดระบบรับชำระเงินปลอดภัยระดับสากล
+                    {lang === "th" ? "กำลังโหลดระบบรับชำระเงินปลอดภัยระดับสากล" : "Loading secure enterprise payment system..."}
                   </p>
                 </div>
               )}
@@ -464,13 +472,15 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                   <div className="inline-flex p-3 rounded-full bg-red-950/50 border border-red-500/30 text-red-500">
                     <AlertTriangle className="h-6 w-6" />
                   </div>
-                  <h4 className="text-sm font-bold text-white">ไม่สามารถเริ่มระบบชำระเงินได้</h4>
+                  <h4 className="text-sm font-bold text-white">
+                    {lang === "th" ? "ไม่สามารถเริ่มระบบชำระเงินได้" : "Unable to initialize payment gateway"}
+                  </h4>
                   <p className="text-xs text-neutral-400 max-w-sm mx-auto">{stripeError}</p>
                   <button
                     onClick={initStripe}
                     className="inline-flex items-center gap-2 text-xs font-heading uppercase tracking-wider px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white border border-white/10 transition-colors cursor-pointer"
                   >
-                    ลองใหม่อีกครั้ง (Retry)
+                    {lang === "th" ? "ลองใหม่อีกครั้ง (Retry)" : "Retry"}
                   </button>
                 </div>
               )}
@@ -501,7 +511,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
 
                 <div className="mb-4">
                   <span className="text-xs text-[var(--text-muted)] font-heading uppercase tracking-wider block">
-                    TOTAL AMOUNT DUE
+                    {t.payment.amountToPay}
                   </span>
                   <div className="flex items-baseline justify-center gap-1.5 mt-1">
                     <span className="font-heading text-3xl font-extrabold text-white">
@@ -532,7 +542,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                 {/* Timer Countdown */}
                 <div className="mt-4 flex items-center gap-2 text-xs font-heading tracking-wider">
                   <Clock size={14} className="text-[var(--warning)]" />
-                  <span className="text-[var(--text-muted)]">QR EXPIRES IN:</span>
+                  <span className="text-[var(--text-muted)]">{t.payment.expiresIn}:</span>
                   <span className={`font-mono font-bold ${timeLeft < 180 ? "text-[var(--accent-red)] animate-pulse" : "text-white"}`}>
                     {formattedTime}
                   </span>
@@ -545,7 +555,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                   <div className="flex items-center gap-2">
                     <Smartphone size={18} className="text-[var(--accent-red)]" />
                     <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-white">
-                      TESTER SIMULATOR (จำลองการชำระเงิน)
+                      {t.payment.simulationNotice}
                     </h3>
                   </div>
                   <span className="badge-red text-[0.6rem] px-2 py-0.5 font-mono">DEV MODE</span>
@@ -559,7 +569,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                     className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 bg-[var(--success)] hover:bg-emerald-600 disabled:opacity-40 text-white font-heading font-bold text-xs uppercase tracking-wider rounded-lg shadow-lg shadow-emerald-950/50 transition-all cursor-pointer"
                   >
                     <CheckCircle2 size={16} />
-                    {isProcessing ? "กำลังบันทึกสถานะ..." : "1. ยืนยันการชำระเงิน (CONFIRM PAYMENT - SUCCESS)"}
+                    {isProcessing ? (lang === "th" ? "กำลังบันทึกสถานะ..." : "Saving status...") : t.payment.confirmSimulation}
                   </button>
 
                   <button
@@ -569,7 +579,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                     className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-transparent hover:bg-red-950/40 border border-[var(--accent-red)] text-[var(--accent-red)] disabled:opacity-40 font-heading font-bold text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer"
                   >
                     <XCircle size={16} />
-                    2. ปฏิเสธ / ยกเลิกการชำระเงิน (REJECT / CANCEL PAYMENT)
+                    {t.payment.rejectSimulation}
                   </button>
                 </div>
 
@@ -581,7 +591,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                     rel="noopener noreferrer"
                     className="text-xs font-heading text-white hover:text-[var(--accent-red)] flex items-center gap-1.5 tracking-wider uppercase transition-colors"
                   >
-                    <ExternalLink size={14} /> เปิดหน้าจอมือถือจำลองในแท็บใหม่
+                    <ExternalLink size={14} /> {lang === "th" ? "เปิดหน้าจอมือถือจำลองในแท็บใหม่" : "Open simulator in new tab"}
                   </a>
 
                   <button
@@ -589,7 +599,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                     className="text-xs text-[var(--text-muted)] hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     {copied ? <Check size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
-                    <span>{copied ? "คัดลอกลิงก์แล้ว" : "คัดลอกลิงก์จำลอง"}</span>
+                    <span>{copied ? (lang === "th" ? "คัดลอกลิงก์แล้ว" : "Link copied") : (lang === "th" ? "คัดลอกลิงก์จำลอง" : "Copy simulator link")}</span>
                   </button>
                 </div>
 
@@ -599,13 +609,15 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                     onClick={() => setShowHostInput(!showHostInput)}
                     className="text-[0.7rem] text-[var(--text-muted)] hover:text-[var(--text-secondary)] underline transition-colors cursor-pointer"
                   >
-                    {showHostInput ? "▲ ซ่อนการตั้งค่า IP มือถือ" : "▼ สแกนด้วยมือถือจริงผ่าน Wi-Fi ในวงแลน? (ตั้งค่า IP)"}
+                    {showHostInput ? (lang === "th" ? "▲ ซ่อนการตั้งค่า IP มือถือ" : "▲ Hide mobile IP setup") : (lang === "th" ? "▼ สแกนด้วยมือถือจริงผ่าน Wi-Fi ในวงแลน? (ตั้งค่า IP)" : "▼ Scanning on real mobile via Wi-Fi? (Set IP)")}
                   </button>
 
                   {showHostInput && (
                     <form onSubmit={handleUpdateHost} className="mt-3 p-3 bg-[#0E0E0E] border border-[#282828] rounded-lg">
                       <p className="text-[0.65rem] text-[var(--text-muted)] mb-2">
-                        หากสแกนด้วยโทรศัพท์จริง มือถือจะไม่สามารถเข้าถึง localhost ได้ ให้ระบุ Local IP เครื่องคุณ เช่น http://192.168.1.100:3000
+                        {lang === "th"
+                          ? "หากสแกนด้วยโทรศัพท์จริง มือถือจะไม่สามารถเข้าถึง localhost ได้ ให้ระบุ Local IP เครื่องคุณ เช่น http://192.168.1.100:3000"
+                          : "If scanning with real mobile device, localhost won't resolve. Specify your PC local LAN IP, e.g. http://192.168.1.100:3000"}
                       </p>
                       <div className="flex gap-2">
                         <input
@@ -635,33 +647,33 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
         <div className="md:col-span-5 space-y-6">
           <div className="bg-[#121212] border border-[#222222] rounded-2xl p-6 shadow-xl space-y-4">
             <h4 className="font-heading text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] pb-2 border-b border-[#222222]">
-              ORDER SUMMARY
+              {t.orders.orderSummary}
             </h4>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[var(--text-secondary)]">ผู้รับ:</span>
+                <span className="text-[var(--text-secondary)]">{t.orders.recipientName}:</span>
                 <span className="text-white font-medium">{order.shippingAddress.recipientName}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[var(--text-secondary)]">เบอร์โทร:</span>
+                <span className="text-[var(--text-secondary)]">{t.orders.phone}:</span>
                 <span className="text-white font-mono">{order.shippingAddress.phone}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[var(--text-secondary)]">อีเมลรับใบเสร็จ:</span>
+                <span className="text-[var(--text-secondary)]">{t.payment.receiptEmail}:</span>
                 <span className="text-white font-mono text-[0.7rem] truncate max-w-[170px]">
                   {receiptEmail || (order.shippingAddress as Address)?.email || "-"}
                 </span>
               </div>
               <div className="flex items-start justify-between gap-4">
-                <span className="text-[var(--text-secondary)]">ที่อยู่จัดส่ง:</span>
+                <span className="text-[var(--text-secondary)]">{t.orders.shippingAddress}:</span>
                 <span className="text-white text-right max-w-[200px] leading-relaxed">
                   {order.shippingAddress.line1}, {order.shippingAddress.subDistrict}, {order.shippingAddress.district},{" "}
                   {order.shippingAddress.province} {order.shippingAddress.postalCode}
                 </span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-[#1C1C1C]">
-                <span className="text-[var(--text-secondary)]">การจัดส่ง:</span>
+                <span className="text-[var(--text-secondary)]">{t.orders.carrier}:</span>
                 <span className="text-white">{order.shippingCarrier || "South Aero Standard Logistics"}</span>
               </div>
             </div>
@@ -669,13 +681,13 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
             {/* Items Breakdown */}
             <div className="pt-3 border-t border-[#202020]">
               <p className="text-[0.7rem] text-[var(--text-muted)] font-heading uppercase tracking-wider mb-2">
-                ITEMS ({items.length})
+                {t.checkout.itemsCount.replace("{count}", String(items.length))}
               </p>
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {items.map((it) => (
                   <div key={it.id} className="flex items-center justify-between text-xs py-1 border-b border-white/5 last:border-0">
                     <span className="text-[var(--text-secondary)] truncate max-w-[180px]">
-                      {it.quantity}x {it.productNameSnapshot}
+                      {it.quantity}x {getLocalizedOrderItemName(it.productNameSnapshot, it.productNameEn, lang)}
                     </span>
                     <span className="text-white font-mono font-medium">
                       {currency === "THB"
@@ -690,7 +702,7 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
             {/* Trust badge */}
             <div className="pt-4 border-t border-[#202020] flex items-center justify-center gap-2 text-[0.7rem] text-neutral-400">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <span>South Aero Buyer Protection Guarantee</span>
+              <span>{lang === "th" ? "การรับประกันคุ้มครองผู้ซื้อ South Aero" : "South Aero Buyer Protection Guarantee"}</span>
             </div>
           </div>
         </div>

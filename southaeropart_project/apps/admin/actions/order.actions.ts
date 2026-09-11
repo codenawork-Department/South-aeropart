@@ -449,7 +449,7 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
     revalidatePath("/orders");
     revalidatePath(`/orders/${orderId}`);
 
-    // If order was transitioned to shipped, send customer shipment notification email & notify storefront
+    // Notify storefront realtime SSE for all status changes
     if (status === "shipped") {
       sendShipmentNotificationEmail(orderId).catch((emailErr) => {
         console.error("[updateOrderStatusAction] Background shipment email error:", emailErr);
@@ -457,6 +457,12 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
       notifyStorefrontCatalogChange("order_shipped", {
         orderId,
         orderNumber: existing.orderNumber,
+      });
+    } else {
+      notifyStorefrontCatalogChange("order_status_updated", {
+        orderId,
+        orderNumber: existing.orderNumber,
+        status,
       });
     }
 
@@ -656,6 +662,14 @@ export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput
       notifyStorefrontCatalogChange("order_shipped", {
         orderId,
         orderNumber: existing.orderNumber,
+        trackingNumber,
+        shippingCarrier,
+      });
+    } else {
+      notifyStorefrontCatalogChange("order_status_updated", {
+        orderId,
+        orderNumber: existing.orderNumber,
+        status: newStatus,
         trackingNumber,
         shippingCarrier,
       });

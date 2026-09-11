@@ -7,12 +7,14 @@ import {
   getSubscriptionStatusAction,
   SubscriptionStatusResult,
 } from "@/actions/newsletter.actions";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface NewsletterSectionProps {
   initialStatus?: SubscriptionStatusResult;
 }
 
 export function NewsletterSection({ initialStatus }: NewsletterSectionProps) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<SubscriptionStatusResult>(
     initialStatus || { isLoggedIn: false, isSubscribed: false, userEmail: null }
@@ -46,10 +48,10 @@ export function NewsletterSection({ initialStatus }: NewsletterSectionProps) {
         setIsSubscribedSuccess(true);
         setStatus((prev) => ({ ...prev, isSubscribed: true }));
       } else {
-        setErrorMessage(res.error || "ไม่สามารถทำรายการได้ กรุณาลองใหม่");
+        setErrorMessage(res.error || t.newsletter.errorMessage);
       }
     } catch (err) {
-      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      setErrorMessage(t.newsletter.networkError);
     } finally {
       setIsLoading(false);
     }
@@ -71,10 +73,10 @@ export function NewsletterSection({ initialStatus }: NewsletterSectionProps) {
         setIsSubscribedSuccess(true);
         setStatus((prev) => ({ ...prev, isSubscribed: true }));
       } else {
-        setErrorMessage(res.error || "ไม่สามารถทำรายการได้ กรุณาลองใหม่");
+        setErrorMessage(res.error || t.newsletter.errorMessage);
       }
     } catch (err) {
-      setErrorMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      setErrorMessage(t.newsletter.networkError);
     } finally {
       setIsLoading(false);
     }
@@ -91,13 +93,13 @@ export function NewsletterSection({ initialStatus }: NewsletterSectionProps) {
           <div className="relative z-10 max-w-xl">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[#202020] border border-[#2E2E2E] text-[0.68rem] text-[var(--text-secondary)] font-heading uppercase tracking-widest mb-3">
               <Sparkles size={13} className="text-[var(--accent-red)] animate-pulse" />
-              <span>AERODYNAMICS & PRODUCT RELEASES</span>
+              <span>{t.newsletter.badge}</span>
             </div>
             <h2 className="heading-md text-white">
               STAY <span className="text-[var(--accent-red)]">UPDATED</span>
             </h2>
             <p className="body-sm mt-1.5 text-[var(--text-secondary)] leading-relaxed">
-              รับรายงานผลทดสอบ CFD Aerodynamics และการแจ้งเตือนการเปิดตัวชุดแต่ง Part Drops รุ่นใหม่ก่อนใคร ส่งตรงถึงกล่องจดหมายของคุณ
+              {t.newsletter.subtitle}
             </p>
           </div>
 
@@ -106,7 +108,7 @@ export function NewsletterSection({ initialStatus }: NewsletterSectionProps) {
             {isSubscribedSuccess ? (
               <div className="flex items-center gap-2.5 p-4 rounded bg-emerald-950/40 border border-emerald-800/50 text-emerald-400 font-heading font-bold text-xs tracking-wider animate-fade-in shadow-lg">
                 <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-                <span>YOU ARE NOW SUBSCRIBED TO LATEST RELEASES!</span>
+                <span>{t.newsletter.successMessage}</span>
               </div>
             ) : status.isLoggedIn ? (
               /* State 2: Logged-in User (1-Click Subscribe) */
@@ -129,12 +131,12 @@ export function NewsletterSection({ initialStatus }: NewsletterSectionProps) {
                   {isLoading ? (
                     <>
                       <Loader2 size={15} className="animate-spin" />
-                      <span>SUBSCRIBING...</span>
+                      <span>{t.newsletter.subscribing}</span>
                     </>
                   ) : (
                     <>
                       <Zap size={15} className="fill-current text-white" />
-                      <span>SUBSCRIBE 1-CLICK</span>
+                      <span>{t.newsletter.oneClickButton}</span>
                     </>
                   )}
                 </button>
@@ -148,7 +150,7 @@ export function NewsletterSection({ initialStatus }: NewsletterSectionProps) {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address..."
+                    placeholder={t.newsletter.emailPlaceholder}
                     className="input-dark w-full rounded-none sm:rounded-l bg-[#1A1A1A] border-[#303030] text-xs py-3 pl-3 pr-3 focus:border-[var(--accent-red)]"
                     id="newsletter-email-home"
                     disabled={isLoading}
@@ -164,7 +166,7 @@ export function NewsletterSection({ initialStatus }: NewsletterSectionProps) {
                     <Loader2 size={14} className="animate-spin" />
                   ) : (
                     <>
-                      <span>SUBSCRIBE</span>
+                      <span>{t.newsletter.subscribeButton}</span>
                       <ArrowRight size={14} />
                     </>
                   )}

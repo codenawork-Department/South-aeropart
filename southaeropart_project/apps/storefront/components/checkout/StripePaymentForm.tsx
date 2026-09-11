@@ -10,6 +10,7 @@ import {
 import { loadStripe, StripeElementsOptions } from "@stripe/stripe-js";
 import { Loader2, ShieldCheck, AlertCircle, Lock } from "lucide-react";
 import { updateOrderReceiptEmail } from "@/actions/checkout.actions";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface StripePaymentFormProps {
@@ -32,6 +33,7 @@ function CheckoutForm({
 }) {
   const stripe = useStripe();
   const elements = useElements();
+  const { lang } = useLanguage();
   const { formatPrice } = useCurrency();
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -45,7 +47,11 @@ function CheckoutForm({
     }
 
     if (!receiptEmail || !receiptEmail.trim() || !receiptEmail.includes("@")) {
-      setErrorMessage("กรุณากรอกอีเมลที่ถูกต้องสำหรับรับใบเสร็จรับเงินและการยืนยันคำสั่งซื้อ");
+      setErrorMessage(
+        lang === "th"
+          ? "กรุณากรอกอีเมลที่ถูกต้องสำหรับรับใบเสร็จรับเงินและการยืนยันคำสั่งซื้อ"
+          : "Please enter a valid email address to receive order receipt and confirmation."
+      );
       return;
     }
 
@@ -73,9 +79,18 @@ function CheckoutForm({
     // If stripe.confirmPayment returns an error, it did not redirect immediately (e.g., card declined or validation error)
     if (error) {
       if (error.type === "card_error" || error.type === "validation_error") {
-        setErrorMessage(error.message || "การชำระเงินไม่สำเร็จ กรุณาตรวจสอบข้อมูลบัตรอีกครั้ง");
+        setErrorMessage(
+          error.message ||
+            (lang === "th"
+              ? "การชำระเงินไม่สำเร็จ กรุณาตรวจสอบข้อมูลบัตรอีกครั้ง"
+              : "Payment failed. Please verify your card details.")
+        );
       } else {
-        setErrorMessage("เกิดข้อผิดพลาดในการประมวลผลคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง");
+        setErrorMessage(
+          lang === "th"
+            ? "เกิดข้อผิดพลาดในการประมวลผลคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง"
+            : "An error occurred while processing your order. Please try again."
+        );
       }
       setIsSubmitting(false);
     }
@@ -120,12 +135,12 @@ function CheckoutForm({
           {isSubmitting ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span>กำลังประมวลผลการชำระเงิน...</span>
+              <span>{lang === "th" ? "กำลังประมวลผลการชำระเงิน..." : "Processing Payment..."}</span>
             </>
           ) : (
             <>
               <ShieldCheck className="h-5 w-5 text-white/90" />
-              <span>ชำระเงิน {formatPrice(total)}</span>
+              <span>{lang === "th" ? `ชำระเงิน ${formatPrice(total)}` : `Pay ${formatPrice(total)}`}</span>
             </>
           )}
         </button>

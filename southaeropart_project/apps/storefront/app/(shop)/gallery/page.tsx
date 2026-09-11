@@ -14,18 +14,20 @@ import {
 } from "lucide-react";
 import { GALLERY_ITEMS, GalleryItem } from "@/lib/mock-data";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const CATEGORY_TABS = [
-  { id: "all", label: "ALL BUILDS" },
+  { id: "all", labelKey: "tabAll" },
   { id: "accord-g9", label: "ACCORD G9" },
   { id: "civic-fd", label: "CIVIC FD" },
   { id: "civic-fe", label: "CIVIC FE" },
   { id: "civic-fl5", label: "CIVIC FL5 TYPE R" },
   { id: "aero-cfd", label: "AERO CFD SIMULATION" },
   { id: "brand", label: "SOUTH AERO LAB" },
-];
+] as const;
 
 export default function GalleryPage() {
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
     null
@@ -62,14 +64,14 @@ export default function GalleryPage() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-[0.65rem] font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase">
-                  MOTORSPORT ARCHIVE &bull; CUSTOMER BUILDS
+                  {t.gallery.badge}
                 </span>
               </div>
               <h1 className="heading-lg text-white">
                 SOUTH AERO <span className="text-[var(--accent-red)]">GALLERY</span>
               </h1>
               <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-lg">
-                Explore our flagship project builds, track validations, wind-tunnel CFD simulations, and customer installations.
+                {t.gallery.subtitle}
               </p>
             </div>
 
@@ -88,7 +90,7 @@ export default function GalleryPage() {
                       : "bg-[#161616] border border-[#2B2B2B] text-[var(--text-secondary)] hover:text-white hover:border-[#404040]"
                   }`}
                 >
-                  {tab.label}
+                  {"labelKey" in tab ? t.gallery.tabAll : tab.label}
                 </button>
               ))}
             </div>
@@ -152,7 +154,7 @@ export default function GalleryPage() {
           {filteredItems.length === 0 && (
             <div className="text-center py-20">
               <p className="text-sm text-[var(--text-muted)] font-heading uppercase">
-                No gallery builds found in this category.
+                {t.gallery.noBuilds}
               </p>
             </div>
           )}
@@ -169,7 +171,7 @@ export default function GalleryPage() {
           <button
             onClick={() => setSelectedImageIndex(null)}
             className="absolute top-5 right-5 p-2 text-white hover:text-[var(--accent-red)] transition-colors rounded hover:bg-white/10 z-20"
-            aria-label="Close lightbox"
+            aria-label={t.gallery.closeLightbox}
           >
             <X size={28} />
           </button>
@@ -178,14 +180,14 @@ export default function GalleryPage() {
           <button
             onClick={prevImage}
             className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/60 hover:bg-[var(--accent-red)] text-white rounded-full transition-colors z-20 backdrop-blur-sm"
-            aria-label="Previous build photo"
+            aria-label={t.gallery.previousBuild}
           >
             <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
           </button>
           <button
             onClick={nextImage}
             className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/60 hover:bg-[var(--accent-red)] text-white rounded-full transition-colors z-20 backdrop-blur-sm"
-            aria-label="Next build photo"
+            aria-label={t.gallery.nextBuild}
           >
             <ChevronRight size={20} className="sm:w-6 sm:h-6" />
           </button>
@@ -234,7 +236,7 @@ export default function GalleryPage() {
                   href="/products"
                   className="btn-primary py-2 px-4 text-xs gap-1.5 whitespace-nowrap"
                 >
-                  SHOP PARTS <ArrowRight size={14} />
+                  {t.gallery.shopParts} <ArrowRight size={14} />
                 </Link>
               </div>
             </div>

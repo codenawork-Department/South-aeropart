@@ -10,45 +10,15 @@ import {
   Layers,
   Send,
   CheckCircle2,
-  ArrowRight,
   Phone,
   Mail,
   MapPin,
 } from "lucide-react";
 import { FeatureBadges } from "@/components/home/FeatureBadges";
-
-const PROCESS_STEPS = [
-  {
-    step: "01",
-    icon: Cpu,
-    title: "3D LASER SCANNING",
-    description:
-      "We scan OEM vehicle chassis using sub-millimeter 3D optical scanning to ensure our aerodynamic surfaces align with factory body gaps.",
-  },
-  {
-    step: "02",
-    icon: Gauge,
-    title: "CFD SIMULATION",
-    description:
-      "Computational Fluid Dynamics software models high-velocity wind patterns, calculating boundary layer pressure and downforce-to-drag efficiency.",
-  },
-  {
-    step: "03",
-    icon: Layers,
-    title: "AUTOCLAVE CARBON",
-    description:
-      "Our components are manufactured using pre-preg carbon fiber cured under high pressure and heat in autoclaves for maximum strength and minimal weight.",
-  },
-  {
-    step: "04",
-    icon: Shield,
-    title: "TRACK VALIDATION",
-    description:
-      "Every prototype undergoes high-speed proving tests to guarantee structural integrity, zero vibration, and measurable aerodynamic gains.",
-  },
-];
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 function AboutPage() {
+  const { lang, t } = useLanguage();
   const [formSent, setFormSent] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -56,6 +26,33 @@ function AboutPage() {
     vehicle: "",
     message: "",
   });
+
+  const processSteps = [
+    {
+      step: "01",
+      icon: Cpu,
+      title: t.about.step1Title,
+      description: t.about.step1Desc,
+    },
+    {
+      step: "02",
+      icon: Gauge,
+      title: t.about.step2Title,
+      description: t.about.step2Desc,
+    },
+    {
+      step: "03",
+      icon: Layers,
+      title: t.about.step3Title,
+      description: t.about.step3Desc,
+    },
+    {
+      step: "04",
+      icon: Shield,
+      title: t.about.step4Title,
+      description: t.about.step4Desc,
+    },
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,19 +67,19 @@ function AboutPage() {
       <section className="relative overflow-hidden bg-gradient-to-b from-[#141414] via-[#0E0E0E] to-[#0A0A0A] border-b border-[#1E1E1E]">
         <div className="container-main py-16 md:py-24 text-center max-w-3xl mx-auto relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#181818] border border-[#2B2B2B] rounded-full text-[0.65rem] font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase mb-4">
-            AERODYNAMIC MOTORSPORT ENGINEERING
+            {t.about.heroBadge}
           </div>
 
           <h1 className="heading-xl text-white">
-            ABOUT <span className="text-[var(--accent-red)]">SOUTH AERO</span>
+            {t.about.heroTitle} <span className="text-[var(--accent-red)]">{t.about.heroHighlight}</span>
           </h1>
 
           <p className="font-heading text-sm md:text-base tracking-[0.25em] text-[var(--text-secondary)] mt-3 uppercase font-semibold">
-            NOT LOUD, JUST DIFFERENT.
+            {t.about.heroTagline}
           </p>
 
           <p className="body-md text-[var(--text-secondary)] mt-4 leading-relaxed">
-            Founded with a singular vision: to bring authentic motorsport aerodynamic engineering to street and track enthusiasts. We reject non-functional cosmetic kits in favor of scientifically validated, race-inspired performance.
+            {t.about.heroDesc}
           </p>
         </div>
       </section>
@@ -93,16 +90,16 @@ function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-center">
             <div className="order-2 md:order-1 md:col-span-6 lg:col-span-6 space-y-4">
               <span className="text-xs font-heading font-bold text-[var(--accent-red)] tracking-widest uppercase">
-                OUR STORY &bull; BORN ON THE TRACK
+                {t.about.storyBadge}
               </span>
               <h2 className="heading-lg text-white">
-                FUNCTION FIRST, SCULPTED FOR THE STREETS
+                {t.about.storyTitle}
               </h2>
               <p className="body-md text-[var(--text-secondary)]">
-                South Aero Performance started in Thailand with a group of automotive engineers and time-attack racers who were dissatisfied with generic aftermarket body kits that caused excessive drag and poor fitment.
+                {t.about.storyDesc1}
               </p>
               <p className="body-md text-[var(--text-secondary)]">
-                By investing in high-precision 3D scanning, high-end CFD software, and autoclave carbon manufacturing, we engineer complete aerodynamic packages that transform the vehicle stance while pushing real downforce onto the pavement.
+                {t.about.storyDesc2}
               </p>
             </div>
 
@@ -126,18 +123,18 @@ function AboutPage() {
         <div className="container-main">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-xs font-heading font-bold text-[var(--accent-red)] tracking-widest uppercase">
-              PRECISION METHODOLOGY
+              {t.about.processBadge}
             </span>
             <h2 className="heading-lg text-white mt-1">
-              OUR ENGINEERING PROCESS
+              {t.about.processTitle}
             </h2>
             <p className="body-sm text-[var(--text-muted)] mt-2">
-              From raw vehicle scan to wind-tunnel calibrated track ready aero.
+              {t.about.processSubtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {PROCESS_STEPS.map(({ step, icon: Icon, title, description }) => (
+            {processSteps.map(({ step, icon: Icon, title, description }) => (
               <div
                 key={step}
                 className="card p-6 bg-[#131313] border-[#222222] hover:border-[var(--accent-red)] transition-all duration-300 group"
@@ -171,13 +168,13 @@ function AboutPage() {
             <div className="md:col-span-5 lg:col-span-5 space-y-6">
               <div>
                 <span className="text-xs font-heading font-bold text-[var(--accent-red)] tracking-widest uppercase">
-                  GET IN TOUCH
+                  {t.about.contactBadge}
                 </span>
                 <h2 className="heading-md text-white mt-1">
-                  CUSTOM BUILDS &amp; WHOLESALE
+                  {t.about.contactTitle}
                 </h2>
                 <p className="body-sm text-[var(--text-secondary)] mt-2">
-                  Interested in custom aerodynamic fabrication, dealership inquiries, or finding a certified installer near you? Contact our engineering team directly.
+                  {t.about.contactDesc}
                 </p>
               </div>
 
@@ -215,10 +212,10 @@ function AboutPage() {
                       className="text-[var(--success)] mx-auto"
                     />
                     <h3 className="font-heading text-lg font-bold text-white uppercase">
-                      MESSAGE RECEIVED
+                      {t.about.messageReceived}
                     </h3>
                     <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto">
-                      Thank you for reaching out. Our aerodynamics team will get back to you within 24 hours.
+                      {t.about.messageReceivedDesc}
                     </p>
                   </div>
                 ) : (
@@ -226,7 +223,7 @@ function AboutPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-[0.65rem] font-heading font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
-                          YOUR NAME
+                          {t.about.formName}
                         </label>
                         <input
                           type="text"
@@ -235,14 +232,14 @@ function AboutPage() {
                           onChange={(e) =>
                             setFormData({ ...formData, name: e.target.value })
                           }
-                          placeholder="John Doe"
+                          placeholder={lang === "th" ? "เช่น คุณสมชาย" : "John Doe"}
                           className="input-dark w-full text-xs"
                         />
                       </div>
 
                       <div>
                         <label className="text-[0.65rem] font-heading font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
-                          EMAIL ADDRESS
+                          {t.about.formEmail}
                         </label>
                         <input
                           type="email"
@@ -259,7 +256,7 @@ function AboutPage() {
 
                     <div>
                       <label className="text-[0.65rem] font-heading font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
-                        VEHICLE MAKE &amp; MODEL (OPTIONAL)
+                        {t.about.formVehicle}
                       </label>
                       <input
                         type="text"
@@ -267,14 +264,14 @@ function AboutPage() {
                         onChange={(e) =>
                           setFormData({ ...formData, vehicle: e.target.value })
                         }
-                        placeholder="e.g. Honda Accord G9 2.4 (2015)"
+                        placeholder={lang === "th" ? "เช่น Honda Accord G9 2.4 (2015)" : "e.g. Honda Accord G9 2.4 (2015)"}
                         className="input-dark w-full text-xs"
                       />
                     </div>
 
                     <div>
                       <label className="text-[0.65rem] font-heading font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
-                        MESSAGE / INQUIRY
+                        {t.about.formMessage}
                       </label>
                       <textarea
                         rows={4}
@@ -283,7 +280,7 @@ function AboutPage() {
                         onChange={(e) =>
                           setFormData({ ...formData, message: e.target.value })
                         }
-                        placeholder="Tell us about your build requirements..."
+                        placeholder={lang === "th" ? "บอกเล่าความต้องการ หรือสอบถามรายละเอียดเพิ่มเติม..." : "Tell us about your build requirements..."}
                         className="input-dark w-full text-xs resize-none"
                       />
                     </div>
@@ -292,7 +289,7 @@ function AboutPage() {
                       type="submit"
                       className="btn-primary w-full justify-center gap-2 py-3 text-xs"
                     >
-                      SEND INQUIRY <Send size={14} />
+                      {t.about.sendInquiry} <Send size={14} />
                     </button>
                   </form>
                 )}

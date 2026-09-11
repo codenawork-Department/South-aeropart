@@ -106,6 +106,7 @@ export default async function OrderDetailPage({
       order={res.data.order}
       items={res.data.items}
       history={res.data.history}
+      guestToken={guestToken}
     />
   );
 }

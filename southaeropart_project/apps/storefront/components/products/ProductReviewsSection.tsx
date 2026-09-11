@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import Image from "next/image";
 import { Star, MessageSquarePlus, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { submitReview, getProductReviews } from "@/actions/review.actions";
 
@@ -107,7 +108,7 @@ export function ProductReviewsSection({ productId }: ProductReviewsSectionProps)
                       size={16}
                       className={
                         s <= Math.round(Number(avgRating))
-                          ? "text-yellow-400 fill-yellow-400"
+                          ? "text-red-500 fill-red-500 drop-shadow-[0_0_6px_rgba(239,68,68,0.4)]"
                           : "text-neutral-600"
                       }
                     />
@@ -161,27 +162,29 @@ export function ProductReviewsSection({ productId }: ProductReviewsSectionProps)
             <label className="block text-xs font-heading uppercase text-gray-300 mb-2">
               ให้คะแนนความพึงพอใจ <span className="text-[var(--accent-red)]">*</span>
             </label>
-            <div className="flex items-center gap-1.5">
+            <div
+              className="inline-flex items-center p-1 rounded-xl bg-[#0C0C0C] border border-[#222222]"
+              onMouseLeave={() => setHoverRating(0)}
+            >
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   type="button"
                   key={star}
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 text-neutral-500 hover:text-yellow-400 transition-colors cursor-pointer"
+                  className="p-1.5 text-neutral-600 hover:text-red-500 transition-colors cursor-pointer"
                 >
                   <Star
                     size={24}
                     className={
                       star <= (hoverRating || rating)
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-neutral-600"
+                        ? "text-red-500 fill-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+                        : "text-neutral-700"
                     }
                   />
                 </button>
               ))}
-              <span className="text-xs font-mono text-gray-400 ml-2">({rating} / 5 ดาว)</span>
+              <span className="text-xs font-mono text-gray-400 ml-2 mr-2">({(hoverRating || rating)} / 5 ดาว)</span>
             </div>
           </div>
 
@@ -236,7 +239,7 @@ export function ProductReviewsSection({ productId }: ProductReviewsSectionProps)
           <div className="py-12 text-center text-gray-500 text-xs">กำลังโหลดความคิดเห็น...</div>
         ) : reviewsList.length === 0 ? (
           <div className="py-12 bg-[#101010] border border-[#1E1E1E] rounded-2xl text-center text-gray-400 p-8">
-            <Star size={28} className="mx-auto mb-2 opacity-30 text-yellow-500" />
+            <Star size={28} className="mx-auto mb-2 opacity-30 text-red-500" />
             <p className="text-xs">ยังไม่มีรีวิวสำหรับสินค้านี้ ร่วมเป็นคนแรกที่รีวิวสินค้านี้!</p>
           </div>
         ) : (
@@ -274,7 +277,7 @@ export function ProductReviewsSection({ productId }: ProductReviewsSectionProps)
                       size={13}
                       className={
                         s <= review.rating
-                          ? "text-yellow-400 fill-yellow-400"
+                          ? "text-red-500 fill-red-500"
                           : "text-neutral-700"
                       }
                     />
@@ -288,6 +291,28 @@ export function ProductReviewsSection({ productId }: ProductReviewsSectionProps)
                 </h4>
               )}
               <p className="text-xs text-gray-300 leading-relaxed">{review.content}</p>
+
+              {/* Review Photos */}
+              {review.imageUrls && review.imageUrls.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                  {review.imageUrls.map((img, i) => (
+                    <div
+                      key={i}
+                      className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-[#2E2E2E] bg-black cursor-pointer hover:border-red-500 transition-colors"
+                      onClick={() => window.open(img, "_blank")}
+                      title="คลิกเพื่อดูรูปภาพขนาดเต็ม"
+                    >
+                      <Image
+                        src={img}
+                        alt={`Review photo ${i + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))
         )}

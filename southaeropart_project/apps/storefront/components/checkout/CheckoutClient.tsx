@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/components/providers/CartProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { createOrder, getSavedCheckoutAddresses } from "@/actions/checkout.actions";
 import {
   ShieldCheck,
@@ -27,6 +28,7 @@ export function CheckoutClient() {
   const router = useRouter();
   const { items, itemCount, subtotal, clearCart, isHydrated } = useCart();
   const { formatPrice, currency } = useCurrency();
+  const { lang, t } = useLanguage();
 
   const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("new");
@@ -200,13 +202,13 @@ export function CheckoutClient() {
             <ShoppingCart size={28} className="text-[var(--accent-red)]" />
           </div>
           <h2 className="font-heading text-xl font-bold uppercase tracking-wider text-white">
-            ไม่มีสินค้าในตะกร้า
+            {lang === "th" ? "ไม่มีสินค้าในตะกร้า" : "YOUR CART IS EMPTY"}
           </h2>
           <p className="text-xs text-[var(--text-secondary)] mt-2">
-            กรุณาเลือกชิ้นส่วนแอโรไดนามิกหรือชุดแต่งที่ต้องการสั่งซื้อก่อนดำเนินการ Checkout
+            {t.checkout.emptyCartNotice}
           </p>
           <Link href="/products" className="btn-primary mt-6 text-xs inline-flex items-center gap-2">
-            BROWSE PRODUCTS <ArrowRight size={14} />
+            {t.cartPage.browseParts} <ArrowRight size={14} />
           </Link>
         </div>
       </div>
@@ -217,11 +219,11 @@ export function CheckoutClient() {
     <div className="container-main py-8 md:py-14">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-xs text-[var(--text-muted)] font-heading tracking-wider uppercase">
-        <Link href="/" className="hover:text-white transition-colors">HOME</Link>
+        <Link href="/" className="hover:text-white transition-colors">{t.nav.home}</Link>
         <span>/</span>
-        <Link href="/cart" className="hover:text-white transition-colors">CART</Link>
+        <Link href="/cart" className="hover:text-white transition-colors">{t.cartPage.cartTitle}</Link>
         <span>/</span>
-        <span className="text-[var(--accent-red)]">CHECKOUT</span>
+        <span className="text-[var(--accent-red)]">{t.checkout.title}</span>
       </nav>
 
       {/* Header */}
@@ -233,8 +235,11 @@ export function CheckoutClient() {
           </span>
         </div>
         <h1 className="font-heading text-2xl sm:text-3xl font-extrabold uppercase tracking-wide text-white mt-1">
-          DELIVERY &amp; PAYMENT DETAILS
+          {t.checkout.title}
         </h1>
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
+          {t.checkout.subtitle}
+        </p>
       </div>
 
       {errorMsg && (
@@ -242,7 +247,7 @@ export function CheckoutClient() {
           <AlertCircle size={20} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <span className="font-heading font-bold text-white text-xs uppercase tracking-wider block mb-1">
-              ไม่สามารถดำเนินการสั่งซื้อได้ (INSUFFICIENT STOCK / ORDER BLOCKED)
+              {lang === "th" ? "ไม่สามารถดำเนินการสั่งซื้อได้ (INSUFFICIENT STOCK / ORDER BLOCKED)" : "ORDER CANNOT PROCEED (INSUFFICIENT STOCK)"}
             </span>
             <span className="leading-relaxed text-xs sm:text-sm text-gray-200">{errorMsg}</span>
             <div className="mt-3">
@@ -250,7 +255,7 @@ export function CheckoutClient() {
                 href="/cart"
                 className="inline-flex items-center gap-1.5 text-xs font-heading font-bold text-[var(--accent-red)] hover:text-red-400 uppercase tracking-wider underline transition-colors"
               >
-                <ShoppingCart size={13} /> กลับไปแก้ไขจำนวนสินค้าในตะกร้า (RETURN TO CART) &rarr;
+                <ShoppingCart size={13} /> {lang === "th" ? "กลับไปแก้ไขจำนวนสินค้าในตะกร้า (RETURN TO CART) →" : "Return to cart to adjust items →"}
               </Link>
             </div>
           </div>
@@ -269,7 +274,7 @@ export function CheckoutClient() {
                   1
                 </div>
                 <h2 className="font-heading text-base sm:text-lg font-bold uppercase tracking-wider text-white">
-                  SHIPPING ADDRESS (ที่อยู่จัดส่ง)
+                  {t.checkout.shippingInfo}
                 </h2>
               </div>
               <MapPin size={18} className="text-[var(--text-muted)]" />
@@ -279,7 +284,7 @@ export function CheckoutClient() {
             {savedAddresses.length > 0 && (
               <div className="mb-5 p-3.5 bg-[#181818] border border-[#2A2A2A] rounded-lg">
                 <label className="block text-xs font-heading font-bold uppercase tracking-wider text-white mb-1.5">
-                  USE SAVED ADDRESS (เลือกที่อยู่ที่บันทึกไว้):
+                  {t.checkout.savedAddresses}:
                 </label>
                 <select
                   value={selectedAddressId}
@@ -291,7 +296,7 @@ export function CheckoutClient() {
                       {addr.recipientName} - {addr.line1}, {addr.subDistrict}, {addr.province} {addr.postalCode}
                     </option>
                   ))}
-                  <option value="new">+ กรอกที่อยู่ใหม่ (Enter New Address)</option>
+                  <option value="new">{t.checkout.newAddress}</option>
                 </select>
               </div>
             )}
@@ -301,20 +306,20 @@ export function CheckoutClient() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    RECIPIENT NAME (ชื่อ-นามสกุลผู้รับ) <span className="text-[var(--accent-red)]">*</span>
+                    {t.checkout.recipientName} <span className="text-[var(--accent-red)]">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    placeholder="เช่น คุณสมชาย วิริยะ"
+                    placeholder={lang === "th" ? "เช่น คุณสมชาย วิริยะ" : "e.g. John Doe"}
                     className="w-full bg-[#0A0A0A] border border-[#262626] rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-red)] transition-colors placeholder:text-gray-600"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    PHONE NUMBER (เบอร์โทรศัพท์) <span className="text-[var(--accent-red)]">*</span>
+                    {t.checkout.phone} <span className="text-[var(--accent-red)]">*</span>
                   </label>
                   <input
                     type="tel"
@@ -330,7 +335,7 @@ export function CheckoutClient() {
               {/* Email */}
               <div>
                 <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                  EMAIL ADDRESS (อีเมลสำหรับรับใบเสร็จ)
+                  {t.checkout.email}
                 </label>
                 <input
                   type="email"
@@ -344,14 +349,14 @@ export function CheckoutClient() {
               {/* Address Line 1 */}
               <div>
                 <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                  ADDRESS (บ้านเลขที่, ถนน, ซอย, หมู่บ้าน/อาคาร) <span className="text-[var(--accent-red)]">*</span>
+                  {t.checkout.addressLine1} <span className="text-[var(--accent-red)]">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={line1}
                   onChange={(e) => setLine1(e.target.value)}
-                  placeholder="123/45 ถนนสุขุมวิท ซอย 55"
+                  placeholder={lang === "th" ? "123/45 ถนนสุขุมวิท ซอย 55" : "123 Sukhumvit Road"}
                   className="w-full bg-[#0A0A0A] border border-[#262626] rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-red)] transition-colors placeholder:text-gray-600"
                 />
               </div>
@@ -359,13 +364,13 @@ export function CheckoutClient() {
               {/* Address Line 2 */}
               <div>
                 <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                  ADDRESS LINE 2 (ชั้น, ห้อง, จุดสังเกต - ถ้ามี)
+                  {t.checkout.addressLine2}
                 </label>
                 <input
                   type="text"
                   value={line2}
                   onChange={(e) => setLine2(e.target.value)}
-                  placeholder="ชั้น 4 ห้อง 402"
+                  placeholder={lang === "th" ? "ชั้น 4 ห้อง 402 (ถ้ามี)" : "Apt / Suite / Unit (Optional)"}
                   className="w-full bg-[#0A0A0A] border border-[#262626] rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-red)] transition-colors placeholder:text-gray-600"
                 />
               </div>
@@ -374,27 +379,27 @@ export function CheckoutClient() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    SUB-DISTRICT (ตำบล/แขวง) <span className="text-[var(--accent-red)]">*</span>
+                    {t.checkout.subDistrict} <span className="text-[var(--accent-red)]">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={subDistrict}
                     onChange={(e) => setSubDistrict(e.target.value)}
-                    placeholder="คลองตันเหนือ"
+                    placeholder={lang === "th" ? "คลองตันเหนือ" : "Sub-district"}
                     className="w-full bg-[#0A0A0A] border border-[#262626] rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-red)] transition-colors placeholder:text-gray-600"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    DISTRICT (อำเภอ/เขต) <span className="text-[var(--accent-red)]">*</span>
+                    {t.checkout.district} <span className="text-[var(--accent-red)]">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
-                    placeholder="วัฒนา"
+                    placeholder={lang === "th" ? "วัฒนา" : "District"}
                     className="w-full bg-[#0A0A0A] border border-[#262626] rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-red)] transition-colors placeholder:text-gray-600"
                   />
                 </div>
@@ -404,20 +409,20 @@ export function CheckoutClient() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    PROVINCE (จังหวัด) <span className="text-[var(--accent-red)]">*</span>
+                    {t.checkout.province} <span className="text-[var(--accent-red)]">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={province}
                     onChange={(e) => setProvince(e.target.value)}
-                    placeholder="กรุงเทพมหานคร"
+                    placeholder={lang === "th" ? "กรุงเทพมหานคร" : "Bangkok"}
                     className="w-full bg-[#0A0A0A] border border-[#262626] rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-red)] transition-colors placeholder:text-gray-600"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    POSTAL CODE (รหัสไปรษณีย์) <span className="text-[var(--accent-red)]">*</span>
+                    {t.checkout.postalCode} <span className="text-[var(--accent-red)]">*</span>
                   </label>
                   <input
                     type="text"
@@ -440,7 +445,7 @@ export function CheckoutClient() {
                   className="rounded border-[#333333] bg-[#1A1A1A] text-[var(--accent-red)] focus:ring-[var(--accent-red)] w-4 h-4"
                 />
                 <label htmlFor="save-address-chk" className="text-xs text-[var(--text-secondary)] cursor-pointer">
-                  บันทึกที่อยู่นี้ไว้ในบัญชีสำหรับการสั่งซื้อครั้งถัดไป
+                  {t.checkout.saveToProfile}
                 </label>
               </div>
             </div>
@@ -453,7 +458,7 @@ export function CheckoutClient() {
                 2
               </div>
               <h2 className="font-heading text-base sm:text-lg font-bold uppercase tracking-wider text-white">
-                SHIPPING METHOD (วิธีการจัดส่ง)
+                {t.checkout.shippingMethod}
               </h2>
             </div>
 
@@ -479,17 +484,17 @@ export function CheckoutClient() {
                   </div>
                   <div>
                     <p className="font-heading text-sm font-bold text-white uppercase tracking-wider">
-                      STANDARD LOGISTICS (จัดส่งมาตรฐาน)
+                      {t.checkout.standardShipping}
                     </p>
                     <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                      ระยะเวลา 2-4 วันทำการ • พร้อมประกันความเสียหายพื้นฐาน
+                      {t.checkout.standardShippingDesc}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="font-heading text-sm font-bold text-white">
                     {subtotalNum >= 15000 ? (
-                      <span className="text-[var(--success)] uppercase">FREE</span>
+                      <span className="text-[var(--success)] uppercase">{t.checkout.free}</span>
                     ) : (
                       formatPrice(150, { showCode: true })
                     )}
@@ -518,11 +523,11 @@ export function CheckoutClient() {
                   </div>
                   <div>
                     <p className="font-heading text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      EXPRESS CRATED FREIGHT (ลังไม้กันกระแทกพิเศษ)
-                      <span className="badge-red text-[0.6rem] px-1.5 py-0.5">RECOMMENDED</span>
+                      {t.checkout.expressShipping}
+                      <span className="badge-red text-[0.6rem] px-1.5 py-0.5">{t.checkout.recommended}</span>
                     </p>
                     <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                      ระยะเวลา 1-2 วันทำการ • ตีโครงไม้ป้องกันชิ้นงานคาร์บอน 100%
+                      {t.checkout.expressShippingDesc}
                     </p>
                   </div>
                 </div>
@@ -542,7 +547,7 @@ export function CheckoutClient() {
                 3
               </div>
               <h2 className="font-heading text-base sm:text-lg font-bold uppercase tracking-wider text-white">
-                PAYMENT METHOD (ช่องทางการชำระเงิน)
+                {t.checkout.paymentMethod}
               </h2>
             </div>
 
@@ -570,12 +575,12 @@ export function CheckoutClient() {
                     <div className="flex items-center gap-2">
                       <QrCode size={18} className="text-[var(--accent-red)]" />
                       <p className="font-heading text-sm font-bold text-white uppercase tracking-wider">
-                        PROMPTPAY QR CODE (สแกนจ่ายผ่าน QR Code)
+                        {t.checkout.promptpayTitle}
                       </p>
-                      <span className="badge-red text-[0.6rem] px-1.5 py-0.5">MOCKUP SIMULATOR</span>
+                      <span className="badge-red text-[0.6rem] px-1.5 py-0.5">{t.checkout.mockupSimulator}</span>
                     </div>
                     <p className="text-xs text-[var(--text-muted)] mt-1 max-w-md">
-                      รองรับ Mobile Banking ทุกธนาคารในไทย เมื่อกดสั่งซื้อ ระบบจะสร้าง QR Code ให้ผู้ทดสอบสามารถสแกนหรือกดยืนยันการชำระเงินได้ทันที
+                      {t.checkout.promptpayDesc}
                     </p>
                   </div>
                 </div>
@@ -604,11 +609,11 @@ export function CheckoutClient() {
                     <div className="flex items-center gap-2">
                       <CreditCard size={18} className="text-[var(--text-muted)]" />
                       <p className="font-heading text-sm font-bold text-white uppercase tracking-wider">
-                        CREDIT / DEBIT CARD (บัตรเครดิต/เดบิต)
+                        {t.checkout.cardTitle}
                       </p>
                     </div>
                     <p className="text-xs text-[var(--text-muted)] mt-1">
-                      รองรับ Visa, Mastercard, JCB (ระบบจำลองการตัดบัตร)
+                      {t.checkout.cardMockupDesc}
                     </p>
                   </div>
                 </div>
@@ -621,7 +626,7 @@ export function CheckoutClient() {
         <div className="md:col-span-5 lg:col-span-5 sticky top-24 md:top-28 space-y-6">
           <div className="bg-[#121212] border border-[#222222] rounded-xl p-4 sm:p-6 shadow-2xl space-y-5">
             <h2 className="font-heading text-base sm:text-lg font-bold uppercase tracking-wider text-white pb-3 border-b border-[#222222]">
-              ORDER SUMMARY ({itemCount} ITEMS)
+              {t.checkout.orderSummary} {t.checkout.itemsCount.replace("{count}", String(itemCount))}
             </h2>
 
             {/* Items List Preview */}
@@ -648,10 +653,10 @@ export function CheckoutClient() {
                       {item.product.name}
                     </p>
                     <p className="text-[0.7rem] text-[var(--text-muted)]">
-                      Finish: <span className="text-gray-300">{item.variant || "Gloss Black"}</span>
+                      {t.checkout.finish} <span className="text-gray-300">{item.variant || "Gloss Black"}</span>
                     </p>
                     <p className="text-[0.7rem] text-[var(--text-muted)] font-mono">
-                      Qty: {item.quantity} × {formatPrice(item.product.price)}
+                      {t.checkout.qty} {item.quantity} × {formatPrice(item.product.price)}
                     </p>
                   </div>
                   <div className="text-right font-heading text-xs font-bold text-white">
@@ -664,24 +669,24 @@ export function CheckoutClient() {
             {/* Calculations Breakdown */}
             <div className="pt-4 border-t border-[#222222] space-y-2.5 text-xs">
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>SUBTOTAL</span>
+                <span>{t.checkout.subtotal}</span>
                 <span className="font-heading font-semibold text-white">
                   {formatPrice(subtotalNum, { showCode: true })}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>SHIPPING FEE</span>
+                <span>{t.checkout.shippingFee}</span>
                 <span className="font-heading font-semibold text-white">
                   {shippingFeeNum === 0 ? (
-                    <span className="text-[var(--success)] uppercase">FREE</span>
+                    <span className="text-[var(--success)] uppercase">{t.checkout.free}</span>
                   ) : (
                     formatPrice(shippingFeeNum, { showCode: true })
                   )}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>ESTIMATED VAT (7%)</span>
-                <span className="font-heading text-[var(--text-muted)]">INCLUDED IN TOTAL</span>
+                <span>{t.checkout.estimatedVat}</span>
+                <span className="font-heading text-[var(--text-muted)]">{t.checkout.includedInTotal}</span>
               </div>
             </div>
 
@@ -690,7 +695,7 @@ export function CheckoutClient() {
               <div className="flex items-baseline justify-between">
                 <div>
                   <span className="font-heading text-sm font-bold uppercase tracking-wider text-white">
-                    GRAND TOTAL
+                    {t.checkout.grandTotal}
                   </span>
                   <p className="text-[0.65rem] text-[var(--text-muted)] uppercase">PromptPay / Net</p>
                 </div>
@@ -704,7 +709,7 @@ export function CheckoutClient() {
 
               {currency !== "THB" && (
                 <p className="text-[0.65rem] text-[var(--text-muted)] text-right pt-1 font-sans">
-                  * ชำระเงินจริงในสกุลเงินหลัก ฿{totalNum.toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
+                  {t.checkout.actualChargeNotice.replace("{amount}", totalNum.toLocaleString(undefined, { minimumFractionDigits: 2 }))}
                 </p>
               )}
             </div>
@@ -726,16 +731,16 @@ export function CheckoutClient() {
               {isRedirecting ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>REDIRECTING TO PAYMENT...</span>
+                  <span>{t.checkout.redirecting}</span>
                 </div>
               ) : loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>CREATING ORDER...</span>
+                  <span>{t.checkout.creatingOrder}</span>
                 </div>
               ) : (
                 <>
-                  PLACE ORDER &amp; PAY <ArrowRight size={16} />
+                  {t.checkout.placeOrder} <ArrowRight size={16} />
                 </>
               )}
             </button>
@@ -743,7 +748,7 @@ export function CheckoutClient() {
             {/* Guarantee */}
             <div className="flex items-center justify-center gap-2 pt-2 text-[0.7rem] text-[var(--text-muted)]">
               <Lock size={12} className="text-[var(--success)]" />
-              <span>256-Bit SSL Encrypted &amp; Secure Checkout</span>
+              <span>{t.checkout.secureNotice}</span>
             </div>
           </div>
         </div>

@@ -1,38 +1,38 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getOrderDetails } from "@/actions/checkout.actions";
-import { MockMobilePayClient } from "@/components/checkout/MockMobilePayClient";
+import { InvoiceClient } from "@/components/orders/InvoiceClient";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "PromptPay Payment Simulator | SOUTH AERO",
-  description: "Mock PromptPay QR Code confirmation screen for testing South Aero checkout.",
+  title: "Official Tax Invoice & Commercial Receipt | SOUTH AERO High-Performance Aerodynamics",
+  description: "Official VAT Tax Invoice and International Commercial Export Receipt for South Aero orders.",
 };
 
-export default async function MockMobilePayPage({
+export default async function OrderInvoicePage({
   params,
   searchParams,
 }: {
   params: { orderId: string };
   searchParams?: { token?: string };
 }) {
-  if (process.env.NODE_ENV === "production") {
-    notFound();
-  }
-
   const { orderId } = params;
   const guestToken = searchParams?.token;
+
+  // Authoritative server-side IDOR guard via getOrderDetails
   const res = await getOrderDetails(orderId, guestToken);
 
   if (!res.success || !res.data) {
     notFound();
   }
 
+  const { order, items } = res.data;
+
   return (
-    <MockMobilePayClient
-      order={res.data.order}
-      items={res.data.items}
+    <InvoiceClient
+      order={order}
+      items={items}
       guestToken={guestToken}
     />
   );
