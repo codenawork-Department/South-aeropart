@@ -15,7 +15,6 @@ import {
   OrbitControls,
   useGLTF,
   useProgress,
-  Environment,
   BakeShadows,
 } from "@react-three/drei";
 import {
@@ -35,9 +34,15 @@ import { MinimalistGarage } from "./MinimalistGarage";
 import { prepareCarModel } from "./prepareCarModel";
 import { AdaptiveQualityMonitor } from "./AdaptiveQualityMonitor";
 import { BakedContactShadow } from "./BakedContactShadow";
+import { StudioEnvironment } from "./StudioLighting";
+import {
+  DEFAULT_RENDERING_PREFERENCES,
+  qualityForLevel,
+  type RenderingPreferences,
+  type RenderingQuality,
+} from "./renderingPreferences";
 import {
   INITIAL_QUALITY_LEVEL,
-  QUALITY_PROFILES,
   type AdaptiveQualitySample,
 } from "./adaptiveQuality";
 
@@ -190,7 +195,7 @@ function ProgressWatcher({
 }
 
 const FILTER_CONFIGS = {
-  studio: { bloom: 0.12, threshold: 1.25, vignette: 0.16, aberration: 0 },
+  studio: { bloom: 0.035, threshold: 1.8, vignette: 0.12, aberration: 0 },
   cinematic: {
     bloom: 0.28,
     threshold: 1.15,
@@ -202,13 +207,12 @@ const FILTER_CONFIGS = {
 
 const CarPostProcessing = memo(function CarPostProcessing({
   preset,
-  level,
+  quality,
 }: {
   preset: Exclude<PostFilterPreset, "off">;
-  level: AdaptiveQualitySample["level"];
+  quality: RenderingQuality;
 }) {
   const config = FILTER_CONFIGS[preset];
-  const quality = QUALITY_PROFILES[level];
   const composerRef = useRef<Composer>(null);
   const lifecycle = useMemo(() => ({ generation: 0 }), []);
   const aberrationOffset = useMemo(
@@ -276,6 +280,7 @@ export interface CarSceneProps {
   cameraPreset: CameraPreset;
   autoRotate: boolean;
   filterPreset?: PostFilterPreset;
+  renderingPreferences?: RenderingPreferences;
   onProgress?: (pct: number) => void;
   onLoaded?: () => void;
   onQualityChange?: (sample: AdaptiveQualitySample) => void;
@@ -285,6 +290,7 @@ export const CarScene = memo(function CarScene({
   cameraPreset,
   autoRotate,
   filterPreset = "studio",
+  renderingPreferences = DEFAULT_RENDERING_PREFERENCES,
   onProgress,
   onLoaded,
   onQualityChange,
@@ -301,7 +307,12 @@ export const CarScene = memo(function CarScene({
     limited: false,
   });
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const quality = QUALITY_PROFILES[sample.level];
+  const automatic = renderingPreferences.mode === "auto";
+  const quality = useMemo(
+    () =>
+      automatic ? qualityForLevel(sample.level) : renderingPreferences.manual,
+    [automatic, sample.level, renderingPreferences.manual],
+  );
   const handleLoaded = useCallback(() => {
     setModelReady(true);
     onLoaded?.();
@@ -309,14 +320,24 @@ export const CarScene = memo(function CarScene({
   const handleQuality = useCallback(
     (next: AdaptiveQualitySample) => {
       // FPS-only reports update the small DOM readout without rebuilding the 3D scene.
-      setSample((previous) =>
-        previous.level === next.level && previous.dpr === next.dpr
-          ? previous
-          : next,
+      if (automatic)
+        setSample((previous) =>
+          previous.level === next.level && previous.dpr === next.dpr
+            ? previous
+            : next,
+        );
+      onQualityChange?.(
+        automatic
+          ? next
+          : {
+              ...next,
+              level: quality.level,
+              dpr: quality.dpr,
+              limited: next.fps !== null && next.fps < 29.5,
+            },
       );
-      onQualityChange?.(next);
     },
-    [onQualityChange],
+    [onQualityChange, automatic, quality],
   );
   const handlePointerDown = () => {
     setIsUserInteracting(true);
@@ -368,34 +389,37 @@ export const CarScene = memo(function CarScene({
           near: 0.1,
           far: 60,
         }}
-        dpr={sample.dpr}
+        dpr={automatic ? sample.dpr : quality.dpr}
         frameloop={visible ? "always" : "never"}
         gl={{
           antialias: true,
           alpha: false,
           powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 0.9,
+          toneMappingExposure: 0.85,
         }}
         shadows="soft"
       >
-        <color attach="background" args={["#edf1f5"]} />
+        <color attach="background" args={["#d9e1e5"]} />
         <ProgressWatcher onProgress={onProgress} />
         <AdaptiveQualityMonitor
           enabled={modelReady && visible}
+          automatic={automatic}
           onQualityChange={handleQuality}
         />
         <Suspense fallback={null}>
           <MinimalistGarage quality={quality} />
-          <Environment
-            files="/environments/studio.hdr"
-            environmentIntensity={0.5}
+          <StudioEnvironment />
+          <hemisphereLight
+            intensity={0.45}
+            color="#edf3fa"
+            groundColor="#b5afa6"
           />
-          <ambientLight intensity={0.22} color="#ffffff" />
           <directionalLight
             key={quality.shadowMapSize}
-            position={[5.5, 8.5, 3]}
-            intensity={1.2}
+            position={[-3.5, 7, 4]}
+            intensity={0.85}
+            shadow-radius={4}
             castShadow={quality.shadowMapSize > 0}
             shadow-mapSize-width={quality.shadowMapSize || 256}
             shadow-mapSize-height={quality.shadowMapSize || 256}
@@ -410,15 +434,18 @@ export const CarScene = memo(function CarScene({
           />
           <directionalLight
             position={[-5, 6, -2]}
-            intensity={0.65}
+            intensity={0.22}
             color="#e5efff"
           />
           <directionalLight
             position={[0, 3.5, -6]}
-            intensity={0.6}
+            intensity={0.3}
             color="#fff5eb"
           />
-          <CarModel onLoaded={handleLoaded} transmission={sample.level === 4} />
+          <CarModel
+            onLoaded={handleLoaded}
+            transmission={quality.glassRefraction}
+          />
           {modelReady && (
             <>
               <BakedContactShadow
@@ -436,9 +463,9 @@ export const CarScene = memo(function CarScene({
           />
           {quality.postprocessing && filterPreset !== "off" && (
             <CarPostProcessing
-              key={`${sample.level}-${filterPreset}`}
+              key={`${quality.multisampling}-${quality.ambientOcclusion}-${filterPreset}`}
               preset={filterPreset}
-              level={sample.level}
+              quality={quality}
             />
           )}
         </Suspense>

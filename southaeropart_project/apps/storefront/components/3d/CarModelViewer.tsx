@@ -12,6 +12,7 @@ import {
   Sparkles,
   ChevronDown,
   Check,
+  SlidersHorizontal,
 } from "lucide-react";
 import type { CameraPreset, PostFilterPreset } from "./CarScene";
 import {
@@ -19,6 +20,11 @@ import {
   type AdaptiveQualitySample,
 } from "./adaptiveQuality";
 import { CarLoadingFallback } from "./CarLoadingFallback";
+import { QualitySettingsPanel } from "./QualitySettingsPanel";
+import {
+  DEFAULT_RENDERING_PREFERENCES,
+  isCustomQuality,
+} from "./renderingPreferences";
 
 const DynamicCarScene = dynamic(
   () => import("./CarScene").then((mod) => mod.CarScene),
@@ -67,6 +73,14 @@ export function CarModelViewer() {
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("hero");
   const [filterPreset, setFilterPreset] = useState<PostFilterPreset>("studio");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showQualitySettings, setShowQualitySettings] = useState(false);
+  const [renderingPreferences, setRenderingPreferences] = useState(
+    DEFAULT_RENDERING_PREFERENCES,
+  );
+  const closeQualitySettings = useCallback(
+    () => setShowQualitySettings(false),
+    [],
+  );
   const [autoRotate, setAutoRotate] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [loadProgress, setLoadProgress] = useState(0);
@@ -139,6 +153,7 @@ export function CarModelViewer() {
         cameraPreset={cameraPreset}
         autoRotate={autoRotate}
         filterPreset={filterPreset}
+        renderingPreferences={renderingPreferences}
         onProgress={handleProgress}
         onLoaded={handleLoaded}
         onQualityChange={setQualitySample}
@@ -151,11 +166,11 @@ export function CarModelViewer() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/20 pointer-events-none" />
 
       {/* TOP BAR OVERLAYS */}
-      <div className="absolute top-3 left-3 right-3 md:top-5 md:left-5 md:right-5 flex justify-between items-start pointer-events-none z-20">
+      <div className="absolute top-3 left-3 right-3 md:top-5 md:left-5 md:right-5 flex justify-between items-start gap-2 pointer-events-none z-20">
         {/* Left Telemetry Badges */}
         <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
           <div className="telemetry-pill backdrop-blur-md bg-[#121212]/80 border-[#2A2A2A]">
-            <span className="text-[var(--accent-red)] font-bold flex items-center gap-1">
+            <span className="text-[var(--accent-red)] font-bold hidden sm:flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] animate-pulse" />
               3D LIVE AERO
             </span>
@@ -174,12 +189,27 @@ export function CarModelViewer() {
 
         {/* Right Action Icons (Post Filter Preset, Auto Rotate, Fullscreen) */}
         <div className="flex items-center gap-1.5 pointer-events-auto">
+          <button
+            type="button"
+            aria-label="Open quality settings"
+            aria-controls="car-quality-settings"
+            aria-expanded={showQualitySettings}
+            onClick={() => {
+              setShowQualitySettings((previous) => !previous);
+              setShowFilterMenu(false);
+            }}
+            className="p-2 rounded-sm border border-[#444] bg-[#121212]/80 text-white/90 hover:bg-[#303238] backdrop-blur-md"
+            title="Quality: Auto / Manual"
+          >
+            <SlidersHorizontal size={14} />
+          </button>
           {/* Post Filter Preset Dropdown */}
           <div className="relative" ref={filterDropdownRef}>
             <button
               type="button"
               onClick={() => {
                 setShowFilterMenu((prev) => !prev);
+                setShowQualitySettings(false);
                 setHasInteracted(true);
               }}
               className={`p-2 sm:px-2.5 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${
@@ -356,15 +386,30 @@ export function CarModelViewer() {
           {!isLoading && qualitySample && (
             <output
               className="rounded-sm bg-[#101010]/85 px-2 py-1 text-[0.55rem] sm:text-[0.6rem] font-mono text-white/70 backdrop-blur-md"
-              title="Visual quality adjusts automatically to measured frame rate. Target: at least 30 FPS."
-              aria-label="Adaptive rendering quality"
+              title={
+                renderingPreferences.mode === "auto"
+                  ? "Visual quality adapts to measured frame rate. Target: 30 FPS or more."
+                  : "Manual quality settings stay fixed."
+              }
+              aria-label="Rendering quality"
             >
-              AUTO · {QUALITY_PROFILES[qualitySample.level].label.toUpperCase()}{" "}
+              {renderingPreferences.mode.toUpperCase()} ·{" "}
+              {renderingPreferences.mode === "manual" &&
+              isCustomQuality(renderingPreferences.manual)
+                ? "CUSTOM"
+                : QUALITY_PROFILES[
+                    renderingPreferences.mode === "manual"
+                      ? renderingPreferences.manual.level
+                      : qualitySample.level
+                  ].label.toUpperCase()}{" "}
               ·{" "}
               {qualitySample.fps === null
                 ? "CALIBRATING"
                 : `${Math.round(qualitySample.fps)} FPS`}
-              {qualitySample.limited && " · DEVICE LIMIT"}
+              {qualitySample.limited &&
+                (renderingPreferences.mode === "auto"
+                  ? " · DEVICE LIMIT"
+                  : " · BELOW 30 FPS")}
             </output>
           )}
           <Link
@@ -375,6 +420,13 @@ export function CarModelViewer() {
           </Link>
         </div>
       </div>
+      {showQualitySettings && (
+        <QualitySettingsPanel
+          preferences={renderingPreferences}
+          onChange={setRenderingPreferences}
+          onClose={closeQualitySettings}
+        />
+      )}
     </div>
   );
 }

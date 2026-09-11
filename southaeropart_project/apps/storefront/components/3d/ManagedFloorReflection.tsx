@@ -7,7 +7,15 @@ import { BlurPass } from "@react-three/drei/materials/BlurPass";
 import * as THREE from "three";
 
 /** Own every reflection target so changing quality releases the previous GPU budget. */
-export function ManagedFloorReflection({ resolution }: { resolution: number }) {
+export function ManagedFloorReflection({
+  resolution,
+  colorMap,
+  surfaceMap,
+}: {
+  resolution: number;
+  colorMap: THREE.Texture;
+  surfaceMap: THREE.Texture;
+}) {
   const floor = useRef<THREE.Mesh>(null);
   const gl = useThree((state) => state.gl);
   const resources = useMemo(() => {
@@ -32,18 +40,22 @@ export function ManagedFloorReflection({ resolution }: { resolution: number }) {
       depthScale: 0,
     });
     const material = new MeshReflectorMaterial();
-    material.color.set("#e9e8e5");
+    material.color.set("#ffffff");
+    material.map = colorMap;
+    material.roughnessMap = surfaceMap;
+    material.bumpMap = surfaceMap;
+    material.bumpScale = 0.006;
     material.roughness = 0.48;
-    material.metalness = 0.02;
-    material.envMapIntensity = 0.45;
+    material.metalness = 0;
+    material.envMapIntensity = 0.65;
     material.textureMatrix = textureMatrix;
     material.tDiffuse = reflection.texture;
     material.tDiffuseBlur = blurred.texture;
     material.hasBlur = true;
     material.defines = { ...material.defines, USE_BLUR: "" };
-    material.mirror = 0.18;
-    material.mixStrength = 0.32;
-    material.mixBlur = 2;
+    material.mirror = 0.24;
+    material.mixStrength = 0.55;
+    material.mixBlur = 1.5;
     material.mixContrast = 0.9;
 
     return {
@@ -64,7 +76,7 @@ export function ManagedFloorReflection({ resolution }: { resolution: number }) {
       target: new THREE.Vector3(),
       q: new THREE.Vector4(),
     };
-  }, [gl, resolution]);
+  }, [gl, resolution, colorMap, surfaceMap]);
 
   useEffect(
     () => () => {
