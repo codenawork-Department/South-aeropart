@@ -9,6 +9,7 @@ import { CurrencyProvider } from "@/components/providers/CurrencyProvider";
 import { getUserLanguagePreference, getUserCurrencyPreference } from "@/actions/profile.actions";
 import { Language, DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME, sanitizeLanguage } from "@/i18n/config";
 import { Currency, DEFAULT_CURRENCY, CURRENCY_COOKIE_NAME, sanitizeCurrency } from "@/lib/currency";
+import { CustomerShipmentAlertToast } from "@/components/orders/CustomerShipmentAlertToast";
 import "./globals.css";
 
 const inter = Inter({
@@ -84,7 +85,10 @@ export default async function RootLayout({
           <AuthSessionTracker />
           <LanguageProvider initialLang={initialLang}>
             <CurrencyProvider initialCurrency={initialCurrency}>
-              <RealtimeLiveProvider>{children}</RealtimeLiveProvider>
+              <RealtimeLiveProvider>
+                <CustomerShipmentAlertToast />
+                {children}
+              </RealtimeLiveProvider>
             </CurrencyProvider>
           </LanguageProvider>
         </body>

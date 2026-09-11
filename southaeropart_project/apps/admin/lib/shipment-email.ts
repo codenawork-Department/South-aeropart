@@ -35,7 +35,10 @@ function generateShipmentEmailHtml({
 }: SendShipmentEmailParams): string {
   const siteUrl = process.env.NEXT_PUBLIC_STOREFRONT_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const orderUrl = `${siteUrl}/orders/${order.id}`;
-  const carrierTrackingUrl = getCarrierTrackingUrl(shippingCarrier, trackingNumber) || orderUrl;
+  const hasRealTracking = Boolean(trackingNumber && trackingNumber.trim() && trackingNumber !== "อยู่ระหว่างเตรียมส่งมอบให้ขนส่ง");
+  const carrierTrackingUrl = hasRealTracking
+    ? getCarrierTrackingUrl(shippingCarrier, trackingNumber) || orderUrl
+    : orderUrl;
 
   const address = order.shippingAddress;
   const addressParts = [
@@ -151,7 +154,7 @@ function generateShipmentEmailHtml({
 
                     <div>
                       <a href="${carrierTrackingUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #D60000; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 12px 28px; border-radius: 6px; box-shadow: 0 4px 14px rgba(214, 0, 0, 0.4);">
-                        คลิกเพื่อตรวจสอบสถานะพัสดุ (TRACK PACKAGE) &rarr;
+                        ${hasRealTracking ? "คลิกเพื่อตรวจสอบสถานะพัสดุ (TRACK PACKAGE)" : "คลิกเพื่อดูรายละเอียดคำสั่งซื้อ (VIEW ORDER)"} &rarr;
                       </a>
                     </div>
                   </td>
@@ -261,13 +264,9 @@ export async function sendShipmentNotificationEmail(
       return { success: false, error: "ไม่พบข้อมูลคำสั่งซื้อ" };
     }
 
-    const trackingNumber = options?.trackingNumber || order.trackingNumber;
-    const shippingCarrier = options?.shippingCarrier || order.shippingCarrier || "South Aero Logistics";
-
-    if (!trackingNumber) {
-      console.warn(`[ShipmentEmail] Order ${order.orderNumber} has no tracking number. Skipping email.`);
-      return { success: false, error: "ยังไม่มีหมายเลขพัสดุสำหรับคำสั่งซื้อนี้" };
-    }
+    const rawTracking = options?.trackingNumber || order.trackingNumber;
+    const trackingNumber = rawTracking && rawTracking.trim() ? rawTracking.trim() : "อยู่ระหว่างเตรียมส่งมอบให้ขนส่ง";
+    const shippingCarrier = options?.shippingCarrier || order.shippingCarrier || "South Aero Standard Logistics";
 
     // 2. Fetch order items and bundle parts
     const rawItems = await db
@@ -299,7 +298,7 @@ export async function sendShipmentNotificationEmail(
         .where(eq(users.id, order.userId))
         .limit(1);
 
-      if (user?.email && !user.email.includes("@southaero.local")) {
+      if (user?.email) {
         recipientEmail = user.email.trim();
       }
     }
@@ -324,7 +323,10 @@ export async function sendShipmentNotificationEmail(
     });
 
     // 5. Send email via Resend
-    const subject = `[SOUTH AERO] แจ้งจัดส่งสินค้าและหมายเลขพัสดุ คำสั่งซื้อ #${order.orderNumber} (${shippingCarrier}: ${trackingNumber})`;
+    const subject = rawTracking && rawTracking.trim()
+      ? `[SOUTH AERO] แจ้งจัดส่งสินค้าและหมายเลขพัสดุ คำสั่งซื้อ #${order.orderNumber} (${shippingCarrier}: ${trackingNumber})`
+      : `[SOUTH AERO] แจ้งจัดส่งสินค้า คำสั่งซื้อ #${order.orderNumber} (${shippingCarrier})`;
+
     const result = await sendEmail({
       to: recipientEmail,
       subject,

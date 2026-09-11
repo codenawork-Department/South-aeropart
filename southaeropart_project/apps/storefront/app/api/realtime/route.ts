@@ -70,7 +70,7 @@ function ensureHeartbeat() {
 
 let currentCatalogVersion = Date.now();
 
-function broadcastEvent(data: { type: string; version: number; action?: string; timestamp: number }) {
+function broadcastEvent(data: { type: string; version: number; action?: string; payload?: unknown; timestamp: number }) {
   currentCatalogVersion = data.version;
   const message = `data: ${JSON.stringify(data)}\n\n`;
   const encoded = new TextEncoder().encode(message);
@@ -202,6 +202,7 @@ export async function POST(request: NextRequest) {
       revalidatePath("/");
       revalidatePath("/collection");
       revalidatePath("/products");
+      revalidatePath("/orders");
     } catch {
       // ignore
     }
@@ -210,6 +211,7 @@ export async function POST(request: NextRequest) {
       type: "refresh",
       version: timestamp,
       action,
+      payload: body?.payload || null,
       timestamp,
     });
 

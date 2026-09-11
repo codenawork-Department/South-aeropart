@@ -1106,8 +1106,20 @@ export async function rejectMockPayment(
   }
 }
 
+export interface UserOrderItemDetail {
+  id: string;
+  orderId: string;
+  productId: string | null;
+  productNameSnapshot: string;
+  unitPrice: string;
+  quantity: number;
+  lineTotal: string;
+  imageUrl: string | null;
+  bundlePartsCount: number;
+}
+
 /**
- * Fetches all orders for current authenticated user.
+ * Fetches all orders for current authenticated user with item previews.
  */
 export async function getUserOrders() {
   try {
@@ -1147,26 +1159,155 @@ export async function getUserOrders() {
     const orderIds = userOrders.map((o) => o.id);
     const allItems = await db
       .select({
+        id: orderItems.id,
         orderId: orderItems.orderId,
+        productId: orderItems.productId,
+        productNameSnapshot: orderItems.productNameSnapshot,
+        unitPrice: orderItems.unitPrice,
         quantity: orderItems.quantity,
+        lineTotal: orderItems.lineTotal,
       })
       .from(orderItems)
       .where(inArray(orderItems.orderId, orderIds));
 
-    const countMap = new Map<string, number>();
-    for (const item of allItems) {
-      countMap.set(item.orderId, (countMap.get(item.orderId) || 0) + item.quantity);
+    // Batch query product images for unique productIds
+    const productIds = Array.from(
+      new Set(allItems.map((i) => i.productId).filter((id): id is string => Boolean(id)))
+    );
+
+    const imageMap = new Map<string, string>();
+    if (productIds.length > 0) {
+      const images = await db
+        .select({
+          productId: productImages.productId,
+          secureUrl: productImages.secureUrl,
+        })
+        .from(productImages)
+        .where(inArray(productImages.productId, productIds))
+        .orderBy(desc(productImages.isPrimary));
+
+      for (const img of images) {
+        if (!imageMap.has(img.productId)) {
+          imageMap.set(img.productId, img.secureUrl);
+        }
+      }
     }
 
-    const ordersWithCounts = userOrders.map((order) => ({
+    // Batch query bundle parts count for multi-part items
+    const itemIds = allItems.map((i) => i.id);
+    const bundleCountMap = new Map<string, number>();
+    if (itemIds.length > 0) {
+      const bundleParts = await db
+        .select({
+          orderItemId: orderItemBundleParts.orderItemId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(orderItemBundleParts)
+        .where(inArray(orderItemBundleParts.orderItemId, itemIds))
+        .groupBy(orderItemBundleParts.orderItemId);
+
+      for (const bp of bundleParts) {
+        bundleCountMap.set(bp.orderItemId, bp.count);
+      }
+    }
+
+    const countMap = new Map<string, number>();
+    const itemsByOrder = new Map<string, UserOrderItemDetail[]>();
+
+    for (const item of allItems) {
+      countMap.set(item.orderId, (countMap.get(item.orderId) || 0) + item.quantity);
+
+      const list = itemsByOrder.get(item.orderId) || [];
+      list.push({
+        id: item.id,
+        orderId: item.orderId,
+        productId: item.productId,
+        productNameSnapshot: item.productNameSnapshot,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        lineTotal: item.lineTotal,
+        imageUrl: item.productId ? (imageMap.get(item.productId) || null) : null,
+        bundlePartsCount: bundleCountMap.get(item.id) || 0,
+      });
+      itemsByOrder.set(item.orderId, list);
+    }
+
+    const ordersWithDetails = userOrders.map((order) => ({
       ...order,
       itemCount: countMap.get(order.id) || 0,
+      items: itemsByOrder.get(order.id) || [],
     }));
 
-    return { success: true, data: ordersWithCounts };
+    return { success: true, data: ordersWithDetails };
   } catch (error) {
     console.error("[getUserOrders] Error:", error);
     return { success: false, error: "Failed to load orders", data: [] };
+  }
+}
+
+/**
+ * Fetches the most recent shipped order for the current user.
+ * Used to display on-screen shipment toast/notification.
+ */
+export async function getLatestCustomerShipmentAlertAction() {
+  try {
+    const { userId } = auth();
+    if (!userId) {
+      return { success: true, data: null };
+    }
+
+    const [latestShippedOrder] = await db
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        status: orders.status,
+        trackingNumber: orders.trackingNumber,
+        shippingCarrier: orders.shippingCarrier,
+        updatedAt: orders.updatedAt,
+        total: orders.total,
+        currency: orders.currency,
+      })
+      .from(orders)
+      .where(and(eq(orders.userId, userId), eq(orders.status, "shipped")))
+      .orderBy(desc(orders.updatedAt))
+      .limit(1);
+
+    if (!latestShippedOrder) {
+      return { success: true, data: null };
+    }
+
+    // Fetch first product snapshot and image for this order
+    const [firstItem] = await db
+      .select({
+        productId: orderItems.productId,
+        productNameSnapshot: orderItems.productNameSnapshot,
+      })
+      .from(orderItems)
+      .where(eq(orderItems.orderId, latestShippedOrder.id))
+      .limit(1);
+
+    let imageUrl: string | null = null;
+    if (firstItem?.productId) {
+      const [img] = await db
+        .select({ secureUrl: productImages.secureUrl })
+        .from(productImages)
+        .where(eq(productImages.productId, firstItem.productId))
+        .orderBy(desc(productImages.isPrimary))
+        .limit(1);
+      imageUrl = img?.secureUrl || null;
+    }
+
+    return {
+      success: true,
+      data: {
+        ...latestShippedOrder,
+        productName: firstItem?.productNameSnapshot || "สินค้าชิ้นส่วนแอโรพาร์ท South Aero",
+        imageUrl,
+      },
+    };
+  } catch (error) {
+    console.error("[getLatestCustomerShipmentAlertAction] Error:", error);
+    return { success: false, data: null };
   }
 }
 
