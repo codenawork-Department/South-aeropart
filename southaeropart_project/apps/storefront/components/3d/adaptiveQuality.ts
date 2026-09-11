@@ -142,6 +142,7 @@ export class AdaptiveQualityController {
 
   pause(): void {
     this.clearWindow();
+    this.fps = null;
     this.headroomMs = 0;
     this.cappedHeadroomMs = 0;
     this.warmupMs = INITIAL_WARMUP_MS;
@@ -152,6 +153,7 @@ export class AdaptiveQualityController {
     frameTimeMs: number,
     active = true,
     nativeDpr = 2,
+    automatic = true,
   ): AdaptiveQualitySample | null {
     if (!active || !Number.isFinite(frameTimeMs) || frameTimeMs <= 0) {
       this.pause();
@@ -167,7 +169,7 @@ export class AdaptiveQualityController {
       // reset warmup forever and never reach the cheaper profiles.
       if (consecutive < 3) return null;
       this.fps = Math.round((1000 / frameTimeMs) * 10) / 10;
-      this.lowerQuality(2);
+      if (automatic) this.lowerQuality(2);
       return this.getSample(nativeDpr);
     }
     this.consecutiveLongFrames = 0;
@@ -190,6 +192,9 @@ export class AdaptiveQualityController {
     const p90 = sorted[Math.ceil(sorted.length * 0.9) - 1];
     this.fps = Math.round(fps * 10) / 10;
     this.clearWindow();
+
+    // Manual mode still measures FPS but must never change the user's settings.
+    if (!automatic) return this.getSample(nativeDpr);
 
     // A stable 30 Hz display is already meeting the target. Reduce early below
     // 34 FPS when frame pacing also deteriorates, and always below the floor.

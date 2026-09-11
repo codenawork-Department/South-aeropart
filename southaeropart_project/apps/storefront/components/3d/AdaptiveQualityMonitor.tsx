@@ -9,12 +9,14 @@ import {
 
 interface AdaptiveQualityMonitorProps {
   enabled?: boolean;
+  automatic?: boolean;
   onQualityChange: (sample: AdaptiveQualitySample) => void;
 }
 
 /** Mount inside Canvas; enable after the model and environment have resolved. */
 export function AdaptiveQualityMonitor({
   enabled = true,
+  automatic = true,
   onQualityChange,
 }: AdaptiveQualityMonitorProps) {
   const controller = useRef<AdaptiveQualityController | null>(null);
@@ -34,13 +36,14 @@ export function AdaptiveQualityMonitor({
       document.removeEventListener("visibilitychange", pause);
       window.removeEventListener("resize", pause);
     };
-  }, [enabled]);
+  }, [enabled, automatic]);
 
   useFrame((_, delta) => {
     const sample = controller.current!.addFrame(
       delta * 1000,
       enabled && document.visibilityState === "visible",
       window.devicePixelRatio,
+      automatic,
     );
     if (sample) onSample.current(sample);
   });

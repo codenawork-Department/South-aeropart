@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { isCustomQuality, qualityForLevel } from "./renderingPreferences";
 import {
   AdaptiveQualityController,
   INITIAL_QUALITY_LEVEL,
@@ -15,6 +16,34 @@ function renderFor(
     controller.addFrame(1000 / fps);
   return controller.getSample();
 }
+
+test("manual mode reports FPS without changing quality, even during severe overload", () => {
+  const controller = new AdaptiveQualityController(3);
+  for (let i = 0; i < 100; i++) controller.addFrame(100, true, 2, false);
+  assert.equal(controller.getSample().level, 3);
+  assert.equal(controller.getSample().fps, 10);
+  for (let i = 0; i < 10; i++) controller.addFrame(1000, true, 2, false);
+  assert.equal(controller.getSample().level, 3);
+  assert.equal(controller.getSample().dpr, 1.5);
+  for (let i = 0; i < 2000; i++) controller.addFrame(1000 / 60, true, 2, false);
+  assert.equal(controller.getSample().level, 3);
+  controller.pause();
+  for (let i = 0; i < 100; i++) controller.addFrame(100, true, 2, true);
+  assert.equal(
+    controller.getSample().level,
+    0,
+    "Auto resumes adapting after Manual",
+  );
+});
+
+test("manual presets are independent and individual detail changes are shown as custom", () => {
+  const preset = qualityForLevel(3);
+  assert.equal(isCustomQuality(preset), false);
+  assert.equal(preset.glassRefraction, true);
+  assert.equal(isCustomQuality({ ...preset, reflections: false }), true);
+  assert.equal(isCustomQuality({ ...preset, glassRefraction: false }), true);
+  assert.equal(qualityForLevel(3).reflections, true);
+});
 
 test("starts balanced, observes real frames, and probes up only after sustained headroom", () => {
   const policy = new AdaptiveQualityController();

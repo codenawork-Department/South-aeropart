@@ -52,14 +52,14 @@ function prepareMaterial(source: THREE.Material): THREE.Material {
   } else if (source.name === "Paint") {
     const paint = material as THREE.MeshPhysicalMaterial;
     paint.metalness = 0.45;
-    paint.roughness = 0.26;
-    paint.clearcoat = 1;
-    paint.clearcoatRoughness = 0.09;
+    paint.roughness = 0.3;
+    paint.clearcoat = 0.75;
+    paint.clearcoatRoughness = 0.19;
     paint.envMapIntensity = 0.7;
   } else if (GLASS_MATERIALS.has(source.name)) {
     const glass = material as THREE.MeshPhysicalMaterial;
     glass.metalness = 0;
-    glass.roughness = source.name === "GlassMtl" ? 0.055 : 0.12;
+    glass.roughness = source.name === "GlassMtl" ? 0.085 : 0.12;
     glass.ior = 1.5;
     glass.thickness = 0.006;
     glass.attenuationDistance = 0.6;
