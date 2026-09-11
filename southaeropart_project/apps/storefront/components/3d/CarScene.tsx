@@ -330,11 +330,11 @@ export const CarScene = memo(function CarScene({
         automatic
           ? next
           : {
-              ...next,
-              level: quality.level,
-              dpr: quality.dpr,
-              limited: next.fps !== null && next.fps < 29.5,
-            },
+            ...next,
+            level: quality.level,
+            dpr: quality.dpr,
+            limited: next.fps !== null && next.fps < 29.5,
+          },
       );
     },
     [onQualityChange, automatic, quality],
