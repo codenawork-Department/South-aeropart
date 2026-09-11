@@ -40,34 +40,34 @@ const FILTER_OPTIONS: {
   badge: string;
   description: string;
 }[] = [
-  {
-    id: "studio",
-    label: "Studio Real",
-    badge: "RECOMMENDED",
-    description:
-      "Photorealistic white showroom with soft specular highlights and clean reflection",
-  },
-  {
-    id: "cinematic",
-    label: "Cinematic HDR",
-    badge: "FILMIC ACES",
-    description:
-      "Punchy film lighting with smooth ACES filmic roll-off and aerodynamic highlights",
-  },
-  {
-    id: "midnight",
-    label: "Midnight Cyber",
-    badge: "NEON GLOW",
-    description:
-      "High-glow aesthetic with vibrant LED illumination on DRLs & taillights",
-  },
-  {
-    id: "off",
-    label: "Raw WebGL",
-    badge: "NO POST-FX",
-    description: "Standard 3D render without post-processing filters",
-  },
-];
+    {
+      id: "studio",
+      label: "Studio Real",
+      badge: "RECOMMENDED",
+      description:
+        "Photorealistic white showroom with soft specular highlights and clean reflection",
+    },
+    {
+      id: "cinematic",
+      label: "Cinematic HDR",
+      badge: "FILMIC ACES",
+      description:
+        "Punchy film lighting with smooth ACES filmic roll-off and aerodynamic highlights",
+    },
+    {
+      id: "midnight",
+      label: "Midnight Cyber",
+      badge: "NEON GLOW",
+      description:
+        "High-glow aesthetic with vibrant LED illumination on DRLs & taillights",
+    },
+    {
+      id: "off",
+      label: "Raw WebGL",
+      badge: "NO POST-FX",
+      description: "Standard 3D render without post-processing filters",
+    },
+  ];
 
 export function CarModelViewer() {
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("hero");
@@ -95,10 +95,10 @@ export function CarModelViewer() {
   const toggleFullscreen = async () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
-      await containerRef.current.requestFullscreen().catch(() => {});
+      await containerRef.current.requestFullscreen().catch(() => { });
       setIsFullscreen(true);
     } else {
-      await document.exitFullscreen().catch(() => {});
+      await document.exitFullscreen().catch(() => { });
       setIsFullscreen(false);
     }
   };
@@ -141,11 +141,10 @@ export function CarModelViewer() {
   return (
     <div
       ref={containerRef}
-      className={`relative w-full rounded-sm overflow-hidden border border-[#222222] bg-[#0A0A0A] shadow-2xl shadow-black/90 transition-all duration-300 group ${
-        isFullscreen
-          ? "fixed inset-0 z-50 rounded-none border-none aspect-auto h-screen"
-          : "aspect-[16/10] sm:aspect-[16/9] md:aspect-[2/1] lg:aspect-[2.2/1] min-h-[280px] sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
-      }`}
+      className={`relative w-full rounded-sm overflow-hidden border border-[#222222] bg-[#0A0A0A] shadow-2xl shadow-black/90 transition-all duration-300 group ${isFullscreen
+        ? "fixed inset-0 z-50 rounded-none border-none aspect-auto h-screen"
+        : "aspect-[16/10] sm:aspect-[16/9] md:aspect-[2/1] lg:aspect-[2.2/1] min-h-[280px] sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+        }`}
       onPointerDown={() => setHasInteracted(true)}
     >
       {/* 3D Scene with Post-Processing Filters */}
@@ -212,11 +211,10 @@ export function CarModelViewer() {
                 setShowQualitySettings(false);
                 setHasInteracted(true);
               }}
-              className={`p-2 sm:px-2.5 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${
-                filterPreset !== "off"
-                  ? "bg-amber-500/15 border-amber-500/60 text-amber-300 hover:bg-amber-500/25"
-                  : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
-              }`}
+              className={`p-2 sm:px-2.5 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${filterPreset !== "off"
+                ? "bg-amber-500/15 border-amber-500/60 text-amber-300 hover:bg-amber-500/25"
+                : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
+                }`}
               title="Select Post-Processing Filter"
             >
               <Sparkles
@@ -232,9 +230,8 @@ export function CarModelViewer() {
               </span>
               <ChevronDown
                 size={11}
-                className={`transition-transform duration-200 text-white/60 ${
-                  showFilterMenu ? "rotate-180" : ""
-                }`}
+                className={`transition-transform duration-200 text-white/60 ${showFilterMenu ? "rotate-180" : ""
+                  }`}
               />
             </button>
 
@@ -255,33 +252,30 @@ export function CarModelViewer() {
                       setShowFilterMenu(false);
                       setHasInteracted(true);
                     }}
-                    className={`w-full text-left p-2 rounded-sm transition-all flex items-start justify-between gap-2 group mb-0.5 ${
-                      filterPreset === opt.id
-                        ? "bg-[#1C1C1C] text-white border border-[#3E3E3E]"
-                        : "hover:bg-[#161616] text-white/70 hover:text-white border border-transparent"
-                    }`}
+                    className={`w-full text-left p-2 rounded-sm transition-all flex items-start justify-between gap-2 group mb-0.5 ${filterPreset === opt.id
+                      ? "bg-[#1C1C1C] text-white border border-[#3E3E3E]"
+                      : "hover:bg-[#161616] text-white/70 hover:text-white border border-transparent"
+                      }`}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-xs font-heading font-bold transition-colors ${
-                            filterPreset === opt.id
-                              ? "text-amber-300"
-                              : "text-white group-hover:text-[var(--accent-red)]"
-                          }`}
+                          className={`text-xs font-heading font-bold transition-colors ${filterPreset === opt.id
+                            ? "text-amber-300"
+                            : "text-white group-hover:text-[var(--accent-red)]"
+                            }`}
                         >
                           {opt.label}
                         </span>
                         <span
-                          className={`text-[0.52rem] px-1 py-0.2 rounded font-mono font-semibold ${
-                            opt.id === "studio"
-                              ? "bg-amber-500/20 text-amber-300"
-                              : opt.id === "cinematic"
-                                ? "bg-red-500/20 text-red-300"
-                                : opt.id === "midnight"
-                                  ? "bg-blue-500/20 text-blue-300"
-                                  : "bg-white/10 text-white/50"
-                          }`}
+                          className={`text-[0.52rem] px-1 py-0.2 rounded font-mono font-semibold ${opt.id === "studio"
+                            ? "bg-amber-500/20 text-amber-300"
+                            : opt.id === "cinematic"
+                              ? "bg-red-500/20 text-red-300"
+                              : opt.id === "midnight"
+                                ? "bg-blue-500/20 text-blue-300"
+                                : "bg-white/10 text-white/50"
+                            }`}
                         >
                           {opt.badge}
                         </span>
@@ -306,11 +300,10 @@ export function CarModelViewer() {
           <button
             type="button"
             onClick={() => setAutoRotate((prev) => !prev)}
-            className={`p-2 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${
-              autoRotate
-                ? "bg-[var(--accent-red)]/15 border-[var(--accent-red)]/60 text-white"
-                : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
-            }`}
+            className={`p-2 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${autoRotate
+              ? "bg-[var(--accent-red)]/15 border-[var(--accent-red)]/60 text-white"
+              : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
+              }`}
             title="Toggle Auto 360° Rotation"
           >
             <Rotate3d
@@ -370,11 +363,10 @@ export function CarModelViewer() {
                 setCameraPreset(cam.id);
                 setHasInteracted(true);
               }}
-              className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[0.58rem] sm:text-[0.62rem] md:text-[0.65rem] font-heading font-bold rounded-sm transition-all whitespace-nowrap ${
-                cameraPreset === cam.id
-                  ? "bg-[var(--accent-red)] text-white shadow-[0_0_10px_rgba(229,29,36,0.4)]"
-                  : "text-white/70 hover:text-white hover:bg-[#1E1E1E]"
-              }`}
+              className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[0.58rem] sm:text-[0.62rem] md:text-[0.65rem] font-heading font-bold rounded-sm transition-all whitespace-nowrap ${cameraPreset === cam.id
+                ? "bg-[var(--accent-red)] text-white shadow-[0_0_10px_rgba(229,29,36,0.4)]"
+                : "text-white/70 hover:text-white hover:bg-[#1E1E1E]"
+                }`}
             >
               {cam.label}
             </button>
@@ -395,13 +387,13 @@ export function CarModelViewer() {
             >
               {renderingPreferences.mode.toUpperCase()} ·{" "}
               {renderingPreferences.mode === "manual" &&
-              isCustomQuality(renderingPreferences.manual)
+                isCustomQuality(renderingPreferences.manual)
                 ? "CUSTOM"
                 : QUALITY_PROFILES[
-                    renderingPreferences.mode === "manual"
-                      ? renderingPreferences.manual.level
-                      : qualitySample.level
-                  ].label.toUpperCase()}{" "}
+                  renderingPreferences.mode === "manual"
+                    ? renderingPreferences.manual.level
+                    : qualitySample.level
+                ].label.toUpperCase()}{" "}
               ·{" "}
               {qualitySample.fps === null
                 ? "CALIBRATING"
