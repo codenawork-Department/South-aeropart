@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import test from "node:test";
+import { describe, it, expect } from "vitest";
 import { isCustomQuality, qualityForLevel } from "./renderingPreferences";
 import {
   AdaptiveQualityController,
@@ -17,113 +16,109 @@ function renderFor(
   return controller.getSample();
 }
 
-test("manual mode reports FPS without changing quality, even during severe overload", () => {
-  const controller = new AdaptiveQualityController(3);
-  for (let i = 0; i < 100; i++) controller.addFrame(100, true, 2, false);
-  assert.equal(controller.getSample().level, 3);
-  assert.equal(controller.getSample().fps, 10);
-  for (let i = 0; i < 10; i++) controller.addFrame(1000, true, 2, false);
-  assert.equal(controller.getSample().level, 3);
-  assert.equal(controller.getSample().dpr, 1.5);
-  for (let i = 0; i < 2000; i++) controller.addFrame(1000 / 60, true, 2, false);
-  assert.equal(controller.getSample().level, 3);
-  controller.pause();
-  for (let i = 0; i < 100; i++) controller.addFrame(100, true, 2, true);
-  assert.equal(
-    controller.getSample().level,
-    0,
-    "Auto resumes adapting after Manual",
-  );
-});
+describe("AdaptiveQualityController", () => {
+  it("manual mode reports FPS without changing quality, even during severe overload", () => {
+    const controller = new AdaptiveQualityController(3);
+    for (let i = 0; i < 100; i++) controller.addFrame(100, true, 2, false);
+    expect(controller.getSample().level).toBe(3);
+    expect(controller.getSample().fps).toBe(10);
+    for (let i = 0; i < 10; i++) controller.addFrame(1000, true, 2, false);
+    expect(controller.getSample().level).toBe(3);
+    expect(controller.getSample().dpr).toBe(1.5);
+    for (let i = 0; i < 2000; i++) controller.addFrame(1000 / 60, true, 2, false);
+    expect(controller.getSample().level).toBe(3);
+    controller.pause();
+    for (let i = 0; i < 100; i++) controller.addFrame(100, true, 2, true);
+    expect(controller.getSample().level).toBe(0);
+  });
 
-test("manual presets are independent and individual detail changes are shown as custom", () => {
-  const preset = qualityForLevel(3);
-  assert.equal(isCustomQuality(preset), false);
-  assert.equal(preset.glassRefraction, true);
-  assert.equal(isCustomQuality({ ...preset, reflections: false }), true);
-  assert.equal(isCustomQuality({ ...preset, glassRefraction: false }), true);
-  assert.equal(qualityForLevel(3).reflections, true);
-});
+  it("manual presets are independent and individual detail changes are shown as custom", () => {
+    const preset = qualityForLevel(3);
+    expect(isCustomQuality(preset)).toBe(false);
+    expect(preset.glassRefraction).toBe(true);
+    expect(isCustomQuality({ ...preset, reflections: false })).toBe(true);
+    expect(isCustomQuality({ ...preset, glassRefraction: false })).toBe(true);
+    expect(qualityForLevel(3).reflections).toBe(true);
+  });
 
-test("starts balanced, observes real frames, and probes up only after sustained headroom", () => {
-  const policy = new AdaptiveQualityController();
-  assert.equal(policy.getSample().level, INITIAL_QUALITY_LEVEL);
-  assert.equal(renderFor(policy, 60, 8).level, INITIAL_QUALITY_LEVEL);
-  assert.equal(renderFor(policy, 60, 3).level, 3);
-  assert.equal(renderFor(policy, 60, 12).level, 4);
-  assert.equal(renderFor(policy, 144, 30).level, 4);
-});
+  it("starts balanced, observes real frames, and probes up only after sustained headroom", () => {
+    const policy = new AdaptiveQualityController();
+    expect(policy.getSample().level).toBe(INITIAL_QUALITY_LEVEL);
+    expect(renderFor(policy, 60, 8).level).toBe(INITIAL_QUALITY_LEVEL);
+    expect(renderFor(policy, 60, 3).level).toBe(3);
+    expect(renderFor(policy, 60, 12).level).toBe(4);
+    expect(renderFor(policy, 144, 30).level).toBe(4);
+  });
 
-test("sustained overload quickly removes expensive passes and reaches the bounded emergency DPR", () => {
-  const policy = new AdaptiveQualityController(4);
-  assert.equal(renderFor(policy, 20, 3).level, 2);
-  const sample = renderFor(policy, 20, 5);
-  assert.equal(sample.level, 0);
-  assert.equal(sample.dpr, MINIMUM_DPR);
-  assert.equal(sample.limited, true);
-  assert.equal(renderFor(policy, 5, 15).dpr, MINIMUM_DPR);
-});
+  it("sustained overload quickly removes expensive passes and reaches the bounded emergency DPR", () => {
+    const policy = new AdaptiveQualityController(4);
+    expect(renderFor(policy, 20, 3).level).toBe(2);
+    const sample = renderFor(policy, 20, 5);
+    expect(sample.level).toBe(0);
+    expect(sample.dpr).toBe(MINIMUM_DPR);
+    expect(sample.limited).toBe(true);
+    expect(renderFor(policy, 5, 15).dpr).toBe(MINIMUM_DPR);
+  });
 
-test("hidden, loading, invalid, and resumed-tab intervals do not change quality", () => {
-  const policy = new AdaptiveQualityController();
-  for (let i = 0; i < 200; i++) policy.addFrame(100, false);
-  for (const delta of [10000, NaN, Infinity, -1, 0])
-    assert.equal(policy.addFrame(delta), null);
-  assert.equal(renderFor(policy, 60, 1).level, INITIAL_QUALITY_LEVEL);
-  assert.equal(policy.getSample().fps, null);
-});
+  it("hidden, loading, invalid, and resumed-tab intervals do not change quality", () => {
+    const policy = new AdaptiveQualityController();
+    for (let i = 0; i < 200; i++) policy.addFrame(100, false);
+    for (const delta of [10000, NaN, Infinity, -1, 0])
+      expect(policy.addFrame(delta)).toBeNull();
+    expect(renderFor(policy, 60, 1).level).toBe(INITIAL_QUALITY_LEVEL);
+    expect(policy.getSample().fps).toBeNull();
+  });
 
-test("repeated very slow visible frames downgrade instead of resetting warmup forever", () => {
-  const policy = new AdaptiveQualityController(4);
-  assert.equal(policy.addFrame(700), null);
-  assert.equal(policy.addFrame(700), null);
-  assert.equal(policy.addFrame(700)?.level, 2);
-  assert.equal(policy.addFrame(700)?.level, 0);
-  assert.equal(policy.addFrame(700)?.dpr, MINIMUM_DPR);
-  assert.equal(policy.getSample().limited, true);
+  it("repeated very slow visible frames downgrade instead of resetting warmup forever", () => {
+    const policy = new AdaptiveQualityController(4);
+    expect(policy.addFrame(700)).toBeNull();
+    expect(policy.addFrame(700)).toBeNull();
+    expect(policy.addFrame(700)?.level).toBe(2);
+    expect(policy.addFrame(700)?.level).toBe(0);
+    expect(policy.addFrame(700)?.dpr).toBe(MINIMUM_DPR);
+    expect(policy.getSample().limited).toBe(true);
 
-  const pausedPolicy = new AdaptiveQualityController(4);
-  pausedPolicy.addFrame(700);
-  pausedPolicy.addFrame(700);
-  pausedPolicy.addFrame(700, false);
-  assert.equal(pausedPolicy.addFrame(700), null);
-  assert.equal(pausedPolicy.getSample().level, 4);
-});
+    const pausedPolicy = new AdaptiveQualityController(4);
+    pausedPolicy.addFrame(700);
+    pausedPolicy.addFrame(700);
+    pausedPolicy.addFrame(700, false);
+    expect(pausedPolicy.addFrame(700)).toBeNull();
+    expect(pausedPolicy.getSample().level).toBe(4);
+  });
 
-test("a failed quality probe rolls back and cannot oscillate immediately back up", () => {
-  const policy = new AdaptiveQualityController();
-  assert.equal(renderFor(policy, 60, 11).level, 3);
-  // The lower profile restores 60 FPS; stop feeding overloaded frames as soon
-  // as the renderer would apply it, instead of simulating permanent overload.
-  for (let i = 0; i < 100 && policy.getSample().level === 3; i++)
-    policy.addFrame(40);
-  assert.equal(policy.getSample().level, 2);
-  assert.equal(renderFor(policy, 60, 20).level, 2);
-  assert.equal(renderFor(policy, 60, 10).level, 3);
-});
+  it("a failed quality probe rolls back and cannot oscillate immediately back up", () => {
+    const policy = new AdaptiveQualityController();
+    expect(renderFor(policy, 60, 11).level).toBe(3);
+    for (let i = 0; i < 100 && policy.getSample().level === 3; i++)
+      policy.addFrame(40);
+    expect(policy.getSample().level).toBe(2);
+    expect(renderFor(policy, 60, 20).level).toBe(2);
+    expect(renderFor(policy, 60, 10).level).toBe(3);
+  });
 
-test("a stable 30 Hz display keeps its quality and can cautiously probe upward", () => {
-  const policy = new AdaptiveQualityController();
-  assert.equal(renderFor(policy, 30, 15).level, INITIAL_QUALITY_LEVEL);
-  assert.equal(renderFor(policy, 30, 8).level, 3);
-});
+  it("a stable 30 Hz display keeps its quality and can cautiously probe upward", () => {
+    const policy = new AdaptiveQualityController();
+    expect(renderFor(policy, 30, 15).level).toBe(INITIAL_QUALITY_LEVEL);
+    expect(renderFor(policy, 30, 8).level).toBe(3);
+  });
 
-test("mixed frame pacing below 34 FPS lowers quality before sustained sub-30 rendering", () => {
-  const policy = new AdaptiveQualityController();
-  renderFor(policy, 60, 2);
-  for (
-    let i = 0;
-    i < 100 && policy.getSample().level === INITIAL_QUALITY_LEVEL;
-    i++
-  )
-    policy.addFrame(i % 2 ? 40 : 22);
-  assert.equal(policy.getSample().level, 1);
-});
+  it("mixed frame pacing below 34 FPS lowers quality before sustained sub-30 rendering", () => {
+    const policy = new AdaptiveQualityController();
+    renderFor(policy, 60, 2);
+    for (
+      let i = 0;
+      i < 100 && policy.getSample().level === INITIAL_QUALITY_LEVEL;
+      i++
+    )
+      policy.addFrame(i % 2 ? 40 : 22);
+    expect(policy.getSample().level).toBe(1);
+  });
 
-test("pixel ratio is capped to the display without lowering effects quality", () => {
-  const policy = new AdaptiveQualityController(4);
-  assert.equal(policy.getSample(1).dpr, 1);
-  assert.equal(policy.getSample(3).dpr, 2);
-  assert.equal(policy.getSample(NaN).dpr, 1);
-  assert.equal(policy.getSample(1).level, 4);
+  it("pixel ratio is capped to the display without lowering effects quality", () => {
+    const policy = new AdaptiveQualityController(4);
+    expect(policy.getSample(1).dpr).toBe(1);
+    expect(policy.getSample(3).dpr).toBe(2);
+    expect(policy.getSample(NaN).dpr).toBe(1);
+    expect(policy.getSample(1).level).toBe(4);
+  });
 });

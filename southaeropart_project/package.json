@@ -8,6 +8,7 @@
     "clean": "pnpm dlx rimraf apps/storefront/.next apps/admin/.next .turbo",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
     "db:generate": "pnpm --filter @repo/db generate",
     "db:migrate": "pnpm --filter @repo/db migrate",
     "db:push": "pnpm --filter @repo/db push",
@@ -15,7 +16,11 @@
     "tunnel:storefront": "cloudflared tunnel --url http://localhost:3000",
     "tunnel:admin": "cloudflared tunnel --url http://localhost:3001",
     "verify": "pnpm --filter storefront verify",
-    "verify:stripe": "pnpm --filter storefront verify:stripe"
+    "verify:stripe": "pnpm --filter storefront verify:stripe",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "test:e2e:stateful": "node scripts/run-stateful-e2e.mjs",
+    "test:security": "pnpm --filter e2e test:security"
   },
   "devDependencies": {
     "prettier": "^3.3.0",

@@ -1,0 +1,192 @@
+name: CI & Security Gates (OWASP ASVS L2)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NODE_ENV: "test"
+  DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/southaero_test"
+  ADMIN_SESSION_SECRET: "ci_test_admin_session_secret_at_least_32_characters_123456"
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_ci_mock_clerk_publishable_key_12345"
+  CLERK_SECRET_KEY: "sk_test_ci_mock_clerk_secret_key_12345"
+  CLERK_WEBHOOK_SECRET: "whsec_ci_mock_clerk_webhook_secret_12345"
+  STRIPE_SECRET_KEY: "sk_test_ci_mock_stripe_secret_key_12345"
+  STRIPE_WEBHOOK_SECRET: "whsec_ci_mock_stripe_webhook_secret_12345"
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_ci_mock_stripe_pub_key_12345"
+  RESEND_API_KEY: "re_ci_mock_resend_api_key_12345"
+  ORDER_TOKEN_SECRET: "ci_test_order_token_secret_for_signing_and_verifying_tokens"
+  REALTIME_SECRET: "ci_test_realtime_invalidation_secret_12345"
+  CLOUDINARY_CLOUD_NAME: "mock_cloud"
+  CLOUDINARY_API_KEY: "mock_api_key_12345"
+  CLOUDINARY_API_SECRET: "mock_api_secret_12345"
+  NEXT_PUBLIC_STOREFRONT_URL: "http://localhost:3000"
+  NEXT_PUBLIC_ADMIN_URL: "http://localhost:3001"
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Stage 1: Secret Scan (CLAUDE.md §5.6, §6.1)
+  # ─────────────────────────────────────────────────────────────
+  secret-scan:
+    name: Secret & Credential Leak Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Detection
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  # ─────────────────────────────────────────────────────────────
+  # Stage 2: Code Quality & Type Integrity (Lint & Typecheck)
+  # ─────────────────────────────────────────────────────────────
+  code-quality:
+    name: Lint & Typecheck Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm Package Manager
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.7.0
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint Across Monorepo
+        run: pnpm lint
+
+      - name: Run TypeScript Typecheck Across All Workspaces
+        run: pnpm typecheck
+
+  # ─────────────────────────────────────────────────────────────
+  # Stage 3: Monorepo Vitest Security & Unit Tests (131+ Tests)
+  # ─────────────────────────────────────────────────────────────
+  vitest-suite:
+    name: Vitest Security Primitives & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm Package Manager
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.7.0
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Execute Monorepo Vitest Suite
+        run: pnpm test
+        env:
+          NODE_ENV: test
+
+  # ─────────────────────────────────────────────────────────────
+  # Stage 4: Playwright Security Headers & Smoke Verification
+  # ─────────────────────────────────────────────────────────────
+  security-headers-and-smoke:
+    name: Security Headers & Protected Route Gates
+    runs-on: ubuntu-latest
+    needs: [code-quality, vitest-suite]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: southaero_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm Package Manager
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.7.0
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Push Database Schema to Test Database
+        run: pnpm db:push
+
+      - name: Install Playwright Chromium Browser
+        run: pnpm --filter e2e exec playwright install --with-deps chromium
+
+      - name: Build Storefront Application
+        run: pnpm --filter storefront build
+        env:
+          NODE_ENV: production
+          CLOUDINARY_CLOUD_NAME: mock_cloud
+          CLOUDINARY_API_KEY: mock_key
+          CLOUDINARY_API_SECRET: mock_secret
+
+      - name: Start Storefront Server in Background
+        run: |
+          pnpm --filter storefront start &
+          npx wait-on http://127.0.0.1:3000 --timeout 60000
+        env:
+          PORT: 3000
+          NODE_ENV: production
+          CLOUDINARY_CLOUD_NAME: mock_cloud
+          CLOUDINARY_API_KEY: mock_key
+          CLOUDINARY_API_SECRET: mock_secret
+
+      - name: Run Playwright Security Headers Test Suite
+        run: pnpm test:security
+
+      - name: Upload Playwright Test Report on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-security-report
+          path: e2e/playwright-report/
+          retention-days: 7

@@ -2,7 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { useState } from "react";
-import { loginAction, type AuthActionResult } from "@/actions/auth.actions";
+import { loginAction, verifyMfaAction, type AuthActionResult } from "@/actions/auth.actions";
 import {
   ShieldCheck,
   Eye,
@@ -13,6 +13,8 @@ import {
   ArrowLeft,
   KeyRound,
   ShieldAlert,
+  Smartphone,
+  RefreshCw,
 } from "lucide-react";
 
 const STOREFRONT_URL =
@@ -44,16 +46,52 @@ function SubmitButton() {
   );
 }
 
+function MfaSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="auth-btn auth-btn-primary flex items-center justify-center gap-2 group transition-all duration-200 mt-2"
+    >
+      {pending ? (
+        <>
+          <span className="btn-spinner" />
+          <span>กำลังตรวจสอบรหัส OTP...</span>
+        </>
+      ) : (
+        <>
+          <ShieldCheck
+            size={16}
+            className="transition-transform group-hover:scale-110 duration-200 text-emerald-400"
+          />
+          <span>ยืนยันรหัส OTP / Recovery Code</span>
+        </>
+      )}
+    </button>
+  );
+}
+
 export default function LoginPage() {
-  const [state, formAction] = useFormState<AuthActionResult | null, FormData>(
+  const [loginState, loginFormAction] = useFormState<AuthActionResult | null, FormData>(
     loginAction,
+    null
+  );
+  const [mfaState, mfaFormAction] = useFormState<AuthActionResult | null, FormData>(
+    verifyMfaAction,
     null
   );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isCapsLockOn, setIsCapsLockOn] = useState(false);
+  const [cancelledMfa, setCancelledMfa] = useState(false);
+
+  const isMfaStep = !!(loginState?.requiresMfa && loginState?.mfaToken && !cancelledMfa);
+  const activeError = isMfaStep ? mfaState?.error : loginState?.error;
+  const activeLockout = isMfaStep ? mfaState?.lockoutMinutes : loginState?.lockoutMinutes;
 
   // Handle Caps Lock detection
   const handleKeyModifierCheck = (
@@ -110,29 +148,29 @@ export default function LoginPage() {
             SOUTH <span className="text-[#E51D24]">AERO</span>
           </h1>
           <p className="brand-subtitle text-[0.62rem] sm:text-[0.68rem] tracking-[0.35em] text-gray-400 font-semibold mt-1">
-            PERFORMANCE ADMIN CONSOLE
+            {isMfaStep ? "TWO-FACTOR AUTHENTICATION" : "PERFORMANCE ADMIN CONSOLE"}
           </p>
 
           {/* Telemetry Security Tag */}
           <div className="mt-3.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#181818] border border-[#2B2B2B] text-[0.65rem] font-mono text-gray-400">
             <span className="w-1.5 h-1.5 rounded-full bg-[#E51D24] animate-pulse" />
             <span className="tracking-wider">
-              RESTRICTED ACCESS &bull; TLS ENCRYPTED
+              {isMfaStep ? "2FA VERIFICATION REQUIRED &bull; RFC 6238" : "RESTRICTED ACCESS &bull; TLS ENCRYPTED"}
             </span>
           </div>
         </div>
 
         {/* ─── Error Alert Banner ─── */}
-        {state?.error && (
+        {activeError && (
           <div
             className={
-              state.lockoutMinutes
+              activeLockout
                 ? "alert-warning mb-5 animate-in"
                 : "alert-error mb-5 animate-in"
             }
             role="alert"
           >
-            {state.lockoutMinutes ? (
+            {activeLockout ? (
               <AlertTriangle
                 size={18}
                 className="flex-shrink-0 text-amber-400"
@@ -144,100 +182,150 @@ export default function LoginPage() {
               />
             )}
             <div className="text-xs leading-relaxed font-medium">
-              <span>{state.error}</span>
+              <span>{activeError}</span>
             </div>
           </div>
         )}
 
-        {/* ─── Login Form ─── */}
-        <form action={formAction} className="space-y-4 sm:space-y-5">
-          {/* Email Field */}
-          <div>
-            <label htmlFor="login-email" className="auth-label">
-              อีเมลผู้ดูแลระบบ
-            </label>
-            <div className="relative">
-              <Mail
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-              />
-              <input
-                id="login-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@southaero.com"
-                className={`auth-input auth-input-with-icon ${
-                  state?.fieldErrors?.email ? "input-error" : ""
-                }`}
-              />
-            </div>
-            {state?.fieldErrors?.email && (
-              <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
-                <AlertTriangle size={12} />
-                <span>{state.fieldErrors.email[0]}</span>
-              </p>
-            )}
-          </div>
+        {/* ─── Forms: Password or MFA Step ─── */}
+        {isMfaStep ? (
+          <form action={mfaFormAction} className="space-y-4 sm:space-y-5">
+            <input type="hidden" name="mfaToken" value={loginState?.mfaToken || ""} />
 
-          {/* Password Field */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="login-password" className="auth-label !mb-0">
-                รหัสผ่าน
-              </label>
-              {isCapsLockOn && (
-                <span className="inline-flex items-center gap-1 text-[0.68rem] text-amber-400 font-medium animate-pulse">
-                  <AlertTriangle size={11} />
-                  <span>Caps Lock เปิดอยู่</span>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="mfa-code" className="auth-label !mb-0">
+                  รหัส OTP หรือ Recovery Code
+                </label>
+                <span className="text-[0.65rem] text-gray-400">
+                  Google Authenticator
                 </span>
-              )}
+              </div>
+              <div className="relative">
+                <Smartphone
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                />
+                <input
+                  id="mfa-code"
+                  name="code"
+                  type="text"
+                  autoComplete="one-time-code"
+                  required
+                  autoFocus
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  placeholder="เช่น 123456 หรือ XXXXX-XXXXX"
+                  className="auth-input auth-input-with-icon font-mono tracking-widest text-center text-lg"
+                />
+              </div>
             </div>
-            <div className="relative">
-              <Lock
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-              />
-              <input
-                id="login-password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={handleKeyModifierCheck}
-                onKeyUp={handleKeyModifierCheck}
-                placeholder="••••••••••••"
-                className={`auth-input auth-input-with-both-icons ${
-                  state?.fieldErrors?.password ? "input-error" : ""
-                }`}
-              />
+
+            <div className="pt-1">
+              <MfaSubmitButton />
+            </div>
+
+            <div className="text-center pt-2">
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="pwd-toggle text-gray-400 hover:text-white"
-                aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                onClick={() => setCancelledMfa(true)}
+                className="text-xs text-gray-400 hover:text-white transition-colors inline-flex items-center gap-1.5"
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                <ArrowLeft size={12} />
+                <span>ย้อนกลับไปหน้ากรอกรหัสผ่าน</span>
               </button>
             </div>
-            {state?.fieldErrors?.password && (
-              <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
-                <AlertTriangle size={12} />
-                <span>{state.fieldErrors.password[0]}</span>
-              </p>
-            )}
-          </div>
+          </form>
+        ) : (
+          <form action={loginFormAction} className="space-y-4 sm:space-y-5">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="login-email" className="auth-label">
+                อีเมลผู้ดูแลระบบ
+              </label>
+              <div className="relative">
+                <Mail
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                />
+                <input
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@southaero.com"
+                  className={`auth-input auth-input-with-icon ${
+                    loginState?.fieldErrors?.email ? "input-error" : ""
+                  }`}
+                />
+              </div>
+              {loginState?.fieldErrors?.email && (
+                <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                  <AlertTriangle size={12} />
+                  <span>{loginState.fieldErrors.email[0]}</span>
+                </p>
+              )}
+            </div>
 
-          {/* Submit Button */}
-          <div className="pt-1">
-            <SubmitButton />
-          </div>
-        </form>
+            {/* Password Field */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="login-password" className="auth-label !mb-0">
+                  รหัสผ่าน
+                </label>
+                {isCapsLockOn && (
+                  <span className="inline-flex items-center gap-1 text-[0.68rem] text-amber-400 font-medium animate-pulse">
+                    <AlertTriangle size={11} />
+                    <span>Caps Lock เปิดอยู่</span>
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <Lock
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                />
+                <input
+                  id="login-password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleKeyModifierCheck}
+                  onKeyUp={handleKeyModifierCheck}
+                  placeholder="••••••••••••"
+                  className={`auth-input auth-input-with-both-icons ${
+                    loginState?.fieldErrors?.password ? "input-error" : ""
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="pwd-toggle text-gray-400 hover:text-white"
+                  aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {loginState?.fieldErrors?.password && (
+                <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                  <AlertTriangle size={12} />
+                  <span>{loginState.fieldErrors.password[0]}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-1">
+              <SubmitButton />
+            </div>
+          </form>
+        )}
 
         {/* ─── Footer Telemetry ─── */}
         <div className="mt-6 pt-5 border-t border-[#1F1F1F] flex flex-col items-center gap-1.5 text-center">

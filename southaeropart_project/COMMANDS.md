@@ -53,6 +53,10 @@
 |---|---|
 | `pnpm build` | ทดสอบ Build ทุกโปรเจกต์ เพื่อดูว่ามี Error ก่อน Deploy หรือไม่ |
 | `pnpm lint` | ตรวจสอบ Code Quality และ Syntax Error |
+| `pnpm test` | รัน Vitest Unit/Integration Tests ทั้งหมด (164 tests) |
+| `pnpm test:e2e` | รัน Playwright E2E Smoke Tests ทั้งหมด (Storefront, Admin, Security) |
+| `pnpm test:security` | รันเฉพาะ Security Headers & CSP E2E Test |
+| `pnpm test:e2e:stateful` | รัน Stateful Full Checkout Flow E2E Test (พอร์ต 3005 กับ `southaero_test`) |
 
 ---
 

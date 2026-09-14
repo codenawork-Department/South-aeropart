@@ -1,0 +1,11 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for mock test fixtures and example files"
+paths = [
+    '''.*\.env\.example$''',
+    '''(^|/)__tests__/''',
+    '''\.(test|spec)\.[jt]sx?$''',
+    '''scripts/verify_.*\.ts$''',
+]

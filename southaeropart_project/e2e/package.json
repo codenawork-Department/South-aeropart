@@ -1,0 +1,15 @@
+{
+  "name": "e2e",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test --project=storefront --project=admin --project=security",
+    "test:e2e:stateful": "node ../scripts/run-stateful-e2e.mjs",
+    "test:e2e:all": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "test:security": "playwright test --project=security"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}

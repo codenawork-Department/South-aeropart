@@ -47,6 +47,12 @@ import {
   getGuestTokenFromCookie,
   setGuestTokenCookie,
 } from "@/lib/guest-order-token";
+import { headers } from "next/headers";
+import {
+  globalStorefrontRateLimiter,
+  getClientIp,
+  RATE_LIMIT_PRESETS,
+} from "@/lib/rate-limiter";
 
 /* =========================================================================
    ZOD SCHEMAS & TYPES
@@ -133,7 +139,28 @@ export async function createOrder(input: CheckoutInput) {
       // Guest customer handling: Create or reuse a guest record to maintain FK
       const guestEmail = validated.shippingAddress.email || `guest_${Date.now()}@southaero.local`;
 
-      // CRIT-03: Rate limit guest orders (Max 5 guest orders per 15 minutes)
+      // CRIT-03: Rate limit guest orders by IP (Max 5 guest orders per 15 minutes)
+      let clientIp = "127.0.0.1";
+      try {
+        const headerList = headers();
+        clientIp = getClientIp({ headers: headerList });
+      } catch {
+        // Fallback in test runner without request headers
+      }
+
+      const ipRateCheck = globalStorefrontRateLimiter.check(
+        `guest_checkout_${clientIp}`,
+        RATE_LIMIT_PRESETS.SENSITIVE
+      );
+
+      if (!ipRateCheck.success) {
+        return {
+          success: false,
+          error: `คำขอสร้างคำสั่งซื้อเกินจำนวนที่กำหนด กรุณารอ ${ipRateCheck.retryAfter} วินาที หรือเข้าสู่ระบบเพื่อดำเนินการต่อ`,
+        };
+      }
+
+      // Also enforce DB email check
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
       const recentGuestOrders = await db
         .select({ id: orders.id })

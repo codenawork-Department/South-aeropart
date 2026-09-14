@@ -46,7 +46,7 @@ const nextConfig = {
       object-src 'none';
       base-uri 'self';
       form-action 'self';
-      frame-ancestors 'self';
+      frame-ancestors 'none';
     `.replace(/\s{2,}/g, " ").trim();
 
     return [
@@ -59,11 +59,11 @@ const nextConfig = {
           },
           {
             key: "Strict-Transport-Security",
-            value: "max-age=31536000; includeSubDomains; preload",
+            value: "max-age=63072000; includeSubDomains; preload",
           },
           {
             key: "X-Frame-Options",
-            value: "SAMEORIGIN",
+            value: "DENY",
           },
           {
             key: "X-Content-Type-Options",

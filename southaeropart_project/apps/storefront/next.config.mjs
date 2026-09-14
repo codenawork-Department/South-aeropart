@@ -7,6 +7,7 @@ config({ path: resolve(__dirname, "../../.env") });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: process.env.PORT === "3005" ? ".next-test" : ".next",
   transpilePackages: ["@repo/ui", "@repo/lib"],
   poweredByHeader: false,
   compress: true,
