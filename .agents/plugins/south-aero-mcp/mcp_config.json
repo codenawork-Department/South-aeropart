@@ -3,11 +3,10 @@
     "neon-postgres": {
       "command": "cmd.exe",
       "args": [
+        "/d",
+        "/s",
         "/c",
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql://user:password@host/dbname?sslmode=require"
+        "if not defined DATABASE_URL (exit /b 1) else (npx -y @modelcontextprotocol/server-postgres \"%DATABASE_URL%\")"
       ]
     },
     "puppeteer": {
@@ -20,12 +19,10 @@
       ]
     },
     "fetch": {
-      "command": "cmd.exe",
+      "command": "python",
       "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-fetch"
+        "-m",
+        "mcp_server_fetch"
       ]
     },
     "memory": {
