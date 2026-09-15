@@ -178,10 +178,14 @@ export function AppIcon({
   if (iconObject.type === "svg_code" && iconObject.svgContent) {
     const formattedSvg = sanitizeAndFormatSvg(iconObject.svgContent);
     return (
-      <span
-        style={{ width: size, height: size, display: "inline-flex" }}
-        className={`items-center justify-center shrink-0 [&>svg]:w-full [&>svg]:h-full ${className}`}
-        dangerouslySetInnerHTML={{ __html: formattedSvg }}
+      // SVG image documents cannot execute scripts in the containing page.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(formattedSvg)}`}
+        alt={iconObject.name || ""}
+        width={size}
+        height={size}
+        className={`object-contain shrink-0 ${className}`}
       />
     );
   }

@@ -120,7 +120,7 @@ function CameraController({
   preset: CameraPreset;
   autoRotate: boolean;
   isUserInteracting: boolean;
-  controlsRef: React.RefObject<OrbitControlsElement>;
+  controlsRef: React.RefObject<OrbitControlsElement | null>;
 }) {
   const { camera, size } = useThree();
   useLayoutEffect(() => {

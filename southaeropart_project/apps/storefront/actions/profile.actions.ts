@@ -1,6 +1,7 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
+import { customerAuth as auth } from "@/lib/customer-auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
@@ -90,7 +91,7 @@ export type SanitizedUserProfile = {
  * Fetch full profile data for authenticated user: user row, saved addresses, and garage vehicles.
  */
 export async function getUserProfile() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized", data: null };
   }
@@ -180,7 +181,7 @@ export async function getUserProfile() {
  * Update basic personal info and preferences (Language, Display Currency, Steering Default).
  */
 export async function updateUserProfile(input: z.infer<typeof updateProfileSchema>) {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -228,7 +229,7 @@ export async function updateUserProfile(input: z.infer<typeof updateProfileSchem
  */
 export async function getUserLanguagePreference(): Promise<"th" | "en"> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) return "en";
 
     const [userRow] = await db
@@ -261,7 +262,7 @@ export async function updateUserLanguagePreference(newLang: "th" | "en"): Promis
     if (!parsed.success) return { success: false };
     const validatedLang = parsed.data;
 
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) return { success: false };
 
     const [currentUserRow] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -298,7 +299,7 @@ export async function updateUserLanguagePreference(newLang: "th" | "en"): Promis
  */
 export async function getUserCurrencyPreference(): Promise<"THB" | "USD" | "EUR" | "JPY" | "SGD"> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) return "THB";
 
     const [userRow] = await db
@@ -331,7 +332,7 @@ export async function updateUserCurrencyPreference(
     if (!parsed.success) return { success: false };
     const validatedCurrency = parsed.data;
 
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) return { success: false };
 
     const [currentUserRow] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -366,7 +367,7 @@ export async function updateUserCurrencyPreference(
  * Update PDPA / GDPR Privacy Consents.
  */
 export async function updatePrivacyConsents(input: z.infer<typeof privacyConsentsSchema>) {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -446,7 +447,7 @@ export async function updatePrivacyConsents(input: z.infer<typeof privacyConsent
  * Create or update a customer shipping/billing address.
  */
 export async function saveUserAddress(input: SaveAddressInput) {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -538,7 +539,7 @@ export async function saveUserAddress(input: SaveAddressInput) {
  * Delete address.
  */
 export async function deleteUserAddress(addressId: string) {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -570,7 +571,7 @@ export async function deleteUserAddress(addressId: string) {
  * Set an address as default.
  */
 export async function setDefaultAddress(addressId: string, type: "shipping" | "billing") {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -620,7 +621,7 @@ export async function setDefaultAddress(addressId: string, type: "shipping" | "b
  * Add or update vehicle in user's garage.
  */
 export async function saveUserVehicle(input: SaveVehicleInput) {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -685,7 +686,7 @@ export async function saveUserVehicle(input: SaveVehicleInput) {
  * Delete vehicle from garage.
  */
 export async function deleteUserVehicle(vehicleId: string) {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -719,7 +720,7 @@ export async function deleteUserVehicle(vehicleId: string) {
  * Set a vehicle as default in garage.
  */
 export async function setDefaultVehicle(vehicleId: string) {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -761,7 +762,7 @@ export async function setDefaultVehicle(vehicleId: string) {
  * Export all customer personal data in clean JSON format for PDPA / GDPR compliance.
  */
 export async function exportUserData() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized", data: null };
   }

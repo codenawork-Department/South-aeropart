@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+vi.mock("@repo/lib/stripe", () => ({
+  retrievePaymentIntent: vi.fn(async (id: string) => ({ id, status: "succeeded", amount_received: 10000, currency: "thb", livemode: false })),
+  toSmallestCurrencyUnit: (value: string) => Number(value) * 100,
+  isExpectedStripeMode: (live: boolean) => !live,
+}));
+// Explicit doubles verify orchestration; the Neon integration suite verifies real locking.
 // Mock In-Memory Database Store
 const mockDb = vi.hoisted(() => ({
   orders: new Map<string, any>(),
@@ -9,8 +15,8 @@ const mockDb = vi.hoisted(() => ({
   productBundleItems: [] as any[],
 }));
 
-vi.mock("@/lib/order-email", () => ({
-  sendOrderConfirmationEmail: vi.fn().mockResolvedValue({ success: true }),
+vi.mock("@/lib/order-email-jobs", () => ({
+  dispatchOrderEmailJob: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 vi.mock("next/cache", () => ({
@@ -79,7 +85,7 @@ vi.mock("@repo/db", () => {
         if (table._name === "orderStatusHistory") {
           mockDb.orderStatusHistory.push(values);
         }
-        return Promise.resolve();
+        return Object.assign(Promise.resolve(), { onConflictDoNothing: () => Promise.resolve() });
       },
     }),
   };
@@ -114,6 +120,7 @@ vi.mock("@repo/db", () => {
       }),
     },
     orders: makeTable("orders"),
+    orderEmailJobs: makeTable("orderEmailJobs"),
     orderItems: makeTable("orderItems"),
     orderStatusHistory: makeTable("orderStatusHistory"),
     orderItemBundleParts: makeTable("orderItemBundleParts"),
@@ -124,13 +131,14 @@ vi.mock("@repo/db", () => {
       _col: col?._col,
       _val: val,
     }),
-    and: (...args: any[]) => Object.assign({}, ...args),
+    and: (...args: any[]) => args[0],
     sql: () => ({ _sql: true }),
     inArray: (col: any, vals: any[]) => ({ _col: col?._col, _vals: vals }),
   };
 });
 
 import { fulfillOrderPayment } from "./order-fulfillment";
+import { retrievePaymentIntent } from "@repo/lib/stripe";
 
 describe("Concurrency & Atomic Stock Fulfillment (CLAUDE.md §5.3, §6.2)", () => {
   const originalEnv = process.env.NODE_ENV;
@@ -149,24 +157,38 @@ describe("Concurrency & Atomic Stock Fulfillment (CLAUDE.md §5.3, §6.2)", () =
   });
 
   describe("Concurrent Payment Fulfillment (Double-Spend / Webhook Replay Race Condition)", () => {
+    it.each(["cancelled", "refunded", "legacy", "wrong-binding", "zero-received"])("rejects %s without inventory or paid-state writes", async (scenario) => {
+      const id = "550e8400-e29b-41d4-a716-446655440099";
+      const order = { id, paymentStatus: "pending", status: "pending", inventoryState: "reserved", total: "100.00", currency: "THB", stripePaymentIntentId: "pi_owned" };
+      if (scenario === "cancelled" || scenario === "refunded") order.status = scenario;
+      if (scenario === "legacy") order.inventoryState = "legacy";
+      if (scenario === "wrong-binding") order.stripePaymentIntentId = "pi_other";
+      if (scenario === "zero-received") vi.mocked(retrievePaymentIntent).mockResolvedValueOnce({ id: "pi_owned", status: "succeeded", amount: 10000, amount_received: 0, currency: "thb", livemode: false } as Awaited<ReturnType<typeof retrievePaymentIntent>>);
+      mockDb.orders.set(id, order);
+      expect((await fulfillOrderPayment(id, { method: "stripe", chargeId: "pi_owned" })).success).toBe(false);
+      expect(mockDb.orders.get(id).paymentStatus).toBe("pending");
+      expect(mockDb.orderStatusHistory).toHaveLength(0);
+    });
     it("handles two simultaneous fulfillment requests atomically without duplicate records", async () => {
       const orderId = "550e8400-e29b-41d4-a716-446655440000";
       mockDb.orders.set(orderId, {
         id: orderId,
         paymentStatus: "pending",
         status: "pending",
-        stripePaymentIntentId: null,
+        stripePaymentIntentId: "pi_test_concurrent_1",
+        total: "100.00", currency: "THB", inventoryState: "reserved",
       });
 
+      mockDb.products.set("part-1", { id: "part-1", stockQuantity: 9 });
       // Execute 2 concurrent fulfillment calls
       const [res1, res2] = await Promise.all([
         fulfillOrderPayment(orderId, { method: "stripe", chargeId: "pi_test_concurrent_1" }),
-        fulfillOrderPayment(orderId, { method: "stripe", chargeId: "pi_test_concurrent_2" }),
+        fulfillOrderPayment(orderId, { method: "stripe", chargeId: "pi_test_concurrent_1" }),
       ]);
 
-      // Both complete cleanly without error
-      expect(res1.success).toBe(true);
-      expect(res2.success).toBe(true);
+      // A compare-and-swap loser retries; it must not create a second transition.
+      expect([res1, res2].some(result => result.success)).toBe(true);
+      expect((await fulfillOrderPayment(orderId, { method: "stripe", chargeId: "pi_test_concurrent_1" })).success).toBe(true);
 
       // Exactly 1 status history record must be inserted
       expect(mockDb.orderStatusHistory).toHaveLength(1);
@@ -176,6 +198,7 @@ describe("Concurrency & Atomic Stock Fulfillment (CLAUDE.md §5.3, §6.2)", () =
       const finalOrder = mockDb.orders.get(orderId);
       expect(finalOrder.paymentStatus).toBe("paid");
       expect(finalOrder.status).toBe("paid");
+      expect(mockDb.products.get("part-1").stockQuantity).toBe(9);
     });
 
     it("returns idempotent success immediately if order was already marked paid", async () => {
@@ -185,6 +208,7 @@ describe("Concurrency & Atomic Stock Fulfillment (CLAUDE.md §5.3, §6.2)", () =
         paymentStatus: "paid",
         status: "paid",
         stripePaymentIntentId: "pi_existing",
+        total: "100.00", currency: "THB", inventoryState: "consumed",
       });
 
       const result = await fulfillOrderPayment(orderId, {

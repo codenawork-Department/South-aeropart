@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "admin login hydrates and password visibility control works",
+    "admin: nonce CSP, no unsafe-eval, credential-pattern check and parser-inserted inline script blocked",
+    "storefront: nonce CSP, no unsafe-eval, credential-pattern check and parser-inserted inline script blocked",
+    "admin protected route redirects unauthenticated request",
+    "maintenance endpoint rejects missing bearer secret"
+  ],
+  "pages": [
+    {
+      "app": "admin",
+      "status": 200,
+      "errors": [],
+      "cspBlocks": []
+    },
+    {
+      "app": "storefront",
+      "status": 200,
+      "errors": [],
+      "cspBlocks": []
+    }
+  ],
+  "errors": []
+}

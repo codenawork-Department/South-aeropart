@@ -2,6 +2,11 @@ import Stripe from "stripe";
 
 let stripeInstance: Stripe | null = null;
 
+export function isExpectedStripeMode(livemode: boolean): boolean {
+  return livemode === (process.env.APP_ENV === "production" ||
+    (process.env.NODE_ENV === "production" && process.env.APP_ENV !== "staging"));
+}
+
 /**
 /**
  * Audit #18: Returns a Stripe client, accepting an explicit secret key or using STRIPE_SECRET_KEY.
@@ -10,6 +15,9 @@ export function getStripe(apiKey?: string): Stripe {
   const secretKey = apiKey || process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
     throw new Error("STRIPE_SECRET_KEY is not configured in environment variables");
+  }
+  if (process.env.NODE_ENV === "production" && !secretKey.startsWith(process.env.APP_ENV === "staging" ? "sk_test_" : "sk_live_")) {
+    throw new Error("Stripe configuration does not match deployment mode");
   }
   if (apiKey) {
     return new Stripe(apiKey, { typescript: true });

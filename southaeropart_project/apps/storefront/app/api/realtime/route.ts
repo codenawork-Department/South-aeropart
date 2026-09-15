@@ -18,13 +18,14 @@ const RATE_LIMIT_MAX_REQUESTS = 30;
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
-  if (postRateLimitMap.size > 1000) {
+  if (postRateLimitMap.size >= 1000) {
     for (const [k, v] of postRateLimitMap.entries()) {
       if (now > v.resetAt) postRateLimitMap.delete(k);
     }
   }
   const entry = postRateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
+  if (!entry && postRateLimitMap.size >= 1000) return true;
+  if (!entry || now >= entry.resetAt) {
     postRateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return false;
   }
@@ -157,7 +158,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   // Audit #7: Rate limit the POST endpoint
-  const ip = request.ip || request.headers.get("x-forwarded-for") || "unknown";
+  const ip = (process.env.TRUSTED_PROXY === "cloudflare" ? request.headers.get("cf-connecting-ip") : null) || "unknown";
   if (isRateLimited(ip)) {
     return NextResponse.json(
       { success: false, error: "Too many requests" },
@@ -210,8 +211,8 @@ export async function POST(request: NextRequest) {
     broadcastEvent({
       type: "refresh",
       version: timestamp,
-      action,
-      payload: body?.payload || null,
+      action: "catalog_update",
+      payload: null,
       timestamp,
     });
 

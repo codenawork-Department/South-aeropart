@@ -1,0 +1,209 @@
+{
+  "commit": "3b05acf8ddd30cc139c38974506a2ac4bdae8edb",
+  "trackedFiles": 637,
+  "textFilesScanned": 357,
+  "actions": [
+    "apps/admin/actions/analytics.actions.ts",
+    "apps/admin/actions/auth.actions.ts",
+    "apps/admin/actions/bundle.actions.ts",
+    "apps/admin/actions/catalog.actions.ts",
+    "apps/admin/actions/homepage.actions.ts",
+    "apps/admin/actions/icon.actions.ts",
+    "apps/admin/actions/newsletter.actions.ts",
+    "apps/admin/actions/order.actions.ts",
+    "apps/admin/actions/product.actions.ts",
+    "apps/admin/actions/realtime.actions.ts",
+    "apps/admin/actions/review.actions.ts",
+    "apps/admin/actions/service-usage.actions.ts",
+    "apps/admin/actions/translate.actions.ts",
+    "apps/storefront/actions/auth-audit.actions.ts",
+    "apps/storefront/actions/bundle.actions.ts",
+    "apps/storefront/actions/cart.actions.ts",
+    "apps/storefront/actions/checkout.actions.ts",
+    "apps/storefront/actions/homepage.actions.ts",
+    "apps/storefront/actions/newsletter.actions.ts",
+    "apps/storefront/actions/product.actions.ts",
+    "apps/storefront/actions/profile.actions.ts",
+    "apps/storefront/actions/review.actions.ts",
+    "apps/storefront/actions/vehicle.actions.ts",
+    "apps/storefront/actions/wishlist.actions.ts"
+  ],
+  "routes": [
+    "apps/storefront/app/api/currency/rates/route.ts",
+    "apps/storefront/app/api/newsletter/unsubscribe/route.ts",
+    "apps/storefront/app/api/realtime/route.ts",
+    "apps/storefront/app/api/vehicles/route.ts",
+    "apps/storefront/app/api/webhooks/clerk/route.ts",
+    "apps/storefront/app/api/webhooks/stripe/route.ts"
+  ],
+  "pages": [
+    "apps/admin/app/(dashboard)/bundles/[id]/page.tsx",
+    "apps/admin/app/(dashboard)/bundles/new/page.tsx",
+    "apps/admin/app/(dashboard)/bundles/page.tsx",
+    "apps/admin/app/(dashboard)/catalog/page.tsx",
+    "apps/admin/app/(dashboard)/homepage/page.tsx",
+    "apps/admin/app/(dashboard)/newsletters/page.tsx",
+    "apps/admin/app/(dashboard)/orders/[id]/page.tsx",
+    "apps/admin/app/(dashboard)/orders/page.tsx",
+    "apps/admin/app/(dashboard)/page.tsx",
+    "apps/admin/app/(dashboard)/products/[id]/edit/page.tsx",
+    "apps/admin/app/(dashboard)/products/new/page.tsx",
+    "apps/admin/app/(dashboard)/products/page.tsx",
+    "apps/admin/app/(dashboard)/reviews/page.tsx",
+    "apps/admin/app/(dashboard)/services/page.tsx",
+    "apps/admin/app/login/page.tsx",
+    "apps/admin/app/setup/page.tsx",
+    "apps/storefront/app/(auth)/sign-in/[[...sign-in]]/page.tsx",
+    "apps/storefront/app/(auth)/sign-in/sso-callback/page.tsx",
+    "apps/storefront/app/(auth)/sign-up/[[...sign-up]]/page.tsx",
+    "apps/storefront/app/(auth)/sign-up/sso-callback/page.tsx",
+    "apps/storefront/app/(shop)/about/page.tsx",
+    "apps/storefront/app/(shop)/aerodynamics/page.tsx",
+    "apps/storefront/app/(shop)/cart/page.tsx",
+    "apps/storefront/app/(shop)/checkout/page.tsx",
+    "apps/storefront/app/(shop)/checkout/payment/[orderId]/page.tsx",
+    "apps/storefront/app/(shop)/collection/page.tsx",
+    "apps/storefront/app/(shop)/gallery/page.tsx",
+    "apps/storefront/app/(shop)/orders/[orderId]/invoice/page.tsx",
+    "apps/storefront/app/(shop)/orders/[orderId]/page.tsx",
+    "apps/storefront/app/(shop)/orders/page.tsx",
+    "apps/storefront/app/(shop)/page.tsx",
+    "apps/storefront/app/(shop)/products/[slug]/page.tsx",
+    "apps/storefront/app/(shop)/products/page.tsx",
+    "apps/storefront/app/(shop)/profile/page.tsx",
+    "apps/storefront/app/(shop)/wishlist/page.tsx",
+    "apps/storefront/app/pay/mock/[orderId]/page.tsx"
+  ],
+  "tests": [
+    "apps/admin/actions/auth.actions.test.ts",
+    "apps/admin/lib/auth.test.ts",
+    "apps/admin/lib/mfa.test.ts",
+    "apps/admin/lib/sku-helper.test.ts",
+    "apps/admin/lib/upload-validator.test.ts",
+    "apps/storefront/app/api/webhooks/clerk/route.test.ts",
+    "apps/storefront/app/api/webhooks/stripe/route.test.ts",
+    "apps/storefront/components/3d/adaptiveQuality.test.ts",
+    "apps/storefront/lib/concurrency-stock.test.ts",
+    "apps/storefront/lib/currency.test.ts",
+    "apps/storefront/lib/guest-order-token.test.ts",
+    "apps/storefront/lib/rate-limiter.test.ts",
+    "apps/storefront/lib/thai-baht-text.test.ts",
+    "e2e/tests/admin/dashboard.spec.ts",
+    "e2e/tests/admin/login.spec.ts",
+    "e2e/tests/security/security-headers.spec.ts",
+    "e2e/tests/storefront/cart.spec.ts",
+    "e2e/tests/storefront/checkout-flow.spec.ts",
+    "e2e/tests/storefront/homepage.spec.ts",
+    "e2e/tests/storefront/i18n.spec.ts",
+    "e2e/tests/storefront/order-tracking.spec.ts",
+    "e2e/tests/storefront/products.spec.ts",
+    "packages/lib/src/carrier.test.ts",
+    "packages/lib/src/cloudinary.test.ts",
+    "packages/lib/src/moderation/text-moderation.test.ts",
+    "packages/lib/src/resend.test.ts",
+    "packages/lib/src/stripe.test.ts",
+    "packages/ui/src/lib/utils.test.ts"
+  ],
+  "secretScan": {
+    "kind": "Limited custom regex over tracked working files; not Gitleaks or history attestation",
+    "candidates": [
+      {
+        "file": ".agents/plugins/south-aero-mcp/mcp_config.json",
+        "line": 10,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": false
+      },
+      {
+        "file": ".github/workflows/ci.yml",
+        "line": 23,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": true
+      },
+      {
+        "file": ".github/workflows/ci.yml",
+        "line": 26,
+        "rule": "providerSecret",
+        "fixtureLike": true
+      },
+      {
+        "file": ".github/workflows/ci.yml",
+        "line": 27,
+        "rule": "providerSecret",
+        "fixtureLike": true
+      },
+      {
+        "file": ".github/workflows/ci.yml",
+        "line": 28,
+        "rule": "providerSecret",
+        "fixtureLike": true
+      },
+      {
+        "file": ".github/workflows/ci.yml",
+        "line": 29,
+        "rule": "providerSecret",
+        "fixtureLike": true
+      },
+      {
+        "file": "apps/admin/scratch_check_db.js",
+        "line": 3,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": false
+      },
+      {
+        "file": "apps/storefront/app/api/webhooks/clerk/route.test.ts",
+        "line": 42,
+        "rule": "providerSecret",
+        "fixtureLike": false
+      },
+      {
+        "file": "packages/db/scratch_test_icons.cjs",
+        "line": 5,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": false
+      },
+      {
+        "file": "packages/db/seed_icons.cjs",
+        "line": 5,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": false
+      },
+      {
+        "file": "packages/db/src/client.ts",
+        "line": 29,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": true
+      },
+      {
+        "file": "packages/db/src/client.ts",
+        "line": 30,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": true
+      },
+      {
+        "file": "packages/db/sync-bundle-schema.cjs",
+        "line": 5,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": false
+      },
+      {
+        "file": "packages/db/sync-newsletter-schema.cjs",
+        "line": 5,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": false
+      },
+      {
+        "file": "packages/db/sync-profile-schema.cjs",
+        "line": 5,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": false
+      },
+      {
+        "file": "packages/db/sync-schema.cjs",
+        "line": 5,
+        "rule": "embeddedDbCredential",
+        "fixtureLike": false
+      }
+    ],
+    "valuesRedacted": true
+  }
+}

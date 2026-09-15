@@ -61,7 +61,8 @@ export function base32Decode(encoded: string): Buffer {
 // ─── AES-256-GCM Encryption for MFA Secrets ───
 
 function getEncryptionKey(): Buffer {
-  const secret = process.env.ADMIN_SESSION_SECRET || "default_test_secret_for_mfa_32bytes!";
+  const secret = process.env.ADMIN_MFA_ENCRYPTION_KEY;
+  if (!secret || secret.length < 32) throw new Error("ADMIN_MFA_ENCRYPTION_KEY must be configured (32+ characters)");
   return createHash("sha256").update(secret).digest();
 }
 
@@ -78,20 +79,24 @@ export function encryptMfaSecret(plaintext: string): string {
   encrypted += cipher.final("hex");
   const authTag = cipher.getAuthTag().toString("hex");
 
-  return `${iv.toString("hex")}:${authTag}:${encrypted}`;
+  return `v2:${iv.toString("hex")}:${authTag}:${encrypted}`;
 }
 
 /**
  * Decrypt an AES-256-GCM encrypted secret.
  */
 export function decryptMfaSecret(payload: string): string {
-  const parts = payload.split(":");
+  const versioned = payload.startsWith("v2:");
+  const parts = (versioned ? payload.slice(3) : payload).split(":");
   if (parts.length !== 3) {
     throw new Error("Invalid encrypted MFA payload format");
   }
 
   const [ivHex, authTagHex, ciphertextHex] = parts;
-  const key = getEncryptionKey();
+  // Read legacy records with their original key; new writes use a dedicated key.
+  const legacySecret = process.env.ADMIN_SESSION_SECRET;
+  if (!versioned && (!legacySecret || legacySecret.length < 32)) throw new Error("Legacy MFA key is unavailable");
+  const key = versioned ? getEncryptionKey() : createHash("sha256").update(legacySecret!).digest();
   const iv = Buffer.from(ivHex, "hex");
   const authTag = Buffer.from(authTagHex, "hex");
 
@@ -245,7 +250,8 @@ export function verifyAndConsumeRecoveryCode(
 const MFA_CHALLENGE_EXPIRY = "5m"; // 5 minutes
 
 function getMfaJwtSecret(): Uint8Array {
-  const secret = process.env.ADMIN_SESSION_SECRET || "default_test_secret_for_mfa_32bytes!";
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret || secret.length < 32) throw new Error("ADMIN_SESSION_SECRET must be configured (32+ characters)");
   return new TextEncoder().encode(secret);
 }
 
@@ -253,13 +259,14 @@ export async function createMfaChallengeToken(adminId: string): Promise<string> 
   return new SignJWT({ adminId, type: "mfa_challenge" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
+    .setJti(randomBytes(24).toString("hex"))
     .setExpirationTime(MFA_CHALLENGE_EXPIRY)
     .sign(getMfaJwtSecret());
 }
 
 export async function verifyMfaChallengeToken(token: string): Promise<string | null> {
   try {
-    const { payload } = await jwtVerify(token, getMfaJwtSecret());
+    const { payload } = await jwtVerify(token, getMfaJwtSecret(), { algorithms: ["HS256"] });
     if (payload.type !== "mfa_challenge" || typeof payload.adminId !== "string") {
       return null;
     }

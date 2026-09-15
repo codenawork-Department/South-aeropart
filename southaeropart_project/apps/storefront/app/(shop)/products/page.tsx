@@ -21,14 +21,7 @@ import { getFeaturedBundleForVehicle } from "@/actions/bundle.actions";
 export const dynamic = "force-dynamic";
 
 interface ProductsPageProps {
-  searchParams?: {
-    make?: string;
-    model?: string;
-    category?: string;
-    q?: string;
-    sort?: string;
-    page?: string;
-  } | Promise<{
+  searchParams?: Promise<{
     make?: string;
     model?: string;
     category?: string;

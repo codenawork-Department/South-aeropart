@@ -1,8 +1,12 @@
 "use server";
+import { isExpectedStripeMode } from "@repo/lib/stripe";
 
+
+import { getStripe } from "@repo/lib/stripe";
 import { randomBytes } from "crypto";
 import { z } from "zod";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
+import { customerAuth as auth } from "@/lib/customer-auth";
 import { revalidatePath } from "next/cache";
 
 function safeRevalidatePath(path: string) {
@@ -14,6 +18,8 @@ function safeRevalidatePath(path: string) {
 }
 import {
   db,
+  reserveOrderStock,
+  takeRateLimit,
   rawSql,
   orders,
   orderItems,
@@ -73,7 +79,7 @@ const addressSchema = z.object({
 const checkoutItemSchema = z.object({
   productId: z.string().uuid("รหัสสินค้าไม่ถูกต้อง"),
   productName: z.string().min(1),
-  quantity: z.number().int().positive(),
+  quantity: z.number().int().positive().max(100),
   unitPrice: z.string(),
   variant: z.string().optional(),
 });
@@ -83,7 +89,7 @@ const checkoutSchema = z.object({
   billingAddress: addressSchema.optional(),
   shippingMethod: z.enum(["standard", "express"]).default("standard"),
   paymentMethod: z.enum(["credit_card", "promptpay"]).default("promptpay"),
-  items: z.array(checkoutItemSchema).min(1, "ตะกร้าสินค้าว่างเปล่า"),
+  items: z.array(checkoutItemSchema).min(1, "ตะกร้าสินค้าว่างเปล่า").max(100),
   saveAddress: z.boolean().optional().default(false),
 });
 
@@ -102,9 +108,9 @@ export async function createOrder(input: CheckoutInput) {
     const validated = checkoutSchema.parse(input);
     let clerkUserId: string | null = null;
     try {
-      clerkUserId = auth().userId;
+      clerkUserId = (await auth()).userId;
     } catch {
-      clerkUserId = null;
+      return { success: false, error: "Unable to verify authentication" };
     }
 
     let orderUserId = clerkUserId;
@@ -112,19 +118,19 @@ export async function createOrder(input: CheckoutInput) {
     // If signed in, ensure user exists in the database
     if (orderUserId) {
       const [existing] = await db
-        .select({ id: users.id })
+        .select({ id: users.id, isBanned: users.isBanned })
         .from(users)
         .where(eq(users.id, orderUserId))
         .limit(1);
 
+      if (existing?.isBanned) return { success: false, error: "Account is disabled" };
       if (!existing) {
-        let clerkUser = null;
-        try {
-          clerkUser = await currentUser();
-        } catch {
-          clerkUser = null;
+        const clerkUser = await currentUser();
+        const verifiedEmail = clerkUser?.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId && e.verification?.status === "verified");
+        if (!clerkUser || clerkUser.id !== orderUserId || !verifiedEmail) {
+          return { success: false, error: "Verified account email is required" };
         }
-        const email = clerkUser?.emailAddresses?.[0]?.emailAddress || validated.shippingAddress.email || `user_${orderUserId}@example.com`;
+        const email = verifiedEmail.emailAddress;
         const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || validated.shippingAddress.recipientName;
         
         await syncUserWithClerk({
@@ -142,12 +148,13 @@ export async function createOrder(input: CheckoutInput) {
       // CRIT-03: Rate limit guest orders by IP (Max 5 guest orders per 15 minutes)
       let clientIp = "127.0.0.1";
       try {
-        const headerList = headers();
+        const headerList = await headers();
         clientIp = getClientIp({ headers: headerList });
       } catch {
         // Fallback in test runner without request headers
       }
 
+      if (!await takeRateLimit(`guest-checkout:${clientIp}`, 5, 15 * 60000)) return { success: false, error: "Too many checkout attempts" };
       const ipRateCheck = globalStorefrontRateLimiter.check(
         `guest_checkout_${clientIp}`,
         RATE_LIMIT_PRESETS.SENSITIVE
@@ -180,27 +187,15 @@ export async function createOrder(input: CheckoutInput) {
         };
       }
 
-      const [existingGuest] = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.email, guestEmail))
-        .limit(1);
-
-      if (existingGuest) {
-        orderUserId = existingGuest.id;
-      } else {
-        const generatedGuestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        const [createdGuest] = await db
-          .insert(users)
-          .values({
-            id: generatedGuestId,
-            email: guestEmail,
-            fullName: validated.shippingAddress.recipientName,
-            phone: validated.shippingAddress.phone,
-          })
-          .returning({ id: users.id });
-        orderUserId = createdGuest.id;
-      }
+      // A supplied email never grants identity or ownership of an existing user.
+      const generatedGuestId = `guest_${randomBytes(24).toString("hex")}`;
+      const [createdGuest] = await db.insert(users).values({
+        id: generatedGuestId,
+        email: `${generatedGuestId}@southaero.local`,
+        fullName: validated.shippingAddress.recipientName,
+        phone: validated.shippingAddress.phone,
+      }).returning({ id: users.id });
+      orderUserId = createdGuest.id;
     }
 
     if (!orderUserId) {
@@ -375,6 +370,8 @@ export async function createOrder(input: CheckoutInput) {
           orderNumber,
           userId: orderUserId,
           status: "pending",
+          inventoryState: "reserved",
+          reservationExpiresAt: new Date(Date.now() + 30 * 60000),
           paymentMethod: validated.paymentMethod,
           paymentStatus: "pending",
           subtotal: subtotalStr,
@@ -391,6 +388,7 @@ export async function createOrder(input: CheckoutInput) {
         })
         .returning();
 
+      const demand = new Map<string, number>();
       // 2. Insert order items and bundle child part snapshots
       for (const item of verifiedItems) {
         const [createdOrderItem] = await tx
@@ -418,6 +416,7 @@ export async function createOrder(input: CheckoutInput) {
             .innerJoin(products, eq(productBundleItems.childProductId, products.id))
             .where(eq(productBundleItems.bundleProductId, item.productId));
 
+          if (!bundleChildParts.length) throw new Error("Bundle has no physical parts");
           if (bundleChildParts.length > 0) {
             const partsToInsert = bundleChildParts.map((part) => ({
               orderItemId: createdOrderItem.id,
@@ -428,38 +427,15 @@ export async function createOrder(input: CheckoutInput) {
             }));
 
             await tx.insert(orderItemBundleParts).values(partsToInsert);
+            for (const part of partsToInsert) demand.set(part.childProductId, (demand.get(part.childProductId) || 0) + part.quantity);
           }
         }
       }
 
-      // 3. Atomic stock reservation
       for (const item of verifiedItems) {
-        const [reserved] = await tx
-          .update(products)
-          .set({
-            stockQuantity: sql`${products.stockQuantity} - ${item.quantity}`,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(products.id, item.productId),
-              gte(products.stockQuantity, item.quantity)
-            )
-          )
-          .returning({ id: products.id, stockQuantity: products.stockQuantity });
-
-        if (!reserved) {
-          throw new Error(`สินค้า "${item.productName}" มีสต็อกคงเหลือไม่เพียงพอ กรุณาลองใหม่อีกครั้ง`);
-        }
-
-        // Auto-set out_of_stock status when stock reaches 0
-        if (reserved.stockQuantity === 0) {
-          await tx
-            .update(products)
-            .set({ status: "out_of_stock", updatedAt: new Date() })
-            .where(eq(products.id, item.productId));
-        }
+        if (item.productType === "single") demand.set(item.productId, (demand.get(item.productId) || 0) + item.quantity);
       }
+      await reserveOrderStock(tx, newOrder.id, demand);
 
       // 4. Insert initial status history
       await tx.insert(orderStatusHistory).values({
@@ -501,7 +477,7 @@ export async function createOrder(input: CheckoutInput) {
         createdOrder.userId,
         createdOrder.createdAt
       );
-      setGuestTokenCookie(createdOrder.id, guestToken);
+      await setGuestTokenCookie(createdOrder.id, guestToken);
     }
 
     const redirectUrl = guestToken
@@ -561,7 +537,7 @@ export async function getOrderDetails(orderId: string, guestToken?: string) {
     if (!order.userId.startsWith("guest_")) {
       let currentUserId: string | null = null;
       try {
-        currentUserId = auth().userId;
+        currentUserId = (await auth()).userId;
       } catch {
         currentUserId = null;
       }
@@ -571,7 +547,7 @@ export async function getOrderDetails(orderId: string, guestToken?: string) {
       }
     } else {
       // 2. Guest orders must present a valid cryptographic access token (via param or HttpOnly cookie)
-      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const effectiveToken = guestToken || await getGuestTokenFromCookie(orderId);
       const isTokenValid = verifyGuestOrderToken(
         effectiveToken,
         order.id,
@@ -707,7 +683,7 @@ export async function getOrderStatus(orderId: string, guestToken?: string) {
     if (!order.userId.startsWith("guest_")) {
       let currentUserId: string | null = null;
       try {
-        currentUserId = auth().userId;
+        currentUserId = (await auth()).userId;
       } catch {
         currentUserId = null;
       }
@@ -716,7 +692,7 @@ export async function getOrderStatus(orderId: string, guestToken?: string) {
         return { success: false, error: "Unauthorized access to order status" };
       }
     } else {
-      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const effectiveToken = guestToken || await getGuestTokenFromCookie(orderId);
       const isTokenValid = verifyGuestOrderToken(
         effectiveToken,
         order.id,
@@ -767,7 +743,7 @@ export async function confirmMockPayment(orderId: string, guestToken?: string) {
   if (!order.userId.startsWith("guest_")) {
     let currentUserId: string | null = null;
     try {
-      currentUserId = auth().userId;
+      currentUserId = (await auth()).userId;
     } catch {
       currentUserId = null;
     }
@@ -776,7 +752,7 @@ export async function confirmMockPayment(orderId: string, guestToken?: string) {
       return { success: false, error: "Unauthorized access to order" };
     }
   } else {
-    const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+    const effectiveToken = guestToken || await getGuestTokenFromCookie(orderId);
     const isTokenValid = verifyGuestOrderToken(
       effectiveToken,
       order.id,
@@ -820,6 +796,8 @@ export async function createOrGetStripePaymentIntent(
         status: orders.status,
         paymentStatus: orders.paymentStatus,
         stripePaymentIntentId: orders.stripePaymentIntentId,
+        inventoryState: orders.inventoryState,
+        reservationExpiresAt: orders.reservationExpiresAt,
         total: orders.total,
         currency: orders.currency,
         shippingAddress: orders.shippingAddress,
@@ -835,19 +813,18 @@ export async function createOrGetStripePaymentIntent(
 
     // IDOR Security Guard (SEC §5.1): Registered user orders require owner session; guest orders require cryptographic token
     let currentUserId: string | null = null;
-    let isOutsideRequestContext = false;
     try {
-      currentUserId = auth().userId;
+      currentUserId = (await auth()).userId;
     } catch {
-      isOutsideRequestContext = true;
+      return { success: false, error: "Unable to verify authentication" };
     }
 
     if (!order.userId.startsWith("guest_")) {
-      if (!isOutsideRequestContext && (!currentUserId || currentUserId !== order.userId)) {
+      if (!currentUserId || currentUserId !== order.userId) {
         return { success: false, error: "Unauthorized access to order" };
       }
     } else {
-      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const effectiveToken = guestToken || await getGuestTokenFromCookie(orderId);
       const isTokenValid = verifyGuestOrderToken(
         effectiveToken,
         order.id,
@@ -867,6 +844,10 @@ export async function createOrGetStripePaymentIntent(
       };
     }
 
+    if (order.status !== "pending" || !["pending", "failed", "authorized"].includes(order.paymentStatus)) {
+      return { success: false, error: "Order cannot accept payment" };
+    }
+    if (order.inventoryState !== "reserved" || !order.reservationExpiresAt || order.reservationExpiresAt <= new Date()) return { success: false, error: "Order reservation expired or requires reconciliation" };
     const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
     if (!publishableKey) {
       return { success: false, error: "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not configured" };
@@ -880,16 +861,17 @@ export async function createOrGetStripePaymentIntent(
         // If the existing intent has already succeeded, verify amount & currency before fulfilling!
         if (existingIntent && existingIntent.status === "succeeded") {
           const expectedAmount = toSmallestCurrencyUnit(order.total);
-          const receivedAmount = existingIntent.amount_received || existingIntent.amount;
+          const receivedAmount = existingIntent.amount_received;
           const expectedCurrency = (order.currency || "THB").toLowerCase();
           const receivedCurrency = (existingIntent.currency || "").toLowerCase();
 
-          if (expectedAmount === receivedAmount && expectedCurrency === receivedCurrency) {
-            await fulfillOrderPayment(order.id, {
+          if (expectedAmount === receivedAmount && expectedCurrency === receivedCurrency && (isExpectedStripeMode(existingIntent.livemode))) {
+            const recovered = await fulfillOrderPayment(order.id, {
               method: "stripe",
               chargeId: existingIntent.id,
               note: "ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Auto-recovered in createOrGetStripePaymentIntent)",
             });
+            if (!recovered.success) return recovered;
             return {
               success: true,
               isAlreadyPaid: true,
@@ -905,6 +887,7 @@ export async function createOrGetStripePaymentIntent(
         // Only reuse clientSecret if intent is in a pending/submittable state
         if (
           existingIntent &&
+          (isExpectedStripeMode(existingIntent.livemode)) &&
           existingIntent.status !== "canceled" &&
           existingIntent.status !== "succeeded" &&
           existingIntent.client_secret
@@ -916,8 +899,9 @@ export async function createOrGetStripePaymentIntent(
           };
         }
       } catch (e) {
-        console.warn("[createOrGetStripePaymentIntent] Could not retrieve existing intent, creating a new one:", e);
+        return { success: false, error: "Unable to verify existing payment; please retry" };
       }
+      return { success: false, error: "Existing payment needs reconciliation" };
     }
 
     // Determine customer receipt email: prioritize order.shippingAddress.email, fallback to user account email
@@ -952,13 +936,18 @@ export async function createOrGetStripePaymentIntent(
     }
 
     // Save stripePaymentIntentId on the order
-    await db
+    const [bound] = await db
       .update(orders)
       .set({
         stripePaymentIntentId: intent.id,
         updatedAt: new Date(),
       })
-      .where(eq(orders.id, orderId));
+      .where(and(eq(orders.id, orderId), eq(orders.status, "pending"), eq(orders.inventoryState, "reserved"), gte(orders.reservationExpiresAt, new Date()), sql`(${orders.stripePaymentIntentId} IS NULL OR ${orders.stripePaymentIntentId} = ${intent.id})`))
+      .returning({ id: orders.id });
+    if (!bound) {
+      await getStripe().paymentIntents.cancel(intent.id, {}, { idempotencyKey: `cancel_order_${orderId}` });
+      return { success: false, error: "Reservation expired or order changed" };
+    }
 
     return {
       success: true,
@@ -1005,19 +994,18 @@ export async function updateOrderReceiptEmail(
 
     // IDOR Security Guard (SEC §5.1)
     let currentUserId: string | null = null;
-    let isOutsideRequestContext = false;
     try {
-      currentUserId = auth().userId;
+      currentUserId = (await auth()).userId;
     } catch {
-      isOutsideRequestContext = true;
+      return { success: false, error: "Unable to verify authentication" };
     }
 
     if (!order.userId.startsWith("guest_")) {
-      if (!isOutsideRequestContext && (!currentUserId || currentUserId !== order.userId)) {
+      if (!currentUserId || currentUserId !== order.userId) {
         return { success: false, error: "Unauthorized access to order" };
       }
     } else {
-      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const effectiveToken = guestToken || await getGuestTokenFromCookie(orderId);
       const isTokenValid = verifyGuestOrderToken(
         effectiveToken,
         order.id,
@@ -1103,19 +1091,18 @@ export async function rejectMockPayment(
 
     // IDOR Security Guard (SEC §5.1)
     let currentUserId: string | null = null;
-    let isOutsideRequestContext = false;
     try {
-      currentUserId = auth().userId;
+      currentUserId = (await auth()).userId;
     } catch {
-      isOutsideRequestContext = true;
+      return { success: false, error: "Unable to verify authentication" };
     }
 
     if (!order.userId.startsWith("guest_")) {
-      if (!isOutsideRequestContext && (!currentUserId || currentUserId !== order.userId)) {
+      if (!currentUserId || currentUserId !== order.userId) {
         return { success: false, error: "Unauthorized access to order" };
       }
     } else {
-      const effectiveToken = guestToken || getGuestTokenFromCookie(orderId);
+      const effectiveToken = guestToken || await getGuestTokenFromCookie(orderId);
       const isTokenValid = verifyGuestOrderToken(
         effectiveToken,
         order.id,
@@ -1176,7 +1163,7 @@ export interface UserOrderItemDetail {
  */
 export async function getUserOrders() {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { success: true, data: [] };
     }
@@ -1309,7 +1296,7 @@ export async function getUserOrders() {
  */
 export async function getLatestCustomerShipmentAlertAction() {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { success: true, data: null };
     }
@@ -1377,7 +1364,7 @@ export async function getLatestCustomerShipmentAlertAction() {
  */
 export async function getSavedCheckoutAddresses() {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { success: true, addresses: [], userProfile: null };
     }

@@ -1,7 +1,8 @@
 import {
   pgTable, uuid, text, integer, numeric, pgEnum,
-  timestamp, boolean, index, jsonb, AnyPgColumn,
+  timestamp, boolean, index, jsonb, AnyPgColumn, check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export interface ProductFeatureItem {
   title: string;
@@ -156,6 +157,7 @@ export const products = pgTable("products", {
   // B-1 fix: composite index for the most common list query pattern
   // WHERE product_type = 'single'/'bundle' ORDER BY created_at DESC
   typeCreatedIdx: index("products_type_created_idx").on(table.productType, table.createdAt),
+  nonnegativeStock: check("products_nonnegative_stock", sql`${table.stockQuantity} >= 0`),
 }));
 
 export const productImages = pgTable("product_images", {
@@ -199,6 +201,8 @@ export const productBundleItems = pgTable("product_bundle_items", {
 }, (table) => ({
   bundleProductIdx: index("bundle_items_bundle_idx").on(table.bundleProductId),
   childProductIdx: index("bundle_items_child_idx").on(table.childProductId),
+  positiveQuantity: check("bundle_items_positive_quantity", sql`${table.quantity} > 0`),
+  noSelfReference: check("bundle_items_no_self_reference", sql`${table.bundleProductId} <> ${table.childProductId}`),
 }));
 
 export type Category = typeof categories.$inferSelect;

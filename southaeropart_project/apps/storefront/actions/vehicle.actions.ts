@@ -1,7 +1,7 @@
 "use server";
 
 import { unstable_noStore as noStore } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { customerAuth as auth } from "@/lib/customer-auth";
 import { db, brands, carModels, userVehicles, eq, asc, desc } from "@repo/db";
 
 export interface VehicleModelData {
@@ -142,7 +142,7 @@ export async function getVehicleSelectorData(): Promise<VehicleBrandData[]> {
 export async function getUserGarageVehicles(): Promise<UserGarageVehicle[]> {
   noStore();
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return [];
     }

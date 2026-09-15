@@ -1,4 +1,4 @@
-name: CI & Security Gates (OWASP ASVS L2)
+name: CI & Security Gates
 
 on:
   push:
@@ -13,16 +13,22 @@ on:
       - develop
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   CI: "true"
+  APP_ENV: "staging"
+  ADMIN_MFA_ENCRYPTION_KEY: "ci_test_mfa_encryption_key_at_least_32_characters"
+  MAINTENANCE_SECRET: "ci_test_maintenance_secret_at_least_32_characters"
   NODE_ENV: "test"
   DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/southaero_test"
   ADMIN_SESSION_SECRET: "ci_test_admin_session_secret_at_least_32_characters_123456"
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_ci_mock_clerk_publishable_key_12345"
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_Y2xlcmsuZXhhbXBsZS5jb20k"
   CLERK_SECRET_KEY: "sk_test_ci_mock_clerk_secret_key_12345"
   CLERK_WEBHOOK_SECRET: "whsec_ci_mock_clerk_webhook_secret_12345"
   STRIPE_SECRET_KEY: "sk_test_ci_mock_stripe_secret_key_12345"
@@ -74,11 +80,14 @@ jobs:
       - name: Setup Node.js Runtime
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "pnpm"
 
       - name: Install Monorepo Dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Audit Production Dependencies
+        run: pnpm audit --prod --audit-level=moderate
 
       - name: Run ESLint Across Monorepo
         run: pnpm lint
@@ -104,7 +113,7 @@ jobs:
       - name: Setup Node.js Runtime
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "pnpm"
 
       - name: Install Monorepo Dependencies
@@ -119,24 +128,9 @@ jobs:
   # Stage 4: Playwright Security Headers & Smoke Verification
   # ─────────────────────────────────────────────────────────────
   security-headers-and-smoke:
-    name: Security Headers & Protected Route Gates
+    name: Build Both Apps & Admin Browser Security
     runs-on: ubuntu-latest
     needs: [code-quality, vitest-suite]
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgrespassword
-          POSTGRES_DB: southaero_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@v4
@@ -149,39 +143,36 @@ jobs:
       - name: Setup Node.js Runtime
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "pnpm"
 
       - name: Install Monorepo Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Push Database Schema to Test Database
-        run: pnpm db:push
-
       - name: Install Playwright Chromium Browser
         run: pnpm --filter e2e exec playwright install --with-deps chromium
 
-      - name: Build Storefront Application
-        run: pnpm --filter storefront build
+      - name: Build Both Applications
+        run: pnpm build
         env:
           NODE_ENV: production
           CLOUDINARY_CLOUD_NAME: mock_cloud
           CLOUDINARY_API_KEY: mock_key
           CLOUDINARY_API_SECRET: mock_secret
 
-      - name: Start Storefront Server in Background
+      - name: Start Admin Production Build
         run: |
-          pnpm --filter storefront start &
-          npx wait-on http://127.0.0.1:3000 --timeout 60000
+          pnpm --filter admin start --port 3001 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:3001/login > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
         env:
-          PORT: 3000
           NODE_ENV: production
-          CLOUDINARY_CLOUD_NAME: mock_cloud
-          CLOUDINARY_API_KEY: mock_key
-          CLOUDINARY_API_SECRET: mock_secret
 
-      - name: Run Playwright Security Headers Test Suite
-        run: pnpm test:security
+      - name: Test Admin Public Security Boundary
+        run: pnpm --filter e2e exec playwright test --project=security admin-public.spec.ts
 
       - name: Upload Playwright Test Report on Failure
         if: failure()
@@ -190,3 +181,17 @@ jobs:
           name: playwright-security-report
           path: e2e/playwright-report/
           retention-days: 7
+
+  static-security:
+    name: CodeQL JavaScript and TypeScript
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3

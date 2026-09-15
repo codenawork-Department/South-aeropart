@@ -1,9 +1,11 @@
 "use server";
 
+import { getStripe } from "@repo/lib/stripe";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import {
   db,
+  releaseOrderStock,
   orders,
   orderItems,
   orderStatusHistory,
@@ -382,6 +384,8 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
         orderNumber: orders.orderNumber,
         status: orders.status,
         paymentStatus: orders.paymentStatus,
+        stripePaymentIntentId: orders.stripePaymentIntentId,
+        inventoryState: orders.inventoryState,
       })
       .from(orders)
       .where(eq(orders.id, orderId))
@@ -391,33 +395,30 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
       return { success: false, error: "Order not found" };
     }
 
-    const updates: Record<string, unknown> = {
-      status,
-      updatedAt: new Date(),
-    };
-
-    if (paymentStatus) {
-      updates.paymentStatus = paymentStatus;
-    } else if (status === "paid") {
-      updates.paymentStatus = "paid";
+    if (paymentStatus && paymentStatus !== existing.paymentStatus) return { success: false, error: "Payment state is controlled by the payment provider" };
+    const allowed: Record<string, string[]> = { pending: ["cancelled"], paid: ["processing"], processing: ["shipped"], shipped: ["delivered"] };
+    if (!allowed[existing.status]?.includes(status)) return { success: false, error: "Invalid order transition; refunds require provider reconciliation" };
+    if (status === "cancelled") {
+      if (admin.role === "staff" || existing.paymentStatus === "paid" || existing.inventoryState !== "reserved") return { success: false, error: "Order cannot be cancelled by this action" };
+      if (existing.stripePaymentIntentId) {
+        const stripe = getStripe();
+        const intent = await stripe.paymentIntents.retrieve(existing.stripePaymentIntentId);
+        if (intent.status !== "canceled") await stripe.paymentIntents.cancel(intent.id, {}, { idempotencyKey: `cancel_order_${orderId}` });
+      }
+    } else if (existing.paymentStatus !== "paid") {
+      return { success: false, error: "Payment must be confirmed before fulfillment" };
     }
-
-    const isPreviousPaid =
-      existing.status === "paid" ||
-      existing.status === "processing" ||
-      existing.status === "shipped" ||
-      existing.status === "delivered" ||
-      existing.paymentStatus === "paid";
-
-    const isNowCancelled = status === "cancelled" || status === "refunded";
+    const updates = { status, updatedAt: new Date() };
 
     await db.transaction(async (tx) => {
       // 1. Update order
-      await tx.update(orders).set(updates).where(eq(orders.id, orderId));
+      const [changed] = await tx.update(orders).set(updates).where(and(eq(orders.id, orderId), eq(orders.status, existing.status), eq(orders.paymentStatus, existing.paymentStatus), sql`${orders.stripePaymentIntentId} IS NOT DISTINCT FROM ${existing.stripePaymentIntentId}`))
+        .returning({ id: orders.id });
+      if (!changed) throw new Error("Order changed concurrently; reload and retry");
 
       // 2. If order was paid and is now cancelled/refunded, restore stock (INV-02 Guard)
-      if (isPreviousPaid && isNowCancelled) {
-        await restoreOrderStock(orderId, tx);
+      if (status === "cancelled") {
+        await releaseOrderStock(tx, orderId);
       }
 
       // 3. Insert into history
@@ -474,122 +475,6 @@ export async function updateOrderStatusAction(input: UpdateStatusInput) {
 }
 
 /**
- * Restores inventory stock for products and bundle parts when an order is cancelled/refunded.
- */
-async function restoreOrderStock(orderId: string, tx: any = db) {
-  try {
-    const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-
-    for (const item of items) {
-      if (item.productId) {
-        // Restore single product stock
-        const [prod] = await tx
-          .select({
-            stockQuantity: products.stockQuantity,
-            productType: products.productType,
-            status: products.status,
-          })
-          .from(products)
-          .where(eq(products.id, item.productId))
-          .limit(1);
-
-        if (prod) {
-          const restoredStock = prod.stockQuantity + item.quantity;
-          await tx
-            .update(products)
-            .set({
-              stockQuantity: restoredStock,
-              status: prod.status === "out_of_stock" ? "active" : prod.status,
-              updatedAt: new Date(),
-            })
-            .where(eq(products.id, item.productId));
-
-          if (prod.productType === "single") {
-            await syncAdminBundleStockForChild(item.productId, tx);
-          }
-        }
-
-        // Restore bundle child parts
-        const bundleParts = await tx
-          .select()
-          .from(orderItemBundleParts)
-          .where(eq(orderItemBundleParts.orderItemId, item.id));
-
-        for (const part of bundleParts) {
-          if (part.childProductId) {
-            const [childProd] = await tx
-              .select({
-                stockQuantity: products.stockQuantity,
-                status: products.status,
-              })
-              .from(products)
-              .where(eq(products.id, part.childProductId))
-              .limit(1);
-
-            if (childProd) {
-              const restoredChildStock = childProd.stockQuantity + part.quantity;
-              await tx
-                .update(products)
-                .set({
-                  stockQuantity: restoredChildStock,
-                  status: childProd.status === "out_of_stock" ? "active" : childProd.status,
-                  updatedAt: new Date(),
-                })
-                .where(eq(products.id, part.childProductId));
-
-              await syncAdminBundleStockForChild(part.childProductId, tx);
-            }
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error("[restoreOrderStock] Error restoring stock for order:", orderId, err);
-  }
-}
-
-/**
- * Recalculates and updates bundle stock based on child parts in admin context.
- */
-async function syncAdminBundleStockForChild(childProductId: string, tx: any = db) {
-  try {
-    const parentBundles = await tx
-      .select({ bundleProductId: productBundleItems.bundleProductId })
-      .from(productBundleItems)
-      .where(eq(productBundleItems.childProductId, childProductId));
-
-    for (const { bundleProductId } of parentBundles) {
-      const bundleParts = await tx
-        .select({
-          childId: productBundleItems.childProductId,
-          partQty: productBundleItems.quantity,
-          childStock: products.stockQuantity,
-        })
-        .from(productBundleItems)
-        .innerJoin(products, eq(productBundleItems.childProductId, products.id))
-        .where(eq(productBundleItems.bundleProductId, bundleProductId));
-
-      if (bundleParts.length === 0) continue;
-
-      const minSets = Math.min(
-        ...bundleParts.map((p: any) => Math.floor(Math.max(0, p.childStock) / (p.partQty || 1)))
-      );
-
-      await tx
-        .update(products)
-        .set({
-          stockQuantity: minSets,
-          status: minSets === 0 ? "out_of_stock" : "active",
-          updatedAt: new Date(),
-        })
-        .where(eq(products.id, bundleProductId));
-    }
-  } catch (err) {
-    console.error("[syncAdminBundleStockForChild] Error syncing bundle stock:", err);
-  }
-}
-
-/**
  * Update tracking number & shipping carrier
  */
 export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput) {
@@ -613,6 +498,9 @@ export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput
       updatedAt: new Date(),
     };
 
+    if (existing.paymentStatus !== "paid" || !["paid", "processing", "shipped"].includes(existing.status)) {
+      return { success: false, error: "Only paid, active orders can be shipped" };
+    }
     const newStatus = markAsShipped ? "shipped" : existing.status;
     if (markAsShipped) {
       updates.status = "shipped";

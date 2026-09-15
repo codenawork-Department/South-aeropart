@@ -36,38 +36,13 @@ const nextConfig = {
     ],
   },
   async headers() {
-    const isProd = process.env.NODE_ENV === "production";
-    const scriptSrc = isProd
-      ? "'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.southaeropart.com https://js.stripe.com https://cdn.jsdelivr.net"
-      : "'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.southaeropart.com https://js.stripe.com https://cdn.jsdelivr.net";
-
-    const cspHeader = `
-      default-src 'self';
-      script-src ${scriptSrc};
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      img-src 'self' blob: data: https://res.cloudinary.com https://img.clerk.com https://images.unsplash.com https://avatars.githubusercontent.com https://*.stripe.com;
-      font-src 'self' data: https://fonts.gstatic.com;
-      connect-src 'self' https://*.clerk.accounts.dev https://clerk.southaeropart.com https://api.stripe.com https://maps.googleapis.com https://res.cloudinary.com https://raw.githubusercontent.com;
-      frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://js.stripe.com https://hooks.stripe.com;
-      media-src 'self' https://res.cloudinary.com blob:;
-      worker-src 'self' blob:;
-      object-src 'none';
-      base-uri 'self';
-      form-action 'self';
-      frame-ancestors 'self';
-    `.replace(/\s{2,}/g, " ").trim();
-
     return [
       {
         source: "/(.*)",
         headers: [
           {
-            key: "Content-Security-Policy",
-            value: cspHeader,
-          },
-          {
             key: "Strict-Transport-Security",
-            value: "max-age=63072000; includeSubDomains; preload",
+            value: "max-age=31536000",
           },
           {
             key: "X-Frame-Options",
@@ -89,8 +64,8 @@ const nextConfig = {
       },
     ];
   },
+  serverExternalPackages: ["@repo/db", "drizzle-orm", "@neondatabase/serverless"],
   experimental: {
-    serverComponentsExternalPackages: ["@repo/db", "drizzle-orm", "@neondatabase/serverless"],
     optimizePackageImports: [
       "lucide-react",
       "@react-three/drei",

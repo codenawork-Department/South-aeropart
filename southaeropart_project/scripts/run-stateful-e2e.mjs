@@ -34,10 +34,9 @@ for (const [k, v] of Object.entries(envFromFile)) {
   }
 }
 
-const originalDbUrl = process.env.DATABASE_URL || "";
-const testDbUrl =
-  process.env.TEST_DATABASE_URL ||
-  originalDbUrl.replace(/\/neondb(\?|$)/, "/southaero_test$1");
+const testDbUrl = process.env.TEST_DATABASE_URL;
+if (!testDbUrl || process.env.TEST_DATABASE_DISPOSABLE !== 'true' || process.env.NODE_ENV === 'production') throw new Error('Provision a disposable TEST_DATABASE_URL explicitly before stateful E2E');
+if (process.env.RESEND_API_KEY || process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_')) throw new Error('Stateful E2E requires an email sink and Stripe test mode');
 
 function checkPortListening(port) {
   return new Promise((resolve) => {
@@ -65,6 +64,8 @@ async function waitForServer(port, timeoutMs = 60000) {
 async function main() {
   console.log("\n🛡️ [STATEFUL E2E] Initializing Automated Stateful E2E Runner...");
 
+  if (await checkPortListening(3005)) throw new Error("Port 3005 is occupied; refusing to use an unverified server");
+
   // 1. Seed the test database
   console.log("🌱 [STATEFUL E2E] Step 1/3: Seeding dedicated test database (southaero_test)...");
   try {
@@ -86,7 +87,7 @@ async function main() {
   const isAlreadyRunning = await checkPortListening(3005);
 
   if (isAlreadyRunning) {
-    console.log("⚡ [STATEFUL E2E] Step 2/3: Test server is already active on port 3005. Reusing instance.");
+    throw new Error("Test server port became occupied; refusing reuse");
   } else {
     console.log("🚀 [STATEFUL E2E] Step 2/3: Launching Storefront test server on port 3005 (southaero_test)...");
     serverProcess = spawn(

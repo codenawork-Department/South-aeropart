@@ -1,8 +1,9 @@
+if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL must be configured explicitly");
 const { neon } = require('@neondatabase/serverless');
 require('dotenv').config({ path: '../../.env' });
 require('dotenv').config({ path: '.env' });
 
-const dbUrl = process.env.DATABASE_URL || "postgresql://neondb_owner:REDACTED_PASSWORD@ep-dummy-neon.tech/neondb?sslmode=require";
+const dbUrl = process.env.DATABASE_URL;
 const sql = neon(dbUrl);
 
 async function run() {

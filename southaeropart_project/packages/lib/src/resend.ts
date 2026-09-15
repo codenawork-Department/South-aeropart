@@ -17,6 +17,7 @@ export interface SendEmailOptions {
   subject: string;
   html: string;
   replyTo?: string;
+  idempotencyKey?: string;
 }
 
 export interface SendEmailResult {
@@ -58,7 +59,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
       subject: options.subject,
       html: options.html,
       replyTo: options.replyTo,
-    });
+    }, options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : undefined);
 
     if (error) {
       console.error("[RESEND] Error response:", error);

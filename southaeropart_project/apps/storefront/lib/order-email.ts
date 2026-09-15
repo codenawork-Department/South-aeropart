@@ -1,3 +1,4 @@
+import { generateGuestOrderToken } from "./guest-order-token";
 import { sendEmail } from "@repo/lib";
 import {
   db,
@@ -10,6 +11,10 @@ import {
   type OrderItem,
   type OrderItemBundlePart,
 } from "@repo/db";
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
 
 export type OrderItemWithParts = OrderItem & {
   bundleParts?: OrderItemBundlePart[];
@@ -29,8 +34,8 @@ function generateOrderEmailHtml({
   items,
   customerEmail,
 }: SendOrderEmailParams): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const trackingUrl = `${siteUrl}/orders/${order.id}`;
+  const siteUrl = process.env.NEXT_PUBLIC_STOREFRONT_URL || "http://localhost:3000";
+  const trackingUrl = `${siteUrl}/orders/${order.id}${order.userId.startsWith("guest_") ? `?token=${generateGuestOrderToken(order.id, order.userId, order.createdAt)}` : ""}`;
   const orderDate = new Date(order.createdAt).toLocaleDateString("th-TH", {
     year: "numeric",
     month: "long",
@@ -48,7 +53,7 @@ function generateOrderEmailHtml({
     `${address.subDistrict}, ${address.district}`,
     `${address.province} ${address.postalCode}`,
   ].filter(Boolean);
-  const addressStr = addressParts.join("<br/>");
+  const addressStr = addressParts.map(part => escapeHtml(part || "")).join("<br/>");
 
   const totalNum = parseFloat(order.total);
   const vatAmount = (totalNum * 7) / 107; // 7% VAT included in price
@@ -74,7 +79,7 @@ function generateOrderEmailHtml({
                 ${item.bundleParts
                   .map(
                     (part) =>
-                      `<li>${part.childProductNameSnapshot} &times; ${part.quantity} ชิ้น</li>`
+                      `<li>${escapeHtml(part.childProductNameSnapshot || "")} &times; ${part.quantity} ชิ้น</li>`
                   )
                   .join("")}
               </ul>
@@ -85,7 +90,7 @@ function generateOrderEmailHtml({
       return `
       <tr>
         <td style="padding: 14px 0; border-bottom: 1px solid #222222; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #FFFFFF; vertical-align: top;">
-          <strong style="color: #FFFFFF; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">${item.productNameSnapshot}</strong>
+          <strong style="color: #FFFFFF; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(item.productNameSnapshot || "")}</strong>
           <div style="color: #888888; font-size: 12px; margin-top: 3px;">
             จำนวน: ${item.quantity} ชิ้น &times; ฿${parseFloat(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })} THB
           </div>
@@ -149,7 +154,7 @@ function generateOrderEmailHtml({
                 <tr>
                   <td style="font-size: 12px; color: #888888;">
                     ใบเสร็จรับเงินและเอกสารยืนยันถูกส่งไปยัง: 
-                    <span style="color: #FFFFFF; font-weight: bold; font-family: monospace;">${customerEmail}</span>
+                    <span style="color: #FFFFFF; font-weight: bold; font-family: monospace;">${escapeHtml(customerEmail || "")}</span>
                   </td>
                 </tr>
               </table>
@@ -356,6 +361,7 @@ export async function sendOrderConfirmationEmail(orderId: string) {
       to: recipientEmail,
       subject: `[SOUTH AERO] ใบเสร็จและยืนยันการชำระเงิน #${order.orderNumber}`,
       html: emailHtml,
+      idempotencyKey: `order-confirmation-${order.id}`,
     });
 
     if (result.success) {

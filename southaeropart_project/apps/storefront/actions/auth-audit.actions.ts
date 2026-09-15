@@ -1,7 +1,7 @@
 "use server";
 //
 import { headers } from "next/headers";
-import { auth } from "@clerk/nextjs/server";
+import { customerAuth as auth } from "@/lib/customer-auth";
 import { z } from "zod";
 import { recordUserLogin, RecordUserLoginParams } from "@/lib/auth-audit";
 
@@ -34,7 +34,7 @@ export async function recordLoginAction(params: LogLoginActionParams): Promise<{
     // HIGH-05: Check server-side session to prevent user spoofing
     let authUserId: string | null = null;
     try {
-      authUserId = auth().userId;
+      authUserId = (await auth()).userId;
     } catch {
       authUserId = null;
     }
@@ -50,7 +50,7 @@ export async function recordLoginAction(params: LogLoginActionParams): Promise<{
       return { success: false };
     }
 
-    const headersList = headers();
+    const headersList = await headers();
     
     // Extract client IP address (supporting proxies / CDN / Vercel)
     const forwardedFor = headersList.get("x-forwarded-for");

@@ -30,7 +30,7 @@ export default async function AerodynamicsPage() {
   let lang: AeroLanguage = DEFAULT_LANGUAGE as AeroLanguage;
 
   // 1. Check if user is authenticated and has a saved profile language
-  const { userId } = auth();
+  const { userId } = await auth();
   if (userId) {
     try {
       const profileLang = await getUserLanguagePreference();
@@ -40,7 +40,7 @@ export default async function AerodynamicsPage() {
     }
   } else {
     // 2. Fallback to cookie if unauthenticated — sanitized against injection
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const cookieLang = cookieStore.get(LANGUAGE_COOKIE_NAME)?.value;
     lang = sanitizeLanguage(cookieLang) as AeroLanguage;
   }

@@ -5,14 +5,14 @@ import { OrderDetailAdminClient } from "@/components/orders/OrderDetailAdminClie
 export const dynamic = "force-dynamic";
 
 interface AdminOrderDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function AdminOrderDetailPage({ params }: AdminOrderDetailPageProps) {
   const [orderRes, staffList] = await Promise.all([
-    getOrderByIdAction(params.id),
+    getOrderByIdAction((await params).id),
     getAdminStaffListAction(),
   ]);
 

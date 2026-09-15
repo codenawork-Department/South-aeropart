@@ -1595,6 +1595,7 @@ export function VisualEmailBuilder({
             <div className="flex-1 overflow-y-auto p-6 bg-[#080808]">
               <iframe
                 srcDoc={compiledEmailHtml}
+                sandbox=""
                 title="Email Preview"
                 className="w-full h-[600px] border border-[#262626] rounded bg-[#0A0A0A]"
               />

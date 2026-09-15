@@ -50,9 +50,9 @@ export function verifyGuestOrderToken(
 /**
  * Reads guest order token from HttpOnly cookies if available in current request context.
  */
-export function getGuestTokenFromCookie(orderId: string): string | null {
+export async function getGuestTokenFromCookie(orderId: string): Promise<string | null> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     return cookieStore.get(`guest_order_${orderId}`)?.value || null;
   } catch {
     return null;
@@ -62,9 +62,9 @@ export function getGuestTokenFromCookie(orderId: string): string | null {
 /**
  * Sets guest order token as an HttpOnly, SameSite=Lax cookie for seamless access during session.
  */
-export function setGuestTokenCookie(orderId: string, token: string): void {
+export async function setGuestTokenCookie(orderId: string, token: string): Promise<void> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set(`guest_order_${orderId}`, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

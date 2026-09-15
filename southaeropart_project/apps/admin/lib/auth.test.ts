@@ -14,6 +14,12 @@ beforeAll(() => {
 
 describe("Admin Auth & Security (CLAUDE.md §5.1)", () => {
   describe("Password Hashing & Verification (bcrypt >= 12 rounds)", () => {
+    it("rejects passwords over bcrypt's 72-byte limit, including multibyte text", async () => {
+      const overLimit = "ก".repeat(25);
+      expect(overLimit.length).toBeLessThan(72);
+      await expect(hashPassword(overLimit)).rejects.toThrow();
+      expect(await verifyPassword(overLimit, "$2b$12$invalid-test-hash")).toBe(false);
+    });
     it("hashes password with salt and verifies successfully", async () => {
       const password = "StrongPassword@123456";
       const hashed = await hashPassword(password);
@@ -60,7 +66,7 @@ describe("Admin Auth & Security (CLAUDE.md §5.1)", () => {
       lockedUntil: null,
       lastLoginAt: null,
       lastLoginIp: null,
-      mfaEnabled: false,
+      mfaEnabled: false, mfaLastUsedStep: null, mfaChallengeHash: null, mfaPendingSetup: null, mfaPendingSetupExpiresAt: null,
       mfaSecretEncrypted: null,
       mfaRecoveryCodesHash: null,
       passwordChangedAt: null,
@@ -106,7 +112,7 @@ describe("Admin Auth & Security (CLAUDE.md §5.1)", () => {
       lockedUntil: null,
       lastLoginAt: null,
       lastLoginIp: null,
-      mfaEnabled: false,
+      mfaEnabled: false, mfaLastUsedStep: null, mfaChallengeHash: null, mfaPendingSetup: null, mfaPendingSetupExpiresAt: null,
       mfaSecretEncrypted: null,
       mfaRecoveryCodesHash: null,
       passwordChangedAt: null,

@@ -1,0 +1,18 @@
+{
+  "run": "security_test_515b9c3194c047de876ae3e0d84104be",
+  "checks": [
+    "fresh database migration journal",
+    "four distinct orders racing for last physical part: exactly one reservation",
+    "multi-part reservation failure rolls back all decrements",
+    "database rejects negative stock",
+    "reservation release is atomic and single-use under concurrency",
+    "shared database rate limiter admits exactly three of eight concurrent requests",
+    "Stripe test payment succeeds and creation retry returns same intent",
+    "paid Stripe intent cannot fulfill an unbound order",
+    "provider-confirmed payment with wrong amount is rejected",
+    "concurrent fulfillment and retry: one paid transition, one email job, no second stock deduction",
+    "real Stripe SDK verifies raw-body signature; late failure cannot overwrite paid"
+  ],
+  "cleanup": true,
+  "stripeCleanup": true
+}

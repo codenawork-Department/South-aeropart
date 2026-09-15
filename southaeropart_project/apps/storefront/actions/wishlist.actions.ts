@@ -1,6 +1,7 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
+import { customerAuth as auth } from "@/lib/customer-auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
@@ -79,7 +80,7 @@ export async function getWishlist(): Promise<{
   items: WishlistItem[];
   error?: string;
 }> {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, items: [], error: "Unauthorized" };
   }
@@ -178,7 +179,7 @@ export async function getWishlist(): Promise<{
 export async function checkIsWishlisted(productId: string): Promise<{
   isWishlisted: boolean;
 }> {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { isWishlisted: false };
   }
@@ -216,7 +217,7 @@ export async function toggleWishlist(productId: string): Promise<{
   isWishlisted: boolean;
   error?: string;
 }> {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, isWishlisted: false, error: "Unauthorized" };
   }
@@ -277,7 +278,7 @@ export async function addToWishlist(productId: string): Promise<{
   success: boolean;
   error?: string;
 }> {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }
@@ -326,7 +327,7 @@ export async function removeFromWishlist(productId: string): Promise<{
   success: boolean;
   error?: string;
 }> {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
   }

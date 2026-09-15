@@ -169,6 +169,10 @@ export function SetupForm() {
 
         {/* ─── Setup Form ─── */}
         <form onSubmit={handleSubmitClick} className="space-y-5">
+          <div>
+            <label htmlFor="bootstrap-token" className="auth-label">รหัสอนุญาตตั้งค่าระบบ</label>
+            <input id="bootstrap-token" name="bootstrapToken" type="password" required autoComplete="off" className="auth-input" />
+          </div>
           {/* Full Name */}
           <div>
             <label htmlFor="setup-fullname" className="auth-label">

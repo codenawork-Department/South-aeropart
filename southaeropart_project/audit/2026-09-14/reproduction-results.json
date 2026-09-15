@@ -1,0 +1,107 @@
+{
+  "commit": "3b05acf8ddd30cc139c38974506a2ac4bdae8edb",
+  "scope": "Offline actual-source characterization with explicit doubles; no database, provider, or HTTP server",
+  "records": [
+    {
+      "id": "ABUSE-01",
+      "title": "Forwarded header overrides the supplied connection IP",
+      "reproduced": true,
+      "evidence": {
+        "selectedIp": "198.51.100.99",
+        "suppliedConnectionIp": "192.0.2.10"
+      }
+    },
+    {
+      "id": "ABUSE-02",
+      "title": "maxBuckets does not bound active entries",
+      "reproduced": true,
+      "evidence": {
+        "configuredMax": 2,
+        "actualActiveEntries": 10
+      }
+    },
+    {
+      "id": "XSS-01",
+      "title": "SVG sanitizer retains an unquoted event handler",
+      "reproduced": true,
+      "evidence": {
+        "retainedEventAttribute": true,
+        "browserExecutionTested": false
+      }
+    },
+    {
+      "id": "STOCK-01",
+      "title": "Fulfillment deducts stock already reserved by checkout",
+      "reproduced": true,
+      "evidence": {
+        "originalStock": 10,
+        "afterCheckoutReservation": 9,
+        "afterFulfillment": 8,
+        "boundary": "Actual fulfillment function; post-checkout state supplied by in-memory double, not PostgreSQL"
+      }
+    },
+    {
+      "id": "PAYMENT-01",
+      "title": "Stripe handler fulfills a mismatched PaymentIntent",
+      "reproduced": true,
+      "evidence": {
+        "httpStatus": 200,
+        "fulfillmentCalls": 1,
+        "signatureVerifier": "mocked; no claim of cryptographic bypass"
+      }
+    },
+    {
+      "id": "MFA-01",
+      "title": "MFA setup can replace an existing factor using session alone",
+      "reproduced": true,
+      "evidence": {
+        "requiresExistingSession": true,
+        "reauthenticationCalls": 0,
+        "clientChosenRecoveryHashAccepted": true
+      }
+    },
+    {
+      "id": "MFA-02",
+      "title": "MFA-enabled account with absent secret falls through to password-only login",
+      "reproduced": true,
+      "evidence": {
+        "mfaEnabled": true,
+        "secretPresent": false,
+        "sessionsCreated": 1,
+        "passwordVerification": "mocked valid"
+      }
+    },
+    {
+      "id": "MFA-03",
+      "title": "Recovery helper accepts the same code twice against concurrent snapshots",
+      "reproduced": true,
+      "evidence": {
+        "acceptedSnapshots": 2,
+        "boundary": "Helper only; action uses non-atomic read/update, PostgreSQL race remains untested"
+      }
+    },
+    {
+      "id": "AUTH-01",
+      "title": "Receipt email mutation fails open when Clerk auth throws",
+      "reproduced": true,
+      "evidence": {
+        "authenticatedUser": null,
+        "authException": true,
+        "mutationSucceeded": true,
+        "boundary": "Actual server action with simulated auth-context error; remote reachability not proven"
+      }
+    },
+    {
+      "id": "STOCK-02",
+      "title": "Staff can cancel a paid order repeatedly and inflate stock",
+      "reproduced": true,
+      "evidence": {
+        "initialStock": 8,
+        "afterFirstCancel": 9,
+        "afterSecondCancel": 10,
+        "actorRole": "staff",
+        "boundary": "Actual action with sequential in-memory persistence, not PostgreSQL"
+      }
+    }
+  ]
+}

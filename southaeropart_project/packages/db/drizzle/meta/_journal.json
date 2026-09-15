@@ -15,6 +15,20 @@
       "when": 1787680978070,
       "tag": "0001_productive_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789420302871,
+      "tag": "0002_security_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789449988439,
+      "tag": "0003_security_runtime",
+      "breakpoints": true
     }
   ]
 }

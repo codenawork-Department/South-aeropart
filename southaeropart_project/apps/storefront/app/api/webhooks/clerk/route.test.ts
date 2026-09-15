@@ -11,9 +11,9 @@ vi.mock("@/lib/user-sync", () => ({
 }));
 
 vi.mock("svix", () => ({
-  Webhook: vi.fn().mockImplementation(() => ({
-    verify: mockSync.svixVerify,
-  })),
+  Webhook: vi.fn().mockImplementation(function () {
+    return { verify: mockSync.svixVerify };
+  }),
 }));
 
 vi.mock("@repo/db", () => ({

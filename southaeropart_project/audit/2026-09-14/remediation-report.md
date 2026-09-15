@@ -1,0 +1,51 @@
+# ผลแก้ไขช่องโหว่ South Aero
+
+อัปเดต 15 กันยายน 2026 — แก้ใน working tree บน baseline `3b05acf8ddd30cc139c38974506a2ac4bdae8edb`; ยังไม่ได้ commit, deploy หรืออนุมัติเปิดรับเงินจริง รายงาน audit เดิมเป็นผลก่อนแก้ ไม่ควรนำจำนวน finding เดิมมาอ้างว่าเป็นผลตรวจรอบนี้
+
+ผู้ใช้ยืนยันว่า Neon/Stripe ที่มีอยู่เป็นข้อมูลทดสอบและอนุญาตให้ทดสอบแล้ว การทดสอบ integration ใช้ schema สุ่มแยก, Stripe test key, email sink และ cleanup ไม่ได้ติดตั้ง migrations หรือแก้ข้อมูลใน schema เดิมของแอป
+
+## หลักฐานที่รันแล้ว
+
+- **Vitest 178 tests ผ่าน**: Storefront 72, Admin 55, shared lib 45, shared UI 6. รอบรวมผ่าน 177 ก่อนเพิ่ม bcrypt UTF-8 regression อีกหนึ่งกรณี; จากนั้นรัน Admin ทั้งชุดผ่าน 55. หลักฐาน `remediation-vitest.log` และ `remediation-admin-vitest-final.log`.
+- **Build ผ่านทั้ง Storefront/Admin**, Next 15.5.24; **typecheck ผ่าน 5 workspaces**, **lint ผ่าน 2 apps**. มี warning การใช้ `<img>` 4 จุด ไม่ได้ปิด TypeScript หรือตัวตรวจ security เพื่อให้ build ผ่าน. หลักฐาน `remediation-build.log`, `remediation-typecheck.log`, `remediation-lint.log`.
+- **Neon + Stripe integration ผ่าน 11 กลุ่ม**: fresh migration journal, แย่งชิ้นส่วนสุดท้ายจาก 4 orders ได้เพียงหนึ่ง, rollback เมื่อชิ้นส่วนไม่ครบ, DB ปฏิเสธ stock ติดลบ, คืน reservation พร้อมกันได้ครั้งเดียว, shared rate limit รับ 3 จาก 8 คำขอพร้อมกัน, Stripe creation retry ได้ intent เดิม, ปฏิเสธ intent ผูกผิด order/ยอดผิด, paid transition/history/email job ครั้งเดียว, และ signed late-failure webhook ไม่ย้อน paid. มีการคืนเงิน Stripe test และลบ schema แล้ว (`cleanup=true`, `stripeCleanup=true`). ดู `neon-stripe-integration-results.json` และ script `../../apps/storefront/scripts/verify-security-integration.ts`.
+- Webhook integration ใช้ **Stripe SDK ลงนาม raw payload และเรียก handler จริงใน process** รวมการแก้ raw body แล้วได้ 400; ไม่ใช่หลักฐานว่า Stripe ส่ง webhook ผ่าน URL deployment จริงแล้ว.
+- **Playwright 3 tests ผ่าน** สำหรับ Admin production build: nonce CSP, hydration/password toggle, บล็อก parser-inserted script และ redirect เมื่อไม่มี session. ดู `remediation-playwright.log` และ `../../e2e/tests/security/admin-public.spec.ts`.
+- **Browser smoke ผ่าน 5 กลุ่ม** ใน Chrome บน local HTTPS: ทั้งสองแอป 200, ไม่มี page JavaScript error/CSP block ระหว่างโหลดปกติ, บล็อกสคริปต์ที่แทรกใน HTML, ตรวจรูปแบบ credential ใน HTML, admin redirect และ maintenance bearer rejection. ดู `remediation-browser-results.json`. Clerk keys ตรวจว่า signing key ตรงกัน; HTTP preview redirect loop เกิดจาก Chrome ปฏิเสธ SameSite=None cookie ที่ไม่มี Secure และหายเมื่อใช้ direct HTTPS. ไม่ได้ลด cookie/CSP policy เพื่อแก้การทดสอบ.
+- CSP ของ Clerk มี `'unsafe-inline'` compatibility token ซึ่ง browser ที่รองรับ nonce จะเพิกเฉย; ผลทดสอบยืนยันการบล็อก parser-inserted inline script จริง และไม่มี `'unsafe-eval'`. การสร้าง script ผ่าน trusted JavaScript/DevTools ภายใต้ strict-dynamic ไม่ใช่การจำลอง HTML injection ที่ถูกต้อง.
+- **Dependency audit 0 advisory** ทั้ง production และรวม development ณ เวลาตรวจ; ดู `remediation-audit-production.json`, `remediation-audit-all.json`. ไม่ได้แปลว่าไม่มีช่องโหว่ที่ยังไม่ถูกค้นพบ. อัปเกรด Next/Clerk/React/Three/Drizzle/Neon/Vitest และ transitive dependencies พร้อม lockfile.
+- **3D headless regression ผ่าน**: 109 skinned meshes, 31 materials, authored door pose, glass/cutouts และ cache isolation. ดู `remediation-car-model.log`. ใช้ texture substitute จึงไม่ใช่ผลตรวจภาพ/ประสิทธิภาพ WebGL บนอุปกรณ์จริง.
+- CI YAML parse ผ่าน; กำหนด Node 22, frozen lockfile, dependency audit, build สองแอป, unit tests, Admin browser checks, Gitleaks และ CodeQL. **ยังไม่ได้รัน CI/Gitleaks/CodeQL บน GitHub และยังไม่ได้ตั้ง required branch checks**.
+- ตรวจรูปแบบ Neon credential literals ใน current tracked text files 637 รายการ ไม่พบเหลือหลังแก้ MCP launch arguments ด้วย (`remediation-secret-literal-check.json`); ไม่ใช่ full secret/history scan. ตรวจ syntax ของ 7 legacy scripts และ `git diff --check` ผ่าน. Build Storefront รอบสุดท้ายหลังแก้ realtime limiter expiry ผ่านใน `remediation-storefront-build-final.log`. ปิด preview ทุกพอร์ตและลบ TLS key/certificate ชั่วคราวแล้ว.
+
+## สิ่งที่แก้เทียบกับ audit เดิม
+
+- **SEC-01 — แก้โค้ดแล้ว แต่ยังเป็น blocker:** เอา Neon credential literals ออกจาก 8 ไฟล์และบังคับรับ env. **ยังไม่ได้ rotate/revoke credential หรือแก้ Git history**; ต้องทำที่ Neon/secret stores ก่อน deployment.
+- **DEP-01 — ผ่าน dependency scan/build:** ใช้แพ็กเกจที่แก้ advisory และ Node 22 ใน CI. อ้างอิง [Next support](https://nextjs.org/support-policy), [Clerk v6 migration](https://clerk.com/docs/guides/development/upgrading/upgrade-guides/nextjs-v6), [Vitest migration](https://v4.vitest.dev/guide/migration).
+- **STOCK-01/STOCK-02 — โค้ดและ DB concurrency ผ่าน:** จอง physical parts รวมกันด้วย conditional SQL, ledger ต่อ order/product, rollback ทั้งรายการ และ consume ตอนจ่ายโดยไม่หักซ้ำ. มี reservation expiry/maintenance cancellation; **ต้องติดตั้ง scheduler และทดสอบ endpoint expiry เต็ม flow ที่ deployment**.
+- **ORDER-01 — ปิดการปลอมสถานะการเงิน:** staff/admin ไม่สามารถใช้ status dropdown ยืนยัน paid/refunded; จำกัด lifecycle, cancellation CAS และ release ledger ครั้งเดียว หลัง provider cancellation. **Refund ที่ผูกกับ provider และ legacy-order reconciliation ยังต้องดำเนินการแยก**.
+- **PAYMENT-01/PAYMENT-02 — ผ่าน unit และ provider integration ตามกรณีข้างต้น:** ตรวจ binding, amount_received, currency, mode, authoritative provider state; paid/cancelled/refunded transitions ไม่ย้อนผิดลำดับ และไม่สร้าง intent ใหม่เมื่อ retrieve ล้มเหลว.
+- **AUTH-01 — fail closed:** ลบ request-context exception bypass ใน Server Actions; auth failure ไม่กลายเป็น guest. มี regression ที่ auth boundary; **ยังไม่ใช่ชุด direct HTTP invocation ครบทุก Server Action/role**.
+- **IDENTITY-01/DATA-01 — ปิด email-based ownership transfer:** guest ได้ identity สุ่มและใช้ token; ไม่ผูกบัญชีจริงด้วย shipping email. ลบ multi-table merge และมี customer guard ที่ปฏิเสธ banned identity ใน action flows. ทดสอบ banned/auth-failure/guest boundary; account-linking/recovery ต้องมีขั้นตอนพิสูจน์ตัวตนต่างหาก.
+- **BOOTSTRAP-01 — แก้ในโค้ด:** bootstrap token, strong password และ transaction advisory lock ก่อนสร้าง super-admin คนแรก. ยังไม่ได้ทำ browser race test ของ provisioning.
+- **MFA-01/MFA-02/AUTH-02 — แก้ในโค้ดและ unit tests:** setup ต้องยืนยัน password, pending factor/recovery hashes อยู่ฝั่ง serverและหมดอายุ, ห้าม overwrite MFA ที่เปิดอยู่, challenge/recovery/TOTP consume ด้วย CAS, MFA บังคับใน production, session MFA proof/idle expiry, atomic lockout, bcrypt จำกัด UTF-8 72 bytes และ encryption key แยก. **ยังไม่ได้ทดสอบ MFA enrollment/recovery ของบัญชีจริงครบ flow ในเบราว์เซอร์**.
+- **MEDIA-01 — แก้ ownership และลำดับ side effects:** ตรวจ image ID/public ID กับ product ก่อน provider mutation, ใช้ URL/identity จาก DB, ไม่ย้าย provider asset เมื่อเปลี่ยน metadata, DB commit ก่อนลบของเดิม และ cleanup ของใหม่เฉพาะ transaction ไม่สำเร็จ. Provider cleanup ยังเป็น best effort และมีความเสี่ยง orphan assets; ยังไม่ได้ fault-injection กับ Cloudinary จริง.
+- **XSS-01 — เปลี่ยน sink และตรวจ CSP จริง:** SVG ใช้ image context แทน inline HTML, email preview ใช้ iframe sandbox และทั้งสองแอปใช้ nonce CSP. Browser test พิสูจน์ CSP และ hydration; ยังไม่ได้ไล่ payload ทุกชนิดผ่านหน้าจัดการ SVG จริง.
+- **ABUSE-01 — แก้บางส่วน:** เลิกเชื่อ XFF/X-Real-IP จาก client, bounded memory maps, DB-backed quotas สำหรับ guest checkout/admin login/MFA setup/review/newsletter. ทดสอบ concurrency ของ DB limiter ผ่าน. **ยังต้องมี trusted ingress/WAF และ shared limits ครบทุก public route รวม cleanup/monitoring ของ quota rows**.
+- **ENV-01 — runtime validation:** instrumentation ตรวจ env ตอนรัน, ระบุ staging/production และ Stripe mode; build ไม่ต้องมี runtime secrets. Mock payments ปิดเมื่อ NODE_ENV=production. ต้องจัดการ secrets จริงตาม runbook.
+- **DB-01 — fresh schema ผ่าน:** journal เพิ่ม schema/migrations ที่ขาดและ constraints. **ฐานข้อมูลเดิมที่ใช้ push/manual sync ต้อง baseline/reconcile ก่อน apply; ยังไม่ได้ apply ที่ schema เดิม**. Existing orders ใช้ legacy inventory state เพื่อป้องกันการตัด/คืน stock ผิด.
+- **CI-01/TEST-01 — ปรับ workflow และเพิ่ม regression:** build/unit/browser/dependency gates และเลิก blanket secret-scan exclusions ของ test files. แทน verify loops ที่แก้ shared stock ด้วย isolated verifier; stateful runner ไม่เดาชื่อ DB และไม่ reuse server ที่ไม่รู้ที่มา. **GitHub execution, secret history scan และ stateful fixture lifecycle เต็มรูปแบบยังไม่ผ่านการยืนยัน**.
+- **REALTIME-01 — ลบข้อมูลส่วนตัวจาก broadcast:** ส่งเพียง catalog invalidation ไม่ส่ง order ID/number/status. **การกระจาย event/version ยังเป็น process-local; multi-instance delivery ยังเป็น deployment gap**.
+- **EMAIL-01 — แก้ในโค้ด/ทดสอบ outbox:** job อยู่ transaction เดียวกับ paid, lease/retry/provider idempotency, escape HTML และ guest token ใน tracking link. **ยังไม่ได้ทดสอบส่งอีเมลจริง/คลิกจากอีกอุปกรณ์; provider idempotency มี retention จึงไม่รับรอง exactly-once ตลอดไป**.
+- **MEDIA-02 — แก้ในโค้ด:** image magic bytes/size, authenticated active customer, quota, stored asset ownership, จำกัดจำนวน URL และ moderation ต้อง approved. DB ownership insert ล้มเหลวพยายามลบ upload. **ยังต้องทดสอบ Cloudinary moderation/cleanup จริง และ backfill ownership สำหรับรูปเก่า**.
+- **CF-01 — ยังไม่พร้อม:** ยังไม่มีหลักฐาน adapter/Workers deployment, shared SSE, large-asset delivery, monitoring และ restore drill. ไม่มีการ deploy หรือเปลี่ยน hosting ในงานนี้.
+
+## งานก่อน deploy ที่ยังจำเป็น
+
+1. Rotate/revoke Neon credentials ที่เคยอยู่ใน Git และอัปเดตผู้ใช้ credential ทุกจุด.
+2. Snapshot/restore drill, baseline ฐานข้อมูลเดิม, apply migration ที่ตรวจแล้ว และ reconcile legacy orders/stock/review ownership.
+3. ตั้ง secrets, HTTPS, MFA, scheduler, ingress/WAF, provider webhooks และ alert/recovery.
+4. ทดสอบ checkout จริงครบหน้า/Clerk/Stripe Elements/PromptPay/Cloudinary/3D บน staging พร้อม refund/reconciliation และ external webhook delivery.
+5. รัน CI/security scanners บน revision ที่จะ release และพิสูจน์ Cloudflare runtime ก่อนเปิดรับเงินจริง.
+
+รายละเอียดและคำสั่งอยู่ใน [SECURITY_RELEASE.md](../../SECURITY_RELEASE.md). สถานะรวมยังเป็น **NO-GO สำหรับ production/เงินจริง** จนกว่าจะปิด blockers ข้างต้น; ช่องโหว่ระดับโค้ดหลายส่วนได้รับการแก้และมีหลักฐานทดสอบเพิ่มแล้ว แต่ไม่ควรกล่าวว่าแก้ครบทุกด้านหรือไม่มีช่องโหว่เหลือ.

@@ -14,15 +14,15 @@ export default async function MockMobilePayPage({
   params,
   searchParams,
 }: {
-  params: { orderId: string };
-  searchParams?: { token?: string };
+  params: Promise<{ orderId: string }>;
+  searchParams?: Promise<{ token?: string }>;
 }) {
   if (process.env.NODE_ENV === "production") {
     notFound();
   }
 
-  const { orderId } = params;
-  const guestToken = searchParams?.token;
+  const { orderId } = await params;
+  const guestToken = (await searchParams)?.token;
   const res = await getOrderDetails(orderId, guestToken);
 
   if (!res.success || !res.data) {

@@ -16,18 +16,18 @@ export default async function OrderDetailPage({
   params,
   searchParams,
 }: {
-  params: { orderId: string };
-  searchParams?: {
+  params: Promise<{ orderId: string }>;
+  searchParams?: Promise<{
     token?: string;
     payment_status?: string;
     payment_intent?: string;
     payment_intent_client_secret?: string;
     redirect_status?: string;
     paid?: string;
-  };
+  }>;
 }) {
-  const { orderId } = params;
-  const guestToken = searchParams?.token;
+  const { orderId } = await params;
+  const guestToken = (await searchParams)?.token;
   let res = await getOrderDetails(orderId, guestToken);
 
   if (!res.success || !res.data) {
@@ -40,7 +40,7 @@ export default async function OrderDetailPage({
   const isOrderPaid = res.data.order.paymentStatus === "paid" || res.data.order.status === "paid";
 
   if (!isOrderPaid) {
-    const paymentIntentId = res.data.order.stripePaymentIntentId || searchParams?.payment_intent;
+    const paymentIntentId = res.data.order.stripePaymentIntentId || (await searchParams)?.payment_intent;
 
     if (paymentIntentId) {
       try {

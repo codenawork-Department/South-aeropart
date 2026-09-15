@@ -58,12 +58,12 @@ export async function uploadImage(
 
   const result: UploadApiResponse = await cloudinary.uploader.upload(fileDataUrl, uploadOptions);
 
-  if (moderation && Array.isArray(result.moderation)) {
-    const mod = result.moderation[0] as { status?: string } | string | undefined;
+  if (moderation) {
+    const mod = result.moderation?.[0] as { status?: string } | string | undefined;
     const status = typeof mod === "object" && mod !== null ? mod.status : mod;
-    if (status === "rejected") {
+    if (status !== "approved") {
       await cloudinary.uploader.destroy(result.public_id);
-      throw new Error("IMAGE_MODERATION_REJECTED");
+      throw new Error(status === "rejected" ? "IMAGE_MODERATION_REJECTED" : "IMAGE_MODERATION_NOT_APPROVED");
     }
   }
 
@@ -156,7 +156,7 @@ export async function renameImage(
   try {
     if (fromPublicId === toPublicId) return null;
     const result = await cloudinary.uploader.rename(fromPublicId, toPublicId, {
-      overwrite: true,
+      overwrite: false,
       resource_type: "image",
       invalidate: true,
     });

@@ -66,6 +66,9 @@ Thumbs.db
 # Vercel & Deployment
 .vercel/
 
+# Ephemeral local browser-test TLS material
+audit/2026-09-14/preview-tls/
+
 # Design & Raw Asset Files
 *.psd
 *.ai

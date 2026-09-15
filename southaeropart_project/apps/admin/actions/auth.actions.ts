@@ -1,8 +1,9 @@
 "use server";
 
+import { createHash, timingSafeEqual } from "node:crypto";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { db, adminUsers, eq, sql, rawSql } from "@repo/db";
+import { db, adminUsers, eq, and, sql, takeRateLimit } from "@repo/db";
 import {
   hashPassword,
   verifyPassword,
@@ -20,6 +21,7 @@ import {
   verifyMfaChallengeToken,
   decryptMfaSecret,
   verifyTotp,
+  generateTotp,
   verifyAndConsumeRecoveryCode,
   generateMfaSecret,
   encryptMfaSecret,
@@ -108,6 +110,9 @@ export async function loginAction(
   }
 
   const { email, password } = parsed.data;
+  if (!await takeRateLimit(`admin-login:${email}`, 20, 15 * 60000)) {
+    return { success: false, error: "Too many sign-in attempts; try again later" };
+  }
 
   // 2) Find admin by email
   const [admin] = await db
@@ -180,8 +185,10 @@ export async function loginAction(
   }
 
   // 6) Check MFA requirement (OWASP ASVS §2.8)
-  if (admin.mfaEnabled && admin.mfaSecretEncrypted) {
+  if (admin.mfaEnabled) {
+    if (!admin.mfaSecretEncrypted) return { success: false, error: "MFA configuration requires administrator recovery" };
     const mfaToken = await createMfaChallengeToken(admin.id);
+    await db.update(adminUsers).set({ mfaChallengeHash: createHash("sha256").update(mfaToken).digest("hex") }).where(eq(adminUsers.id, admin.id));
     await logAuditEvent({
       adminId: admin.id,
       action: "admin.login_mfa_challenge_issued",
@@ -207,8 +214,8 @@ export async function loginAction(
     metadata: { role: admin.role },
   });
 
-  // 10) Redirect to dashboard
-  redirect("/");
+  // Unenrolled production sessions can only access the MFA enrollment flow.
+  redirect(process.env.NODE_ENV === "production" ? "/security/enroll" : "/");
 }
 
 // ─── Verify MFA Action ───
@@ -249,7 +256,7 @@ export async function verifyMfaAction(
     .where(eq(adminUsers.id, adminId))
     .limit(1);
 
-  if (!admin || !admin.isActive) {
+  if (!admin || !admin.isActive || !admin.mfaEnabled || !admin.mfaSecretEncrypted || admin.mfaChallengeHash !== createHash("sha256").update(mfaToken).digest("hex")) {
     return { success: false, error: "บัญชีไม่ถูกต้องหรือถูกปิดใช้งาน" };
   }
 
@@ -267,13 +274,20 @@ export async function verifyMfaAction(
   // 4) Check TOTP (if 6 digits)
   const normalizedCode = code.trim();
   let verified = false;
+  let acceptedStep: number | null = null;
+  let remainingHashes = admin.mfaRecoveryCodesHash;
   let method: "totp" | "recovery_code" = "totp";
 
   if (/^\d{6}$/.test(normalizedCode) && admin.mfaSecretEncrypted) {
     try {
       const secret = decryptMfaSecret(admin.mfaSecretEncrypted);
-      if (verifyTotp(normalizedCode, secret)) {
-        verified = true;
+      const currentStep = Math.floor(Date.now() / 30000);
+      for (const step of [currentStep - 1, currentStep, currentStep + 1]) {
+        if (step > (admin.mfaLastUsedStep ?? -1) && generateTotp(secret, step * 30000) === normalizedCode) {
+          verified = true;
+          acceptedStep = step;
+          break;
+        }
       }
     } catch {
       verified = false;
@@ -286,14 +300,7 @@ export async function verifyMfaAction(
     if (recoveryResult.valid) {
       verified = true;
       method = "recovery_code";
-      // Update consumed recovery code list in DB
-      await db
-        .update(adminUsers)
-        .set({
-          mfaRecoveryCodesHash: recoveryResult.remainingHashes,
-          updatedAt: new Date(),
-        })
-        .where(eq(adminUsers.id, admin.id));
+      remainingHashes = recoveryResult.remainingHashes;
     }
   }
 
@@ -322,9 +329,24 @@ export async function verifyMfaAction(
     };
   }
 
+  // Compare-and-swap consumes the challenge and factor together. Concurrent
+  // requests cannot reuse a recovery code or a TOTP from another challenge.
+  const [consumed] = await db.update(adminUsers).set({
+    mfaChallengeHash: null,
+    mfaRecoveryCodesHash: remainingHashes,
+    ...(acceptedStep === null ? {} : { mfaLastUsedStep: acceptedStep }),
+    updatedAt: new Date(),
+  }).where(and(
+    eq(adminUsers.id, admin.id), eq(adminUsers.isActive, true), eq(adminUsers.mfaEnabled, true),
+    eq(adminUsers.mfaSecretEncrypted, admin.mfaSecretEncrypted),
+    eq(adminUsers.mfaChallengeHash, admin.mfaChallengeHash),
+    sql`${adminUsers.mfaRecoveryCodesHash} IS NOT DISTINCT FROM ${JSON.stringify(admin.mfaRecoveryCodesHash)}::jsonb`,
+    sql`${adminUsers.mfaLastUsedStep} IS NOT DISTINCT FROM ${admin.mfaLastUsedStep}`,
+  )).returning({ id: adminUsers.id });
+  if (!consumed) return { success: false, error: "MFA challenge already used; sign in again" };
   // 7) Handle verification success
   await resetFailedLogins(admin.id);
-  await createSession(admin.id);
+  await createSession(admin.id, undefined, undefined, true);
 
   await logAuditEvent({
     adminId: admin.id,
@@ -347,24 +369,28 @@ export type MfaSetupData = {
   recoveryCodesHash?: string[];
 };
 
-export async function initiateMfaSetupAction(): Promise<MfaSetupData> {
-  const admin = await validateSession();
+export async function initiateMfaSetupAction(password: string = ""): Promise<MfaSetupData> {
+  const admin = await validateSession(true);
   if (!admin) {
     return { success: false, error: "กรุณาเข้าสู่ระบบก่อนดำเนินการ" };
   }
 
+  if (!await takeRateLimit(`mfa-setup:${admin.id}`, 5, 15 * 60000) || admin.mfaEnabled || isAccountLocked(admin) || !await verifyPassword(password, admin.passwordHash)) {
+    return { success: false, error: "ยืนยันรหัสผ่านก่อนตั้งค่า และไม่สามารถแทนที่ MFA ที่เปิดอยู่" };
+  }
   const secret = generateMfaSecret();
-  const encryptedSecret = encryptMfaSecret(secret);
   const { rawCodes, hashedCodes } = generateRecoveryCodes(8);
   const uri = getTotpUri(admin.email, secret);
+  const pending = encryptMfaSecret(JSON.stringify({ secret, hashedCodes }));
+  await db.update(adminUsers).set({ mfaPendingSetup: pending, mfaPendingSetupExpiresAt: new Date(Date.now() + 5 * 60000) })
+    .where(and(eq(adminUsers.id, admin.id), eq(adminUsers.mfaEnabled, false)));
 
   return {
     success: true,
     secret,
     uri,
     rawRecoveryCodes: rawCodes,
-    encryptedSecret,
-    recoveryCodesHash: hashedCodes,
+
   };
 }
 
@@ -372,47 +398,42 @@ export async function confirmMfaSetupAction(
   _prevState: AuthActionResult | null,
   formData: FormData
 ): Promise<AuthActionResult> {
-  const admin = await validateSession();
+  const admin = await validateSession(true);
   if (!admin) {
     return { success: false, error: "กรุณาเข้าสู่ระบบก่อนดำเนินการ" };
   }
 
   const code = formData.get("code")?.toString().trim();
-  const encryptedSecret = formData.get("encryptedSecret")?.toString().trim();
-  const recoveryCodesHashRaw = formData.get("recoveryCodesHash")?.toString().trim();
-
-  if (!code || !encryptedSecret || !recoveryCodesHashRaw) {
-    return { success: false, error: "ข้อมูลการตั้งค่า MFA ไม่ครบถ้วน" };
+  if (!await takeRateLimit(`mfa-confirm:${admin.id}`, 5, 15 * 60000)) {
+    return { success: false, error: "Too many verification attempts; try again later" };
   }
-
+  if (admin.mfaEnabled || !code || !admin.mfaPendingSetup || !admin.mfaPendingSetupExpiresAt || admin.mfaPendingSetupExpiresAt <= new Date()) {
+    return { success: false, error: "เริ่มตั้งค่า MFA ใหม่และยืนยันรหัสผ่านก่อน" };
+  }
+  let secret: string;
   let recoveryCodesHash: string[];
   try {
-    recoveryCodesHash = JSON.parse(recoveryCodesHashRaw);
-    if (!Array.isArray(recoveryCodesHash)) throw new Error();
+    const pending = JSON.parse(decryptMfaSecret(admin.mfaPendingSetup));
+    secret = pending.secret;
+    recoveryCodesHash = pending.hashedCodes;
   } catch {
-    return { success: false, error: "รูปแบบ Recovery Codes ไม่ถูกต้อง" };
+    return { success: false, error: "Invalid pending MFA setup" };
   }
-
-  let secret: string;
-  try {
-    secret = decryptMfaSecret(encryptedSecret);
-  } catch {
-    return { success: false, error: "การถอดรหัส Secret ผิดพลาด" };
-  }
+  const encryptedSecret = encryptMfaSecret(secret);
 
   if (!verifyTotp(code, secret)) {
     return { success: false, error: "รหัส OTP 6 หลักไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง" };
   }
 
-  await db
-    .update(adminUsers)
-    .set({
-      mfaEnabled: true,
-      mfaSecretEncrypted: encryptedSecret,
-      mfaRecoveryCodesHash: recoveryCodesHash,
-      updatedAt: new Date(),
-    })
-    .where(eq(adminUsers.id, admin.id));
+  const [enabled] = await db.update(adminUsers).set({
+    mfaEnabled: true, mfaSecretEncrypted: encryptedSecret, mfaRecoveryCodesHash: recoveryCodesHash,
+    mfaPendingSetup: null, mfaPendingSetupExpiresAt: null, mfaChallengeHash: null,
+    mfaLastUsedStep: Math.floor(Date.now() / 30000), updatedAt: new Date(),
+  }).where(and(eq(adminUsers.id, admin.id), eq(adminUsers.mfaEnabled, false), eq(adminUsers.mfaPendingSetup, admin.mfaPendingSetup)))
+    .returning({ id: adminUsers.id });
+  if (!enabled) return { success: false, error: "MFA setup already consumed" };
+  await revokeAllSessions(admin.id);
+  await createSession(admin.id, undefined, undefined, true);
 
   await logAuditEvent({
     adminId: admin.id,
@@ -432,6 +453,7 @@ export async function disableMfaAction(
     return { success: false, error: "กรุณาเข้าสู่ระบบก่อนดำเนินการ" };
   }
 
+  if (process.env.NODE_ENV === "production") return { success: false, error: "MFA is required in production" };
   const password = formData.get("password")?.toString();
   if (!password) {
     return { success: false, error: "กรุณากรอกรหัสผ่านเพื่อยืนยันการปิด MFA" };
@@ -448,10 +470,16 @@ export async function disableMfaAction(
       mfaEnabled: false,
       mfaSecretEncrypted: null,
       mfaRecoveryCodesHash: null,
+      mfaChallengeHash: null,
+      mfaPendingSetup: null,
+      mfaPendingSetupExpiresAt: null,
+      mfaLastUsedStep: null,
       updatedAt: new Date(),
     })
     .where(eq(adminUsers.id, admin.id));
 
+  await revokeAllSessions(admin.id);
+  await clearSessionCookie();
   await logAuditEvent({
     adminId: admin.id,
     action: "admin.mfa_disabled",
@@ -486,6 +514,12 @@ export async function setupSuperAdminAction(
   _prevState: AuthActionResult | null,
   formData: FormData
 ): Promise<AuthActionResult> {
+  const bootstrap = process.env.ADMIN_BOOTSTRAP_TOKEN;
+  const provided = formData.get("bootstrapToken");
+  if (!bootstrap || bootstrap.length < 32 || typeof provided !== "string" ||
+      !timingSafeEqual(createHash("sha256").update(bootstrap).digest(), createHash("sha256").update(provided).digest())) {
+    return { success: false, error: "Setup is disabled or bootstrap token is invalid" };
+  }
   // 1) Validate input first (before touching the DB)
   const raw = {
     fullName: formData.get("fullName"),
@@ -508,14 +542,13 @@ export async function setupSuperAdminAction(
   // 2) Hash the password
   const passwordHash = await hashPassword(password);
 
-  // 3) Audit #4: Atomic guard — INSERT only if admin_users table is empty.
-  //    This eliminates the TOCTOU race between COUNT(*) and INSERT.
-  const result = await rawSql`
-    INSERT INTO admin_users (email, password_hash, full_name, role, is_active, password_changed_at)
-    SELECT ${email}, ${passwordHash}, ${fullName}, 'super_admin', true, NOW()
-    WHERE NOT EXISTS (SELECT 1 FROM admin_users)
-    RETURNING id
-  `;
+  // Serialize initial provisioning inside the transaction.
+  const result = await db.transaction(async tx => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(741852963)`);
+    const existing = await tx.select({ id: adminUsers.id }).from(adminUsers).limit(1);
+    if (existing.length) return [];
+    return tx.insert(adminUsers).values({ email, passwordHash, fullName, role: "super_admin", isActive: true, passwordChangedAt: new Date() }).returning({ id: adminUsers.id });
+  });
 
   if (!result || result.length === 0) {
     return {

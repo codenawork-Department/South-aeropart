@@ -1,6 +1,7 @@
+if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL must be configured explicitly");
 const { neon } = require('@neondatabase/serverless');
 
-const sql = neon("postgresql://neondb_owner:REDACTED_PASSWORD@ep-dummy-neon.tech/neondb?sslmode=require");
+const sql = neon(process.env.DATABASE_URL);
 
 async function run() {
   const prods = await sql`SELECT id, sku, name, brand_id, car_model_id, category_id FROM products LIMIT 20;`;

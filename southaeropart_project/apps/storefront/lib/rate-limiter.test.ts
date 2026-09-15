@@ -90,18 +90,18 @@ describe("Storefront Rate Limiter (CLAUDE.md §5.1, OWASP ASVS §14.4)", () => {
   });
 
   describe("getClientIp Resolution & Proxy Security", () => {
-    it("extracts the leftmost untrusted IP from x-forwarded-for header", () => {
+    it("ignores spoofable x-forwarded-for without a trusted proxy", () => {
       const headers = new Headers();
       headers.set("x-forwarded-for", "203.0.113.195, 70.41.3.18, 150.172.238.178");
       const ip = getClientIp({ headers });
-      expect(ip).toBe("203.0.113.195");
+      expect(ip).toBe("unknown");
     });
 
-    it("falls back to x-real-ip when x-forwarded-for is missing", () => {
+    it("ignores spoofable x-real-ip", () => {
       const headers = new Headers();
       headers.set("x-real-ip", "198.51.100.22");
       const ip = getClientIp({ headers });
-      expect(ip).toBe("198.51.100.22");
+      expect(ip).toBe("unknown");
     });
 
     it("falls back to request.ip when headers are empty", () => {
@@ -110,14 +110,24 @@ describe("Storefront Rate Limiter (CLAUDE.md §5.1, OWASP ASVS §14.4)", () => {
       expect(ip).toBe("192.0.2.1");
     });
 
-    it("defaults to 127.0.0.1 when no IP can be determined", () => {
+    it("uses a shared unknown bucket without a verified source", () => {
       const headers = new Headers();
       const ip = getClientIp({ headers });
-      expect(ip).toBe("127.0.0.1");
+      expect(ip).toBe("unknown");
     });
   });
 
   describe("Path-specific Rate Limit Policy", () => {
+    it("rejects new identifiers at capacity without evicting active restrictions", () => {
+      const bounded = new MemoryRateLimiter(2);
+      const config = { windowMs: 1000, maxRequests: 1 };
+      expect(bounded.check("one", config, 0).success).toBe(true);
+      expect(bounded.check("two", config, 0).success).toBe(true);
+      expect(bounded.check("three", config, 0).success).toBe(false);
+      expect(bounded.size()).toBe(2);
+      expect(bounded.check("one", config, 0).success).toBe(false);
+      expect(bounded.check("three", config, 1000).success).toBe(true);
+    });
     it("exempts Stripe and Clerk webhooks from rate limiting", () => {
       expect(getRateLimitForPath("/api/webhooks/stripe")).toBeNull();
       expect(getRateLimitForPath("/api/webhooks/clerk")).toBeNull();

@@ -105,9 +105,9 @@ describe("Stripe Webhook Route Handler (CLAUDE.md §5.3)", () => {
 
   it("returns 404 when payment_intent refers to a non-existent order", async () => {
     mockState.constructStripeWebhookEvent.mockReturnValue({
-      type: "payment_intent.succeeded",
+      type: "payment_intent.succeeded", livemode: false,
       data: {
-        object: {
+        object: { livemode: false,
           id: "pi_non_existent",
           metadata: { orderId: "order_missing_123" },
         },
@@ -141,10 +141,10 @@ describe("Stripe Webhook Route Handler (CLAUDE.md §5.3)", () => {
     });
 
     mockState.constructStripeWebhookEvent.mockReturnValue({
-      type: "payment_intent.succeeded",
+      type: "payment_intent.succeeded", livemode: false,
       data: {
-        object: {
-          id: "pi_test_123",
+        object: { livemode: false,
+          id: "pi_test_123", amount_received: 2500000, currency: "thb",
           metadata: { orderId },
         },
       },
@@ -179,9 +179,9 @@ describe("Stripe Webhook Route Handler (CLAUDE.md §5.3)", () => {
     });
 
     mockState.constructStripeWebhookEvent.mockReturnValue({
-      type: "payment_intent.succeeded",
+      type: "payment_intent.succeeded", livemode: false,
       data: {
-        object: {
+        object: { livemode: false,
           id: "pi_test_mismatch",
           amount: 2500000, // Attacker paid only 25,000 THB!
           amount_received: 2500000,
@@ -225,9 +225,9 @@ describe("Stripe Webhook Route Handler (CLAUDE.md §5.3)", () => {
     });
 
     mockState.constructStripeWebhookEvent.mockReturnValue({
-      type: "payment_intent.succeeded",
+      type: "payment_intent.succeeded", livemode: false,
       data: {
-        object: {
+        object: { livemode: false,
           id: "pi_test_valid",
           amount: 3500000,
           amount_received: 3500000,

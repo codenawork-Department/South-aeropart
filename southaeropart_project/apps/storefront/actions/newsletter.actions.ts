@@ -1,6 +1,10 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
+import { customerAuth as auth } from "@/lib/customer-auth";
+import { headers } from "next/headers";
+import { getClientIp } from "@/lib/rate-limiter";
+import { takeRateLimit } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
@@ -32,7 +36,7 @@ export interface SubscribeActionResult {
  */
 export async function getSubscriptionStatusAction(): Promise<SubscriptionStatusResult> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { isLoggedIn: false, isSubscribed: false, userEmail: null };
     }
@@ -88,7 +92,8 @@ export async function subscribeNewsletterAction(input?: {
   source?: "footer" | "homepage_banner" | "signup" | "profile" | "1click_banner";
 }): Promise<SubscribeActionResult> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
+    if (!await takeRateLimit(`newsletter:${userId || getClientIp({ headers: await headers() })}`, 5, 3600000)) return { success: false, error: "Too many subscription requests" };
     const source = input?.source || (userId ? "1click_banner" : "homepage_banner");
     let targetEmail = input?.email?.trim().toLowerCase();
 

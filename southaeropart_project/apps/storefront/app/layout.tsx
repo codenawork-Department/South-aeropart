@@ -45,7 +45,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cookieRawLang = cookieStore.get(LANGUAGE_COOKIE_NAME)?.value;
   const cookieRawCurr = cookieStore.get(CURRENCY_COOKIE_NAME)?.value;
 
@@ -74,7 +74,7 @@ export default async function RootLayout({
   }
 
   return (
-    <ClerkProvider
+    <ClerkProvider dynamic
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       signInFallbackRedirectUrl="/"

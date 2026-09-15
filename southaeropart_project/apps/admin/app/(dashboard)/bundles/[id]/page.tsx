@@ -8,14 +8,14 @@ export const metadata = {
 };
 
 interface EditBundlePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditBundlePage({ params }: EditBundlePageProps) {
   const [bundleRes, { brands, carModels, materials, installations }] = await Promise.all([
-    getBundleDetailAction(params.id),
+    getBundleDetailAction((await params).id),
     getCategoriesAndBrandsAction(),
   ]);
 

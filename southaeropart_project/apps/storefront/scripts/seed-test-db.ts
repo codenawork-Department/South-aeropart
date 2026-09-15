@@ -4,8 +4,7 @@ dotenv.config({ path: "../../.env" });
 import { assertTestIsolation } from "./test-guard";
 
 // Target dedicated test database
-const originalDbUrl = process.env.DATABASE_URL || "";
-const testDbUrl = process.env.TEST_DATABASE_URL || originalDbUrl.replace(/\/neondb(\?|$)/, "/southaero_test$1");
+const testDbUrl = process.env.TEST_DATABASE_URL || "";
 process.env.DATABASE_URL = testDbUrl;
 
 // Verify strict test isolation before executing any DB query

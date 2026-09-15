@@ -20,7 +20,7 @@ const isProtectedRoute = createRouteMatcher([
   "/orders$",
 ]);
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
 
   // 1. Edge-level Anti-DoS Rate Limiting
@@ -53,9 +53,17 @@ export default clerkMiddleware((auth, req) => {
 
   // 2. Auth Route Protection
   if (isProtectedRoute(req)) {
-    auth().protect();
+    await auth.protect();
   }
-});
+}, { contentSecurityPolicy: { strict: true, directives: {
+  "img-src": ["data:", "blob:", "https://res.cloudinary.com"],
+  "connect-src": ["https://api.cloudinary.com", "https://res.cloudinary.com", "https://api.stripe.com", "https://*.protect.clerk.com:*"],
+  "frame-src": ["https://upload-widget.cloudinary.com", "https://js.stripe.com", "https://hooks.stripe.com", "https://*.protect.clerk.com"],
+  "script-src": ["https://*.protect.clerk.com"],
+  "media-src": ["'self'", "blob:", "https://res.cloudinary.com"],
+  "worker-src": ["'self'", "blob:"],
+  "object-src": ["'none'"], "base-uri": ["'self'"], "frame-ancestors": ["'self'"],
+} } });
 
 export const config = {
   matcher: ["/((?!_next|.*\\..*).*)", "/(api|trpc)(.*)"],

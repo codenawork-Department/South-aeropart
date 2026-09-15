@@ -35,7 +35,7 @@ describe("Admin MFA Utilities (RFC 6238 & OWASP ASVS §2.8 / §2.9)", () => {
       const encrypted = encryptMfaSecret(secret);
 
       expect(encrypted).not.toBe(secret);
-      expect(encrypted.split(":").length).toBe(3); // iv:tag:ciphertext
+      expect(encrypted.split(":").length).toBe(4); // iv:tag:ciphertext
 
       const decrypted = decryptMfaSecret(encrypted);
       expect(decrypted).toBe(secret);

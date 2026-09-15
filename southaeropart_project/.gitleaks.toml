@@ -2,10 +2,9 @@
 useDefault = true
 
 [allowlist]
-description = "Global allowlist for mock test fixtures and example files"
-paths = [
-    '''.*\.env\.example$''',
-    '''(^|/)__tests__/''',
-    '''\.(test|spec)\.[jt]sx?$''',
-    '''scripts/verify_.*\.ts$''',
+description = "Only explicit nonfunctional CI fixture values; test files are scanned"
+regexTarget = "secret"
+regexes = [
+    '''^ci_test_[A-Za-z0-9_]+$''',
+    '''^(sk_test|pk_test|whsec|re)_ci_mock_[A-Za-z0-9_]+$''',
 ]

@@ -1,8 +1,10 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   loginAction,
   verifyMfaAction,
   confirmMfaSetupAction,
+  initiateMfaSetupAction,
 } from "./auth.actions";
 import {
   generateMfaSecret,
@@ -31,6 +33,7 @@ vi.mock("next/headers", () => ({
 const mockSelect = vi.fn();
 const mockUpdate = vi.fn();
 const mockInsert = vi.fn();
+const mockReturning = vi.fn();
 
 vi.mock("@repo/db", () => ({
   db: {
@@ -43,7 +46,7 @@ vi.mock("@repo/db", () => ({
     }),
     update: () => ({
       set: () => ({
-        where: mockUpdate,
+        where: (...args: unknown[]) => { mockUpdate(...args); return { returning: mockReturning }; },
       }),
     }),
     insert: () => ({
@@ -54,8 +57,10 @@ vi.mock("@repo/db", () => ({
   adminSessions: {},
   adminAuditLogs: {},
   eq: vi.fn(),
+  and: vi.fn(),
   sql: vi.fn(),
   rawSql: vi.fn(),
+  takeRateLimit: vi.fn().mockResolvedValue(true),
 }));
 
 // Mock lib/auth
@@ -81,10 +86,20 @@ vi.mock("@/lib/auth", () => ({
 describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockReturning.mockResolvedValue([{ id: "admin-1" }]);
     process.env.ADMIN_SESSION_SECRET = "test_admin_session_secret_at_least_32_chars_long!";
   });
 
   describe("loginAction with MFA", () => {
+    it("fails closed when enabled MFA has no stored secret", async () => {
+      mockSelect.mockResolvedValueOnce([{ id: "admin-1", isActive: true, mfaEnabled: true, mfaSecretEncrypted: null, passwordHash: "hash" }]);
+      const form = new FormData();
+      form.set("email", "admin@example.invalid");
+      form.set("password", "ValidPassword@123");
+      expect((await loginAction(null, form)).success).toBe(false);
+      expect(mockCreateSession).not.toHaveBeenCalled();
+      expect(redirectMock).not.toHaveBeenCalled();
+    });
     it("returns requiresMfa: true and an ephemeral mfaToken when MFA is enabled", async () => {
       const secret = generateMfaSecret();
       const encryptedSecret = encryptMfaSecret(secret);
@@ -136,6 +151,8 @@ describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
           lockedUntil: null,
           mfaEnabled: true,
           mfaSecretEncrypted: encryptedSecret,
+          mfaChallengeHash: createHash("sha256").update(mfaToken).digest("hex"),
+          mfaLastUsedStep: null,
           mfaRecoveryCodesHash: [],
           role: "admin",
         },
@@ -148,7 +165,7 @@ describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
       await verifyMfaAction(null, formData);
 
       expect(mockResetFailedLogins).toHaveBeenCalledWith(adminId);
-      expect(mockCreateSession).toHaveBeenCalledWith(adminId);
+      expect(mockCreateSession).toHaveBeenCalledWith(adminId, undefined, undefined, true);
       expect(redirectMock).toHaveBeenCalledWith("/");
     });
 
@@ -168,6 +185,8 @@ describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
           lockedUntil: null,
           mfaEnabled: true,
           mfaSecretEncrypted: encryptedSecret,
+          mfaChallengeHash: createHash("sha256").update(mfaToken).digest("hex"),
+          mfaLastUsedStep: null,
           mfaRecoveryCodesHash: hashedCodes,
           role: "admin",
         },
@@ -180,7 +199,7 @@ describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
       await verifyMfaAction(null, formData);
 
       expect(mockResetFailedLogins).toHaveBeenCalledWith(adminId);
-      expect(mockCreateSession).toHaveBeenCalledWith(adminId);
+      expect(mockCreateSession).toHaveBeenCalledWith(adminId, undefined, undefined, true);
       expect(redirectMock).toHaveBeenCalledWith("/");
     });
 
@@ -199,6 +218,8 @@ describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
           lockedUntil: null,
           mfaEnabled: true,
           mfaSecretEncrypted: encryptedSecret,
+          mfaChallengeHash: createHash("sha256").update(mfaToken).digest("hex"),
+          mfaLastUsedStep: null,
           mfaRecoveryCodesHash: [],
           role: "admin",
         },
@@ -230,6 +251,37 @@ describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
   });
 
   describe("confirmMfaSetupAction", () => {
+    it("rejects client-supplied setup credentials without server pending state", async () => {
+      const secret = generateMfaSecret();
+      mockValidateSession.mockResolvedValueOnce({ id: "admin-1", mfaEnabled: false });
+      const form = new FormData();
+      form.set("encryptedSecret", encryptMfaSecret(secret));
+      form.set("recoveryCodesHash", JSON.stringify(generateRecoveryCodes(4).hashedCodes));
+      form.set("code", generateTotp(secret));
+      expect((await confirmMfaSetupAction(null, form)).success).toBe(false);
+      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(mockCreateSession).not.toHaveBeenCalled();
+    });
+
+    it("cannot replace an already enabled MFA enrollment", async () => {
+      mockValidateSession.mockResolvedValueOnce({ id: "admin-1", mfaEnabled: true });
+      expect((await initiateMfaSetupAction("ValidPassword@123")).success).toBe(false);
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it("rejects expired pending setup and a concurrent consumed setup", async () => {
+      const secret = generateMfaSecret();
+      const pending = { id: "admin-1", mfaEnabled: false, mfaPendingSetup: encryptMfaSecret(JSON.stringify({ secret, hashedCodes: [] })) };
+      const form = new FormData();
+      form.set("code", generateTotp(secret));
+      mockValidateSession.mockResolvedValueOnce({ ...pending, mfaPendingSetupExpiresAt: new Date(0) });
+      expect((await confirmMfaSetupAction(null, form)).success).toBe(false);
+      expect(mockUpdate).not.toHaveBeenCalled();
+      mockValidateSession.mockResolvedValueOnce({ ...pending, mfaPendingSetupExpiresAt: new Date(Date.now() + 60000) });
+      mockReturning.mockResolvedValueOnce([]);
+      expect((await confirmMfaSetupAction(null, form)).success).toBe(false);
+      expect(mockCreateSession).not.toHaveBeenCalled();
+    });
     it("successfully enables MFA when valid TOTP code confirms setup", async () => {
       const secret = generateMfaSecret();
       const encryptedSecret = encryptMfaSecret(secret);
@@ -240,6 +292,9 @@ describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
         id: "admin-1",
         email: "admin@southaero.com",
         role: "admin",
+        mfaEnabled: false,
+        mfaPendingSetup: encryptMfaSecret(JSON.stringify({ secret, hashedCodes })),
+        mfaPendingSetupExpiresAt: new Date(Date.now() + 60000),
       });
 
       const formData = new FormData();
@@ -261,6 +316,9 @@ describe("Admin MFA Authentication Actions (CLAUDE.md §5.2)", () => {
         id: "admin-1",
         email: "admin@southaero.com",
         role: "admin",
+        mfaEnabled: false,
+        mfaPendingSetup: encryptMfaSecret(JSON.stringify({ secret, hashedCodes })),
+        mfaPendingSetupExpiresAt: new Date(Date.now() + 60000),
       });
 
       const formData = new FormData();

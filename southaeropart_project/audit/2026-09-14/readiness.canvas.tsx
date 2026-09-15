@@ -1,0 +1,685 @@
+import { useState, useHostTheme, Stack, Row, Grid, Divider, TextInput } from "cursor/canvas";
+const audit = {
+  "decision": "NO-GO — ยังไม่พร้อมเปิด production/รับเงินจริง",
+  "date": "2026-09-14",
+  "commit": "3b05acf8ddd30cc139c38974506a2ac4bdae8edb",
+  "target": "Cloudflare (tentative) + Neon; no isolated staging credentials verified",
+  "severityCounts": {
+    "Critical": 1,
+    "High": 19,
+    "Medium": 5
+  },
+  "findings": [
+    {
+      "id": "SEC-01",
+      "severity": "Critical",
+      "area": "Secrets",
+      "title": "รหัสผ่าน Neon อยู่ใน Git จำนวน 8 ไฟล์",
+      "detail": "พบ URI ของ Neon พร้อม username/password ที่ไม่ใช่ข้อความ placeholder ในไฟล์ tracked รวมไฟล์ MCP, scratch และ sync scripts; ประวัติของไฟล์บางส่วนย้อนถึง 1f18485, 6d5f865, b25dc32 และ 3c95bc9. ไม่ได้ทดลอง credential จึงยังไม่ยืนยันว่าใช้งานได้หรือเคยถูกนำไปใช้",
+      "impact": "ผู้ที่ได้สำเนา repository/history อาจเข้าถึงฐานข้อมูลตามสิทธิ์ของ credential โดยไม่ผ่านเว็บ หากรหัสยังใช้ได้",
+      "fix": "Rotate/revoke credential ที่ Neon, อัปเดต secret store ของผู้ใช้งานทั้งหมด, ตรวจ DB access logs, เอา literals/fallback credentials ออกจากโค้ดและ MCP config แล้วสแกนประวัติเต็ม; การ rewrite history ไม่ทดแทน rotation",
+      "evidence": [
+        {
+          "file": ".agents/plugins/south-aero-mcp/mcp_config.json",
+          "line": 10
+        },
+        {
+          "file": "apps/admin/scratch_check_db.js",
+          "line": 3
+        },
+        {
+          "file": "packages/db/sync-schema.cjs",
+          "line": 5
+        }
+      ],
+      "test": "inventory.json ระบุตำแหน่งโดยไม่เก็บค่า secret; ตรวจรูปแบบ Neon URI และ git log แบบไม่แสดงเนื้อหา",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "DEP-01",
+      "severity": "High",
+      "area": "Dependencies",
+      "title": "Framework หมดระยะสนับสนุนและ dependency scan ไม่ผ่าน",
+      "detail": "Next.js 14.2.35 อยู่ในสาย unsupported. npm audit พบ 39 รายการรวมทั้งหมด (Critical 3 / High 17 / Moderate 17 / Low 2), production filter 30 (Critical 2 / High 13 / Moderate 13 / Low 2). CI ใช้ Node 20 ที่ EOL แล้ว ขณะที่เครื่องตรวจใช้ Node 22.17.1",
+      "impact": "มีแพ็กเกจตรง affected ranges แต่จำนวน advisory ไม่ใช่จำนวนช่องโหว่ที่โจมตีเว็บนี้ได้จริง: Windows RCE กระทบ Windows hosting, AVIF RCE ต้องเข้าเส้นทาง optimizer/libheif, Happy DOM เป็นเครื่องมือทดสอบ, Drizzle advisory ต้องมี untrusted identifier ซึ่งยังไม่พบในเส้นทางที่อ่าน",
+      "fix": "อัปเกรด Next/Clerk/React/ORM/เครื่องมือให้เข้ากันบนสาย supported และ patched ตาม advisory ปัจจุบัน; อัปเดต lockfile แล้วทดสอบพฤติกรรมและ Workers runtime ใหม่ ห้ามใช้ audit fix แบบบังคับโดยไม่ประเมิน breaking changes",
+      "evidence": [
+        {
+          "file": "pnpm-lock.yaml",
+          "line": 2251
+        },
+        {
+          "file": ".github/workflows/ci.yml",
+          "line": 77
+        }
+      ],
+      "test": "dependency-audit.json และ dependency-audit-production.json; อ่าน advisory จาก maintainer โดยตรง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "STOCK-01",
+      "severity": "High",
+      "area": "Commerce",
+      "title": "สร้างออเดอร์หักสต็อกแล้ว การชำระเงินหักซ้ำ",
+      "detail": "createOrder หัก stockQuantity ภายใน transaction เมื่อสร้าง pending order; fulfillOrderPayment อ่านรายการเดิมและหักอีกครั้ง ตัวอย่างสต็อก 10 → checkout 9 → paid 8 สำหรับสินค้า 1 ชิ้น",
+      "impact": "สต็อกคลาดเคลื่อนทุกการซื้อและสินค้าหมดก่อนจริง; Math.max(0, ...) ซ่อนภาวะขาดสต็อก",
+      "fix": "กำหนด lifecycle reservation/available/consumed ให้ชัด และ consume reservation เดิมเมื่อจ่ายแทนการหักซ้ำ พร้อม ledger/constraints และ test บน PostgreSQL",
+      "evidence": [
+        {
+          "file": "apps/storefront/actions/checkout.actions.ts",
+          "line": 435
+        },
+        {
+          "file": "apps/storefront/lib/order-fulfillment.ts",
+          "line": 202
+        }
+      ],
+      "test": "reproduce.cjs STOCK-01 ใช้ fulfillment จริงกับสถานะหลัง checkout จำลอง; ไม่ใช่ real DB integration",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "STOCK-02",
+      "severity": "High",
+      "area": "Commerce",
+      "title": "ออเดอร์ค้างล็อกสินค้า และ bundle ไม่จองชิ้นส่วนร่วม",
+      "detail": "checkout จองเฉพาะ item.productId แต่ snapshot ชิ้นส่วน bundle ไว้โดยไม่หัก/จองชิ้นส่วน ณ จุดนี้; ไม่พบ reservation expiry/release worker; admin คืนเฉพาะออเดอร์ที่เคย paid. fulfillment ใช้ read-modify-write ของ products โดยไม่มี conditional stock decrement ทำให้ต่างออเดอร์แข่งกันเขียนค่าเดิมได้",
+      "impact": "guest สร้าง pending orders ทิ้งไว้ทำให้สินค้าหมดได้, bundle ที่แชร์อะไหล่อาจรับเงินเกิน stock จริง, การจ่ายต่างออเดอร์พร้อมกันอาจทำ stock update สูญหาย",
+      "fix": "รวม demand ของสินค้าและอะไหล่ shared parts ก่อนจอง, ล็อกตามลำดับคงที่, จองแบบ atomic พร้อม TTL/release job และ late-payment compensation; ทดสอบ final-stock concurrency และ rollback จริง",
+      "evidence": [
+        {
+          "file": "apps/storefront/actions/checkout.actions.ts",
+          "line": 435
+        },
+        {
+          "file": "apps/storefront/lib/order-fulfillment.ts",
+          "line": 188
+        },
+        {
+          "file": "apps/admin/actions/order.actions.ts",
+          "line": 419
+        }
+      ],
+      "test": "Static flow review; ยังไม่มี concurrency/expiry test บน isolated PostgreSQL",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "ORDER-01",
+      "severity": "High",
+      "area": "Commerce",
+      "title": "staff เปลี่ยนสถานะการเงินได้ และ cancel ซ้ำเพิ่ม stock ซ้ำ",
+      "detail": "updateOrderStatusAction ตรวจเพียง session ไม่ตรวจ role หรือ allowed transition; รับ paymentStatus จาก input และทำ paid/refunded ได้เอง. cancel โดยไม่ส่ง paymentStatus ทำให้ค่า paid เดิมค้าง จึงเรียก cancel ซ้ำแล้วเข้า restoreOrderStock ได้อีก; helper กลืน error ของการคืน stock",
+      "impact": "ผู้มีสิทธิ์ staff สามารถเปลี่ยนบันทึกการชำระเงิน/คืนสินค้าเกินจริง; สถานะ refunded ในเว็บไม่พิสูจน์ Stripe refund เพราะไม่พบ provider refund flow",
+      "fix": "แยก permission การเงินกับ fulfillment, บังคับ state machine และ re-auth, ทำ once-only restock ใน transaction พร้อม conditional transition; ใช้ Stripe refund idempotency และ reconcile ผลก่อนแสดงว่าคืนเงินจริง",
+      "evidence": [
+        {
+          "file": "apps/admin/actions/order.actions.ts",
+          "line": 370
+        },
+        {
+          "file": "apps/admin/actions/order.actions.ts",
+          "line": 405
+        },
+        {
+          "file": "apps/admin/actions/order.actions.ts",
+          "line": 479
+        }
+      ],
+      "test": "reproduce.cjs STOCK-02: staff + paid order; cancel สองครั้ง stock 8 → 9 → 10 ใน persistence จำลอง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "PAYMENT-01",
+      "severity": "High",
+      "area": "Payments",
+      "title": "PaymentIntent ไม่ตรง binding แล้วยัง fulfill",
+      "detail": "Stripe webhook พบ targetOrder.stripePaymentIntentId ต่างจาก event แล้ว console.warn แต่ดำเนิน fulfill ต่อ ซึ่งเขียน binding ใหม่. ไม่ใช่ช่องโหว่ปลอม signature: ต้องเป็น event ที่ผ่าน signature และยอด/สกุลเงินตรง",
+      "impact": "event ที่ผูกออเดอร์ผิดจาก metadata/ระบบภายในอาจนำ payment ของคนละ operation มายืนยันออเดอร์ได้",
+      "fix": "Reject mismatch ก่อน side effect; ผูก order/intent/account/mode แบบ durable unique key รวม recovery ที่กำหนดชัดกรณี provider สำเร็จแต่ DB write ล้มเหลว",
+      "evidence": [
+        {
+          "file": "apps/storefront/app/api/webhooks/stripe/route.ts",
+          "line": 131
+        },
+        {
+          "file": "apps/storefront/lib/order-fulfillment.ts",
+          "line": 121
+        }
+      ],
+      "test": "reproduce.cjs PAYMENT-01: handler จริงตอบ 200 และเรียก fulfill เมื่อ bound ID ไม่ตรง; verifier ถูก mock",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "PAYMENT-02",
+      "severity": "High",
+      "area": "Payments",
+      "title": "Webhook failure แข่งกับ success แล้วอาจย้อน paid เป็น failed",
+      "detail": "payment_failed อ่าน paymentStatus ก่อน update แยก query แล้ว update ด้วย order ID อย่างเดียว; success ที่ commit ระหว่างสองคำสั่งถูกทับได้. failure branch ไม่ทำ binding/live-mode checks แบบ succeeded. fulfillment ยอมรับ cancelled/refunded ตราบใด paymentStatus ไม่ใช่ paid",
+      "impact": "เงินเข้าจริงแต่ระบบกลับเป็น failed, late events เปิดออเดอร์ที่ปิดแล้ว และ retries อาจกลับเข้าหัก stock อีกรอบ",
+      "fix": "ใช้ transition ที่ atomic และตรวจ binding/mode ทุก event ที่มีผล; durable event inbox + reconcile + ปฏิเสธ/ชดเชย late payment ตาม reservation policy",
+      "evidence": [
+        {
+          "file": "apps/storefront/app/api/webhooks/stripe/route.ts",
+          "line": 152
+        },
+        {
+          "file": "apps/storefront/lib/order-fulfillment.ts",
+          "line": 111
+        }
+      ],
+      "test": "Static interleaving analysis; ยังไม่จำลอง race บนฐานข้อมูลจริง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "AUTH-01",
+      "severity": "High",
+      "area": "Authorization",
+      "title": "Server Action ยอมผ่าน ownership เมื่อ auth() โยน exception",
+      "detail": "createOrGetStripePaymentIntent และ updateOrderReceiptEmail ตั้ง isOutsideRequestContext=true เมื่อ auth ล้มเหลว แล้วข้าม ownership ของ registered orders แม้ NODE_ENV=production; exception จึงถูกตีความเป็นสิทธิ์ทดสอบ",
+      "impact": "หาก request เข้าเส้นทางที่ Clerk context เสีย/ไม่ผ่าน middleware อาจแก้ receipt email หรือรับ client_secret ของออเดอร์อื่นได้ ต้องรู้ order UUID; ยังไม่ได้พิสูจน์ remote reachability ผ่าน Cloudflare",
+      "fix": "Fail closed ทุก exception ใน public action; แยก trusted internal/testing function ออกและใช้ dependency injection ห้ามใช้ auth failure เป็น bypass",
+      "evidence": [
+        {
+          "file": "apps/storefront/actions/checkout.actions.ts",
+          "line": 838
+        }
+      ],
+      "test": "reproduce.cjs AUTH-01: production action เปลี่ยน email ของ registered order เมื่อ mock auth โยน exception",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "IDENTITY-01",
+      "severity": "High",
+      "area": "Identity",
+      "title": "Guest ใช้ email เดิมผูกกับบัญชีจริง และการ merge อาศัย email ที่ไม่ยืนยัน",
+      "detail": "guest checkout ค้น users.email แล้ว reuse existing id แม้ไม่ใช่ guest; ไม่มี guest token หาก reuse registered user จึงสร้าง order แล้วเจ้าตัว guest เข้า payment ไม่ได้. สำหรับ signed-in user ที่ยังไม่มี DB row ถ้า currentUser ล้มเหลว checkout ใช้ shipping email ที่กรอกเองส่งเข้า syncUserWithClerk ซึ่งย้าย orders/addresses ฯลฯ จาก ID เดิมโดยไม่จำกัด guest หรือ verified email",
+      "impact": "order spam เข้า account ผู้อื่น/guest checkout ล้มเหลว และมีเส้นทาง conditional account-data reassignment เมื่อ identity lookup ล้มเหลว; ไม่ได้ยืนยันการยึดบัญชีจากภายนอก",
+      "fix": "แยก guest identity จาก verified account; ห้ามใช้ shipping email เป็น identity proof; merge เฉพาะ guest หลังพิสูจน์ email/claim token และตรวจ ownership ใน transaction",
+      "evidence": [
+        {
+          "file": "apps/storefront/actions/checkout.actions.ts",
+          "line": 189
+        },
+        {
+          "file": "apps/storefront/actions/checkout.actions.ts",
+          "line": 127
+        },
+        {
+          "file": "apps/storefront/lib/user-sync.ts",
+          "line": 55
+        }
+      ],
+      "test": "Static end-to-end dataflow; ยังไม่ทดสอบ Clerk error path ผ่าน HTTP จริง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "BOOTSTRAP-01",
+      "severity": "High",
+      "area": "Admin auth",
+      "title": "หน้า setup เปิดให้คนแรกสร้าง super_admin ได้",
+      "detail": "/setup เป็น public และ setupSuperAdminAction ไม่ใช้ bootstrap secret/admin authorization. INSERT WHERE NOT EXISTS ไม่มี singleton constraint/lock จึงไม่ได้กัน concurrent first-admin creation แบบที่ comment กล่าวอ้าง",
+      "impact": "ถ้าเปิดเว็บกับฐานข้อมูลว่างก่อน owner setup ผู้เข้าถึงก่อนอาจยึดสิทธิ์ super_admin; race ของ distinct emails ต้องพิสูจน์ใน DB เพิ่ม",
+      "fix": "ทำ bootstrap ผ่าน one-off secured provisioning หรือ single-use secret และ unique singleton/lock; ปิด public setup ใน production แล้วทดสอบ direct action",
+      "evidence": [
+        {
+          "file": "apps/admin/middleware.ts",
+          "line": 14
+        },
+        {
+          "file": "apps/admin/actions/auth.actions.ts",
+          "line": 485
+        },
+        {
+          "file": "apps/admin/actions/auth.actions.ts",
+          "line": 516
+        }
+      ],
+      "test": "Static; ไม่สร้าง admin จริง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "MFA-01",
+      "severity": "High",
+      "area": "Admin auth",
+      "title": "ผู้ถือ session เปลี่ยน MFA factor และ recovery codes ได้โดยไม่ re-auth",
+      "detail": "initiate/confirmMfaSetupAction ทำได้แม้ mfaEnabled=true; confirm รับ encryptedSecret และ recoveryCodesHash จาก browser ไม่ผูก pending setup กับ session ฝั่ง server ตรวจแค่ OTP ของ secret ใหม่",
+      "impact": "session ที่ถูกขโมยหรือ script ใน admin origin สามารถแทน MFA ของเจ้าของและตั้ง recovery ของตนได้ แม้ไม่ทราบรหัสผ่าน/OTP เดิม",
+      "fix": "เก็บ pending setup ฝั่ง server ผูกผู้ใช้+session+expiry; require recent password+existing MFA เพื่อ replace; generate recovery hashes ฝั่ง server, revoke/rotate sessions และ audit ใน transaction",
+      "evidence": [
+        {
+          "file": "apps/admin/actions/auth.actions.ts",
+          "line": 350
+        },
+        {
+          "file": "apps/admin/actions/auth.actions.ts",
+          "line": 382
+        }
+      ],
+      "test": "reproduce.cjs MFA-01 ยืนยัน accepted client-chosen recovery hash และไม่มี password check",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "MFA-02",
+      "severity": "High",
+      "area": "Admin auth",
+      "title": "MFA เป็น optional และ recovery/challenge ไม่ได้ consume แบบ atomic",
+      "detail": "login สร้าง session ปกติเมื่อไม่เปิด MFA หรือเปิดแต่ secret หาย; disable MFA ใช้แค่ password. recovery read+update แยกกันทำให้ concurrent snapshots ใช้ code เดียวผ่านได้; challenge JWT ไม่มี durable one-time nonce และไม่มี last-used TOTP step",
+      "impact": "นโยบาย mandatory MFA ไม่เกิดจริง และ code/challenge replay ภายในอายุยังเป็นไปได้. ข้อพิสูจน์ helper ไม่เท่ากับ real DB race",
+      "fix": "บังคับ enrollment ก่อนให้ privileged session, reject inconsistent MFA state, consume challenge/recovery/TOTP step ใน transaction, ยืนยันตัวตนซ้ำก่อน disable",
+      "evidence": [
+        {
+          "file": "apps/admin/actions/auth.actions.ts",
+          "line": 183
+        },
+        {
+          "file": "apps/admin/actions/auth.actions.ts",
+          "line": 293
+        },
+        {
+          "file": "apps/admin/lib/mfa.ts",
+          "line": 253
+        }
+      ],
+      "test": "reproduce.cjs MFA-02 และ MFA-03; real HTTP replay/concurrency ยังไม่ตรวจ",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "AUTH-02",
+      "severity": "Medium",
+      "area": "Admin auth",
+      "title": "Lockout มี race; password limit เป็นอักขระ และ key/expiry ยังไม่ครบ",
+      "detail": "recordFailedLogin อ่าน attempts แล้วเขียน attempts+1 จึงสูญจำนวนเมื่อพร้อมกัน; response เผยบัญชี disabled/locked และจำนวน attempts. bcrypt schema max(72) นับ UTF-16 characters แทน UTF-8 bytes. session มี absolute 8h แต่ไม่มี idle expiry; JWT ไม่กำหนด alg allowlist/issuer/audience; MFA มี fallback test secret และไม่ใช้ ADMIN_MFA_ENCRYPTION_KEY ที่ schema ประกาศ",
+      "impact": "lockout อ่อนลงภายใต้ concurrency; Unicode password อาจถูก truncate และการ rotate session secret กระทบการถอดรหัส MFA เดิม. ไม่ได้พิสูจน์ JWT forgery หรือ fallback exploit ใน production ที่มี key ถูกต้อง",
+      "fix": "Atomic increment/account+IP shared limiter, generic responses, enforce bcrypt byte limit, domain-separated encryption/signing keys พร้อม rotation, idle expiry และ explicit JWT validation",
+      "evidence": [
+        {
+          "file": "apps/admin/lib/auth.ts",
+          "line": 217
+        },
+        {
+          "file": "apps/admin/actions/auth.actions.ts",
+          "line": 42
+        },
+        {
+          "file": "apps/admin/lib/mfa.ts",
+          "line": 64
+        }
+      ],
+      "test": "Static; bcrypt positive/negative และ lockout helper tests เดิมผ่านแต่ไม่ครอบคลุม concurrent DB",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "MEDIA-01",
+      "severity": "High",
+      "area": "Media",
+      "title": "update product ลบ/rename Cloudinary asset จาก publicId ที่ client ส่ง",
+      "detail": "currentDbImages ถูก query แต่ publicIdsToDelete มาจาก data.images โดยไม่ตรวจว่าตรงรายการของ product ก่อนเรียก provider; retained image path ใช้ publicId สำหรับ rename แบบเดียวกัน. DB delete มี productId guard แต่เกิดหลัง provider delete",
+      "impact": "บัญชี staff ที่แก้ product ได้อาจลบ/ย้าย asset อื่นใน Cloudinary account ที่รู้ publicId; validation failure หลังลบบางรายการทำให้ผลไม่ครบ",
+      "fix": "รับเฉพาะ image row ID แล้ว resolve publicId/URL จาก DB ที่ผูก resource; ตรวจ permission ก่อน provider operation; durable cleanup/retry และ quota",
+      "evidence": [
+        {
+          "file": "apps/admin/actions/product.actions.ts",
+          "line": 925
+        },
+        {
+          "file": "apps/admin/actions/product.actions.ts",
+          "line": 944
+        },
+        {
+          "file": "apps/admin/actions/product.actions.ts",
+          "line": 996
+        }
+      ],
+      "test": "Static; ไม่เรียก delete/rename จริง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "XSS-01",
+      "severity": "High",
+      "area": "Browser",
+      "title": "SVG sanitizer แบบ regex ยังปล่อย event handler; CSP อนุญาต inline",
+      "detail": "sanitizeAndFormatSvg ลบเฉพาะ on*= ที่ใส่ quote; unquoted handler คงอยู่และนำเข้า dangerouslySetInnerHTML. staff สร้าง/แก้ icon ได้. Email preview ยังมี srcDoc ไม่มี sandbox และ compile block.content เป็น HTML โดยไม่ escape",
+      "impact": "stored content ใน admin origin อาจรัน script เมื่อ admin อีกคนดู ทำรายการผ่าน session ของผู้ดูได้ แม้ cookie เป็น HttpOnly; โซ่ต่อไปยัง MFA replacement มีความเสี่ยงสูง",
+      "fix": "SVG allowlist sanitizer ที่ parse DOM หรือยกเลิก raw SVG, sanitize/escape HTML, sandbox email iframe แบบไม่ให้ scripts/same-origin, CSP nonce/hash พร้อมทดสอบ integration",
+      "evidence": [
+        {
+          "file": "apps/admin/components/icons/app-icon.tsx",
+          "line": 94
+        },
+        {
+          "file": "apps/admin/components/icons/app-icon.tsx",
+          "line": 184
+        },
+        {
+          "file": "apps/admin/components/newsletters/VisualEmailBuilder.tsx",
+          "line": 1597
+        },
+        {
+          "file": "apps/admin/next.config.mjs",
+          "line": 32
+        }
+      ],
+      "test": "reproduce.cjs XSS-01 ยืนยัน sanitizer output; browser-results.json Chrome ยืนยัน event marker รันภายใต้ unsafe-inline ใน HTML แยก ไม่ได้ inject เข้าเว็บจริง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "ABUSE-01",
+      "severity": "High",
+      "area": "Availability",
+      "title": "Rate limiter ข้าม instance ไม่ได้และเชื่อ forwarded IP",
+      "detail": "Map เป็น process-local fixed window ไม่ใช่ shared sliding window; storefront เลือก leftmost x-forwarded-for ก่อน connection IP. maxBuckets แค่ prune expired แต่ไม่จำกัด active entries. guest-only sensitive limit, logged-in checkout/newsletter/upload/PaymentIntent ไม่มี operation limiter เทียบเท่า",
+      "impact": "หาก ingress ไม่ overwrite trusted headers ผู้ส่งเปลี่ยน IP key หลบ limit ได้; scaling/restart รีเซ็ต counters และ flood unique keys ทำให้ memory โต. ต้องไม่อ้างว่าเป็น DDoS protection ครบ",
+      "fix": "กำหนด trusted proxy ของ target ให้ชัด ปิด origin bypass ใช้ edge/shared durable limiter ผูก account/IP/operation และมี hard bounds; load test เฉพาะ staging",
+      "evidence": [
+        {
+          "file": "apps/storefront/lib/rate-limiter.ts",
+          "line": 149
+        },
+        {
+          "file": "apps/storefront/lib/rate-limiter.ts",
+          "line": 64
+        },
+        {
+          "file": "apps/admin/middleware.ts",
+          "line": 17
+        }
+      ],
+      "test": "reproduce.cjs ABUSE-01/02; edge deployment/WAF configuration ยังไม่ตรวจ",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "ENV-01",
+      "severity": "High",
+      "area": "Configuration",
+      "title": "env schema ไม่ถูก import ใน runtime และ provider mode ไม่ fail closed",
+      "detail": "ค้นไม่พบการ import lib/env ของทั้งสองแอป; modules ใช้ process.env โดยตรง. schema มีอยู่จึงไม่ใช่ startup gate. Stripe helper รับ test key ใน production; webhook success ปฏิเสธ test-mode แต่ recovery จาก retrievePaymentIntent ไม่ตรวจ livemode และไม่ตรวจผล fulfillment ก่อนรายงาน isAlreadyPaid",
+      "impact": "production เริ่มได้ทั้งที่ config สำคัญไม่ครบ; test key/ผิด account สร้าง payment flow ที่ webhook ไม่ยอมรับหรือ recovery รายงานจ่ายสำเร็จผิด",
+      "fix": "validate startup/build/runtime ผ่าน entrypoint จริง, แยก live/test environment ชัดเจน, ตรวจ account+mode ที่ทุก payment boundary และ propagate fulfillment failure",
+      "evidence": [
+        {
+          "file": "apps/storefront/lib/env.ts",
+          "line": 62
+        },
+        {
+          "file": "apps/admin/lib/env.ts",
+          "line": 18
+        },
+        {
+          "file": "packages/lib/src/stripe.ts",
+          "line": 10
+        },
+        {
+          "file": "apps/storefront/actions/checkout.actions.ts",
+          "line": 881
+        }
+      ],
+      "test": "Static import search; production build ผ่านไม่ได้ยืนยัน startup schema validation",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "DB-01",
+      "severity": "High",
+      "area": "Database",
+      "title": "Migration journal ไม่ครอบคลุม schema ปัจจุบัน",
+      "detail": "journal มีเพียง 0000/0001 แต่มี SQL 0002/0003 ที่ไม่ถูกลงทะเบียน; SQL migrations ที่ค้นไม่พบ stripe_payment_intent_id/order_item_bundle_parts/product_bundle_items/newsletter/homepage tables ตาม schema ปัจจุบัน. constraints stock>=0/quantity>0 และ unique payment intent ยังขาด",
+      "impact": "fresh deploy ผ่าน db:migrate อาจไม่มีตาราง/คอลัมน์ที่โค้ดเรียก; db:push ที่เคยใช้ทำให้เครื่องเดิมใช้งานได้แต่ไม่พิสูจน์ reproducible release",
+      "fix": "สร้าง reviewed forward migration ครอบคลุม schema drift ห้ามแก้ migration เก่าเพื่อกลบประวัติ; fresh DB migrate+upgrade test, check constraints/indexes, จำกัด runtime role และแยก migration role",
+      "evidence": [
+        {
+          "file": "packages/db/drizzle/meta/_journal.json",
+          "line": 1
+        },
+        {
+          "file": "packages/db/src/schema/orders.ts",
+          "line": 36
+        },
+        {
+          "file": "packages/db/src/schema/orders.ts",
+          "line": 73
+        }
+      ],
+      "test": "Static SQL/schema comparison; ไม่ migrate หรือ query catalog ของ Neon จริง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "CI-01",
+      "severity": "High",
+      "area": "Delivery",
+      "title": "CI ไม่ใช่ release gate ครบตามรายงาน",
+      "detail": "workflow build แค่ storefront และรัน test:security สองข้อ ไม่ได้รัน admin build หรือ smoke/stateful suite เต็ม; ไม่มี dependency scan/SAST job. mock Clerk publishable key ไม่ใช่หลักฐาน production config และ PostgreSQL service ต้องตรวจ transport ให้ตรง Neon websocket driver. Gitleaks allowlist ยกเว้น test/spec/verify ทั้งไฟล์",
+      "impact": "main อาจผ่าน job ที่จำกัดขอบเขตโดยยังมีช่องโหว่/สคริปต์ที่ secret scan ไม่ครอบคลุม; ยังไม่มีหลักฐาน required checks และ CI run ของ commit นี้",
+      "fix": "CI ใช้ frozen lockfile, supported Node, build ทั้งแอป, dependency/Gitleaks/SAST, real isolated DB security tests และ adapter preview; required branch/deploy checks; allowlist เฉพาะ fixture ค่าแน่นอน",
+      "evidence": [
+        {
+          "file": ".github/workflows/ci.yml",
+          "line": 184
+        },
+        {
+          "file": ".github/workflows/ci.yml",
+          "line": 164
+        },
+        {
+          "file": ".gitleaks.toml",
+          "line": 6
+        }
+      ],
+      "test": "Static workflow review; ไม่อ้างว่า CI ล้มเหลวแน่นอนเพราะไม่ได้รัน GitHub Actions",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "TEST-01",
+      "severity": "High",
+      "area": "Verification",
+      "title": "ชุดทดสอบเดิมไม่พิสูจน์ concurrency/IDOR/checkout ครบ และ isolation ไม่พอ",
+      "detail": "concurrency-stock test ไม่มี orderItems/products fixture ใน concurrent case จึงไม่ตรวจ stock. Clerk/Stripe signatures ถูก mock. stateful จบที่ payment screen ไม่จ่าย/ตรวจ stock จริง; forged token ใช้ order ที่ไม่มีอยู่ ไม่ทดสอบ order ของ B. runner เปลี่ยนชื่อ DB ใน URL แต่ reuse credentials และ root provider env; guard ใช้ substring/override ไม่มี email sink หรือ run cleanup ที่ครบ",
+      "impact": "164 tests ผ่านไม่เท่ากับ 100% coverage หรือ ASVS L2; รัน stateful โดยไม่แยก credentials อาจแก้ข้อมูล/เรียก provider ผิด environment",
+      "fix": "Dedicated DB/project+restricted test role, verified test provider+email sink, fail-closed bootstrap ก่อน side effects, run-owned fixtures/cleanup; ทดสอบ 2 users/2 orders/shared parts และ HTTP boundary จริง",
+      "evidence": [
+        {
+          "file": "apps/storefront/lib/concurrency-stock.test.ts",
+          "line": 152
+        },
+        {
+          "file": "e2e/tests/storefront/checkout-flow.spec.ts",
+          "line": 139
+        },
+        {
+          "file": "scripts/run-stateful-e2e.mjs",
+          "line": 40
+        },
+        {
+          "file": "apps/storefront/scripts/test-guard.ts",
+          "line": 31
+        }
+      ],
+      "test": "164 existing tests ผ่าน; 29 smoke/3 stateful ไม่ได้รันใหม่ทั้งชุดเพราะยังไม่ยืนยัน isolation",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "REALTIME-01",
+      "severity": "Medium",
+      "area": "Privacy and scaling",
+      "title": "SSE สาธารณะ broadcast order metadata และจำสถานะใน instance เดียว",
+      "detail": "GET /api/realtime ไม่ตรวจ auth; POST ที่มี shared secret broadcast payload ไป clients ทั้งหมด. order notifier ส่ง orderId/orderNumber/status ให้ public subscribers; clients/version เก็บใน memory และ background fetch ไม่มี durable retry",
+      "impact": "ผู้ไม่เข้าสู่ระบบฟัง order metadata ได้โดยไม่ใช่การเปิดเผยที่อยู่ทั้งหมด; หลาย Workers instances จะไม่ได้ broadcast ถึงกัน และ event/notification หายได้เมื่อ process จบ",
+      "fix": "public channel ส่งเฉพาะ catalog version; order event ต้อง per-user authorization; ใช้ shared coordinator/pubsub/durable retry และ backpressure",
+      "evidence": [
+        {
+          "file": "apps/storefront/app/api/realtime/route.ts",
+          "line": 92
+        },
+        {
+          "file": "apps/storefront/app/api/realtime/route.ts",
+          "line": 214
+        },
+        {
+          "file": "apps/admin/actions/order.actions.ts",
+          "line": 462
+        }
+      ],
+      "test": "Static; ยังไม่เปิด SSE เก็บข้อมูลจริงหรือทดสอบหลาย instance",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "DATA-01",
+      "severity": "Medium",
+      "area": "Database",
+      "title": "User merge หลายตารางไม่ atomic และ ban flag ไม่มี enforcement กลาง",
+      "detail": "syncUserWithClerk เปลี่ยนอีเมลเดิม/สร้าง row ใหม่/ย้ายหลาย child tables/ลบเดิมโดยไม่ transaction และ catch migration error แล้ว return success; isBanned ถูกตั้งจาก Clerk webhook แต่ไม่พบการตรวจใน protected customer actions ที่ไล่ดู",
+      "impact": "failure กลางทางทิ้งข้อมูลแยกสอง account และ retry อาจไม่ merge ต่อ; DB-ban อย่างเดียวไม่ปิดสิทธิ์ session ที่ยังใช้ได้ ทั้งนี้ Clerk deleted-user revocation เป็นคนละ control",
+      "fix": "transaction+idempotent merge พร้อม verified identity, central customer active/ban guard และ reconciliation; ทดสอบ failure ทุกจุด",
+      "evidence": [
+        {
+          "file": "apps/storefront/lib/user-sync.ts",
+          "line": 58
+        },
+        {
+          "file": "apps/storefront/lib/user-sync.ts",
+          "line": 93
+        },
+        {
+          "file": "apps/storefront/app/api/webhooks/clerk/route.ts",
+          "line": 133
+        }
+      ],
+      "test": "Static; provider session revocation จริงยังไม่ตรวจ",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "EMAIL-01",
+      "severity": "Medium",
+      "area": "Delivery and privacy",
+      "title": "Email ไม่ durable, มี HTML interpolation และ guest link ใช้งานข้ามอุปกรณ์ไม่ได้",
+      "detail": "fulfillment email failure ถูกกลืน; retry order paid ออกก่อนส่งซ้ำ. order-email ต่อ shipping address/product snapshot ลง HTML โดยไม่ escape; tracking URL ใช้ NEXT_PUBLIC_SITE_URL default localhost และไม่แนบ guest access mechanism. newsletter broadcast ทำ provider sends ก่อน durable outcome และไม่มี operation idempotency",
+      "impact": "รับเงินแล้วลูกค้าไม่ได้ receipt, retry อาจส่ง campaign ซ้ำ, receipt content injection และ guest เปิดลิงก์บนอุปกรณ์ใหม่ถูกปฏิเสธ",
+      "fix": "transactional outbox+retry/dedupe, escape HTML/validate URL, รวม canonical storefront URL และใช้ guest access link ที่มีอายุ/claim flow; audit outcome durable",
+      "evidence": [
+        {
+          "file": "apps/storefront/lib/order-email.ts",
+          "line": 33
+        },
+        {
+          "file": "apps/storefront/lib/order-email.ts",
+          "line": 51
+        },
+        {
+          "file": "apps/storefront/lib/order-fulfillment.ts",
+          "line": 238
+        },
+        {
+          "file": "apps/admin/actions/newsletter.actions.ts",
+          "line": 367
+        }
+      ],
+      "test": "Static; ไม่ส่งอีเมลจริง",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "MEDIA-02",
+      "severity": "Medium",
+      "area": "Validation",
+      "title": "Review uploads/URLs ไม่ enforce ownership, format และ moderation pending ครบ",
+      "detail": "uploadReviewImageAction ตรวจเพียง data:image prefix/ความยาว; submitReview รับ imageUrls URL ใดก็ได้และไม่มี max array. shared uploader รับ pending/missing moderation result เป็น success. หลาย input เช่น checkout address/items และ MFA code/token ไม่มี maximum length/count ที่เจาะจง",
+      "impact": "ผู้ใช้ข้าม upload/moderation path ผ่าน arbitrary URLs, ใช้ storage/provider เกิน quota หรือเพิ่มงาน DB/memory; moderation ไม่ทดแทน XSS protection",
+      "fix": "validate decoded bytes/format/dimensions, ownership asset records และ count/byte budgets; quarantine pending/missing result จน approved, scoped rate limits และ orphan cleanup",
+      "evidence": [
+        {
+          "file": "apps/storefront/actions/review.actions.ts",
+          "line": 15
+        },
+        {
+          "file": "apps/storefront/actions/review.actions.ts",
+          "line": 266
+        },
+        {
+          "file": "packages/lib/src/cloudinary.ts",
+          "line": 64
+        }
+      ],
+      "test": "Static; upload-validator ของ admin มี magic bytes tests ผ่าน แต่ไม่ครอบคลุม customer upload",
+      "status": "ไม่ผ่าน"
+    },
+    {
+      "id": "CF-01",
+      "severity": "High",
+      "area": "Cloudflare",
+      "title": "ยังไม่มี deployment integration หรือ Workers runtime evidence",
+      "detail": "ไม่พบ wrangler/open-next/vinext configuration หรือ Workers build ใน repository. Next build ที่ผ่านเป็น Node.js บน Windows. global Neon Pool, process-local SSE/rate limiter, timers และ provider SDK ต้องตรวจใน adapter runtime. โมเดลใน public มีขนาด 78.2 และ 54.3 MiB",
+      "impact": "ยังไม่ใช่ artifact ที่พิสูจน์ว่า deploy บน Cloudflare ได้; large static assets ต้องออกแบบ delivery และ mobile performance มีความเสี่ยง",
+      "fix": "เลือก Workers adapter ที่รองรับ framework เวอร์ชันหลัง upgrade; ทำสองแอป/โดเมน/secret bindings, preview/staging ใน workerd, runtime transaction/stream/cookie/cache tests; ย้าย/บีบอัดโมเดลให้เหมาะกับ asset limits",
+      "evidence": [
+        {
+          "file": "apps/storefront/package.json",
+          "line": 1
+        },
+        {
+          "file": "packages/db/src/client.ts",
+          "line": 13
+        },
+        {
+          "file": "apps/storefront/components/3d/CarScene.tsx",
+          "line": 393
+        }
+      ],
+      "test": "Static config/file sizes; ไม่ deploy หรือเปลี่ยน hosting; mobile GPU/load/Cloudflare limits ยังต้องทดสอบ",
+      "status": "ไม่ผ่าน"
+    }
+  ],
+  "tests": {
+    "vitest": {
+      "passed": 164,
+      "failed": 0
+    },
+    "lint": {
+      "passed": true,
+      "warnings": 4
+    },
+    "typecheck": "passed: 5 workspaces",
+    "build": "passed: admin + storefront, Windows Node.js",
+    "offlineReproductions": 10,
+    "productionAdvisories": 30,
+    "allAdvisories": 39
+  }
+};
+const root = "C:/Users/thana/south_aero_project/South-aeropart/southaeropart_project/";
+export default function ReadinessAudit() {
+  const theme = useHostTheme();
+  const [query, setQuery] = useState("");
+  const [severity, setSeverity] = useState("All");
+  const findings = audit.findings.filter(f => (severity === "All" || f.severity === severity) && [f.id, f.title, f.area, f.detail, f.fix].join(" ").toLowerCase().includes(query.toLowerCase()));
+  const link = { color: theme.text.link, overflowWrap: "anywhere" as const };
+  return <Stack gap={24} style={{padding:24, maxWidth:1100, margin:"0 auto", color:theme.text.primary, background:theme.bg.editor, fontFamily:"system-ui, sans-serif", lineHeight:1.65}}>
+    <Stack gap={6}>
+      <div style={{color:theme.text.secondary}}>SOUTH AERO / RELEASE REVIEW / {audit.date}</div>
+      <h1 style={{fontSize:24, margin:0}}>NO-GO — ยังไม่พร้อมเปิด production</h1>
+      <p style={{margin:0}}>ต้องปิดความเสี่ยงด้าน credentials, เงินและสต็อก, สิทธิ์ผู้ใช้ และพิสูจน์การทำงานบน Cloudflare ก่อนรับเงินจริง</p>
+      <div style={{fontSize:12, color:theme.text.tertiary}}>Commit {audit.commit} · เป้าหมาย Cloudflare + Neon · สรุปผลตรวจโค้ดและการทดสอบในเครื่อง</div>
+    </Stack>
+    <Grid columns="repeat(auto-fit, minmax(150px, 1fr))" gap={20} style={{padding:20, background:theme.fill.tertiary}}>
+      {Object.entries(audit.severityCounts).map(([level,count]) => <Stack key={level} gap={0}><strong style={{fontSize:24}}>{count}</strong><span>{level} findings</span></Stack>)}
+      <Stack gap={0}><strong style={{fontSize:24}}>164 / 164</strong><span>Vitest ผ่าน</span></Stack>
+    </Grid>
+    <Grid columns="repeat(auto-fit, minmax(260px, 1fr))" gap={28}>
+      <section><h2 style={{fontSize:18, marginTop:0}}>จัดการก่อนอย่างอื่น</h2><ol style={{paddingLeft:22, margin:0}}><li>Rotate/revoke Neon credentials ที่อยู่ใน Git 8 ไฟล์ และตรวจ access logs</li><li>แก้ stock/payment lifecycle และช่องโหว่ auth/MFA/content พร้อม regression tests</li><li>อัปเกรด dependencies และพิสูจน์ migrations/Workers staging/restore</li></ol></section>
+      <section><h2 style={{fontSize:18, marginTop:0}}>อ่านผลทดสอบให้ถูกขอบเขต</h2><p style={{margin:0}}>Typecheck และ build ทั้งสองแอปผ่าน; lint มี 4 warnings. Production dependency audit พบ 30 รายการ ซึ่งไม่เท่ากับ 30 ช่องโหว่ที่โจมตีได้จริง</p><p>การจำลอง offline ยืนยันอาการเสีย 10 กรณี ไม่ใช่ security pass. Playwright เต็มชุด, DB concurrency, load/restore และ Cloudflare runtime ยังไม่ยืนยัน</p></section>
+    </Grid>
+    <Divider />
+    <Stack gap={12}>
+      <Row justify="space-between" align="center" wrap><h2 style={{fontSize:18, margin:0}}>ข้อค้นพบและหลักฐาน ({findings.length} / {audit.findings.length})</h2><a style={link} href={root + "audit/2026-09-14/production-readiness-report.md"}>เปิดรายงานฉบับเต็ม</a></Row>
+      <Row gap={12} align="center" wrap>
+        <label style={{flex:"1 1 260px"}}>ค้นหาประเด็น<TextInput value={query} onChange={setQuery} placeholder="เช่น stock, MFA, Cloudflare" /></label>
+        <label>ระดับความเสี่ยง <select value={severity} onChange={e => setSeverity(e.target.value)} style={{padding:8, color:theme.text.primary, background:theme.bg.editor, border:`1px solid ${theme.stroke.primary}`}}>{["All", "Critical", "High", "Medium"].map(s => <option key={s} value={s}>{s === "All" ? "ทั้งหมด" : s}</option>)}</select></label>
+      </Row>
+      {findings.map(f => <details key={f.id} style={{padding:"14px 0", borderBottom:`1px solid ${theme.stroke.secondary}`}}>
+        <summary style={{cursor:"pointer"}}><strong>{f.id} · {f.severity}</strong> — {f.title}<span style={{fontSize:12, color:theme.text.tertiary}}> / {f.area}</span></summary>
+        <Stack gap={12} style={{padding:"16px 0 4px"}}>
+          <p style={{margin:0}}>{f.detail}</p>
+          <div><strong>ผลกระทบและเงื่อนไข</strong><div>{f.impact}</div></div>
+          <div><strong>แนวทางแก้และตรวจซ้ำ</strong><div>{f.fix}</div></div>
+          <div style={{color:theme.text.secondary}}><strong>ขอบเขตหลักฐาน</strong><div>{f.test}</div></div>
+          <Stack gap={4}>{f.evidence.map(e => <a key={e.file+e.line} href={root+e.file+":"+e.line} style={link}>{e.file}:{e.line}</a>)}</Stack>
+        </Stack>
+      </details>)}
+    </Stack>
+    <section style={{fontSize:13, color:theme.text.secondary}}><strong>ขอบเขตการรับรอง</strong><p>ตรวจ inventory 637 tracked files และไล่เส้นทางสำคัญตามหลักฐานในรายงาน ไม่ได้ยืนยันทุกบรรทัดหรือทุก branch. ยังไม่ได้ใช้ credential ที่พบ, เปลี่ยน production, เขียน Neon หรือ deploy. รายงานนี้ไม่ใช่ ASVS certification หรือหลักประกันว่าไม่มีช่องโหว่</p><a style={link} href={root+"audit/2026-09-14/reproduction-results.json"}>ผลจำลองอาการแบบ offline</a></section>
+  </Stack>;
+}

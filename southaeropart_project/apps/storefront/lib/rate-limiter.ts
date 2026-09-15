@@ -1,10 +1,10 @@
 /**
  * Rate Limiter for Edge Middleware & Server Actions (CLAUDE.md §5.1, OWASP ASVS §14.4)
  *
- * Implements an in-memory sliding window rate limiter with:
+ * Implements an in-memory fixed window rate limiter with:
  * - Anti-spoofing client IP resolution
  * - Route-specific tiered thresholds (API vs Page vs Checkout)
- * - Automatic LRU-style garbage collection to prevent memory exhaustion (DoS on memory)
+ * - Bounded capacity and expired-entry cleanup to prevent memory exhaustion (DoS on memory)
  * - Strict Webhook bypass to prevent dropping payment confirmations (Stripe / Clerk)
  */
 
@@ -61,13 +61,16 @@ export class MemoryRateLimiter {
     now: number = Date.now()
   ): RateLimitResult {
     // Garbage collection if cache size exceeds limit
-    if (this.buckets.size > this.maxBuckets) {
+    if (this.buckets.size >= this.maxBuckets) {
       this.prune(now);
     }
 
     const entry = this.buckets.get(key);
 
-    if (!entry || now > entry.resetAt) {
+    if (!entry && this.buckets.size >= this.maxBuckets) {
+      return { success: false, count: 0, remaining: 0, resetAt: now + config.windowMs, retryAfter: Math.ceil(config.windowMs / 1000) };
+    }
+    if (!entry || now >= entry.resetAt) {
       const resetAt = now + config.windowMs;
       this.buckets.set(key, { count: 1, resetAt });
       return {
@@ -126,7 +129,7 @@ export class MemoryRateLimiter {
    */
   public prune(now: number = Date.now()): void {
     for (const [key, bucket] of this.buckets.entries()) {
-      if (now > bucket.resetAt) {
+      if (now >= bucket.resetAt) {
         this.buckets.delete(key);
       }
     }
@@ -138,7 +141,7 @@ export const globalStorefrontRateLimiter = new MemoryRateLimiter(5000);
 
 /**
  * Extract client IP from Request or NextRequest headers securely.
- * Handles reverse proxy chains by taking the leftmost (untrusted client) IP in x-forwarded-for.
+ * Only accepts a platform-provided IP or explicitly trusted Cloudflare ingress.
  */
 export function getClientIp(requestOrHeaders: {
   headers: Headers | { get(name: string): string | null };
@@ -146,22 +149,16 @@ export function getClientIp(requestOrHeaders: {
 }): string {
   const headers = requestOrHeaders.headers;
 
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const leftmostIp = forwardedFor.split(",")[0].trim();
-    if (leftmostIp) return leftmostIp;
-  }
-
-  const realIp = headers.get("x-real-ip");
-  if (realIp && realIp.trim()) {
-    return realIp.trim();
-  }
-
   if (requestOrHeaders.ip) {
     return requestOrHeaders.ip;
   }
-
-  return "127.0.0.1";
+  // Enable only when the origin is inaccessible except through Cloudflare,
+  // which overwrites this header. Never trust arbitrary forwarding chains.
+  if (process.env.TRUSTED_PROXY === "cloudflare") {
+    const ip = headers.get("cf-connecting-ip")?.trim();
+    if (ip && ip.length <= 45 && /^[0-9a-fA-F:.]+$/.test(ip)) return ip;
+  }
+  return "unknown";
 }
 
 /**

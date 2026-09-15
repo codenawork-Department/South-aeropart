@@ -18,48 +18,20 @@ const nextConfig = {
       },
     ],
   },
+  serverExternalPackages: ["@repo/db", "drizzle-orm", "@neondatabase/serverless"],
   experimental: {
-    serverComponentsExternalPackages: ["@repo/db", "drizzle-orm", "@neondatabase/serverless"],
     serverActions: {
       bodySizeLimit: "4mb",
     },
   },
   async headers() {
-    const isDev = process.env.NODE_ENV !== "production";
-    const scriptSrc = [
-      "'self'",
-      isDev ? "'unsafe-eval'" : "",
-      "'unsafe-inline'",
-      "https://res.cloudinary.com",
-      "https://upload-widget.cloudinary.com",
-    ].filter(Boolean).join(" ");
-
-    const cspHeader = `
-      default-src 'self';
-      script-src ${scriptSrc};
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      img-src 'self' blob: data: https://res.cloudinary.com;
-      font-src 'self' data: https://fonts.gstatic.com;
-      connect-src 'self' https://api.cloudinary.com https://res.cloudinary.com;
-      frame-src 'self' https://upload-widget.cloudinary.com;
-      media-src 'self' https://res.cloudinary.com blob:;
-      object-src 'none';
-      base-uri 'self';
-      form-action 'self';
-      frame-ancestors 'none';
-    `.replace(/\s{2,}/g, " ").trim();
-
     return [
       {
         source: "/(.*)",
         headers: [
           {
-            key: "Content-Security-Policy",
-            value: cspHeader,
-          },
-          {
             key: "Strict-Transport-Security",
-            value: "max-age=63072000; includeSubDomains; preload",
+            value: "max-age=31536000",
           },
           {
             key: "X-Frame-Options",

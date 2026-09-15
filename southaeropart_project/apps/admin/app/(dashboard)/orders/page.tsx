@@ -6,15 +6,15 @@ export const dynamic = "force-dynamic";
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     search?: string;
     status?: string;
     page?: string;
-  };
+  }>;
 }) {
-  const search = searchParams?.search || "";
-  const status = searchParams?.status || "all";
-  const page = searchParams?.page ? parseInt(searchParams.page, 10) : 1;
+  const search = (await searchParams)?.search || "";
+  const status = (await searchParams)?.status || "all";
+  const page = (await searchParams)?.page ? parseInt((await searchParams)!.page!, 10) : 1;
 
   const [ordersRes, statsRes] = await Promise.all([
     getOrdersAction({ search, status, page, limit: 20 }),

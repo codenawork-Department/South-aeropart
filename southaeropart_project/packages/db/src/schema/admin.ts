@@ -24,6 +24,10 @@ export const adminUsers = pgTable("admin_users", {
     mfaEnabled: boolean("mfa_enabled").notNull().default(false),
     mfaSecretEncrypted: text("mfa_secret_encrypted"),
     mfaRecoveryCodesHash: jsonb("mfa_recovery_codes_hash").$type<string[]>(),
+    mfaLastUsedStep: integer("mfa_last_used_step"),
+    mfaChallengeHash: text("mfa_challenge_hash"),
+    mfaPendingSetup: text("mfa_pending_setup"),
+    mfaPendingSetupExpiresAt: timestamp("mfa_pending_setup_expires_at", { withTimezone: true }),
 
     // Brute-force protection.
     failedLoginAttempts: integer("failed_login_attempts").notNull().default(0),
@@ -46,6 +50,8 @@ export const adminSessions = pgTable("admin_sessions", {
     id: uuid("id").defaultRandom().primaryKey(),
     adminId: uuid("admin_id").notNull().references(() => adminUsers.id, { onDelete: "cascade" }),
     tokenHash: text("token_hash").notNull().unique(), // hash of the session/refresh token, never the raw token
+    mfaVerified: boolean("mfa_verified").notNull().default(false),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),

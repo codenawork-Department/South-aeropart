@@ -1,3 +1,4 @@
+import { securedNextResponse } from "@/lib/csp";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
@@ -20,13 +21,14 @@ const RATE_LIMIT_MAX = 120; // 120 reqs/min per IP
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
-  if (rateLimitMap.size > 2000) {
+  if (rateLimitMap.size >= 2000) {
     for (const [k, v] of rateLimitMap.entries()) {
       if (now > v.resetAt) rateLimitMap.delete(k);
     }
   }
   const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
+  if (!entry && rateLimitMap.size >= 2000) return true;
+  if (!entry || now >= entry.resetAt) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return false;
   }
@@ -44,13 +46,8 @@ function getSessionSecret(): Uint8Array {
 }
 
 export async function middleware(request: NextRequest) {
-  // Extract client IP (handle comma-separated proxies in x-forwarded-for securely)
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  const ip =
-    request.ip ||
-    (forwardedFor ? forwardedFor.split(",")[0].trim() : null) ||
-    request.headers.get("x-real-ip") ||
-    "unknown";
+  // Only trust this header when Cloudflare is the sole permitted ingress.
+  const ip = process.env.TRUSTED_PROXY === "cloudflare" ? (request.headers.get("cf-connecting-ip") || "unknown") : "unknown";
 
   if (isRateLimited(ip)) {
     return new NextResponse("Too Many Requests", {
@@ -66,7 +63,7 @@ export async function middleware(request: NextRequest) {
 
   // Allow public paths
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
+    return securedNextResponse(request);
   }
 
   // Check for session cookie
@@ -83,8 +80,8 @@ export async function middleware(request: NextRequest) {
       // Secret not configured — reject
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    await jwtVerify(token, secret);
-    return NextResponse.next();
+    await jwtVerify(token, secret, { algorithms: ["HS256"] });
+    return securedNextResponse(request);
   } catch {
     // Token invalid or expired — redirect to login
     const response = NextResponse.redirect(new URL("/login", request.url));

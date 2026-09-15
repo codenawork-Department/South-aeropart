@@ -14,11 +14,11 @@ export default async function OrderInvoicePage({
   params,
   searchParams,
 }: {
-  params: { orderId: string };
-  searchParams?: { token?: string };
+  params: Promise<{ orderId: string }>;
+  searchParams?: Promise<{ token?: string }>;
 }) {
-  const { orderId } = params;
-  const guestToken = searchParams?.token;
+  const { orderId } = await params;
+  const guestToken = (await searchParams)?.token;
 
   // Authoritative server-side IDOR guard via getOrderDetails
   const res = await getOrderDetails(orderId, guestToken);

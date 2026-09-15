@@ -130,6 +130,8 @@ export default function AdminGlobalError({ error, reset }: GlobalErrorProps) {
             >
               ลองใหม่อีกครั้ง
             </button>
+            {/* A full document navigation resets the failed root layout. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a
               href="/"
               style={{

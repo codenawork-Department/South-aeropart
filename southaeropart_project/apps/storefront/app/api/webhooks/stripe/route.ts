@@ -1,7 +1,8 @@
+import { isExpectedStripeMode } from "@repo/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { constructStripeWebhookEvent, toSmallestCurrencyUnit, Stripe } from "@repo/lib";
 import { fulfillOrderPayment } from "@/lib/order-fulfillment";
-import { db, orders, orderStatusHistory, eq } from "@repo/db";
+import { db, orders, orderStatusHistory, eq, and, inArray } from "@repo/db";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,9 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
+    if (event.account || (!isExpectedStripeMode(event.livemode))) {
+      return NextResponse.json({ error: "Unexpected Stripe account or mode" }, { status: 400 });
+    }
     // Handle supported Stripe events
     switch (event.type) {
       case "payment_intent.succeeded": {
@@ -95,21 +99,15 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Order not found" }, { status: 404 });
         }
 
-        // Idempotency check: if order is already marked paid, return success immediately
-        if (targetOrder.paymentStatus === "paid") {
-          console.log(`[Stripe Webhook] Order ${orderId} already fulfilled. Skipping redundant processing.`);
-          return NextResponse.json({ received: true, alreadyPaid: true });
-        }
-
         // Mode verification (SEC §5.3): Refuse test-mode events in production
-        if (process.env.NODE_ENV === "production" && !event.livemode) {
+        if (!isExpectedStripeMode(event.livemode)) {
           console.error(`[Stripe Webhook Security] Test-mode event received in production for order ${orderId}!`);
           return NextResponse.json({ error: "Test-mode event not permitted in production" }, { status: 400 });
         }
 
         // Amount & Currency Verification (SEC §5.3: Server-authoritative totals)
         const expectedAmount = toSmallestCurrencyUnit(targetOrder.total);
-        const receivedAmount = paymentIntent.amount_received || paymentIntent.amount;
+        const receivedAmount = paymentIntent.amount_received;
         const expectedCurrency = (targetOrder.currency || "THB").toLowerCase();
         const receivedCurrency = (paymentIntent.currency || "").toLowerCase();
 
@@ -129,12 +127,16 @@ export async function POST(req: NextRequest) {
         }
 
         // Payment binding check: If a payment intent was already recorded on the order, ensure it matches
-        if (targetOrder.stripePaymentIntentId && targetOrder.stripePaymentIntentId !== paymentIntent.id) {
+        if (!targetOrder.stripePaymentIntentId || targetOrder.stripePaymentIntentId !== paymentIntent.id || (!isExpectedStripeMode(paymentIntent.livemode))) {
           console.warn(
             `[Stripe Webhook Security] PaymentIntent ID mismatch for order ${orderId}. Bound: ${targetOrder.stripePaymentIntentId}, Event: ${paymentIntent.id}`
           );
         }
 
+        if (targetOrder.stripePaymentIntentId !== paymentIntent.id || (!isExpectedStripeMode(paymentIntent.livemode))) {
+          return NextResponse.json({ error: "Payment binding or mode mismatch" }, { status: 400 });
+        }
+        if (targetOrder.paymentStatus === "paid") return NextResponse.json({ received: true, alreadyPaid: true });
         const fulfillmentResult = await fulfillOrderPayment(orderId, {
           method: "stripe",
           chargeId: paymentIntent.id,
@@ -151,61 +153,15 @@ export async function POST(req: NextRequest) {
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        let orderId = paymentIntent.metadata?.orderId;
-        const orderNumber = paymentIntent.metadata?.orderNumber;
-
-        console.warn(`[Stripe Webhook] Payment failed for intentId: ${paymentIntent.id}, reason: ${paymentIntent.last_payment_error?.message || "unknown"}`);
-
-        // Fallback 1: Look up by stripePaymentIntentId
-        if (!orderId && paymentIntent.id) {
-          const [matchedOrder] = await db
-            .select({ id: orders.id })
-            .from(orders)
-            .where(eq(orders.stripePaymentIntentId, paymentIntent.id))
-            .limit(1);
-          if (matchedOrder) {
-            orderId = matchedOrder.id;
-          }
+        if (!isExpectedStripeMode(paymentIntent.livemode)) {
+          return NextResponse.json({ error: "Unexpected payment mode" }, { status: 400 });
         }
-
-        // Fallback 2: Look up by orderNumber
-        if (!orderId && orderNumber) {
-          const [matchedOrder] = await db
-            .select({ id: orders.id })
-            .from(orders)
-            .where(eq(orders.orderNumber, orderNumber))
-            .limit(1);
-          if (matchedOrder) {
-            orderId = matchedOrder.id;
-          }
-        }
-
-        if (orderId) {
-          const [currentOrder] = await db
-            .select({ id: orders.id, status: orders.status, paymentStatus: orders.paymentStatus })
-            .from(orders)
-            .where(eq(orders.id, orderId))
-            .limit(1);
-
-          // Only update if not already marked paid
-          if (currentOrder && currentOrder.paymentStatus !== "paid") {
-            await db
-              .update(orders)
-              .set({
-                paymentStatus: "failed",
-                updatedAt: new Date(),
-              })
-              .where(eq(orders.id, orderId));
-
-            const failureReason = paymentIntent.last_payment_error?.message || "PaymentIntent execution failed";
-            await db.insert(orderStatusHistory).values({
-              orderId,
-              status: currentOrder.status,
-              note: `การชำระเงินไม่สำเร็จผ่าน Stripe: ${failureReason}`,
-            });
-            console.warn(`[Stripe Webhook] Order ${orderId} marked as payment_failed: ${failureReason}`);
-          }
-        }
+        await db.transaction(async tx => {
+          const [changed] = await tx.update(orders).set({ paymentStatus: "failed", updatedAt: new Date() })
+            .where(and(eq(orders.stripePaymentIntentId, paymentIntent.id), eq(orders.status, "pending"), inArray(orders.paymentStatus, ["pending", "authorized"])))
+            .returning({ id: orders.id, status: orders.status });
+          if (changed) await tx.insert(orderStatusHistory).values({ orderId: changed.id, status: changed.status, note: "Stripe payment attempt failed" });
+        });
         break;
       }
 

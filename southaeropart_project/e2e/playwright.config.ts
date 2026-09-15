@@ -24,6 +24,7 @@ export default defineConfig({
     ["list"],
   ],
   use: {
+    channel: process.env.PLAYWRIGHT_CHANNEL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     navigationTimeout: 45000,

@@ -1,8 +1,10 @@
 "use server";
 
+import { validateBase64Image } from "@repo/lib/image-validation";
 import { z } from "zod";
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { db, reviews, orders, orderItems, users, eq, and, or, inArray, desc } from "@repo/db";
+import { currentUser } from "@clerk/nextjs/server";
+import { customerAuth as auth } from "@/lib/customer-auth";
+import { db, reviews, reviewUploads, takeRateLimit, orders, orderItems, users, eq, and, or, inArray, desc } from "@repo/db";
 import { moderateText } from "@repo/lib";
 import { syncUserWithClerk } from "@/lib/user-sync";
 
@@ -12,7 +14,7 @@ const reviewSchema = z.object({
   rating: z.number().int().min(1, "กรุณาให้คะแนนอย่างน้อย 1 ดาว").max(5, "คะแนนสูงสุดคือ 5 ดาว"),
   title: z.string().max(200).optional(),
   content: z.string().min(5, "เนื้อหารีวิวต้องมีความยาวอย่างน้อย 5 ตัวอักษร").max(2000),
-  imageUrls: z.array(z.string().url()).optional(),
+  imageUrls: z.array(z.string().url().max(2048)).max(5).optional(),
 });
 
 export type SubmitReviewInput = z.input<typeof reviewSchema>;
@@ -25,7 +27,7 @@ export async function submitReview(input: SubmitReviewInput) {
   try {
     const validated = reviewSchema.parse(input);
 
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return {
         success: false,
@@ -33,8 +35,15 @@ export async function submitReview(input: SubmitReviewInput) {
       };
     }
 
+    if (!await takeRateLimit(`review-submit:${userId}`, 10, 3600000)) return { success: false, error: "Too many review submissions" };
+    if (validated.imageUrls?.length) {
+      const owned = await db.select({ url: reviewUploads.secureUrl }).from(reviewUploads)
+        .where(and(eq(reviewUploads.userId, userId), inArray(reviewUploads.secureUrl, validated.imageUrls)));
+      if (validated.imageUrls.some(url => !owned.some(row => row.url === url))) return { success: false, error: "Review image ownership could not be verified" };
+    }
     // Ensure user profile exists in database
     const [existingUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (existingUser?.isBanned) return { success: false, error: "Account is disabled" };
     if (!existingUser) {
       let clerkUser = null;
       try {
@@ -210,7 +219,7 @@ export async function getProductReviews(productId: string) {
  */
 export async function getUserProductReviewsAction(productIds: string[]) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     const validIds = (productIds || []).filter(Boolean);
     if (!userId || validIds.length === 0) {
       return { success: true, data: {} };
@@ -258,18 +267,16 @@ export async function getUserProductReviewsAction(productIds: string[]) {
  */
 export async function uploadReviewImageAction(dataUrl: string, productName?: string) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { success: false, error: "กรุณาเข้าสู่ระบบก่อนอัปโหลดรูปภาพ" };
     }
 
-    if (!dataUrl || !dataUrl.startsWith("data:image/")) {
-      return { success: false, error: "รูปแบบไฟล์รูปภาพไม่ถูกต้อง (ต้องเป็น Data URI รูปภาพ)" };
-    }
-
-    if (dataUrl.length > 7 * 1024 * 1024) {
-      return { success: false, error: "ขนาดรูปภาพต้องไม่เกิน 5MB" };
-    }
+    const validation = validateBase64Image(dataUrl, { maxSizeBytes: 5 * 1024 * 1024 });
+    if (!validation.valid) return { success: false, error: validation.error };
+    const [account] = await db.select({ isBanned: users.isBanned }).from(users).where(eq(users.id, userId)).limit(1);
+    if (!account || account.isBanned) return { success: false, error: "Account unavailable" };
+    if (!await takeRateLimit(`review-upload:${userId}`, 10, 3600000)) return { success: false, error: "Upload quota exceeded" };
 
     // Sanitize product name for Cloudinary folder path
     // Remove slashes/backslashes to avoid nested subdirectories
@@ -290,6 +297,13 @@ export async function uploadReviewImageAction(dataUrl: string, productName?: str
       moderation: true,
     });
 
+    try {
+      await db.insert(reviewUploads).values({ userId, publicId: result.publicId, secureUrl: result.secureUrl });
+    } catch (error) {
+      const { deleteImage } = await import("@repo/lib");
+      await deleteImage(result.publicId).catch(() => console.error("Review upload compensation failed"));
+      throw error;
+    }
     return { success: true, secureUrl: result.secureUrl };
   } catch (error) {
     console.error("[uploadReviewImageAction] Error:", error);

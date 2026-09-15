@@ -26,7 +26,6 @@ import {
   uploadImage,
   deleteMultipleImages,
   deleteImage,
-  renameImage,
 } from "@repo/lib/cloudinary";
 import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
 import { validateBase64Image } from "@/lib/upload-validator";
@@ -696,6 +695,11 @@ export async function createProductAction(
   // 1. Upload new images to Cloudinary
   const validImagesToUpload = data.images.filter((img) => img.data && !img.isDeleted);
 
+  let creationCommitted = false;
+  for (const image of validImagesToUpload) {
+    const validation = validateBase64Image(image.data!);
+    if (!validation.valid) return { success: false, message: validation.error || "Invalid image" };
+  }
   const uploadedCloudinaryImages: Array<{
     publicId: string;
     secureUrl: string;
@@ -827,6 +831,7 @@ export async function createProductAction(
       );
     });
 
+    creationCommitted = true;
     revalidatePath("/products");
     notifyStorefrontCatalogChange("product.created", { id: newProductId });
     return {
@@ -837,7 +842,7 @@ export async function createProductAction(
   } catch (error) {
     console.error("[CreateProductAction] Error:", error);
     // Cleanup any uploaded images if creation failed
-    if (uploadedCloudinaryImages.length > 0) {
+    if (!creationCommitted && uploadedCloudinaryImages.length > 0) {
       await deleteMultipleImages(
         uploadedCloudinaryImages.map((img) => img.publicId)
       );
@@ -918,6 +923,18 @@ export async function updateProductAction(
     .from(productImages)
     .where(eq(productImages.productId, productId));
 
+  // Client references must belong to this product before any provider mutation.
+  for (const image of data.images) {
+    if (image.publicId && !currentDbImages.some((owned) =>
+      owned.cloudinaryPublicId === image.publicId && (!image.id || owned.id === image.id)
+    )) {
+      return { success: false, message: "รูปภาพไม่ได้เป็นของสินค้านี้" };
+    }
+    if (image.id && !currentDbImages.some((owned) => owned.id === image.id)) {
+      return { success: false, message: "รูปภาพไม่ได้เป็นของสินค้านี้" };
+    }
+  }
+
   // Determine images to delete from Cloudinary
   const removedImages = data.images.filter(
     (img) => img.isDeleted && img.publicId
@@ -931,6 +948,11 @@ export async function updateProductAction(
     (img) => img.data && !img.isDeleted
   );
 
+  let updateCommitted = false;
+  for (const image of newImagesToUpload) {
+    const validation = validateBase64Image(image.data!);
+    if (!validation.valid) return { success: false, message: validation.error || "Invalid image" };
+  }
   const newlyUploadedImages: Array<{
     publicId: string;
     secureUrl: string;
@@ -939,19 +961,6 @@ export async function updateProductAction(
   }> = [];
 
   try {
-    // 1. Delete removed images from Cloudinary and database
-    if (publicIdsToDelete.length > 0) {
-      await deleteMultipleImages(publicIdsToDelete);
-      await db
-        .delete(productImages)
-        .where(
-          and(
-            eq(productImages.productId, productId),
-            inArray(productImages.cloudinaryPublicId, publicIdsToDelete)
-          )
-        );
-    }
-
     // 2. Upload new images to Cloudinary in the structured folder
     for (let i = 0; i < newImagesToUpload.length; i++) {
       const img = newImagesToUpload[i];
@@ -993,24 +1002,11 @@ export async function updateProductAction(
     // Cloudinary renames must be serial (API rate limits), but we collect DB update data
     for (const img of existingRetainedImages) {
       if (img.id) {
-        let currentPublicId = img.publicId;
-        let currentSecureUrl = img.secureUrl;
-
-        // If the asset is currently in an old folder path, relocate it on Cloudinary
-        if (currentPublicId) {
-          const lastSlash = currentPublicId.lastIndexOf("/");
-          const currentFolder = lastSlash !== -1 ? currentPublicId.substring(0, lastSlash) : "";
-          if (currentFolder && currentFolder !== cloudinaryFolder) {
-            const fileName = currentPublicId.substring(lastSlash + 1);
-            const targetPublicId = `${cloudinaryFolder}/${fileName}`;
-            const renamed = await renameImage(currentPublicId, targetPublicId);
-            if (renamed) {
-              currentPublicId = renamed.publicId;
-              currentSecureUrl = renamed.secureUrl;
-            }
-          }
-        }
-
+        // Retain the authoritative provider identity. A product rename does not
+        // need to move the asset; keeping it stable avoids provider/DB split failure.
+        const owned = currentDbImages.find(image => image.id === img.id)!;
+        const currentPublicId = owned.cloudinaryPublicId || undefined;
+        const currentSecureUrl = owned.secureUrl;
         imageUpdateOps.push({
           id: img.id,
           position: img.position,
@@ -1051,6 +1047,9 @@ export async function updateProductAction(
     }));
 
     await db.transaction(async (tx) => {
+      if (publicIdsToDelete.length) await tx.delete(productImages).where(and(
+        eq(productImages.productId, productId), inArray(productImages.cloudinaryPublicId, publicIdsToDelete)
+      ));
       // 3. Insert newly uploaded images into product_images
       if (newlyUploadedImages.length > 0) {
         await tx.insert(productImages).values(
@@ -1147,12 +1146,15 @@ export async function updateProductAction(
       );
     });
 
+    updateCommitted = true;
     revalidatePath("/products");
     revalidatePath(`/products/${productId}/edit`);
+    await deleteMultipleImages(publicIdsToDelete);
     notifyStorefrontCatalogChange("product.updated", { id: productId });
 
     return { success: true, message: "อัปเดตข้อมูลสินค้าสำเร็จ" };
   } catch (error) {
+    if (!updateCommitted) await deleteMultipleImages(newlyUploadedImages.map(image => image.publicId));
     console.error("[UpdateProductAction] Error:", error);
     return {
       success: false,
@@ -1195,10 +1197,7 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
       .map((img) => img.publicId)
       .filter((id): id is string => Boolean(id));
 
-    // 2. Destroy from Cloudinary
-    if (publicIds.length > 0) {
-      await deleteMultipleImages(publicIds);
-    }
+    // Provider deletion follows a committed DB deletion.
 
     // 3. Delete product and log audit event atomically
     await db.transaction(async (tx) => {
@@ -1220,6 +1219,7 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
     });
 
     revalidatePath("/products");
+    await deleteMultipleImages(publicIds);
     notifyStorefrontCatalogChange("product.deleted", { id: productId });
     return { success: true, message: "ลบสินค้าและรูปภาพสำเร็จ" };
   } catch (error) {

@@ -1,9 +1,10 @@
 import {
-  pgTable, uuid, text, integer, numeric, pgEnum, timestamp, jsonb, index,
+  pgTable, uuid, text, integer, numeric, pgEnum, timestamp, jsonb, index, uniqueIndex, check,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { products } from "./products";
 import { adminUsers } from "./admin";
+import { sql } from "drizzle-orm";
 
 export const orderStatusEnum = pgEnum("order_status", [
   "pending", "paid", "processing", "shipped", "delivered", "cancelled", "refunded",
@@ -34,6 +35,8 @@ export const orders = pgTable("orders", {
   paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
   omiseChargeId: text("omise_charge_id"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  inventoryState: text("inventory_state").notNull().default("legacy"),
+  reservationExpiresAt: timestamp("reservation_expires_at", { withTimezone: true }),
   subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
   shippingFee: numeric("shipping_fee", { precision: 12, scale: 2 }).notNull().default("0"),
   taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -51,6 +54,8 @@ export const orders = pgTable("orders", {
   userIdx: index("orders_user_idx").on(table.userId),
   statusIdx: index("orders_status_idx").on(table.status),
   createdAtIdx: index("orders_created_at_idx").on(table.createdAt),
+  stripeIntentUnique: uniqueIndex("orders_stripe_intent_unique").on(table.stripePaymentIntentId),
+  inventoryStateCheck: check("orders_inventory_state_check", sql`${table.inventoryState} IN ('legacy', 'reserved', 'consumed', 'released')`),
 }));
 
 export const orderItems = pgTable("order_items", {
@@ -64,7 +69,27 @@ export const orderItems = pgTable("order_items", {
 }, (table) => ({
   orderIdx: index("order_items_order_idx").on(table.orderId),
   productIdx: index("order_items_product_idx").on(table.productId),
+  quantityPositive: check("order_items_quantity_positive", sql`${table.quantity} > 0`),
 }));
+
+export const orderStockReservations = pgTable("order_stock_reservations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  productId: uuid("product_id").notNull().references(() => products.id),
+  quantity: integer("quantity").notNull(),
+}, table => ({
+  orderProductUnique: uniqueIndex("order_stock_reservations_order_product_unique").on(table.orderId, table.productId),
+  quantityPositive: check("order_stock_reservations_quantity_positive", sql`${table.quantity} > 0`),
+}));
+
+export const orderEmailJobs = pgTable("order_email_jobs", {
+  orderId: uuid("order_id").primaryKey().references(() => orders.id),
+  attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  leaseId: uuid("lease_id"),
+  leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+});
 
 /**
  * Order Item Bundle Parts: Snapshots of individual aero parts sold as part of a bundle.

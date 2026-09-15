@@ -106,11 +106,12 @@ function applyClosedDoorPose(
   // The supplied clip's final frame closes the door and raises its window. A
   // one-time sample also handles its root/hinge tracks without rounded constants
   // or a permanently running AnimationMixer for an otherwise stationary car.
-  for (const track of closeClip.tracks) {
-    const binding = new THREE.PropertyBinding(scene, track.name);
-    binding.setValue(track.createInterpolant().evaluate(closeClip.duration), 0);
-    binding.unbind();
-  }
+  const mixer = new THREE.AnimationMixer(scene);
+  const action = mixer.clipAction(closeClip);
+  action.setLoop(THREE.LoopOnce, 1);
+  action.clampWhenFinished = true;
+  action.play();
+  mixer.setTime(closeClip.duration);
   scene.updateMatrixWorld(true);
 }
 

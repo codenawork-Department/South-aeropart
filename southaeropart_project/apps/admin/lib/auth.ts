@@ -11,6 +11,7 @@ import {
   and,
   isNull,
   gt,
+  sql,
 } from "@repo/db";
 
 // ─── Constants ───
@@ -24,6 +25,7 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 // ─── Password Hashing ───
 
 export async function hashPassword(password: string): Promise<string> {
+  if (Buffer.byteLength(password, "utf8") > 72) throw new Error("Password exceeds bcrypt's 72-byte limit");
   return hash(password, BCRYPT_ROUNDS);
 }
 
@@ -31,6 +33,7 @@ export async function verifyPassword(
   password: string,
   passwordHash: string
 ): Promise<boolean> {
+  if (Buffer.byteLength(password, "utf8") > 72) return false;
   return compare(password, passwordHash);
 }
 
@@ -65,8 +68,8 @@ export async function verifySessionToken(
   token: string
 ): Promise<string | null> {
   try {
-    const { payload } = await jwtVerify(token, getSessionSecret());
-    return (payload.sid as string) ?? null;
+    const { payload } = await jwtVerify(token, getSessionSecret(), { algorithms: ["HS256"] });
+    return typeof payload.sid === "string" ? payload.sid : null;
   } catch {
     return null;
   }
@@ -94,7 +97,8 @@ function verifyTokenHash(token: string, storedHash: string): boolean {
 export async function createSession(
   adminId: string,
   ipAddress?: string,
-  userAgent?: string
+  userAgent?: string,
+  mfaVerified: boolean = false
 ): Promise<string> {
   const sessionId = randomUUID();
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
@@ -110,6 +114,7 @@ export async function createSession(
       id: sessionId,
       adminId,
       tokenHash,
+      mfaVerified,
       ipAddress: ipAddress ?? null,
       userAgent: userAgent ?? null,
       expiresAt,
@@ -132,7 +137,7 @@ export async function createSession(
  * Validate the current request's session cookie.
  * Returns the admin user if the session is valid, null otherwise.
  */
-export async function validateSession(): Promise<AdminUser | null> {
+export async function validateSession(allowMfaEnrollment = false): Promise<AdminUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
@@ -159,6 +164,9 @@ export async function validateSession(): Promise<AdminUser | null> {
     .limit(1);
 
   if (!row) return null;
+  if (row.session.lastSeenAt.getTime() < Date.now() - 30 * 60000) return null;
+  if (row.admin.mfaEnabled && (!row.admin.mfaSecretEncrypted || !row.session.mfaVerified)) return null;
+  if (process.env.NODE_ENV === "production" && !allowMfaEnrollment && !row.admin.mfaEnabled) return null;
 
   // Verify token hash (supports SHA-256 and legacy bcrypt)
   const isTokenValid = row.session.tokenHash.startsWith("$2")
@@ -166,6 +174,9 @@ export async function validateSession(): Promise<AdminUser | null> {
     : verifyTokenHash(token, row.session.tokenHash);
 
   if (!isTokenValid) return null;
+  if (row.session.lastSeenAt.getTime() < Date.now() - 60000) {
+    await db.update(adminSessions).set({ lastSeenAt: new Date() }).where(and(eq(adminSessions.id, sessionId), isNull(adminSessions.revokedAt)));
+  }
 
   return row.admin;
 }
@@ -215,26 +226,11 @@ export function isAccountLocked(admin: AdminUser): boolean {
  * lock the account for LOCKOUT_DURATION_MS.
  */
 export async function recordFailedLogin(adminId: string): Promise<void> {
-  const [admin] = await db
-    .select({ attempts: adminUsers.failedLoginAttempts })
-    .from(adminUsers)
-    .where(eq(adminUsers.id, adminId))
-    .limit(1);
-
-  const newAttempts = (admin?.attempts ?? 0) + 1;
-  const lockedUntil =
-    newAttempts >= MAX_FAILED_ATTEMPTS
-      ? new Date(Date.now() + LOCKOUT_DURATION_MS)
-      : null;
-
-  await db
-    .update(adminUsers)
-    .set({
-      failedLoginAttempts: newAttempts,
-      lockedUntil,
-      updatedAt: new Date(),
-    })
-    .where(eq(adminUsers.id, adminId));
+  await db.update(adminUsers).set({
+    failedLoginAttempts: sql`${adminUsers.failedLoginAttempts} + 1`,
+    lockedUntil: sql`CASE WHEN ${adminUsers.failedLoginAttempts} + 1 >= ${MAX_FAILED_ATTEMPTS} THEN NOW() + INTERVAL '15 minutes' ELSE ${adminUsers.lockedUntil} END`,
+    updatedAt: new Date(),
+  }).where(eq(adminUsers.id, adminId));
 }
 
 /**
@@ -295,4 +291,3 @@ export function hasRequiredRole(
   if (!admin) return false;
   return allowedRoles.includes(admin.role);
 }
-

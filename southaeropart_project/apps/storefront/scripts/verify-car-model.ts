@@ -103,7 +103,7 @@ async function verifyCarModel() {
     (track) => track.name === "Animate_Door_FrontLeft.quaternion",
   )!;
   const expectedDoor = new THREE.Quaternion().fromArray(
-    doorTrack.createInterpolant().evaluate(clip.duration),
+    Array.from(doorTrack.values).slice(-4),
   );
   assert(
     closedDoor.quaternion.equals(expectedDoor),

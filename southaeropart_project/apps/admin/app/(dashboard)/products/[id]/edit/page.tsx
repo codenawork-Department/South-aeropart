@@ -10,14 +10,14 @@ export const metadata = {
 };
 
 interface EditProductPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
   const [product, { categories, brands, carModels, materials, installations }] = await Promise.all([
-    getProductByIdAction(params.id),
+    getProductByIdAction((await params).id),
     getCategoriesAndBrandsAction(),
   ]);
 

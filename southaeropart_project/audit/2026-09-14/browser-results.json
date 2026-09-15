@@ -1,0 +1,5 @@
+{
+  "browser": "153.0.8010.36",
+  "inlineSvgEventExecutesUnderUnsafeInline": true,
+  "scope": "Isolated local HTML, equivalent relevant CSP directive; no production injection performed"
+}
