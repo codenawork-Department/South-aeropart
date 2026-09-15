@@ -35,11 +35,11 @@ CREATE TABLE IF NOT EXISTS "car_models" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "last_login_at" timestamp with time zone;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "last_login_ip" text;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "last_login_method" text;--> statement-breakpoint
-ALTER TABLE "products" ADD COLUMN "car_model_id" uuid;--> statement-breakpoint
-ALTER TABLE "products" ADD COLUMN "features" jsonb DEFAULT '[]'::jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_login_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_login_ip" text;--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_login_method" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "car_model_id" uuid;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "features" jsonb DEFAULT '[]'::jsonb NOT NULL;--> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "user_login_logs" ADD CONSTRAINT "user_login_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
