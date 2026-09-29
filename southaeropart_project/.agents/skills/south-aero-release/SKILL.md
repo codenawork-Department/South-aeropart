@@ -22,6 +22,8 @@ Release readiness ต้องใช้หลักฐาน runtime/operations;
   [Admin config](../../../apps/admin/next.config.mjs)
 - อ่าน env schemas ทั้ง [Storefront](../../../apps/storefront/lib/env.ts) และ
   [Admin](../../../apps/admin/lib/env.ts) โดยไม่เปิดเผย values/secrets
+- อ่าน CLAUDE.md §6.4 กับ [latest handoff](../../../docs/security/handoff/2026-09-29/customer-notes-and-build.md)
+  และ [rollout gates](../../../SECURITY_RELEASE.md); corpus ผ่านไม่เท่ากับ production gates ผ่าน
 - แยกงาน upgrade/config fix จาก readiness audit และจากการ deploy ที่ผู้ใช้อนุญาตจริง
   ทำ artifact/diff/checks ให้ตรวจทานได้ก่อนขั้นตอนที่เปลี่ยนระบบปลายทาง
 
@@ -29,9 +31,13 @@ Release readiness ต้องใช้หลักฐาน runtime/operations;
 
 1. ตรวจ resolved versions/runtime ปัจจุบันกับ official support policies/advisories
    ใช้เอกสาร primary sources ที่ตรง versions; ข้อความ baseline ใน CLAUDE.md อาจเก่าแล้ว
+   บันทึกวันที่/affected range/runtime feature แยก hardening-only, confirmed affected และ upcoming release
+   ไม่ตีความชื่อประกาศ Critical ว่าทุก major ติดช่องโหว่ และไม่ใช้เลข patch ที่ยังไม่ออกเป็นผลแก้สำเร็จ
 2. เปลี่ยน dependency พร้อม lockfile ด้วย pnpm ที่โครงการกำหนด ไม่เพิ่ม package manager/lockfile คู่ขนาน
    framework upgrade ตรวจ peer dependencies, middleware/auth APIs, React/Three และ config ของทั้งสองแอป
 3. ตรวจ CI ที่มีจริง ใช้ frozen lockfile และ checks ตาม §6.1
+   ตรวจ `.github/workflows` อยู่ที่ Git root ของ deployment repository; ไฟล์ใต้ nested application root
+   ไม่ทำให้ GitHub discover workflow โดยอัตโนมัติใน checkout นี้
    lint/typecheck/build, relevant behavior tests, dependency/secret/static security scans ต้องมีผลที่ผูกกับ release commit
    scanner ที่ unavailable/skipped ต้องแสดงเป็นยังไม่ตรวจ
 4. ใช้ [south-aero-testing](../south-aero-testing/SKILL.md) เลือก checks และ test isolation
@@ -42,11 +48,15 @@ Release readiness ต้องใช้หลักฐาน runtime/operations;
 - ตรวจ mock/auth bypass flags ฝั่ง server รวม direct invocation; provider mode และ env schema ต้อง fail closed
 - ตรวจ production headers/cookies/origin/proxy/cache ที่ runtime จริง
   CSP ที่แก้ต้องทดสอบ Clerk/Stripe/Cloudinary/3D ร่วมด้วย ไม่แก้ด้วย wildcard/unsafe policy เพื่อกลบ failure
+  มี nonce/Clerk strict CSP แล้ว ตรวจ middleware/layout/matcher และ header บน failure paths
+  แยก loopback production HTTPS evidence จาก external callback/login และ deployment ingress จริง
 - ถ้ามี schema change ใช้ [south-aero-database](../south-aero-database/SKILL.md)
   ตรวจ staging, lock/backfill/compatibility, migration role และ rollback/roll-forward plan
 - ขอหรืออ่านหลักฐาน backup/restore ตาม RPO/RTO ที่เจ้าของกำหนด และ monitoring สำหรับ webhook backlog,
   paid-but-unfulfilled, stock anomalies, auth abuse และ privileged changes ตาม §6.3
   ไม่อนุมานว่ามี alert/restore drill แล้วจากการใช้ managed service
+  ตรวจ maintenance scheduler กับ `payment_reconciliation_jobs.pending_review` แยกกัน;
+  มีคิวไม่พิสูจน์ว่า operator resolve/refund แล้ว ตรวจ multi-instance SSE และ target hosting adapter ด้วย
 - การ deploy ต้องอยู่ใน authorization และ target ที่ผู้ใช้ระบุ
   ถ้ายังไม่ชัด ให้เตรียม diff/build/recovery plan ก่อนขอข้อมูลเฉพาะที่ขาด
   หากอนุญาตไว้แล้วให้ดำเนินการในขอบเขตนั้นโดยไม่ขอซ้ำ

@@ -24,6 +24,7 @@
   cleanup listeners/timers/connection เมื่อ unmount และใช้ bounded backoff
 - ตรวจจำนวน connection และพฤติกรรมหลาย instance ก่อนอ้างว่า in-memory notification รองรับ production
   คง fallback ที่ผู้ใช้ยังเห็นข้อมูลอัปเดตได้เมื่อ transport ล้มเหลว
+  ปัจจุบัน SSE ยังมี per-process clients/version; ห้ามอ้างว่า shared delivery ผ่านจาก single-process test
 
 ## Email, newsletter และ shipping
 
@@ -36,8 +37,19 @@
   หากส่งล้มเหลวต้องไม่เรียก fulfillment หรือตัด stock ซ้ำ
 - แยก transactional email กับ newsletter consent/unsubscribe; คง opt-out ในการเลือก recipients
   escape ข้อมูลผู้ใช้ใน template และส่งเฉพาะ PII ที่ recipient มีสิทธิ์เห็น
+  Customer order note ต้อง escape ผ่าน shared note-email helper ทั้ง receipt/shipment;
+  ทดสอบกับ loopback sink ไม่ใช้ผล simple verifier ที่ปิด email เป็น delivery evidence
 - ตรวจ carrier/status semantics จาก [carrier helper](../../../../packages/lib/src/carrier.ts)
   อย่าอนุมานว่าเปลี่ยน label ใน UI เท่ากับเปลี่ยน shipment state
 - การพัฒนา template ไม่ใช่คำสั่งส่ง campaign จริง ใช้ preview/email sink และ fixtures สำหรับการทดสอบ
   ถ้าผู้ใช้อนุญาตให้ส่งแล้วให้รักษาขอบเขต recipients/content ของคำขอนั้น ไม่ขอซ้ำโดยไม่มีเหตุ
+
+## Order maintenance และ reconciliation
+
+- [maintenance route](../../../../apps/storefront/app/api/maintenance/orders/route.ts) ใช้ POST และ
+  dedicated `MAINTENANCE_SECRET`; scheduler/config ต้องอยู่ฝั่ง server ไม่ expose secret ไป browser
+- คง provider cancellation ก่อน release reservation; provider failure ต้องคง stock reservation ให้ retry
+  และ email job failure ต้องไม่เรียก fulfillment ซ้ำ
+- Scheduler มี bounded batch; ตรวจ backlog/failed response กับ alert owner ไม่ถือว่ามี scheduler แล้วเพราะมี route
+  `payment_reconciliation_jobs.pending_review` ต้องมี operator workflow แยก ไม่ใช่ refund อัตโนมัติจาก cron นี้
 

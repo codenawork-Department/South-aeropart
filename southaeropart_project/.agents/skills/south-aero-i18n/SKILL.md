@@ -37,6 +37,9 @@ description: >-
    conversion สำหรับแสดงผลไม่ใช่ authoritative order/Stripe amount
 6. ถ้าเพิ่ม currency ที่เก็บเงินจริง ใช้ [south-aero-payments](../south-aero-payments/SKILL.md)
    ตรวจหน่วยย่อยและ rounding ตามสกุลนั้น ไม่ถือว่าทุกสกุลมีทศนิยมสองหลัก
+7. Customer note ใช้ [shared note validator](../../../packages/lib/src/order-note.ts) และ UTF-8 byte counter
+   ไม่ใช้จำนวนอักษรหรือ UTF-16 length แทน byte budget โดยเฉพาะภาษาไทย/emoji
+   แปล labels/errors ได้แต่ไม่แปล/normalize ข้อความที่ลูกค้าส่งและเก็บไว้ตาม contract เอง; render เป็น escaped text
 
 ตรวจสลับภาษา → refresh → navigation, invalid/missing cookie, storage ใช้งานไม่ได้,
 ข้อความยาว และ fields ที่คำแปลว่าง รัน Storefront typecheck เพื่อตรวจ dictionary contract

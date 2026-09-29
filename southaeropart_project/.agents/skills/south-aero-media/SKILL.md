@@ -15,6 +15,8 @@ description: >-
 
 - [Cloudinary helpers](../../../packages/lib/src/cloudinary.ts):
   upload, moderated upload, delete, rename และ optimized URL
+- [shared image validator](../../../packages/lib/src/image-validation.ts) สำหรับ byte-format validation;
+  ดู [security schema](../../../packages/db/src/schema/security.ts) และ action ที่ใช้ ownership records จริง
 - [upload validator](../../../apps/admin/lib/upload-validator.ts),
   [image uploader](../../../apps/admin/components/products/image-uploader.tsx),
   [product actions](../../../apps/admin/actions/product.actions.ts),
@@ -33,6 +35,8 @@ description: >-
    preset/folder/resource type และอายุ ห้ามเซ็น object ที่ client ส่งมาโดยตรง
 3. ยืนยัน provider result และ asset ownership ก่อนผูก `publicId`/`secureUrl` กับ entity
    URL ที่ดูเหมือน Cloudinary ไม่พิสูจน์ว่าเป็น asset ของผู้ใช้หรือ upload ที่อนุญาต
+   Product metadata update ต้องคง Cloudinary identity เดิมจาก DB;
+   review assets เก่าที่ไม่มี ownership record ต้อง backfill อย่างตรวจสอบได้ก่อน reuse ไม่สร้าง record จาก client claim
 4. เก็บเฉพาะ asset references ใน DB ไม่เก็บ binary/base64; จำกัดไม่เกิน 20 รูปต่อสินค้า
    validate จำนวนและลำดับรูปทั้ง server และ UI
 5. ภาพต้อง quarantine จน moderation อนุมัติ แยก pending/rejected/provider error
@@ -42,6 +46,8 @@ description: >-
    bulk cleanup scripts ต้องตรวจ scope ก่อนใช้
 7. แสดงภาพด้วย Next Image/CldImage และ size ที่เหมาะกับจอ คง cover/order/alt
    ตรวจ failure placeholder และ image host/config ที่เกี่ยวข้องโดยไม่เปิด wildcard เกินความจำเป็น
+   เพิ่ม external resource origin เท่าที่จำเป็นใน CSP; magic-byte validation ไม่พิสูจน์ decoded image/resource cost
+   เมื่อรับ glTF/GLB ใหม่ต้องตรวจ external resource URLs และขนาด texture/geometry ที่จะ decode ด้วย
 
 ## Review moderation
 
@@ -53,4 +59,5 @@ description: >-
 pending/rejected moderation และ DB failure หลัง upload ตามงานที่แก้
 ใช้ isolated assets/account ตาม [south-aero-testing](../south-aero-testing/SKILL.md)
 สำหรับ render 3D ใช้ [south-aero-3d](../south-aero-3d/SKILL.md) แยกจาก asset validation
+Native HTTPS cookie tests ที่ปิด Cloudinary transport ไม่ใช่หลักฐาน upload/delete/moderation สำเร็จ
 

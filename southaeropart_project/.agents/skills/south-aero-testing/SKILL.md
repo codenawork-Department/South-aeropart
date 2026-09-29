@@ -18,7 +18,8 @@ description: >-
 2. อ่าน script และ transitive imports ก่อน execute โดยเฉพาะ DB/provider/env initialization
    ชื่อ `test`/`verify`/`scratch` และตำแหน่ง guard ในไฟล์ไม่พิสูจน์ว่าไม่มี side effect ก่อน guard
 3. เลือกคำสั่งที่มีจริงใน [command guide](references/commands.md)
-   ไม่มี root `pnpm test`/`pnpm typecheck` ให้ใช้โดยอนุมานจากชื่อทั่วไป
+   มี root `pnpm test`/`pnpm typecheck` แล้ว ใช้ pnpm 9.7.0 ตาม manifest;
+   ไม่รัน Next build พร้อม typecheck ของแอปเดียวกัน เพราะ build เขียน `.next/types`
 4. งานเอกสาร/skills ตรวจ diff, frontmatter และ relative references ก็พอ
    งาน code รัน lint/typecheck ส่วนที่เกี่ยวข้อง; build เมื่อกระทบ integration/config
 5. เพิ่ม regression test เมื่อ behavior มีความเสี่ยงหรือ bug มีโอกาสกลับมา
@@ -41,9 +42,21 @@ description: >-
 - Media: forged MIME/public ID, quota, unauthorized delete และ moderation failure
 - UI/i18n: pending/empty/error, keyboard, mobile, switch locale→refresh และ hydration
 - 3D: resource ownership, remount, adaptive/manual quality; แยก headless checks ออกจาก browser visual evidence
+- Notes/ingress: UTF-8 byte bounds, malformed Unicode, escaped page/email output,
+  oversized streamed action/webhook และ forged Origin/forwarded host พร้อมยืนยันไม่มี business mutation
 
 อ่าน race assertions ว่าควบคุม simultaneous attempts จริงหรือเพียงเรียก sequential
 ตรวจ state ใน DB/provider หลัง failure/retry ไม่ใช้แค่ response status เป็นหลักฐาน
+
+## Corpus และหลักฐานปัจจุบัน
+
+ใช้ [CLAUDE.md](../../../CLAUDE.md) §6.4 และ artifacts ที่ลิงก์ไว้เป็น recorded baseline
+ตรวจ digest drift ก่อน reuse ไม่เขียนทับ historical reports
+`native --all` เป็น combined run; default ตรวจ Inventory+Cart ส่วน flags เฉพาะกลุ่มเป็น diagnostic
+ผล BLOCKED/UNIMPLEMENTED นอกกลุ่มที่เลือกยังอยู่ใน denominator และทำให้ gate exit 1 ได้ตาม design
+อ่าน actual wire status/semantic result แยกกัน และระบุชั้นหลักฐาน application/parser/offline/browser
+ไม่รวมหลาย runs เป็นผล combined หรือเพิ่ม supplemental cases เข้าจำนวน corpus เดิม
+ตรวจ cleanup ของ schema/process/Clerk/Stripe; interrupted run ต้องตามเก็บเฉพาะ resources ที่มี ownership record
 
 ## สรุปผล
 

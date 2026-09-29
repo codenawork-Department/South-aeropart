@@ -36,6 +36,9 @@ description: >-
    เคารพ reduced motion และคงการใช้งานได้เมื่อ animation ถูกลด
 6. รูปสินค้าคง aspect ratio และ alt ที่มีความหมาย ใช้ Next Image/CldImage ตาม flow เดิม
    ให้ `sizes` สอดคล้อง layout ไม่ตั้ง priority ให้ทุกภาพใน grid
+7. เมื่อแสดง customer/product/order text ใช้ escaped text ตามปกติ ไม่เปลี่ยน notes เป็น HTML
+   ข้อผิดพลาดจาก action แสดงเฉพาะ safe message/code; ไม่ส่ง stack/SQL/token ผ่าน toast หรือ analytics
+   รักษา CSP nonce flow และ test hydration ของปุ่ม/form ก่อนเปิด interaction ที่ต้องพึ่ง handlers
 
 ## ตรวจผลที่ผู้ใช้เห็น
 

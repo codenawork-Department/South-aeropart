@@ -36,6 +36,11 @@ description: >-
 5. จำกัด row payload ไม่ส่ง PII/secret หรือทุกแถวเพื่อให้ client ทำงานเอง
    guards ต้องคุม action/query แม้เข้า URL หรือเรียก action โดยตรง
 
+เมื่อแก้ product mutation ใช้ [product-input](../../../apps/admin/lib/product-input.ts) เป็น contract
+รักษา strict unknown-field/stock/decimal/text validation, role guard และ atomic audit/rollback
+Customer order note แสดงเป็น escaped text เฉพาะผู้มีสิทธิ์และแยกจาก internal admin notes
+การแก้สถานะ order ต้องไม่ mark paid/refunded หรือ restock paid/legacy orders แทน provider-backed recovery
+
 ## Dashboard และตัวเลข
 
 - นิยาม metric ก่อนแก้ query: ช่วงเวลา/timezone, order states ที่นับ,

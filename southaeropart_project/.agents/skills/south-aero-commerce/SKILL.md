@@ -23,7 +23,8 @@ description: >-
 - Orders: [orders schema](../../../packages/db/src/schema/orders.ts),
   [checkout actions](../../../apps/storefront/actions/checkout.actions.ts),
   [fulfillment](../../../apps/storefront/lib/order-fulfillment.ts),
-  [admin order actions](../../../apps/admin/actions/order.actions.ts)
+  [admin order actions](../../../apps/admin/actions/order.actions.ts),
+  [physical reservation helpers](../../../packages/db/src/inventory.ts)
 
 ## Catalog และ cart
 
@@ -44,6 +45,8 @@ description: >-
    ไม่ถือว่าหัก parent stock อย่างเดียวเท่ากับหักอะไหล่ย่อยแล้ว
 3. ตรวจ/ตัด/คืน stock กับ order/payment/history ที่ต้องสอดคล้องกันใน transaction เดียว
    ใช้ conditional decrement หรือ locks พร้อมตรวจ affected rows และคงลำดับ lock ของ parts
+   flow ปัจจุบัน reserve ตอน checkout; fulfillment ไม่ตัดซ้ำ คง reservation ledger และ
+   `FOR NO KEY UPDATE` ของ product stock เพื่อไม่ชน FK key-share locks อย่าเปลี่ยนเป็น `FOR UPDATE` โดยไม่ทดสอบ race
 4. ส่ง `tx` ให้ helpers ทั้งหมด ตรวจทั้ง fulfillment และ cancel/restore
    retry/duplicate request ต้องไม่ตัดหรือคืน stock ซ้ำ
 5. เก็บ order item และ bundle-part snapshots เพื่อรักษาราคา จำนวน และรายละเอียดขณะซื้อ
@@ -53,6 +56,12 @@ description: >-
 7. ตรวจ state transitions จาก enums และ callers จริง ไม่รวม order/payment/fulfillment status เป็นสถานะเดียว
    delayed payment หลัง cancel/expiry หรือ stock ไม่พอต้องมี recovery ตาม §5.3
 8. Revalidate data views หลัง commit; email/realtime failures ต้องไม่ทำให้ fulfillment รันซ้ำ
+
+Customer notes ใช้ [shared note contract](../../../packages/lib/src/order-note.ts) จำกัด UTF-8 bytes ตาม CLAUDE.md §5.4
+เก็บใน order transaction และส่งเฉพาะ DTO ที่ผู้รับมีสิทธิ์; escape ทั้ง customer/admin page และ email
+แยกจาก internal history notes ไม่ตีความข้อความเป็น HTML/คำสั่งหรือใช้เป็นข้อมูลราคา
+Orders ที่ `inventory_state=legacy` ต้อง reconcile จาก ledger จริงก่อนเปลี่ยน state;
+provider cancel ต้องยืนยันก่อน release reservation และ paid-but-unavailable ต้องเข้าคิว review ไม่คืน stock/mark paid โดยเดา
 
 ## ตรวจ behavior ที่เสี่ยง
 

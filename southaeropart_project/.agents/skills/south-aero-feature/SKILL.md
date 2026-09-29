@@ -21,6 +21,7 @@ description: >-
 - ใช้ `@repo/db` สำหรับ schema/client/types, `@repo/lib` สำหรับ provider helpers,
   `@repo/ui` สำหรับ UI ที่มีจริง; ตรวจ exports ก่อน import เพราะ package ไม่ได้มี component ครบตามชื่อ
 - อ่าน manifest และ resolved lockfile ก่อนใช้ API ใหม่ ไม่ย้ายตัวอย่างจาก Next.js รุ่นใหม่มาใช้โดยไม่ตรวจ compatibility
+- อ่าน CLAUDE.md §6.4 เพื่อรักษา controls ที่มีแล้วและขอบเขตหลักฐานปัจจุบัน ไม่คัดลอก baseline เก่าเป็นสถานะ runtime
 
 ## ลงมือพัฒนา
 
@@ -28,6 +29,8 @@ description: >-
    จำกัด `"use client"` ไว้ที่ interaction ไม่ส่ง DB/secret/provider SDK ผ่าน shared barrel ไป client
 2. UI mutations ใช้ `"use server"` ใน actions; ใช้ Route Handlers สำหรับ webhook/public API ตามสถาปัตยกรรม
    ไม่เพิ่ม REST endpoint ซ้ำกับ action โดยไม่มีความจำเป็นจาก feature
+   แยก shared schemas/types ไว้ validation modules ไม่ re-export input types จาก action file
+   รักษา action ingress ก่อน React decode และ generic error contract เมื่อ body/origin ถูกปฏิเสธ
 3. Validate untrusted input ด้วย Zod ก่อน business query; protected reads/writes ตรวจ session,
    permission และ ownership ฝั่ง server ส่วน public flow ต้องมีขอบเขตและ abuse control
 4. ทำ multi-table writes ที่ต้องสอดคล้องกันใน transaction เดียว ส่ง transaction client เข้า helpers ทุกตัว
@@ -36,6 +39,7 @@ description: >-
    การ invalidate cache ของแอปหนึ่งไม่ใช่หลักฐานว่าอีกแอปอัปเดตแล้ว
 6. รักษา error contract ของ callers; รองรับ pending/empty/failure และไม่กลืน `redirect()`
    หรือ framework control flow ใน broad catch
+   แยก HTTP status จาก semantic action result และเคารพ `retryAfter` ไม่วน retry/poll โดยไม่มีขอบเขต
 
 ## เลือกคู่มือเฉพาะงาน
 

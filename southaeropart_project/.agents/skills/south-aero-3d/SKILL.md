@@ -37,6 +37,9 @@ description: >-
    alpha บาง atlas เป็นข้อมูล shading ไม่ใช่ cutout; ถ้าเปลี่ยน model ต้องตรวจ mapping ใหม่
 5. Cleanup timers/listeners/render targets และทดสอบ mount→unmount→remount
    ไม่เพิ่ม React state update ทุก frame ถ้าใช้ refs/renderer state ได้
+6. เมื่อเปลี่ยนเส้นทางโหลด glTF/GLB ให้ตรวจ external texture/buffer URLs, compressed/decoded size
+   และ geometry/texture budget; ไฟล์ที่ผ่าน MIME หรือ upload ไม่ได้พิสูจน์ว่าโหลดแล้วไม่กินทรัพยากรเกินขอบเขต
+   จำกัด origin ของ assets/decoder/worker ตาม CSP จริง ไม่เปิด wildcard หรือ production `unsafe-eval` เพื่อให้ viewer ผ่าน
 
 ## Performance และคุณภาพภาพ
 

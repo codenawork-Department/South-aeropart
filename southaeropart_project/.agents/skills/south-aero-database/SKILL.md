@@ -20,6 +20,8 @@ description: >-
   ก่อนใช้ CLI ต้องทราบ effective target โดยไม่พิมพ์ connection string/secrets
 - [migrations](../../../packages/db/drizzle) และ [journal](../../../packages/db/drizzle/meta/_journal.json)
   ต้องสอดคล้องกัน ตรวจ SQL, snapshots และ journal จริง ไม่ถือว่าไฟล์ SQL ที่มีในโฟลเดอร์ถูก apply แล้ว
+  Baseline ลงทะเบียน `0000`–`0005` แล้ว; `0004` คือ webhook ledger/reconciliation และ `0005` คือ customer note
+  ดู CLAUDE.md §6.4 สำหรับหลักฐาน apply ใน development/test แยกจาก production ไม่ apply ซ้ำจากเอกสารนี้
 
 ## Queries และ data integrity
 
@@ -31,6 +33,8 @@ description: >-
    ห้าม helper ใช้ global `db` เมื่อ caller คาดว่าจะ rollback ทั้งชุด
 4. ตรวจ driver transaction support จาก adapter ที่ใช้จริง; atomicity ไม่แทน locking/isolation
    concurrent writes ต้องมี conditional update/affected-row checks หรือ row locks ตาม flow
+   [inventory helpers](../../../packages/db/src/inventory.ts) lock parts ตามลำดับด้วย `FOR NO KEY UPDATE`
+   เพื่อไม่ upgrade ชน FK locks ระหว่าง checkout; เปลี่ยน lock semantics ต้องพิสูจน์ final-stock/shared-bundle race
 5. จัดการ external provider/email หลัง commit ด้วย recovery ที่เหมาะสม ไม่ถือว่า transaction ครอบ network side effect
 6. สำหรับ performance ตรวจ join cardinality, count/query filters และ N+1
    เพิ่ม index ตาม query ที่มีหลักฐาน ไม่สร้าง index ทุกคอลัมน์
@@ -44,6 +48,8 @@ description: >-
   ระบุ locking, compatibility ระหว่างแอปเก่า/ใหม่ และ recovery เมื่อสำเร็จบางส่วน
 - ไม่แก้ historical migration ที่ถูก apply แล้วโดยไม่ตรวจประวัติ;
   ไม่ใช้ `sync-*.cjs` หรือ seed scripts แทน reviewed migration เพียงเพราะรันง่าย
+  ใช้ journal entries เท่านั้น; SQL เก่าที่ไม่ registered ไม่ใช่งานค้างให้รันอัตโนมัติ
+  อย่าแก้ ledger hashes/history เพื่อกลบความต่าง LF/CRLF ตรวจ normalization กับหลักฐานต้นทางก่อน
 - การ generate/review SQL เป็นงานเตรียมไฟล์; การ apply ต้องตรง environment และ authorization ที่มี
   `db:push` ใช้กับ development ที่ยืนยันแล้วเท่านั้น และไม่ใช้แทน production migrations
 - ก่อน production apply ต้องมีหลักฐาน staging, backup/restore และ rollout/recovery ตาม §6.3

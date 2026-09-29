@@ -1,44 +1,45 @@
 # DB and provider test isolation
 
-ใช้ [CLAUDE.md](../../../../CLAUDE.md) §6.2 เป็นข้อกำหนดหลัก
-หน้านี้ช่วยตรวจ runner ของ repo ไม่ใช่การรับรองว่าทดสอบกับ environment ปัจจุบันได้แล้ว
+ใช้ [CLAUDE.md](../../../../CLAUDE.md) §6.2 เป็นข้อกำหนดหลัก อ่าน runner จริงก่อนใช้
+การผ่าน guard/random schema เป็นเพียงส่วนหนึ่งของ isolation ไม่พิสูจน์ว่า credentials เข้า production ไม่ได้
+ตรวจ target/project/role โดยไม่แสดง connection strings, keys หรือ private fixture records
 
-## อ่านก่อนรัน
+## เลือก runner ให้ตรงหลักฐาน
 
-- [verify_loop.ts](../../../../apps/storefront/scripts/verify_loop.ts)
-- [verify_stripe_loop.ts](../../../../apps/storefront/scripts/verify_stripe_loop.ts)
-- [test-guard.ts](../../../../apps/storefront/scripts/test-guard.ts)
-- [DB client](../../../../packages/db/src/client.ts), [Stripe helper](../../../../packages/lib/src/stripe.ts)
-  และ [Resend helper](../../../../packages/lib/src/resend.ts)
+| Runner | Guard / isolation ปัจจุบัน | สิ่งที่ยังอ้างไม่ได้ |
+|---|---|---|
+| [Simple verifier](../../../../apps/storefront/scripts/verify-security-integration.ts) (`verify`, `verify:stripe`) | โหลด root `.env`, opt-in `ALLOW_ISOLATED_SECURITY_TESTS=true`, reject production/live Stripe; dynamic imports หลัง guard, random schema/search_path/journal, fixtures ของ run, ปิด external email | ไม่วัด native HTTP หรือ email delivery; flag/schema ไม่ตรวจ independent test-only DB role |
+| [Native runtime](../../../../packages/security-harness/src/integration/native-runtime.ts) (`native --all`/กลุ่มย่อย) | opt-in, reject production parent, Stripe/Clerk test keys, random schema + copied apps, run-owned provider fixtures, loopback Resend sink และ cleanup; child production HTTPS ใช้ staging/test providers | ไม่ใช่ live deployment/external email/OAuth/media validation ทั้งหมด; ไม่มี exact DB endpoint/role allowlist จาก guard อีกไฟล์โดยอัตโนมัติ |
+| [Stateful E2E launcher](../../../../scripts/run-stateful-e2e.mjs) / [test guard](../../../../apps/storefront/scripts/test-guard.ts) | disposable `TEST_DATABASE_URL`, `TEST_DATABASE_DISPOSABLE=true`, ไม่ใช้ production/live Stripe/Resend; ตรวจ launcher ที่ตั้ง target และ port 3005 | fixture lifecycle คนละชุดกับ native; ห้ามแทนด้วย DB ที่ใช้งานร่วมกับผู้ใช้ |
+| [Offline/contract isolation guard](../../../../packages/security-harness/src/isolation-guard.ts) | ใช้ exact endpoint/role allowlist เมื่อขอ DB และ fail closed หากยังไม่มี verified sink | ไม่ใช่ guard ที่ native-runtime เรียกโดยอัตโนมัติ ห้ามนำชื่อ env ของ guard นี้มาอ้างว่าป้องกัน native แล้ว |
 
-ตรวจ dotenv preload ใน package scripts ด้วย ไม่ตรวจเฉพาะ function body
-Static imports ถูก evaluate ก่อน top-level function call; การวาง `assertTestIsolation()`
-เหนือบรรทัด import ในข้อความไฟล์ไม่ได้รับประกันว่า client initialization รอ guard
-ถ้าจำเป็นให้ bootstrap ตรวจ config ก่อน dynamic import หรือใช้ dependency injection/explicit clients
+`verify_loop.ts` และ `verify_stripe_loop.ts` เป็น retired stubs ที่ throw; ไม่คืน implementation เดิมหรือใช้ `ALLOW_TEST_MUTATIONS` เป็นทางลัด
 
-## สิ่งที่ต้องยืนยัน
+## Preflight ที่ต้องยืนยันก่อน side effects
 
-1. Test DB/project อยู่ใน allowlist ของ environment แยก และ credentials ใช้ production ไม่ได้
-   ตรวจ effective endpoint/project ด้วยวิธีที่ไม่พิมพ์ secret
-2. Fixtures เป็นของ run นี้ ระบุ run ID และตรวจ queries ทุกตัวให้จำกัดอยู่กับ fixtures
-   ห้ามเลือก active product แรกใน shared DB แล้วเปลี่ยน stock เพื่อทดสอบ
-3. Stripe ใช้ test account/keys ที่ยืนยันแล้ว และ email ส่งเข้า sink/transport ที่ไม่ส่งถึงลูกค้าจริง
-   test ต้องไม่ตกไปใช้ default live client ผ่าน transitive import
-4. Automated guard ทำงานก่อนสร้าง client/เปิด network/side effects;
-   missing/unknown/live configuration ต้อง fail closed
-5. Cleanup อยู่ใน `finally` และลบเฉพาะ fixture/assets ของ run
-   ห้าม restore snapshot ของ shared stock ทับ concurrent writes
-   bounded retries ต้องไม่สร้าง payment/email ซ้ำ
+1. ตรวจ effective env และ imports ก่อนเปิด DB/provider clients แม้ไฟล์จะชื่อ test/verify
+   static imports ถูก evaluate ก่อน top-level call; ใช้ bootstrap/dynamic imports หรือ explicit clients ตาม runner
+2. Target ต้องเป็น development/test project ที่ผู้ใช้อนุญาต และ credentials แยกจาก production
+   random schema จำกัด fixture scope แต่ใช้ connection เดิมสร้าง schema จึงไม่ทดแทน credential isolation
+   หากยืนยันไม่ได้หยุดเฉพาะ integration และรายงานข้อจำกัด ไม่แก้ flag/ชื่อ DB เพื่อให้ผ่าน
+3. ตรวจ search_path ของทุก pool/app copy ก่อน migration/fixtures และใช้ journal entries ตามลำดับ
+   ห้าม fallback ไป default `db`/public schema หรือ glob รัน SQL ทั้ง directory
+4. Stripe/Clerk ใช้ test accounts; identities/payment metadata มี run ID/nonce ไม่ชนหลายกลุ่มใน run เดียว
+   cleanup/refund ต้องยืนยัน ownership จาก record/metadata ไม่ enumerate ลบทุก object ใน test account
+5. Native email ใช้ loopback transport ที่วัดผลได้จริง; fake-looking Resend key ไม่ใช่ sink
+   simple verifier ปิด email ต้องรายงานว่าไม่ได้วัด delivery ห้ามส่ง receipt/campaign ถึงลูกค้าระหว่าง test
+6. Read-only/offline checks ที่ทำได้อย่างปลอดภัยดำเนินต่อได้แม้ integration ยังไม่พร้อม
+   missing/unknown/live configuration ต้องถูก reject ก่อน side effects และไม่พิมพ์ raw provider/SQL errors ที่มี secrets
 
-## ตรวจ guard ตาม implementation จริง
+## Cleanup และ evidence
 
-ในโค้ดที่ใช้สร้างคู่มือนี้ guard ตรวจชื่อ host/substring ที่คล้าย test และมี
-`ALLOW_TEST_MUTATIONS` override ให้กลับไปอ่าน source ทุกครั้งเมื่อใช้งาน
-ชื่อ DB, `NODE_ENV=test` หรือการเปิด override ไม่พิสูจน์ credential isolation,
-email sink หรือ run-owned fixtures ตาม §6.2 จึงไม่ใช่เหตุผลให้ข้ามรายการด้านบน
-
-ทดสอบ guard ด้วย missing/unknown/live config ใน process แยกที่ไม่มี credential จริง
-และ instrument client factory/transport ว่าไม่ถูกเรียกก่อน rejection
-เมื่อ environment ยังยืนยันไม่ได้ ให้ทำ pure unit/static checks ต่อและรายงาน integration **ยังไม่ตรวจ**
-อย่าปรับ guard ให้ผ่านเพื่อใช้ legacy runner กับข้อมูลที่ยังไม่แยก
-
+- Cleanup ใน `finally` เฉพาะ schema, child processes, assets, Clerk identities และ Stripe intents ของ run
+  ห้าม restore stock snapshot ทับ concurrent writes หรือหยุด process ทั้งเครื่อง
+- ตรวจ cleanup flags/observations จริง ไม่ใช้ exit 0 เป็นหลักฐานอย่างเดียว
+  interrupted/failed run ต้องอ่าน private ownership record และ reconcile ที่ค้างก่อน retry โดยไม่เผยแพร่ record นั้น
+- Production HTTPS check ใช้ loopback certificate ชั่วคราวและ exception เฉพาะ test browser context
+  ห้ามเปลี่ยน OS trust store หรือ global TLS settings; media transport ที่ disabled ไม่ถือว่า media ผ่าน
+- เก็บ artifacts แบบ redact: source digests, selected/completed targets, actual observations และ cleanup
+  ตรวจ configured-secret leaks ก่อนเผยแพร่ พร้อมบอก scope ของ scan; zero matches ไม่ใช่ full history secret scan
+- เมื่อเปลี่ยน runner ให้ทดสอบ rejection ด้วย env จำลองที่ไม่มี credentials จริง
+  instrument client factories/transports ว่ายังไม่ถูกเรียกก่อน guard; ไม่ทดสอบ fail-closed โดยลองยิง production
