@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useTransition } from "react";
-import { useFormState } from "react-dom";
+import { useState, useCallback, useEffect, useTransition, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import {
   setupSuperAdminAction,
@@ -65,7 +64,7 @@ const strengthColor: Record<StrengthLevel, string> = {
 
 export function SetupForm() {
   const router = useRouter();
-  const [state, formAction] = useFormState<
+  const [state, formAction] = useActionState<
     AuthActionResult | null,
     FormData
   >(setupSuperAdminAction, null);

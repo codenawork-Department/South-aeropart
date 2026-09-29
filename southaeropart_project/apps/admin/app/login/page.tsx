@@ -1,7 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
-import { useState } from "react";
+import { useFormStatus } from "react-dom";
+import { useState, useActionState } from "react";
 import { loginAction, verifyMfaAction, type AuthActionResult } from "@/actions/auth.actions";
 import {
   ShieldCheck,
@@ -73,11 +73,11 @@ function MfaSubmitButton() {
 }
 
 export default function LoginPage() {
-  const [loginState, loginFormAction] = useFormState<AuthActionResult | null, FormData>(
+  const [loginState, loginFormAction] = useActionState<AuthActionResult | null, FormData>(
     loginAction,
     null
   );
-  const [mfaState, mfaFormAction] = useFormState<AuthActionResult | null, FormData>(
+  const [mfaState, mfaFormAction] = useActionState<AuthActionResult | null, FormData>(
     verifyMfaAction,
     null
   );

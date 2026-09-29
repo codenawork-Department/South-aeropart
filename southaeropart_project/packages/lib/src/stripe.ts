@@ -40,19 +40,33 @@ export interface CreatePaymentIntentParams {
   idempotencyKey?: string;
 }
 
-/**
- * Audit #17: Accurately converts a monetary amount (e.g. "35000.15" or 35000) to the smallest unit (satang)
- * without floating-point precision loss.
+export class InvalidMonetaryAmountError extends Error {
+  readonly code = "INVALID_INPUT";
+  constructor() {
+    super("Invalid request");
+  }
+}
+
+/** Exact conversion for the project's two-decimal currency amounts.
+ * Signed values and zero remain valid conversions; charge limits belong to the caller.
+ * Never trim, truncate, parse a numeric prefix, or silently round unsafe satang.
  */
 export function toSmallestCurrencyUnit(amount: string | number): number {
-  const str = String(amount).trim();
-  const [integerPart, decimalPart = ""] = str.split(".");
-  const paddedDecimal = (decimalPart + "00").slice(0, 2);
-  const isNegative = str.startsWith("-");
-  const absInt = integerPart.replace(/^-/, "") || "0";
-  const satangStr = `${absInt}${paddedDecimal}`;
-  const result = parseInt(satangStr, 10);
-  return isNegative ? -result : result;
+  if (typeof amount !== "string" && typeof amount !== "number") {
+    throw new InvalidMonetaryAmountError();
+  }
+  const str = String(amount);
+  // Bound work before regex/BigInt on untrusted, potentially megabyte-sized input.
+  if (str.length > 32 || !/^-?\d+(?:\.\d{1,2})?(?![\s\S])/.test(str)) {
+    throw new InvalidMonetaryAmountError();
+  }
+  const negative = str.startsWith("-");
+  const [whole, fraction = ""] = (negative ? str.slice(1) : str).split(".");
+  const magnitude = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0"));
+  if (magnitude > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new InvalidMonetaryAmountError();
+  }
+  return Number(negative ? -magnitude : magnitude);
 }
 
 /**
@@ -69,10 +83,8 @@ export async function createPaymentIntent({
   metadata = {},
   idempotencyKey,
 }: CreatePaymentIntentParams): Promise<Stripe.PaymentIntent> {
-  const stripe = getStripe();
-
-  // Audit #17: Use exact integer conversion instead of parseFloat * 100
   const amountInSmallestUnit = toSmallestCurrencyUnit(amountNumeric);
+  const stripe = getStripe();
   const effectiveIdempotencyKey = idempotencyKey || `pi_order_${orderId}`;
 
   const intent = await stripe.paymentIntents.create(
@@ -124,14 +136,15 @@ export async function updatePaymentIntentReceiptEmail(
 export function constructStripeWebhookEvent(
   payload: string | Buffer,
   signature: string,
-  webhookSecret?: string
+  webhookSecret?: string,
+  receivedAt?: number
 ): Stripe.Event {
   const stripe = getStripe();
   const secret = webhookSecret || process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
     throw new Error("STRIPE_WEBHOOK_SECRET is not configured in environment variables");
   }
-  return stripe.webhooks.constructEvent(payload, signature, secret);
+  return stripe.webhooks.constructEvent(payload, signature, secret, 300, undefined, receivedAt);
 }
 
 export type { Stripe };

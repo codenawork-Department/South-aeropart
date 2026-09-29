@@ -1,0 +1,107 @@
+{
+  "runId": "security_test_88f9013e9fdf487da10381de05ce2697",
+  "verifiedAt": "2026-09-29T15:47:16.628Z",
+  "summary": {
+    "totalVariants": 477,
+    "passed": 477,
+    "failed": 0,
+    "unimplemented": 0,
+    "blocked": 0,
+    "byLayer": {
+      "server_action": 296,
+      "isolated_validator": 30,
+      "parser_only": 43,
+      "pure_unit": 14,
+      "route_handler": 94
+    },
+    "durationMs": 1217513,
+    "generatedAt": "2026-09-29T11:25:15.834Z"
+  },
+  "sourceDigestCount": 74,
+  "sourceDrift": [],
+  "allSelectedTargetsCompleted": true,
+  "gatePassed": true,
+  "byTarget": {
+    "cart.add": {
+      "PASS": 70,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    },
+    "checkout.create": {
+      "PASS": 70,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    },
+    "amount.validate": {
+      "PASS": 26,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    },
+    "api.json": {
+      "PASS": 50,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    },
+    "admin.product": {
+      "PASS": 102,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    },
+    "inventory.delta": {
+      "PASS": 10,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    },
+    "money.convert": {
+      "PASS": 14,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    },
+    "stripe.webhook": {
+      "PASS": 94,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    },
+    "guest.track": {
+      "PASS": 41,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "UNIMPLEMENTED": 0
+    }
+  },
+  "supplemental": {
+    "inventorySessionsPassed": 11,
+    "inventorySessionsTotal": 11,
+    "adminRenderingPassed": 32,
+    "checkoutRacesPassed": 2,
+    "productionHttpsCookiePassed": true,
+    "shipmentSinkPassed": true,
+    "notesPassed": 3,
+    "noteInvalidInputsRejected": 6
+  },
+  "cleanup": {
+    "schemaDropped": true,
+    "serversStopped": true,
+    "clerkFixtureGroups": 4,
+    "clerkCleaned": true,
+    "stripe": {
+      "ownedIntents": 94,
+      "refunded": 94,
+      "cleaned": true
+    }
+  },
+  "publicArtifactSecretScan": {
+    "filesScanned": 17,
+    "configuredSecretValuesChecked": 12,
+    "matches": 0,
+    "scope": "Exact configured secret values and JSON-escaped forms of at least 12 characters; no values recorded"
+  }
+}

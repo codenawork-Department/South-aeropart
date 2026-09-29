@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import Link from "next/link";
 import { CarModelViewer } from "@/components/3d/CarModelViewer";
 import { HeroCardData, getHomepageHeroCards } from "@/actions/homepage.actions";

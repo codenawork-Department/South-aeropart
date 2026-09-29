@@ -1,0 +1,61 @@
+{
+  "runId": "security_test_fd7f4764438d4fd598326337ea8c33fa",
+  "generatedAt": "2026-09-29T10:54:50.408Z",
+  "checks": [
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/checkout/payment/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [
+        "Error"
+      ],
+      "passed": false
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/pay/mock/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    }
+  ],
+  "builds": [
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "passed": true
+    }
+  ],
+  "uiChecks": [
+    {
+      "mode": "turbopack",
+      "locale": "th",
+      "width": 390,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    },
+    {
+      "mode": "turbopack",
+      "locale": "en",
+      "width": 1440,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    }
+  ]
+}

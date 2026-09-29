@@ -1,0 +1,35 @@
+{
+  "runId": "security_test_77298917bb294d139809b890911ff3de",
+  "targets": [
+    "admin.product"
+  ],
+  "completedTargets": [
+    "admin.product"
+  ],
+  "appCopies": true,
+  "nativeActionClient": true,
+  "mode": "development",
+  "sourceDigests": {
+    "pnpm-lock.yaml": "24048916e72a68bdc1d019f19798bd839dcd0aeb84069e182deddbdd7bca8706",
+    "apps/admin/actions/product.actions.ts": "9c2dcbf8fee64eedc935e8b008829625a2735850198d4963722d22db856345d6",
+    "apps/admin/next.config.mjs": "8b0d52d6a559b9936b189c1866e9e62c19edb49f34c78eebb81c02a9a6ad3639",
+    "packages/security-harness/src/integration/admin-product.ts": "691088fbf9152944983c88cfefff0b693352b52ce4030689ded0dd84a2da6b40",
+    "apps/storefront/actions/checkout.actions.ts": "c625237c4c7139890e18eeef8f689bd60145584aa6eb96d275ba9fcf0790f9b4",
+    "apps/storefront/lib/guest-order-token.ts": "dab0a453e74a75e3daa4d92ff002cd8fb5bdb3bf6564ccb7fd48e46c20fa68b8",
+    "apps/storefront/lib/order-token-clock.ts": "c0dfee6b22d36dc34f73b56ff5fe195a1f6cdb65c0cb6c0c8b2930b3ab974a12",
+    "apps/storefront/lib/order-read-dto.ts": "7535ec5d230bf3a4579ffd0304375e1ef1beae7ac95e0123a013b5da7ab1863d",
+    "apps/storefront/next.config.mjs": "e76018e123cbbf3b0a4eb409c0e9fda03dc5fc06ae4e4defe96e73a3c3b52b09",
+    "packages/security-harness/src/cli/native.ts": "918a40b681b13437e990135d9d6f507ba05e8f995c28b4975f685a12a60302c1",
+    "packages/security-harness/src/integration/native-runtime.ts": "a61d636bd835527ce3655d7559485c3f0e92fbe454829eef972669a32627d6f1",
+    "packages/security-harness/src/integration/native-action.ts": "bf530840b0ba408dd7926930f9f9a701cd91ce37313f693a80ef148e6a353592",
+    "packages/security-harness/src/integration/guest-tracking.ts": "8957520be558f0120a75d7c11c79ab41d3d89c29ef740ce0595ab0a7388ff101",
+    "packages/security-harness/src/integration/guest-fixture.ts": "7c0b644c05aa87adc9321de9940733774e845adfe659258697f6238e80820e3d",
+    "packages/security-harness/src/integration/clerk-actors.ts": "8c4e21406c2e2ea36b66126c3e26053ba678df51ef46402809708a5e7d001e76",
+    "packages/security-harness/src/integration/resource-observer.ts": "bac4d45376da3adb1b62f12ffca550b0f950cbde8bc186084bcb53778ab7e207",
+    "packages/security-harness/src/integration/resource-watchdog.cjs": "765d12d9d6cc926ace37c3945c4a853210942cbdb6401b227c9d0b693c89331d"
+  },
+  "guestClockMs": null,
+  "guestClockScope": null,
+  "emailSinkMessages": 0,
+  "reportScope": "offline observations plus completed native requests; supplemental sessions are separate"
+}

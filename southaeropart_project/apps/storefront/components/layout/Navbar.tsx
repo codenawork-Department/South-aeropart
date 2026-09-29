@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { Menu, Search, ShoppingCart, X, LogOut, User as UserIcon, Package, ChevronDown, Heart, ArrowRight, Loader2 } from "lucide-react";

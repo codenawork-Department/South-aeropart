@@ -12,6 +12,13 @@
     "./cloudinary": "./src/cloudinary.ts",
     "./resend": "./src/resend.ts",
     "./stripe": "./src/stripe.ts",
+    "./html": "./src/html.ts",
+    "./order-note": "./src/order-note.ts",
+    "./order-note-email": "./src/order-note-email.ts",
+    "./inventory-adjustment": "./src/inventory-adjustment.ts",
+    "./action-ingress": "./src/action-ingress.ts",
+    "./bounded-json": "./src/bounded-json.ts",
+    "./money-arithmetic": "./src/money-arithmetic.ts",
     "./moderation": "./src/moderation/text-moderation.ts",
     "./carrier": "./src/carrier.ts",
     "./image-validation": "./src/image-validation.ts"

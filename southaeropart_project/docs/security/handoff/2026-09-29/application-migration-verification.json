@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-09-29T10:58:37.667Z",
+  "applied": true,
+  "environment": "existing owner-authorized development/test database",
+  "schema": "public",
+  "providerKeysAreTest": true,
+  "migrations": [
+    {
+      "tag": "0004_payment_webhook_evidence",
+      "sha256": "def37aa3d4376b93f0280148b038e80537ebc1a90c09e47ec3a5bb267b5a9ac6"
+    },
+    {
+      "tag": "0005_customer_order_note",
+      "sha256": "af8b6a8abefa7116b69fc449947d68ef618ce61fcd590dcad4ac75e69dcac5f0"
+    }
+  ],
+  "historicalHashesMatchedAfterLfNormalization": true,
+  "historicalLedgerUnchanged": true,
+  "existingBusinessTablesCompared": 31,
+  "existingRowsUnchanged": true,
+  "additiveOnly": true,
+  "freshConnectionConfirmed": true
+}

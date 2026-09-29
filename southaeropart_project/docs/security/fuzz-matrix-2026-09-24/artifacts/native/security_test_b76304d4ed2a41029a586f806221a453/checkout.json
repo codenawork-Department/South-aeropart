@@ -1,0 +1,2425 @@
+{
+  "variants": [
+    {
+      "caseId": "N-04",
+      "variant": "val_0_1",
+      "entry": {
+        "caseId": "N-04",
+        "target": "checkout.create",
+        "variant": "val_0_1",
+        "seed": "65c41778",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 1,
+      "itemRows": 1,
+      "reservationRows": 1,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-04",
+      "variant": "val_1_99",
+      "entry": {
+        "caseId": "N-04",
+        "target": "checkout.create",
+        "variant": "val_1_99",
+        "seed": "5323ab06",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 1,
+      "itemRows": 1,
+      "reservationRows": 1,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-04",
+      "variant": "val_2_100",
+      "entry": {
+        "caseId": "N-04",
+        "target": "checkout.create",
+        "variant": "val_2_100",
+        "seed": "f1026c08",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 1,
+      "itemRows": 1,
+      "reservationRows": 1,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-05",
+      "variant": "val_0_0",
+      "entry": {
+        "caseId": "N-05",
+        "target": "checkout.create",
+        "variant": "val_0_0",
+        "seed": "2a7eb9dd",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-05",
+      "variant": "val_1_-1",
+      "entry": {
+        "caseId": "N-05",
+        "target": "checkout.create",
+        "variant": "val_1_-1",
+        "seed": "1bd661b7",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-05",
+      "variant": "val_2_-99999",
+      "entry": {
+        "caseId": "N-05",
+        "target": "checkout.create",
+        "variant": "val_2_-99999",
+        "seed": "54402391",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-05",
+      "variant": "val_3_101",
+      "entry": {
+        "caseId": "N-05",
+        "target": "checkout.create",
+        "variant": "val_3_101",
+        "seed": "3ab22f78",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:2147483646",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:2147483646",
+        "seed": "f1f3097f",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:2147483646",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:2147483646",
+        "seed": "b92c4d9c",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:2147483647",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:2147483647",
+        "seed": "b045bb7a",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:2147483647",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:2147483647",
+        "seed": "a1d527c3",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:2147483648",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:2147483648",
+        "seed": "140a400c",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:2147483648",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:2147483648",
+        "seed": "153b17c6",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:-2147483648",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:-2147483648",
+        "seed": "03f237c2",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:-2147483648",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:-2147483648",
+        "seed": "28f09c04",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:-2147483649",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:-2147483649",
+        "seed": "23e923e9",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:-2147483649",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:-2147483649",
+        "seed": "3c52a879",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:4294967295",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:4294967295",
+        "seed": "38a22137",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:4294967295",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:4294967295",
+        "seed": "17047a58",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:4294967296",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:4294967296",
+        "seed": "aba1a4a7",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:4294967296",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:4294967296",
+        "seed": "bc558417",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:9007199254740990",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:9007199254740990",
+        "seed": "a8973830",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:9007199254740990",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:9007199254740990",
+        "seed": "f514eed3",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:9007199254740991",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:9007199254740991",
+        "seed": "a45a322d",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:9007199254740991",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:9007199254740991",
+        "seed": "50ea310e",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:9007199254740992",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:9007199254740992",
+        "seed": "1672138b",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:9007199254740992",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:9007199254740992",
+        "seed": "f71747c4",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:9007199254740993",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:9007199254740993",
+        "seed": "69042c17",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:9007199254740993",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:9007199254740993",
+        "seed": "64ef6560",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:9223372036854775807",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:9223372036854775807",
+        "seed": "17f46bfa",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:9223372036854775807",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:9223372036854775807",
+        "seed": "08ca1068",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:9223372036854775808",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:9223372036854775808",
+        "seed": "f7771821",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:9223372036854775808",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:9223372036854775808",
+        "seed": "23b15538",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:-9223372036854775808",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:-9223372036854775808",
+        "seed": "b50e3f20",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:-9223372036854775808",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:-9223372036854775808",
+        "seed": "029dd07e",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:-9223372036854775809",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:-9223372036854775809",
+        "seed": "e0efd312",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:-9223372036854775809",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:-9223372036854775809",
+        "seed": "9c0cb38f",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:18446744073709551615",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:18446744073709551615",
+        "seed": "4b366d5a",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:18446744073709551615",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:18446744073709551615",
+        "seed": "73b7c661",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:18446744073709551616",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:18446744073709551616",
+        "seed": "37d9ace1",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:18446744073709551616",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:18446744073709551616",
+        "seed": "b079b4f5",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_token:-4294967296",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_token:-4294967296",
+        "seed": "53db9d32",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-06",
+      "variant": "checkout.create:numeric_string:-4294967296",
+      "entry": {
+        "caseId": "N-06",
+        "target": "checkout.create",
+        "variant": "checkout.create:numeric_string:-4294967296",
+        "seed": "9a6504c7",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-07",
+      "variant": "checkout.create:val_0",
+      "entry": {
+        "caseId": "N-07",
+        "target": "checkout.create",
+        "variant": "checkout.create:val_0",
+        "seed": "889e9dcd",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-07",
+      "variant": "checkout.create:val_1",
+      "entry": {
+        "caseId": "N-07",
+        "target": "checkout.create",
+        "variant": "checkout.create:val_1",
+        "seed": "c1a357c5",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-07",
+      "variant": "checkout.create:val_2",
+      "entry": {
+        "caseId": "N-07",
+        "target": "checkout.create",
+        "variant": "checkout.create:val_2",
+        "seed": "585c2503",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-07",
+      "variant": "checkout.create:val_3",
+      "entry": {
+        "caseId": "N-07",
+        "target": "checkout.create",
+        "variant": "checkout.create:val_3",
+        "seed": "63b9e6ca",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-24",
+      "variant": "tamper_price_0_name_Changed title",
+      "entry": {
+        "caseId": "N-24",
+        "target": "checkout.create",
+        "variant": "tamper_price_0_name_Changed title",
+        "seed": "222d1635",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 1,
+      "itemRows": 1,
+      "reservationRows": 1,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-24",
+      "variant": "tamper_price_0.01_name_Changed title",
+      "entry": {
+        "caseId": "N-24",
+        "target": "checkout.create",
+        "variant": "tamper_price_0.01_name_Changed title",
+        "seed": "5cab2fb1",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 1,
+      "itemRows": 1,
+      "reservationRows": 1,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-24",
+      "variant": "tamper_price_9999999999999999_name_Changed title",
+      "entry": {
+        "caseId": "N-24",
+        "target": "checkout.create",
+        "variant": "tamper_price_9999999999999999_name_Changed title",
+        "seed": "fa314b47",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 1,
+      "itemRows": 1,
+      "reservationRows": 1,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-24",
+      "variant": "tamper_price_NaN_name_Changed title",
+      "entry": {
+        "caseId": "N-24",
+        "target": "checkout.create",
+        "variant": "tamper_price_NaN_name_Changed title",
+        "seed": "928b098b",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 1,
+      "itemRows": 1,
+      "reservationRows": 1,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "N-28",
+      "variant": "duplicate_lines_60_60",
+      "entry": {
+        "caseId": "N-28",
+        "target": "checkout.create",
+        "variant": "duplicate_lines_60_60",
+        "seed": "7d013295",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 409,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "AUTHORITATIVE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-03",
+      "variant": "items_null",
+      "entry": {
+        "caseId": "S-03",
+        "target": "checkout.create",
+        "variant": "items_null",
+        "seed": "9dc4523f",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-03",
+      "variant": "items_object",
+      "entry": {
+        "caseId": "S-03",
+        "target": "checkout.create",
+        "variant": "items_object",
+        "seed": "38b45488",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-03",
+      "variant": "items_string",
+      "entry": {
+        "caseId": "S-03",
+        "target": "checkout.create",
+        "variant": "items_string",
+        "seed": "0236e326",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-03",
+      "variant": "items_empty_array",
+      "entry": {
+        "caseId": "S-03",
+        "target": "checkout.create",
+        "variant": "items_empty_array",
+        "seed": "f1b6ae87",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-03",
+      "variant": "items_101_valid_items",
+      "entry": {
+        "caseId": "S-03",
+        "target": "checkout.create",
+        "variant": "items_101_valid_items",
+        "seed": "b5bb61bc",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-03",
+      "variant": "items_array_with_null",
+      "entry": {
+        "caseId": "S-03",
+        "target": "checkout.create",
+        "variant": "items_array_with_null",
+        "seed": "53ef232d",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-03",
+      "variant": "items_array_with_scalar",
+      "entry": {
+        "caseId": "S-03",
+        "target": "checkout.create",
+        "variant": "items_array_with_scalar",
+        "seed": "7672ce8d",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-04",
+      "variant": "items_100_valid_distinct_items",
+      "entry": {
+        "caseId": "S-04",
+        "target": "checkout.create",
+        "variant": "items_100_valid_distinct_items",
+        "seed": "cde18964",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 1,
+      "itemRows": 100,
+      "reservationRows": 100,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-05",
+      "variant": "checkout.create:delete_shippingAddress",
+      "entry": {
+        "caseId": "S-05",
+        "target": "checkout.create",
+        "variant": "checkout.create:delete_shippingAddress",
+        "seed": "d58adf14",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-05",
+      "variant": "checkout.create:delete_items",
+      "entry": {
+        "caseId": "S-05",
+        "target": "checkout.create",
+        "variant": "checkout.create:delete_items",
+        "seed": "2f6d6ceb",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-06",
+      "variant": "unknown_0_isAdmin",
+      "entry": {
+        "caseId": "S-06",
+        "target": "checkout.create",
+        "variant": "unknown_0_isAdmin",
+        "seed": "f3cdc39a",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-06",
+      "variant": "unknown_1_role",
+      "entry": {
+        "caseId": "S-06",
+        "target": "checkout.create",
+        "variant": "unknown_1_role",
+        "seed": "c0500194",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-06",
+      "variant": "unknown_2_userId",
+      "entry": {
+        "caseId": "S-06",
+        "target": "checkout.create",
+        "variant": "unknown_2_userId",
+        "seed": "4355f83f",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-06",
+      "variant": "unknown_3_paymentStatus",
+      "entry": {
+        "caseId": "S-06",
+        "target": "checkout.create",
+        "variant": "unknown_3_paymentStatus",
+        "seed": "656f05fb",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-06",
+      "variant": "unknown_4_total",
+      "entry": {
+        "caseId": "S-06",
+        "target": "checkout.create",
+        "variant": "unknown_4_total",
+        "seed": "9c3a7e4d",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-06",
+      "variant": "unknown_5_currency",
+      "entry": {
+        "caseId": "S-06",
+        "target": "checkout.create",
+        "variant": "unknown_5_currency",
+        "seed": "45a37014",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    },
+    {
+      "caseId": "S-06",
+      "variant": "unknown_6_unexpectedField",
+      "entry": {
+        "caseId": "S-06",
+        "target": "checkout.create",
+        "variant": "unknown_6_unexpectedField",
+        "seed": "57e89a54",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 422,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "orderRows": 0,
+      "itemRows": 0,
+      "reservationRows": 0,
+      "emailRequests": 0
+    }
+  ],
+  "clerkCleaned": true,
+  "scope": "Authenticated native createOrder with owned catalog fixtures; payment-intent creation is a separate action."
+}

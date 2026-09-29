@@ -1,0 +1,318 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Proposed normalized input contracts",
+  "description": "Test-oracle projections, not drop-in replacements for full application schemas. Disable coercion/useDefaults/removeAdditional. Field schemas cannot verify HMAC, session, expiry, DB stock, UTF8 byte length, raw JSON duplicate keys, or safe intermediate arithmetic.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "cart"
+        },
+        "input": {
+          "$ref": "#/definitions/cart"
+        }
+      },
+      "required": [
+        "kind",
+        "input"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "amount"
+        },
+        "input": {
+          "$ref": "#/definitions/amount"
+        }
+      },
+      "required": [
+        "kind",
+        "input"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "inventory"
+        },
+        "input": {
+          "$ref": "#/definitions/inventory"
+        }
+      },
+      "required": [
+        "kind",
+        "input"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "guest"
+        },
+        "input": {
+          "$ref": "#/definitions/guest"
+        }
+      },
+      "required": [
+        "kind",
+        "input"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "product"
+        },
+        "input": {
+          "$ref": "#/definitions/product"
+        }
+      },
+      "required": [
+        "kind",
+        "input"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "noteInput"
+        },
+        "input": {
+          "$ref": "#/definitions/noteInput"
+        }
+      },
+      "required": [
+        "kind",
+        "input"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "generic"
+        },
+        "input": {
+          "$ref": "#/definitions/generic"
+        }
+      },
+      "required": [
+        "kind",
+        "input"
+      ]
+    }
+  ],
+  "definitions": {
+    "cartQuantity": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "checkoutQuantity": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "stockQuantity": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "delta": {
+      "type": "integer",
+      "minimum": -2147483647,
+      "maximum": 2147483647,
+      "not": {
+        "const": 0
+      }
+    },
+    "amountSatang": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 99999999
+    },
+    "currency": {
+      "const": "thb"
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "guestToken": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sku": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[A-Z0-9][A-Z0-9._-]*$"
+    },
+    "priceMajor": {
+      "type": "string",
+      "pattern": "^[0-9]{1,10}(\\.[0-9]{1,2})?$",
+      "description": "Major-unit decimal; maximum 9999999999.99. Lexical length cap also prevents excessively long leading-zero strings; 010 is accepted."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[^\\u0000\\u202a-\\u202e\\u2066-\\u2069]*$",
+      "description": "Code points, not UTF16 units. A separate Unicode validator rejects lone surrogates."
+    },
+    "description": {
+      "type": "string",
+      "pattern": "^[^\\u0000\\u202a-\\u202e\\u2066-\\u2069]*$",
+      "description": "Extra validator: UTF8 <=16384 bytes and valid Unicode scalar values; text-only rendering."
+    },
+    "note": {
+      "type": "string",
+      "pattern": "^[^\\u0000\\u202a-\\u202e\\u2066-\\u2069]*$",
+      "description": "Extra validator: UTF8 <=2048 bytes and valid Unicode scalar values; text-only rendering."
+    },
+    "cart": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "productId": {
+          "$ref": "#/definitions/uuid"
+        },
+        "quantity": {
+          "$ref": "#/definitions/cartQuantity"
+        },
+        "variant": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "productId",
+        "quantity"
+      ]
+    },
+    "amount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "amountSatang": {
+          "$ref": "#/definitions/amountSatang"
+        },
+        "currency": {
+          "$ref": "#/definitions/currency"
+        }
+      },
+      "required": [
+        "amountSatang",
+        "currency"
+      ]
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "productId": {
+          "$ref": "#/definitions/uuid"
+        },
+        "delta": {
+          "$ref": "#/definitions/delta"
+        }
+      },
+      "required": [
+        "productId",
+        "delta"
+      ]
+    },
+    "guest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "orderId": {
+          "$ref": "#/definitions/uuid"
+        },
+        "guestToken": {
+          "$ref": "#/definitions/guestToken"
+        }
+      },
+      "required": [
+        "orderId",
+        "guestToken"
+      ]
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sku": {
+          "$ref": "#/definitions/sku"
+        },
+        "name": {
+          "$ref": "#/definitions/name"
+        },
+        "price": {
+          "$ref": "#/definitions/priceMajor"
+        },
+        "stockQuantity": {
+          "$ref": "#/definitions/stockQuantity"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "active",
+            "archived",
+            "out_of_stock"
+          ]
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        }
+      },
+      "required": [
+        "sku",
+        "price"
+      ]
+    },
+    "noteInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "note": {
+          "$ref": "#/definitions/note"
+        }
+      },
+      "required": [
+        "note"
+      ]
+    },
+    "generic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "quantity": {
+          "$ref": "#/definitions/cartQuantity"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "quantity",
+        "label"
+      ]
+    }
+  }
+}

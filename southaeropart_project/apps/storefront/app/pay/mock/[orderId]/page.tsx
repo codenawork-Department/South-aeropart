@@ -23,7 +23,7 @@ export default async function MockMobilePayPage({
 
   const { orderId } = await params;
   const guestToken = (await searchParams)?.token;
-  const res = await getOrderDetails(orderId, guestToken);
+  const res = await getOrderDetails({ orderId, guestToken });
 
   if (!res.success || !res.data) {
     notFound();

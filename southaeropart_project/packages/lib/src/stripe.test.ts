@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toSmallestCurrencyUnit } from "./stripe";
+import { toSmallestCurrencyUnit, InvalidMonetaryAmountError } from "./stripe";
 
 /**
  * Unit tests for toSmallestCurrencyUnit() — CLAUDE.md §5.3
@@ -41,9 +41,10 @@ describe("toSmallestCurrencyUnit", () => {
     expect(toSmallestCurrencyUnit("1")).toBe(100);
   });
 
-  it("truncates beyond two decimal places", () => {
-    // "99.999" should only take the first two decimals → 9999
-    expect(toSmallestCurrencyUnit("99.999")).toBe(9999);
+  it("rejects excess precision instead of silently changing money", () => {
+    expect(() => toSmallestCurrencyUnit("99.999")).toThrow(
+      InvalidMonetaryAmountError,
+    );
   });
 
   it("handles exact two decimal places", () => {
@@ -82,7 +83,84 @@ describe("toSmallestCurrencyUnit", () => {
 
   // --- Whitespace handling ---
 
-  it("trims whitespace from string input", () => {
-    expect(toSmallestCurrencyUnit("  250.00  ")).toBe(25000);
+  it("rejects whitespace rather than coercing it", () => {
+    expect(() => toSmallestCurrencyUnit("  250.00  ")).toThrow(
+      InvalidMonetaryAmountError,
+    );
+  });
+
+  it.each([
+    "0.001",
+    "0.00000001",
+    "0.30000000000000004",
+    "1e5",
+    "1foo",
+    "NaN",
+    "Infinity",
+    "-Infinity",
+    "",
+    ".50",
+    "1.",
+    "+1",
+    "1\0",
+    "1\n",
+    "0x10",
+    "ก",
+    "🚗",
+    "1".repeat(1048576),
+  ])("rejects malformed monetary input #%#", (input) => {
+    expect(() => toSmallestCurrencyUnit(input)).toThrow(
+      expect.objectContaining({
+        code: "INVALID_INPUT",
+        message: "Invalid request",
+      }),
+    );
+  });
+
+  it.each([NaN, Infinity, -Infinity, 0.1 + 0.2, 0.00000001])(
+    "rejects unsafe numeric input %s",
+    (input) => {
+      expect(() => toSmallestCurrencyUnit(input)).toThrow(
+        InvalidMonetaryAmountError,
+      );
+    },
+  );
+
+  it("bounds exact signed satang before converting BigInt to Number", () => {
+    expect(toSmallestCurrencyUnit("90071992547409.91")).toBe(
+      Number.MAX_SAFE_INTEGER,
+    );
+    expect(toSmallestCurrencyUnit("-90071992547409.91")).toBe(
+      Number.MIN_SAFE_INTEGER,
+    );
+    for (const input of [
+      "90071992547409.92",
+      "-90071992547409.92",
+      "18446744073709551615",
+    ])
+      expect(() => toSmallestCurrencyUnit(input)).toThrow(
+        InvalidMonetaryAmountError,
+      );
+    expect(toSmallestCurrencyUnit("010")).toBe(1000);
+    expect(toSmallestCurrencyUnit(19.99)).toBe(1999);
+  });
+
+  it("rejects runtime type confusion without invoking attacker-controlled coercion", () => {
+    for (const input of [
+      null,
+      undefined,
+      {},
+      [],
+      true,
+      10n,
+      {
+        toString() {
+          throw new Error("Should not be called");
+        },
+      },
+    ])
+      expect(() => toSmallestCurrencyUnit(input as unknown as string)).toThrow(
+        InvalidMonetaryAmountError,
+      );
   });
 });

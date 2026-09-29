@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-09-27T19:40:39.635Z",
+  "originalManifestFiles": 806,
+  "unchangedOriginalFiles": 791,
+  "missing": [],
+  "intentionalChanges": [
+    "MOVE-TO-NEW-LAPTOP.md",
+    "SECURITY-HANDOFF.md",
+    "apps/storefront/actions/checkout.actions.ts",
+    "apps/storefront/components/checkout/MockMobilePayClient.tsx",
+    "apps/storefront/components/checkout/PaymentClient.tsx",
+    "apps/storefront/components/orders/InvoiceClient.tsx",
+    "apps/storefront/components/orders/OrderDetailClient.tsx",
+    "apps/storefront/lib/guest-order-token.test.ts",
+    "apps/storefront/lib/guest-order-token.ts",
+    "packages/security-harness/INTEGRATION-SETUP.md",
+    "packages/security-harness/README.md",
+    "packages/security-harness/src/cli/native.ts",
+    "packages/security-harness/src/integration/inventory-sessions.ts",
+    "packages/security-harness/src/integration/native-action.ts",
+    "packages/security-harness/src/integration/native-runtime.ts"
+  ],
+  "latestCombinedRun": "security_test_215742844f5240fbbb5ba05edd0db7d5",
+  "recordedRunSourceMatchesCurrent": true,
+  "sourceDigestMismatches": [],
+  "originalTransferManifestPreserved": true,
+  "lockfilePreserved": true
+}

@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { productFailure, productException } from "@/lib/product-errors";
 import { revalidatePath, unstable_cache } from "next/cache";
 import {
   db,
@@ -39,104 +40,12 @@ import { notifyStorefrontCatalogChange } from "@/lib/realtime-notifier";
 
 // ─── Types & Schemas ──────────────────────────────────────────────────────────
 
-const imageItemSchema = z.object({
-  id: z.string().optional(),
-  data: z.string().optional(), // base64 / data URL for new uploads
-  publicId: z.string().optional(), // existing Cloudinary public_id
-  secureUrl: z.string().optional(), // existing secure URL
-  position: z.number().int().default(0),
-  isPrimary: z.boolean().default(false),
-  isDeleted: z.boolean().optional(),
-});
-
-const compatibilityItemSchema = z.object({
-  make: z.string().min(1, "กรุณากรอกยี่ห้อรถ (Make)"),
-  model: z.string().min(1, "กรุณากรอกรุ่นรถ (Model)"),
-  yearFrom: z.number().int().min(1900).max(2100),
-  yearTo: z.number().int().min(1900).max(2100),
-});
-
-const featureItemSchema = z
-  .object({
-    title: z.string().max(200).optional().nullable(),
-    titleEn: z.string().max(200).optional().nullable(),
-    description: z.string().max(1000).optional().nullable(),
-    descriptionEn: z.string().max(1000).optional().nullable(),
-    iconSlug: z.string().optional().nullable(),
-    iconId: z.string().optional().nullable(),
-  })
-  .refine(
-    (f) =>
-      (f.titleEn && f.titleEn.trim().length > 0) ||
-      (f.title && f.title.trim().length > 0),
-    {
-      message: "กรุณากรอกหัวข้อจุดเด่น (Feature Title)",
-      path: ["titleEn"],
-    }
-  );
-
-const productInputSchema = z
-  .object({
-    sku: z.string().min(1, "กรุณากรอกรหัสสินค้า (SKU)").max(100).trim(),
-    name: z.string().max(255).optional().nullable(),
-    nameEn: z.string().max(255).optional().nullable(),
-    slug: z.string().optional(),
-    description: z.string().optional().nullable(),
-    descriptionEn: z.string().optional().nullable(),
-    shortDescription: z.string().max(500).optional().nullable(),
-    shortDescriptionEn: z.string().max(500).optional().nullable(),
-    price: z
-      .string()
-      .min(1, "กรุณากรอกราคา")
-      .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบราคาไม่ถูกต้อง เช่น 1500 หรือ 1500.50"),
-    compareAtPrice: z
-      .string()
-      .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบราคาไม่ถูกต้อง")
-      .optional()
-      .nullable(),
-    stockQuantity: z.number().int().min(0, "จำนวนสต็อกต้องไม่ติดลบ").default(0),
-    status: z.enum(["draft", "active", "archived", "out_of_stock"]).default("draft"),
-    isFeatured: z.boolean().default(false),
-    weightKg: z
-      .string()
-      .regex(/^\d+(\.\d{1,2})?$/, "รูปแบบน้ำหนักไม่ถูกต้อง")
-      .optional()
-      .nullable(),
-    installation: z.string().max(500).optional().nullable(),
-    installationEn: z.string().max(500).optional().nullable(),
-    installationId: z.string().uuid("วิธีการติดตั้งไม่ถูกต้อง").optional().nullable(),
-    categoryId: z.string().uuid("หมวดหมู่ไม่ถูกต้อง").optional().nullable(),
-    brandId: z.string().uuid("แบรนด์ไม่ถูกต้อง").optional().nullable(),
-    carModelId: z.string().uuid("รุ่นรถไม่ถูกต้อง").optional().nullable(),
-    materialId: z.string().uuid("วัสดุไม่ถูกต้อง").optional().nullable(),
-    // CFD Aerodynamic Telemetry
-    downforceN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-    dragN: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-    downforceBefore: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-    downforceAfter: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-    dragBefore: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-    dragAfter: z.string().regex(/^-?\d+(\.\d{1,2})?$/, "รูปแบบตัวเลขไม่ถูกต้อง").optional().nullable(),
-    images: z
-      .array(imageItemSchema)
-      .max(20, "สามารถเพิ่มรูปภาพสินค้าได้สูงสุดไม่เกิน 20 รูป")
-      .default([]),
-    compatibility: z.array(compatibilityItemSchema).optional().default([]),
-    features: z.array(featureItemSchema).optional().default([]),
-  })
-  .refine(
-    (data) =>
-      (data.nameEn && data.nameEn.trim().length > 0) ||
-      (data.name && data.name.trim().length > 0),
-    {
-      message: "กรุณากรอกชื่อสินค้า (Product Name)",
-      path: ["nameEn"],
-    }
-  );
-
-export type ProductInput = z.infer<typeof productInputSchema>;
+import { productInputSchema, type ProductInput } from "@/lib/product-input";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
+  code?: string;
+  requestId?: string;
   message?: string;
   data?: T;
   errors?: Record<string, string[]>;
@@ -622,21 +531,28 @@ export async function getProductByIdAction(id: string) {
  * Create a new product with Cloudinary images organized in structured hierarchy:
  * south-aero/products/[brand]/[model]/[category]/[product-slug]
  */
-export async function createProductAction(
+export async function createProductAction(input: ProductInput): Promise<ActionResult<{productId:string}>> {
+  try { return await createProduct(input); }
+  catch(error) { return productException(error,"create"); }
+}
+export async function updateProductAction(productId:string,input:ProductInput):Promise<ActionResult> {
+  try { return await updateProduct(productId,input); }
+  catch(error) { return productException(error,"update"); }
+}
+
+async function createProduct(
   input: ProductInput
 ): Promise<ActionResult<{ productId: string }>> {
   const admin = await validateSession();
   if (!admin) {
-    return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+    return productFailure("UNAUTHENTICATED");
   }
+
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) return productFailure("FORBIDDEN");
 
   const parsed = productInputSchema.safeParse(input);
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบข้อมูลที่กรอก",
-      errors: parsed.error.flatten().fieldErrors,
-    };
+    return productFailure("INVALID_INPUT");
   }
 
   const data = parsed.data;
@@ -659,10 +575,7 @@ export async function createProductAction(
 
   if (existingProduct.length > 0) {
     if (existingProduct[0].sku.toLowerCase() === data.sku.toLowerCase()) {
-      return {
-        success: false,
-        message: `รหัสสินค้า SKU '${data.sku}' นี้มีอยู่ในระบบแล้ว`,
-      };
+      return productFailure("CONFLICT");
     }
     slug = `${slug}-${Date.now().toString(36)}`;
   }
@@ -698,7 +611,7 @@ export async function createProductAction(
   let creationCommitted = false;
   for (const image of validImagesToUpload) {
     const validation = validateBase64Image(image.data!);
-    if (!validation.valid) return { success: false, message: validation.error || "Invalid image" };
+    if (!validation.valid) return productFailure("INVALID_INPUT");
   }
   const uploadedCloudinaryImages: Array<{
     publicId: string;
@@ -713,10 +626,7 @@ export async function createProductAction(
       if (img.data) {
         const validation = validateBase64Image(img.data);
         if (!validation.valid) {
-          return {
-            success: false,
-            message: `รูปภาพลำดับที่ ${i + 1} ไม่ถูกต้อง: ${validation.error}`,
-          };
+          return productFailure("INVALID_INPUT");
         }
         const uploaded = await uploadImage(img.data, {
           folder: cloudinaryFolder,
@@ -840,39 +750,38 @@ export async function createProductAction(
       data: { productId: newProductId },
     };
   } catch (error) {
-    console.error("[CreateProductAction] Error:", error);
     // Cleanup any uploaded images if creation failed
     if (!creationCommitted && uploadedCloudinaryImages.length > 0) {
       await deleteMultipleImages(
         uploadedCloudinaryImages.map((img) => img.publicId)
       );
     }
-    return {
-      success: false,
-      message: "เกิดข้อผิดพลาดในการสร้างสินค้า กรุณาลองใหม่อีกครั้ง",
-    };
+    return productException(error,"create");
   }
 }
 
 /**
  * Update existing product, manage Cloudinary images & compatibility
  */
-export async function updateProductAction(
+async function updateProduct(
   productId: string,
   input: ProductInput
 ): Promise<ActionResult> {
   const admin = await validateSession();
   if (!admin) {
-    return { success: false, message: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" };
+    return productFailure("UNAUTHENTICATED");
   }
 
+  // [A-3] RBAC Guard: only admin / super_admin may modify product pricing & details.
+  // Staff role is explicitly excluded before input parsing and protected reads.
+  if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+    return productFailure("FORBIDDEN");
+  }
+
+  if (!z.string().uuid().safeParse(productId).success) return productFailure("INVALID_INPUT");
   const parsed = productInputSchema.safeParse(input);
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบข้อมูลที่กรอก",
-      errors: parsed.error.flatten().fieldErrors,
-    };
+    return productFailure("INVALID_INPUT");
   }
 
   const data = parsed.data;
@@ -890,7 +799,7 @@ export async function updateProductAction(
     .limit(1);
 
   if (!existingProduct) {
-    return { success: false, message: "ไม่พบสินค้าในระบบ" };
+    return productFailure("NOT_FOUND");
   }
 
   // Resolve hierarchical folder slugs for Cloudinary
@@ -928,10 +837,10 @@ export async function updateProductAction(
     if (image.publicId && !currentDbImages.some((owned) =>
       owned.cloudinaryPublicId === image.publicId && (!image.id || owned.id === image.id)
     )) {
-      return { success: false, message: "รูปภาพไม่ได้เป็นของสินค้านี้" };
+      return productFailure("INVALID_INPUT");
     }
     if (image.id && !currentDbImages.some((owned) => owned.id === image.id)) {
-      return { success: false, message: "รูปภาพไม่ได้เป็นของสินค้านี้" };
+      return productFailure("INVALID_INPUT");
     }
   }
 
@@ -951,7 +860,7 @@ export async function updateProductAction(
   let updateCommitted = false;
   for (const image of newImagesToUpload) {
     const validation = validateBase64Image(image.data!);
-    if (!validation.valid) return { success: false, message: validation.error || "Invalid image" };
+    if (!validation.valid) return productFailure("INVALID_INPUT");
   }
   const newlyUploadedImages: Array<{
     publicId: string;
@@ -967,10 +876,7 @@ export async function updateProductAction(
       if (img.data) {
         const validation = validateBase64Image(img.data);
         if (!validation.valid) {
-          return {
-            success: false,
-            message: `รูปภาพใหม่ลำดับที่ ${i + 1} ไม่ถูกต้อง: ${validation.error}`,
-          };
+          return productFailure("INVALID_INPUT");
         }
         const uploaded = await uploadImage(img.data, {
           folder: cloudinaryFolder,
@@ -1155,11 +1061,7 @@ export async function updateProductAction(
     return { success: true, message: "อัปเดตข้อมูลสินค้าสำเร็จ" };
   } catch (error) {
     if (!updateCommitted) await deleteMultipleImages(newlyUploadedImages.map(image => image.publicId));
-    console.error("[UpdateProductAction] Error:", error);
-    return {
-      success: false,
-      message: "เกิดข้อผิดพลาดในการอัปเดตสินค้า",
-    };
+    return productException(error,"update");
   }
 }
 

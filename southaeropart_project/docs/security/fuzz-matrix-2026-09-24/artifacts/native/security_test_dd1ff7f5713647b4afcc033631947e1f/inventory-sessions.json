@@ -1,0 +1,90 @@
+[
+  {
+    "name": "anonymous",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "UNAUTHENTICATED",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "staff",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "FORBIDDEN",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "expired",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "UNAUTHENTICATED",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "revoked",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "UNAUTHENTICATED",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "inactive",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "UNAUTHENTICATED",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "idle",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "UNAUTHENTICATED",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "wrong_hash",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "UNAUTHENTICATED",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "invalid_signature",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "UNAUTHENTICATED",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "role_changed",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": "FORBIDDEN",
+    "stockAfter": 10,
+    "auditRows": 0
+  },
+  {
+    "name": "admin",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": null,
+    "stockAfter": 9,
+    "auditRows": 1
+  },
+  {
+    "name": "super_admin",
+    "passed": true,
+    "wireStatus": 200,
+    "semanticCode": null,
+    "stockAfter": 9,
+    "auditRows": 1
+  }
+]

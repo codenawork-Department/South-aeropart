@@ -1,0 +1,511 @@
+{
+  "scope": "Isolated abstract API contract over loopback HTTP; not an application endpoint",
+  "observations": [
+    {
+      "caseId": "S-07",
+      "variant": "raw_0",
+      "entry": {
+        "caseId": "S-07",
+        "target": "api.json",
+        "variant": "raw_0",
+        "seed": "f91580ea",
+        "layer": "parser_only",
+        "actualWireStatus": 422,
+        "semanticResult": 422,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "NO_POLLUTION"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 56,
+      "sha256": "6c1e29e69fb9a34dbe7e4f0ab515007225fa81f96d78b2be5ea4d0a6cccad217",
+      "chunked": false,
+      "resources": {
+        "id": "844fb66c-b9f9-4b63-a864-e75039e75a8e",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 75653120,
+        "peakRssBytes": 76259328,
+        "peakGrowthBytes": 606208,
+        "samples": 4,
+        "maxSampleIntervalMs": 14.776900000000012,
+        "durationMs": 29.40870000000001,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-07",
+      "variant": "raw_1",
+      "entry": {
+        "caseId": "S-07",
+        "target": "api.json",
+        "variant": "raw_1",
+        "seed": "6b76f947",
+        "layer": "parser_only",
+        "actualWireStatus": 422,
+        "semanticResult": 422,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "NO_POLLUTION"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 73,
+      "sha256": "862c6c2b91379bd33ab755506fc5856cc366bb71823f45b4a4b667def8a539a3",
+      "chunked": false,
+      "resources": {
+        "id": "15a2e80a-8ab8-4386-a50b-560236d60144",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 76263424,
+        "peakRssBytes": 76271616,
+        "peakGrowthBytes": 8192,
+        "samples": 4,
+        "maxSampleIntervalMs": 15.480000000000018,
+        "durationMs": 31.31000000000006,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-07",
+      "variant": "raw_2",
+      "entry": {
+        "caseId": "S-07",
+        "target": "api.json",
+        "variant": "raw_2",
+        "seed": "8a6f655c",
+        "layer": "parser_only",
+        "actualWireStatus": 422,
+        "semanticResult": 422,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "NO_POLLUTION"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 62,
+      "sha256": "d0734ada955199f4dc84716f22f135078e281f3cdfb1b18799c4ea3c62053971",
+      "chunked": false,
+      "resources": {
+        "id": "7885ba0f-dff9-4bf2-9150-053dedfd3a1d",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 76275712,
+        "peakRssBytes": 76357632,
+        "peakGrowthBytes": 81920,
+        "samples": 4,
+        "maxSampleIntervalMs": 15.247999999999934,
+        "durationMs": 30.721400000000017,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-12",
+      "variant": "depth_33",
+      "entry": {
+        "caseId": "S-12",
+        "target": "api.json",
+        "variant": "depth_33",
+        "seed": "88bb0004",
+        "layer": "parser_only",
+        "actualWireStatus": 422,
+        "semanticResult": 422,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 199,
+      "sha256": "bc63617556f03bfbca84610e3851f6ab8baf6ae386b2e33312454faaae5868a3",
+      "chunked": false,
+      "resources": {
+        "id": "ed288987-51b6-4a18-bdd8-9fd31630e9d1",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 76357632,
+        "peakRssBytes": 76365824,
+        "peakGrowthBytes": 8192,
+        "samples": 4,
+        "maxSampleIntervalMs": 14.90440000000001,
+        "durationMs": 30.106599999999958,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-12",
+      "variant": "depth_100",
+      "entry": {
+        "caseId": "S-12",
+        "target": "api.json",
+        "variant": "depth_100",
+        "seed": "b95a9e21",
+        "layer": "parser_only",
+        "actualWireStatus": 422,
+        "semanticResult": 422,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 601,
+      "sha256": "6bc59e5cf6cce777bb4a5806de726dc17f58aa5ef820353b111e04030ed773c3",
+      "chunked": false,
+      "resources": {
+        "id": "a64e345a-508f-472e-b6f1-f909d40ca8fd",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 76365824,
+        "peakRssBytes": 76451840,
+        "peakGrowthBytes": 86016,
+        "samples": 4,
+        "maxSampleIntervalMs": 15.440599999999904,
+        "durationMs": 30.432199999999966,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_ascii_normal",
+      "entry": {
+        "caseId": "S-14",
+        "target": "api.json",
+        "variant": "bytes_1_ascii_normal",
+        "seed": "7abbb780",
+        "layer": "parser_only",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 1048577,
+      "sha256": "676ab39a57b1d77314e59680b528ac64fc4a76a2d851da1a527ba6bf131ad6d7",
+      "chunked": false,
+      "resources": {
+        "id": "e8d5e506-44f4-494f-a7a6-1afc300eccab",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 76451840,
+        "peakRssBytes": 77176832,
+        "peakGrowthBytes": 724992,
+        "samples": 3,
+        "maxSampleIntervalMs": 14.849100000000021,
+        "durationMs": 15.767400000000066,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_ascii_chunked_no_content_length",
+      "entry": {
+        "caseId": "S-14",
+        "target": "api.json",
+        "variant": "bytes_1_ascii_chunked_no_content_length",
+        "seed": "a05d4bdb",
+        "layer": "parser_only",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 1048577,
+      "sha256": "676ab39a57b1d77314e59680b528ac64fc4a76a2d851da1a527ba6bf131ad6d7",
+      "chunked": true,
+      "resources": {
+        "id": "8a7d9795-1dea-431f-9d02-b89a3630e0d3",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 77176832,
+        "peakRssBytes": 78032896,
+        "peakGrowthBytes": 856064,
+        "samples": 4,
+        "maxSampleIntervalMs": 15.263900000000035,
+        "durationMs": 31.39250000000004,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_thai_normal",
+      "entry": {
+        "caseId": "S-14",
+        "target": "api.json",
+        "variant": "bytes_1_thai_normal",
+        "seed": "482a64e6",
+        "layer": "parser_only",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 1048577,
+      "sha256": "679be3823ca0bbc831f73830b202f3cadff3082aef088819ecf1fc8cb44bfcde",
+      "chunked": false,
+      "resources": {
+        "id": "c66840c5-7c99-4400-810d-9978cb3b040c",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 78032896,
+        "peakRssBytes": 78741504,
+        "peakGrowthBytes": 708608,
+        "samples": 4,
+        "maxSampleIntervalMs": 15.491700000000037,
+        "durationMs": 30.996999999999957,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_thai_chunked_no_content_length",
+      "entry": {
+        "caseId": "S-14",
+        "target": "api.json",
+        "variant": "bytes_1_thai_chunked_no_content_length",
+        "seed": "c888ca47",
+        "layer": "parser_only",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 1048577,
+      "sha256": "679be3823ca0bbc831f73830b202f3cadff3082aef088819ecf1fc8cb44bfcde",
+      "chunked": true,
+      "resources": {
+        "id": "d89f47d6-dfc9-4a16-9d86-46d71af5e90e",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 78741504,
+        "peakRssBytes": 80027648,
+        "peakGrowthBytes": 1286144,
+        "samples": 4,
+        "maxSampleIntervalMs": 15.653799999999933,
+        "durationMs": 31.269699999999943,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_emoji_normal",
+      "entry": {
+        "caseId": "S-14",
+        "target": "api.json",
+        "variant": "bytes_1_emoji_normal",
+        "seed": "b80977d1",
+        "layer": "parser_only",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 1048577,
+      "sha256": "7862ffee50a377160dca84561ac2f95c9bcfa98b6caf0408f6bf6932ed86e5b0",
+      "chunked": false,
+      "resources": {
+        "id": "009cdee2-2a43-46a7-ba75-ab286623d563",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 80039936,
+        "peakRssBytes": 81043456,
+        "peakGrowthBytes": 1003520,
+        "samples": 4,
+        "maxSampleIntervalMs": 15.532600000000002,
+        "durationMs": 30.910499999999956,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_emoji_chunked_no_content_length",
+      "entry": {
+        "caseId": "S-14",
+        "target": "api.json",
+        "variant": "bytes_1_emoji_chunked_no_content_length",
+        "seed": "c3571fcc",
+        "layer": "parser_only",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": null,
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at parser_only layer only."
+      },
+      "bytes": 1048577,
+      "sha256": "7862ffee50a377160dca84561ac2f95c9bcfa98b6caf0408f6bf6932ed86e5b0",
+      "chunked": true,
+      "resources": {
+        "id": "558d06b2-009d-4bba-9df4-5d8d148455dd",
+        "pid": 6988,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 81043456,
+        "peakRssBytes": 82046976,
+        "peakGrowthBytes": 1003520,
+        "samples": 4,
+        "maxSampleIntervalMs": 15.30860000000007,
+        "durationMs": 30.180700000000115,
+        "samplingIntervalMs": 10
+      },
+      "prototypeUnchanged": true
+    }
+  ]
+}

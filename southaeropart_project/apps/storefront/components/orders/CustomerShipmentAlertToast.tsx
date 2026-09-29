@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import { Truck, Package, X, ArrowRight, Copy, Check } from "lucide-react";
 import { getLatestCustomerShipmentAlertAction } from "@/actions/checkout.actions";
 import { useLanguage } from "@/components/providers/LanguageProvider";

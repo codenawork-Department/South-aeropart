@@ -508,6 +508,13 @@ export function OrderDetailAdminClient({
             </div>
           </div>
 
+          {order.customerNote && (
+            <section aria-labelledby="customer-note-title" className="bg-[#121212] border border-[#222222] rounded-xl p-5 shadow-xl space-y-3">
+              <h3 id="customer-note-title" className="font-bold text-white text-xs tracking-wider">หมายเหตุจากลูกค้า</h3>
+              <p data-customer-order-note className="text-sm text-gray-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{order.customerNote}</p>
+            </section>
+          )}
+
           {/* Payment Card */}
           <div className="bg-[#121212] border border-[#222222] rounded-xl p-5 shadow-xl space-y-3 text-xs">
             <h3 className="font-bold text-white uppercase tracking-wider pb-2 border-b border-[#222222] flex items-center gap-1.5">

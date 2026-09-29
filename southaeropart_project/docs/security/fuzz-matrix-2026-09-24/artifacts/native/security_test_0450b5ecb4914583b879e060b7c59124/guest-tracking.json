@@ -1,0 +1,2970 @@
+{
+  "variants": [
+    {
+      "caseId": "G-01",
+      "variant": "val_0_",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_0_",
+            "seed": "3d9f3506",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_0_",
+            "seed": "3d9f3506",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-01",
+      "variant": "val_1_not-a-uuid",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_1_not-a-uuid",
+            "seed": "e16fe42d",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_1_not-a-uuid",
+            "seed": "e16fe42d",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-01",
+      "variant": "val_2_200000000000400",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_2_200000000000400",
+            "seed": "c533660d",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_2_200000000000400",
+            "seed": "c533660d",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-01",
+      "variant": "val_3_20000000-0000-4",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_3_20000000-0000-4",
+            "seed": "04e78997",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_3_20000000-0000-4",
+            "seed": "04e78997",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-01",
+      "variant": "val_4_null",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_4_null",
+            "seed": "f9d54a69",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_4_null",
+            "seed": "f9d54a69",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-01",
+      "variant": "val_5_",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_5_",
+            "seed": "3d68c021",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_5_",
+            "seed": "3d68c021",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-01",
+      "variant": "val_6_[object Object]",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_6_[object Object]",
+            "seed": "706319d8",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-01",
+            "target": "guest.track",
+            "variant": "val_6_[object Object]",
+            "seed": "706319d8",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_missing",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_missing",
+            "seed": "b432ccd2",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_missing",
+            "seed": "b432ccd2",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_null",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_null",
+            "seed": "ebbaa3f9",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_null",
+            "seed": "ebbaa3f9",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_array",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_array",
+            "seed": "087568ac",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_array",
+            "seed": "087568ac",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_object",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_object",
+            "seed": "d4bc40a9",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_object",
+            "seed": "d4bc40a9",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_empty",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_empty",
+            "seed": "de413225",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_empty",
+            "seed": "de413225",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_length_63",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_length_63",
+            "seed": "663c14a8",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_length_63",
+            "seed": "663c14a8",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_length_65",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_length_65",
+            "seed": "c38105d4",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_length_65",
+            "seed": "c38105d4",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_non_hex_64",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_non_hex_64",
+            "seed": "dc928c5a",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_non_hex_64",
+            "seed": "dc928c5a",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_uppercase_valid",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_uppercase_valid",
+            "seed": "5af1e45c",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_uppercase_valid",
+            "seed": "5af1e45c",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_one_char_changed",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_one_char_changed",
+            "seed": "5e159e1f",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_one_char_changed",
+            "seed": "5e159e1f",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_leading_space",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_leading_space",
+            "seed": "c7eec8d0",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_leading_space",
+            "seed": "c7eec8d0",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_trailing_newline",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_trailing_newline",
+            "seed": "6eec52eb",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_trailing_newline",
+            "seed": "6eec52eb",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_embedded_nul",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_embedded_nul",
+            "seed": "e8357990",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_embedded_nul",
+            "seed": "e8357990",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_base64_instead_of_hex",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_base64_instead_of_hex",
+            "seed": "ccd70579",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_base64_instead_of_hex",
+            "seed": "ccd70579",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-02",
+      "variant": "token_jwt_instead_of_hmac",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_jwt_instead_of_hmac",
+            "seed": "5344b881",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-02",
+            "target": "guest.track",
+            "variant": "token_jwt_instead_of_hmac",
+            "seed": "5344b881",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-03",
+      "variant": "token_valid_parameter",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-03",
+            "target": "guest.track",
+            "variant": "token_valid_parameter",
+            "seed": "a184f12f",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-03",
+            "target": "guest.track",
+            "variant": "token_valid_parameter",
+            "seed": "a184f12f",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-03",
+      "variant": "token_valid_cookie_only",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-03",
+            "target": "guest.track",
+            "variant": "token_valid_cookie_only",
+            "seed": "671c768f",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only. Actual checkout cookie issuance, attributes and cookie-only reads also verified on this run's production build over HTTPS."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-03",
+            "target": "guest.track",
+            "variant": "token_valid_cookie_only",
+            "seed": "671c768f",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only. Actual checkout cookie issuance, attributes and cookie-only reads also verified on this run's production build over HTTPS."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-04",
+      "variant": "ownership_token_A_order_B",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-04",
+            "target": "guest.track",
+            "variant": "ownership_token_A_order_B",
+            "seed": "06cce279",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-04",
+            "target": "guest.track",
+            "variant": "ownership_token_A_order_B",
+            "seed": "06cce279",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-04",
+      "variant": "ownership_valid_shape_nonexistent_order",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-04",
+            "target": "guest.track",
+            "variant": "ownership_valid_shape_nonexistent_order",
+            "seed": "10027045",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-04",
+            "target": "guest.track",
+            "variant": "ownership_valid_shape_nonexistent_order",
+            "seed": "10027045",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-04",
+      "variant": "ownership_customer_B_session_order_A",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-04",
+            "target": "guest.track",
+            "variant": "ownership_customer_B_session_order_A",
+            "seed": "c058c29f",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-04",
+            "target": "guest.track",
+            "variant": "ownership_customer_B_session_order_A",
+            "seed": "c058c29f",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-04",
+      "variant": "ownership_customer_session_guest_order_wrong_token",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-04",
+            "target": "guest.track",
+            "variant": "ownership_customer_session_guest_order_wrong_token",
+            "seed": "0d47b556",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-04",
+            "target": "guest.track",
+            "variant": "ownership_customer_session_guest_order_wrong_token",
+            "seed": "0d47b556",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-05",
+      "variant": "age_604799s",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-05",
+            "target": "guest.track",
+            "variant": "age_604799s",
+            "seed": "ae3c39a4",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-05",
+            "target": "guest.track",
+            "variant": "age_604799s",
+            "seed": "ae3c39a4",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-06",
+      "variant": "age_604800s",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-06",
+            "target": "guest.track",
+            "variant": "age_604800s",
+            "seed": "4e11e9a7",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-06",
+            "target": "guest.track",
+            "variant": "age_604800s",
+            "seed": "4e11e9a7",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-06",
+      "variant": "age_604801s",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-06",
+            "target": "guest.track",
+            "variant": "age_604801s",
+            "seed": "1deb50ee",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-06",
+            "target": "guest.track",
+            "variant": "age_604801s",
+            "seed": "1deb50ee",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-07",
+      "variant": "creation_val_invalid_date",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-07",
+            "target": "guest.track",
+            "variant": "creation_val_invalid_date",
+            "seed": "3e3c9842",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-07",
+            "target": "guest.track",
+            "variant": "creation_val_invalid_date",
+            "seed": "3e3c9842",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-07",
+      "variant": "creation_val_now_plus_1_second",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-07",
+            "target": "guest.track",
+            "variant": "creation_val_now_plus_1_second",
+            "seed": "85f94fc2",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-07",
+            "target": "guest.track",
+            "variant": "creation_val_now_plus_1_second",
+            "seed": "85f94fc2",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-07",
+      "variant": "creation_val_unix_seconds_as_milliseconds",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-07",
+            "target": "guest.track",
+            "variant": "creation_val_unix_seconds_as_milliseconds",
+            "seed": "9bee7fbe",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-07",
+            "target": "guest.track",
+            "variant": "creation_val_unix_seconds_as_milliseconds",
+            "seed": "9bee7fbe",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-07",
+      "variant": "creation_val_out_of_date_range",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-07",
+            "target": "guest.track",
+            "variant": "creation_val_out_of_date_range",
+            "seed": "7e448fee",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-07",
+            "target": "guest.track",
+            "variant": "creation_val_out_of_date_range",
+            "seed": "7e448fee",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-08",
+      "variant": "len_10240_fill_a",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-08",
+            "target": "guest.track",
+            "variant": "len_10240_fill_a",
+            "seed": "101b9d84",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE",
+              "RESOURCE_BOUNDED"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-08",
+            "target": "guest.track",
+            "variant": "len_10240_fill_a",
+            "seed": "101b9d84",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 404,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE",
+              "RESOURCE_BOUNDED"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-08",
+      "variant": "len_1048576_fill_a",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-08",
+            "target": "guest.track",
+            "variant": "len_1048576_fill_a",
+            "seed": "8d1ef6af",
+            "layer": "server_action",
+            "actualWireStatus": 413,
+            "semanticResult": 413,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE",
+              "RESOURCE_BOUNDED"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-08",
+            "target": "guest.track",
+            "variant": "len_1048576_fill_a",
+            "seed": "8d1ef6af",
+            "layer": "server_action",
+            "actualWireStatus": 413,
+            "semanticResult": 413,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT",
+              "GUEST_PRIVATE",
+              "RESOURCE_BOUNDED"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-09",
+      "variant": "unknown_0_expiresAt",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-09",
+            "target": "guest.track",
+            "variant": "unknown_0_expiresAt",
+            "seed": "59b64471",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-09",
+            "target": "guest.track",
+            "variant": "unknown_0_expiresAt",
+            "seed": "59b64471",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-09",
+      "variant": "unknown_1_createdAt",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-09",
+            "target": "guest.track",
+            "variant": "unknown_1_createdAt",
+            "seed": "bb932592",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-09",
+            "target": "guest.track",
+            "variant": "unknown_1_createdAt",
+            "seed": "bb932592",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "G-09",
+      "variant": "unknown_2_userId",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "G-09",
+            "target": "guest.track",
+            "variant": "unknown_2_userId",
+            "seed": "1db9d06e",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "G-09",
+            "target": "guest.track",
+            "variant": "unknown_2_userId",
+            "seed": "1db9d06e",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 422,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "A-04",
+      "variant": "rate_limit_probe",
+      "actions": [
+        {
+          "binding": "guestDetails",
+          "entry": {
+            "caseId": "A-04",
+            "target": "guest.track",
+            "variant": "rate_limit_probe",
+            "seed": "804c78a0",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 429,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "guestStatus",
+          "entry": {
+            "caseId": "A-04",
+            "target": "guest.track",
+            "variant": "rate_limit_probe",
+            "seed": "804c78a0",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 429,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    }
+  ],
+  "customerSessions": [
+    {
+      "actor": "A",
+      "binding": "guestDetails",
+      "argumentMode": "positional",
+      "ownerAccepted": true
+    },
+    {
+      "actor": "A",
+      "binding": "guestDetails",
+      "argumentMode": "object",
+      "ownerAccepted": true
+    },
+    {
+      "actor": "A",
+      "binding": "guestStatus",
+      "argumentMode": "positional",
+      "ownerAccepted": true
+    },
+    {
+      "actor": "A",
+      "binding": "guestStatus",
+      "argumentMode": "object",
+      "ownerAccepted": true
+    },
+    {
+      "actor": "B",
+      "binding": "guestDetails",
+      "argumentMode": "positional",
+      "ownerAccepted": true
+    },
+    {
+      "actor": "B",
+      "binding": "guestDetails",
+      "argumentMode": "object",
+      "ownerAccepted": true
+    },
+    {
+      "actor": "B",
+      "binding": "guestStatus",
+      "argumentMode": "positional",
+      "ownerAccepted": true
+    },
+    {
+      "actor": "B",
+      "binding": "guestStatus",
+      "argumentMode": "object",
+      "ownerAccepted": true
+    }
+  ],
+  "clerkCleaned": true,
+  "resourceChecks": [
+    {
+      "caseId": "G-08",
+      "variant": "len_10240_fill_a",
+      "binding": "guestDetails",
+      "requestBytes": 10283,
+      "requestDepth": 1,
+      "measurement": {
+        "id": "05ca36ce-5f1d-47b3-8cdf-5b069a377858",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1037479936,
+        "peakRssBytes": 1038352384,
+        "peakGrowthBytes": 872448,
+        "samples": 20,
+        "maxSampleIntervalMs": 16.166299999982584,
+        "durationMs": 276.5323999999964,
+        "samplingIntervalMs": 10
+      },
+      "passed": true
+    },
+    {
+      "caseId": "G-08",
+      "variant": "len_10240_fill_a",
+      "binding": "guestStatus",
+      "requestBytes": 10283,
+      "requestDepth": 1,
+      "measurement": {
+        "id": "cce4a1f1-8d59-4ccb-9de4-b6d1b4143556",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1039155200,
+        "peakRssBytes": 1039159296,
+        "peakGrowthBytes": 4096,
+        "samples": 17,
+        "maxSampleIntervalMs": 16.43210000000545,
+        "durationMs": 231.85740000000806,
+        "samplingIntervalMs": 10
+      },
+      "passed": true
+    },
+    {
+      "caseId": "G-08",
+      "variant": "len_1048576_fill_a",
+      "binding": "guestDetails",
+      "requestBytes": 1048619,
+      "requestDepth": 1,
+      "measurement": {
+        "id": "5277de04-a2d3-4453-9bbb-8407ad5996d7",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1039859712,
+        "peakRssBytes": 1040384000,
+        "peakGrowthBytes": 524288,
+        "samples": 6,
+        "maxSampleIntervalMs": 16.33410000000731,
+        "durationMs": 63.17909999997937,
+        "samplingIntervalMs": 10
+      },
+      "passed": true
+    },
+    {
+      "caseId": "G-08",
+      "variant": "len_1048576_fill_a",
+      "binding": "guestStatus",
+      "requestBytes": 1048619,
+      "requestDepth": 1,
+      "measurement": {
+        "id": "639ea5b7-4bf6-4297-a6b1-e0687cef6b30",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1040510976,
+        "peakRssBytes": 1042014208,
+        "peakGrowthBytes": 1503232,
+        "samples": 5,
+        "maxSampleIntervalMs": 16.592099999979837,
+        "durationMs": 47.44980000000214,
+        "samplingIntervalMs": 10
+      },
+      "passed": true
+    }
+  ],
+  "rateChecks": [
+    {
+      "binding": "guestDetails",
+      "lastAllowed": true,
+      "countAfterRejection": 121,
+      "retryAfter": 60,
+      "recovered": true
+    },
+    {
+      "binding": "guestStatus",
+      "lastAllowed": true,
+      "countAfterRejection": 121,
+      "retryAfter": 60,
+      "recovered": true
+    }
+  ],
+  "tlsCookie": {
+    "passed": true,
+    "build": "production",
+    "environment": "staging with test providers and temporary schema",
+    "transport": "HTTPS loopback, ephemeral certificate",
+    "actualCheckout": true,
+    "mediaProvider": "disabled transport; media operations are outside this check",
+    "secure": true,
+    "httpOnly": true,
+    "sameSite": "Lax",
+    "path": "/",
+    "scriptReadable": false,
+    "ttlSeconds": 604800,
+    "reads": [
+      {
+        "binding": "guestDetails",
+        "wireStatus": 200,
+        "accepted": true,
+        "tokenArgumentAbsent": true
+      },
+      {
+        "binding": "guestStatus",
+        "wireStatus": 200,
+        "accepted": true,
+        "tokenArgumentAbsent": true
+      }
+    ],
+    "requests": [
+      {
+        "binding": "checkout",
+        "bytes": 425,
+        "sha256": "999f86a752ffa7f595cac9c18b10889222d93e86f9d4a0cb4907c2fcdac70c61"
+      },
+      {
+        "binding": "guestDetails",
+        "bytes": 52,
+        "sha256": "b61d30f296c1eefea240dc3d02674fb062a705199ef8b5d6c522e1af54e2709d"
+      },
+      {
+        "binding": "guestStatus",
+        "bytes": 52,
+        "sha256": "b61d30f296c1eefea240dc3d02674fb062a705199ef8b5d6c522e1af54e2709d"
+      }
+    ],
+    "businessRowsChangedByReads": 0,
+    "emailRequests": 0
+  }
+}

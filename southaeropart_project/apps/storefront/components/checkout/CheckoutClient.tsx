@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import Link from "next/link";
 import { useCart } from "@/components/providers/CartProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { createOrder, getSavedCheckoutAddresses } from "@/actions/checkout.actions";
+import { MAX_ORDER_NOTE_BYTES, orderNoteByteLength, orderNoteSchema } from "@repo/lib/order-note";
 import {
   ShieldCheck,
   Truck,
@@ -44,6 +45,9 @@ export function CheckoutClient() {
   const [province, setProvince] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [saveAddress, setSaveAddress] = useState(true);
+  const [customerNote, setCustomerNote] = useState("");
+  const noteBytes = orderNoteByteLength(customerNote);
+  const noteInvalid = !orderNoteSchema.safeParse(customerNote).success;
 
   // Shipping & Payment Method
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
@@ -117,6 +121,11 @@ export function CheckoutClient() {
   async function handleSubmitOrder(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
+    if (noteInvalid) {
+      setErrorMsg(t.checkout.noteInvalid);
+      document.getElementById("customer-order-note")?.focus();
+      return;
+    }
 
     // Basic client validation
     if (!recipientName.trim()) {
@@ -159,6 +168,7 @@ export function CheckoutClient() {
         shippingMethod,
         paymentMethod,
         saveAddress,
+        customerNote,
         items: items.map((i) => ({
           productId: i.product.id,
           productName: i.product.name,
@@ -180,7 +190,7 @@ export function CheckoutClient() {
         // Redirect directly to payment screen without flashing empty cart
         router.push(`/checkout/payment/${res.orderId}`);
       } else {
-        setErrorMsg(res.error || "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง");
+        setErrorMsg(("error" in res && res.error) || "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง");
         setLoading(false);
       }
     } catch (err) {
@@ -449,6 +459,31 @@ export function CheckoutClient() {
                 </label>
               </div>
             </div>
+          </div>
+
+          <div className="bg-[#121212] border border-[#222222] rounded-xl p-6 sm:p-7 shadow-xl">
+            <label htmlFor="customer-order-note" className="block font-heading text-base font-bold text-white mb-2">
+              {t.checkout.customerNote}
+            </label>
+            <p id="customer-order-note-hint" className="text-xs text-[var(--text-secondary)] mb-3">
+              {t.checkout.noteHint}
+            </p>
+            <textarea
+              id="customer-order-note"
+              name="customerNote"
+              rows={4}
+              value={customerNote}
+              onChange={(event) => setCustomerNote(event.target.value)}
+              disabled={loading || isRedirecting}
+              aria-invalid={noteInvalid}
+              aria-describedby={`customer-order-note-hint customer-order-note-count${noteInvalid ? " customer-order-note-error" : ""}`}
+              placeholder={t.checkout.notePlaceholder}
+              className="w-full min-h-28 resize-y bg-[#0A0A0A] border border-[#262626] rounded px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--accent-red)] placeholder:text-gray-600 disabled:opacity-60"
+            />
+            <p id="customer-order-note-count" className="text-xs text-[var(--text-secondary)] text-right mt-1">
+              {t.checkout.noteSize.replace("{used}", String(noteBytes)).replace("{max}", String(MAX_ORDER_NOTE_BYTES))}
+            </p>
+            {noteInvalid && <p id="customer-order-note-error" role="alert" className="text-xs text-red-300 mt-2">{t.checkout.noteInvalid}</p>}
           </div>
 
           {/* Section 2: Shipping Method */}

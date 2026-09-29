@@ -1,5 +1,4 @@
 "use server";
-//h
 // Cart Server Actions
 // Currently cart state is managed client-side via React Context
 // These server actions will be used when we integrate with the database
@@ -10,10 +9,14 @@ const addToCartSchema = z.object({
   productId: z.string().uuid(),
   quantity: z.number().int().positive().max(10),
   variant: z.string().optional(),
-});
+}).strict();
 
 export async function addToCart(input: z.infer<typeof addToCartSchema>) {
-  const validated = addToCartSchema.parse(input);
+  const parsed = addToCartSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: { code: "INVALID_INPUT", message: "Invalid request" } } as const;
+  }
+  const validated = parsed.data;
 
   // TODO: When database is connected:
   // 1. Verify product exists and is active
@@ -21,7 +24,7 @@ export async function addToCart(input: z.infer<typeof addToCartSchema>) {
   // 3. Add to user's cart in database (if authenticated)
   // 4. Return updated cart
 
-  return { success: true, item: validated };
+  return { success: true, item: validated } as const;
 }
 
 export async function removeFromCart(itemId: string) {

@@ -1,0 +1,6071 @@
+{
+  "observations": [
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_ascii_normal",
+      "entry": {
+        "caseId": "S-14",
+        "target": "stripe.webhook",
+        "variant": "bytes_1_ascii_normal",
+        "seed": "fd6113b0",
+        "layer": "route_handler",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 413,
+          "bytes": 1048577,
+          "sha256": "5e516b71c33e6b4857ac167115b4272d295367eb1a180f44f49041f866aaa2f9",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "90dc2f31-546d-43f2-a677-b530fc26fd4f",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1604767744,
+        "peakRssBytes": 1608290304,
+        "peakGrowthBytes": 3522560,
+        "samples": 7,
+        "maxSampleIntervalMs": 15.771500000031665,
+        "durationMs": 75.66610000003129,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_ascii_chunked_no_content_length",
+      "entry": {
+        "caseId": "S-14",
+        "target": "stripe.webhook",
+        "variant": "bytes_1_ascii_chunked_no_content_length",
+        "seed": "07b3036b",
+        "layer": "route_handler",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 413,
+          "bytes": 1048577,
+          "sha256": "cd450585fd92cdd8559ec6d65ad4fdc4950662b5d3341a27b9ca43118df1539e",
+          "chunked": true
+        }
+      ],
+      "resources": {
+        "id": "de1d830e-0643-479c-b546-41c753bfb200",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1612087296,
+        "peakRssBytes": 1614729216,
+        "peakGrowthBytes": 2641920,
+        "samples": 7,
+        "maxSampleIntervalMs": 16.333199999993667,
+        "durationMs": 78.6868999999715,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_thai_normal",
+      "entry": {
+        "caseId": "S-14",
+        "target": "stripe.webhook",
+        "variant": "bytes_1_thai_normal",
+        "seed": "5005afa6",
+        "layer": "route_handler",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 413,
+          "bytes": 1048577,
+          "sha256": "178eeffbfc8db08423650c655c5f24766a1edb9956705d00e5027893e88f949b",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "e41fa94c-142d-4fc7-93e4-8d692b7a808b",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1617891328,
+        "peakRssBytes": 1622867968,
+        "peakGrowthBytes": 4976640,
+        "samples": 7,
+        "maxSampleIntervalMs": 15.77730000007432,
+        "durationMs": 77.20349999994505,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_thai_chunked_no_content_length",
+      "entry": {
+        "caseId": "S-14",
+        "target": "stripe.webhook",
+        "variant": "bytes_1_thai_chunked_no_content_length",
+        "seed": "b6f821b8",
+        "layer": "route_handler",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 413,
+          "bytes": 1048577,
+          "sha256": "74962863c4b4b1871b056974b92598607c6e988c64b72f752f9c1153d9a77698",
+          "chunked": true
+        }
+      ],
+      "resources": {
+        "id": "9b2ee4c7-d2b8-4041-94db-99f6a344be97",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1625690112,
+        "peakRssBytes": 1629290496,
+        "peakGrowthBytes": 3600384,
+        "samples": 8,
+        "maxSampleIntervalMs": 16.44079999998212,
+        "durationMs": 93.79820000007749,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_emoji_normal",
+      "entry": {
+        "caseId": "S-14",
+        "target": "stripe.webhook",
+        "variant": "bytes_1_emoji_normal",
+        "seed": "fd5fe574",
+        "layer": "route_handler",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 413,
+          "bytes": 1048577,
+          "sha256": "999d488d09f43091b41a50867ceff053053cff0f3ea738e68d72f70d6a8064e6",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "f5bd59da-599c-4357-b2a8-056a4edc539f",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1637601280,
+        "peakRssBytes": 1641201664,
+        "peakGrowthBytes": 3600384,
+        "samples": 7,
+        "maxSampleIntervalMs": 16.362300000037067,
+        "durationMs": 78.2457000000868,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "S-14",
+      "variant": "bytes_1_emoji_chunked_no_content_length",
+      "entry": {
+        "caseId": "S-14",
+        "target": "stripe.webhook",
+        "variant": "bytes_1_emoji_chunked_no_content_length",
+        "seed": "f0c28c26",
+        "layer": "route_handler",
+        "actualWireStatus": 413,
+        "semanticResult": 413,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 413,
+          "bytes": 1048577,
+          "sha256": "0e2c2a3a73c3c6e76e2c3596b41ad5d4a3011a4b55db946aee8d7943604e1da0",
+          "chunked": true
+        }
+      ],
+      "resources": {
+        "id": "4b0fd095-6350-46f8-91d1-fc84af2b2772",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1644539904,
+        "peakRssBytes": 1649508352,
+        "peakGrowthBytes": 4968448,
+        "samples": 7,
+        "maxSampleIntervalMs": 16.11619999993127,
+        "durationMs": 78.27619999996386,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "S-15",
+      "variant": "bytes_-1_ascii_normal",
+      "entry": {
+        "caseId": "S-15",
+        "target": "stripe.webhook",
+        "variant": "bytes_-1_ascii_normal",
+        "seed": "1da3f795",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 1048575,
+          "sha256": "c28fa2f2319f842d3affd5d50894e5755d06a7b9cbae21f4a602dfb2bae81fd1",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "4647a3fe-f47e-4a2b-9707-bce7352a2236",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1654767616,
+        "peakRssBytes": 1672376320,
+        "peakGrowthBytes": 17608704,
+        "samples": 130,
+        "maxSampleIntervalMs": 18.175300000002608,
+        "durationMs": 1991.9156000000658,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "S-15",
+      "variant": "bytes_-1_thai_normal",
+      "entry": {
+        "caseId": "S-15",
+        "target": "stripe.webhook",
+        "variant": "bytes_-1_thai_normal",
+        "seed": "805810c7",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 1048575,
+          "sha256": "88e3fedf82fa82005d130312c8b7813ab4939da581fcc76dd0287c9974face10",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "c90ea5ee-9bed-43ea-9135-857b7b2240cf",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1527754752,
+        "peakRssBytes": 1537241088,
+        "peakGrowthBytes": 9486336,
+        "samples": 107,
+        "maxSampleIntervalMs": 16.721800000057556,
+        "durationMs": 1641.389199999976,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "S-15",
+      "variant": "bytes_-1_emoji_normal",
+      "entry": {
+        "caseId": "S-15",
+        "target": "stripe.webhook",
+        "variant": "bytes_-1_emoji_normal",
+        "seed": "275d148c",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 1048575,
+          "sha256": "465b2edc9f79b4d38fc938cccce59a3ffba2093beb10a4f90481e1b503bee165",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "0fc554b6-920e-415e-9500-9f215ad4dd4b",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1543602176,
+        "peakRssBytes": 1555685376,
+        "peakGrowthBytes": 12083200,
+        "samples": 100,
+        "maxSampleIntervalMs": 16.765599999926053,
+        "durationMs": 1526.3607999999076,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "S-15",
+      "variant": "bytes_0_ascii_normal",
+      "entry": {
+        "caseId": "S-15",
+        "target": "stripe.webhook",
+        "variant": "bytes_0_ascii_normal",
+        "seed": "f25750e2",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "2923aa86d936a636ba12c558ddec93c38665fba6104ea4b390b05b18fa50d818",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "86bec4fe-8800-46d6-8de2-73fc3b1baa16",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1565745152,
+        "peakRssBytes": 1579036672,
+        "peakGrowthBytes": 13291520,
+        "samples": 118,
+        "maxSampleIntervalMs": 16.724200000055134,
+        "durationMs": 1805.2939999999944,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "S-15",
+      "variant": "bytes_0_thai_normal",
+      "entry": {
+        "caseId": "S-15",
+        "target": "stripe.webhook",
+        "variant": "bytes_0_thai_normal",
+        "seed": "0119550c",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "5406f411b85498c7a463321d1c6131c0eefe7a32103e743509b2d8ae128aac49",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "58cf1437-b6fe-4ca2-8176-fb31778022fb",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1576771584,
+        "peakRssBytes": 1588363264,
+        "peakGrowthBytes": 11591680,
+        "samples": 118,
+        "maxSampleIntervalMs": 16.587999999988824,
+        "durationMs": 1804.0533000000287,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "S-15",
+      "variant": "bytes_0_emoji_normal",
+      "entry": {
+        "caseId": "S-15",
+        "target": "stripe.webhook",
+        "variant": "bytes_0_emoji_normal",
+        "seed": "8c524aae",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "RESOURCE_BOUNDED"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 1048576,
+          "sha256": "b738d0835a343f206d8d5d5661c7607beb4ecd2aa68ea7b19a092f56f94c3251",
+          "chunked": false
+        }
+      ],
+      "resources": {
+        "id": "60a563cc-4912-4aff-a53b-8d0f8118afab",
+        "pid": 36744,
+        "state": "complete",
+        "timeoutMs": 5000,
+        "growthBudgetBytes": 268435456,
+        "baselineRssBytes": 1588740096,
+        "peakRssBytes": 1603289088,
+        "peakGrowthBytes": 14548992,
+        "samples": 127,
+        "maxSampleIntervalMs": 16.56479999993462,
+        "durationMs": 1947.2526999999536,
+        "samplingIntervalMs": 10
+      },
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-01",
+      "variant": "sig_missing",
+      "entry": {
+        "caseId": "W-01",
+        "target": "stripe.webhook",
+        "variant": "sig_missing",
+        "seed": "42e38c40",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "81483969aa0b0b2055f61ef2d28de0b235af7ca36db1d2270d91d3c6cac94c78",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-01",
+      "variant": "sig_empty",
+      "entry": {
+        "caseId": "W-01",
+        "target": "stripe.webhook",
+        "variant": "sig_empty",
+        "seed": "6d3c3235",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "da8e7460df4e5b4b0c7a5664a8bca003513b9cba5b88d6e3e001c6b9225d0326",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-01",
+      "variant": "sig_wrong_secret",
+      "entry": {
+        "caseId": "W-01",
+        "target": "stripe.webhook",
+        "variant": "sig_wrong_secret",
+        "seed": "5cce8e7d",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "f32321750fc14d4deb8550c6c52849e8d4ca7f9fc073bbd77dd9d75afeaad02f",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-01",
+      "variant": "sig_wrong_signature",
+      "entry": {
+        "caseId": "W-01",
+        "target": "stripe.webhook",
+        "variant": "sig_wrong_signature",
+        "seed": "7c4346a6",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "80718fc7adb1fc0f494b152d67fe38037d0f822cb88e505ac3da3cac05775525",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-01",
+      "variant": "sig_v0_only",
+      "entry": {
+        "caseId": "W-01",
+        "target": "stripe.webhook",
+        "variant": "sig_v0_only",
+        "seed": "a580ceef",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "82a5789ae67450292c9fbcb40b74d90b4633f3722e1ce8eb67cd43653a0bdfdb",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-01",
+      "variant": "sig_missing_t",
+      "entry": {
+        "caseId": "W-01",
+        "target": "stripe.webhook",
+        "variant": "sig_missing_t",
+        "seed": "49b56e6c",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "6598207eae9edbd5bbe971e19c96a737e388eaa57b8025d77c4a1470eea1d563",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-01",
+      "variant": "sig_missing_v1",
+      "entry": {
+        "caseId": "W-01",
+        "target": "stripe.webhook",
+        "variant": "sig_missing_v1",
+        "seed": "57cd846c",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "8c15b5697a21c807a8cfb0afb960a363e1364bf2577072cb68396bce95723657",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-02",
+      "variant": "sig_valid",
+      "entry": {
+        "caseId": "W-02",
+        "target": "stripe.webhook",
+        "variant": "sig_valid",
+        "seed": "ad4df05e",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "43c2cc0ec769e04d9fc487f94e9b2af9f7287d10e64e4fe42fef37f2e66608ef",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-02",
+      "variant": "sig_multiple_v1_one_valid",
+      "entry": {
+        "caseId": "W-02",
+        "target": "stripe.webhook",
+        "variant": "sig_multiple_v1_one_valid",
+        "seed": "03f58c07",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "875773933112bbd3145dd25f23d2709a5a25ffaecb5b49591f92aa24b68b3c70",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-02",
+      "variant": "sig_v1_valid_plus_v0",
+      "entry": {
+        "caseId": "W-02",
+        "target": "stripe.webhook",
+        "variant": "sig_v1_valid_plus_v0",
+        "seed": "21482274",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "840b5a7a33bcdd7b0229c312262ba298bc9143f4f1a878f0227edbcbfe06a235",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-03",
+      "variant": "sig_space_after_sign",
+      "entry": {
+        "caseId": "W-03",
+        "target": "stripe.webhook",
+        "variant": "sig_space_after_sign",
+        "seed": "905179e0",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 372,
+          "sha256": "11e981f5cba59928365e8ab452beadaea96b946c6d97a3679ab8a575cbac3f7a",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-03",
+      "variant": "sig_reorder_after_sign",
+      "entry": {
+        "caseId": "W-03",
+        "target": "stripe.webhook",
+        "variant": "sig_reorder_after_sign",
+        "seed": "4c91648a",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "e46af4aee85169868f1015b4f9fe2af792acdec9a3aa58e12570607b8382dbf1",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-03",
+      "variant": "sig_newline_after_sign",
+      "entry": {
+        "caseId": "W-03",
+        "target": "stripe.webhook",
+        "variant": "sig_newline_after_sign",
+        "seed": "3a739d4c",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 372,
+          "sha256": "a1a551411cdb8bc729eb729042a4741870581541451e2589967747002ed495c2",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-03",
+      "variant": "sig_unicode_escape_after_sign",
+      "entry": {
+        "caseId": "W-03",
+        "target": "stripe.webhook",
+        "variant": "sig_unicode_escape_after_sign",
+        "seed": "77a1194a",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 376,
+          "sha256": "e8303a5229cb2e1861efa442a07a09b50bcb73375b80cb7b4e9a7bd022492743",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-04",
+      "variant": "time_off_-299s",
+      "entry": {
+        "caseId": "W-04",
+        "target": "stripe.webhook",
+        "variant": "time_off_-299s",
+        "seed": "627e2e0d",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "4e5628bfea95c8cceeb2682ec11e995ed598a4866b16e003ba1cee857b179837",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-04",
+      "variant": "time_off_-300s",
+      "entry": {
+        "caseId": "W-04",
+        "target": "stripe.webhook",
+        "variant": "time_off_-300s",
+        "seed": "b0679348",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "1de75db5f854d5f67a2b5fa1fb9f6a2be8c5cd2e208415899820b70bff46a5c6",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-05",
+      "variant": "time_off_-301s",
+      "entry": {
+        "caseId": "W-05",
+        "target": "stripe.webhook",
+        "variant": "time_off_-301s",
+        "seed": "fe39223e",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "d6c6ea9e7e6fb44d6c93b6f80630d6893f6c8be1d4656695743b66a48e19134c",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-06",
+      "variant": "time_off_30s",
+      "entry": {
+        "caseId": "W-06",
+        "target": "stripe.webhook",
+        "variant": "time_off_30s",
+        "seed": "f1faadc1",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "86ba1e52ece687f6f7fd564e08fb90ab323fa9fdc568ffae395097aabe776f9c",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-07",
+      "variant": "time_off_31s",
+      "entry": {
+        "caseId": "W-07",
+        "target": "stripe.webhook",
+        "variant": "time_off_31s",
+        "seed": "5ad94a40",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "e37f8a2485ecc9f8a95406b2732a782ab740313d4ad6c7806d0cd5c78a9dc0f8",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-07",
+      "variant": "time_off_301s",
+      "entry": {
+        "caseId": "W-07",
+        "target": "stripe.webhook",
+        "variant": "time_off_301s",
+        "seed": "7b1040bc",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "a5b3c604b4a213c75c0a83d9300682554adfd080904e94450885b927bf87e554",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-08",
+      "variant": "ts_lexeme_NaN",
+      "entry": {
+        "caseId": "W-08",
+        "target": "stripe.webhook",
+        "variant": "ts_lexeme_NaN",
+        "seed": "f26d57f2",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "3eb953f6c106937bd0b1cc7d417171720fc9ee53d8e97bf7bd3d1b808ca11f82",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-08",
+      "variant": "ts_lexeme_Infinity",
+      "entry": {
+        "caseId": "W-08",
+        "target": "stripe.webhook",
+        "variant": "ts_lexeme_Infinity",
+        "seed": "0550a51a",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "4c962e33c5b700712e2206de6f4d0ec1fd20b811819e59fc2f838841a47bfaa4",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-08",
+      "variant": "ts_lexeme_-1",
+      "entry": {
+        "caseId": "W-08",
+        "target": "stripe.webhook",
+        "variant": "ts_lexeme_-1",
+        "seed": "066a42f5",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "c6562d6b9fba70fcb6adac8da3593fb9c61907a54d07b749bb3a9828c99e5412",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-08",
+      "variant": "ts_lexeme_1.5",
+      "entry": {
+        "caseId": "W-08",
+        "target": "stripe.webhook",
+        "variant": "ts_lexeme_1.5",
+        "seed": "c5f190b1",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "abc40909571d249d5931ad8b7f8c1cbc50cff49f5ed51a3453b2dd9914e6279c",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-08",
+      "variant": "ts_lexeme_1e5",
+      "entry": {
+        "caseId": "W-08",
+        "target": "stripe.webhook",
+        "variant": "ts_lexeme_1e5",
+        "seed": "e0f69d62",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "c45d066ad9cb1362e9ad0a208626b709df22ed390a094b3510bc3ed3ccb30843",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-08",
+      "variant": "ts_lexeme_1790208000junk",
+      "entry": {
+        "caseId": "W-08",
+        "target": "stripe.webhook",
+        "variant": "ts_lexeme_1790208000junk",
+        "seed": "00290b0a",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "2387b13d999211ce12820653c48545dcc33e1452faa27a5aa118cc273c72c50f",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-08",
+      "variant": "ts_lexeme_1790208000000",
+      "entry": {
+        "caseId": "W-08",
+        "target": "stripe.webhook",
+        "variant": "ts_lexeme_1790208000000",
+        "seed": "6faf61ce",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "8517baa6c9b228009893a5b9e9a511a127425922560fbdebe94a18aca0c28fc4",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-08",
+      "variant": "ts_lexeme_18446744073709551615",
+      "entry": {
+        "caseId": "W-08",
+        "target": "stripe.webhook",
+        "variant": "ts_lexeme_18446744073709551615",
+        "seed": "2128277b",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "eb59fa838de712e64724fec4a0202cb2b8a9e5dc868e4edba6e40f0c8f814d28",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-09",
+      "variant": "time_off_0s",
+      "entry": {
+        "caseId": "W-09",
+        "target": "stripe.webhook",
+        "variant": "time_off_0s",
+        "seed": "3891a0f4",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "ce5803918fa64c478e025d0f87c5d076df2c36e55e05979475ef0856fc7c7800",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_invalid_json",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_invalid_json",
+        "seed": "a54ec28d",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 14,
+          "sha256": "3b3743743b9a328af33917856df830ec90d8bb414cd7a268e4fc295bc3209edc",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_null_root",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_null_root",
+        "seed": "ba660534",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 4,
+          "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_array_root",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_array_root",
+        "seed": "40c6253d",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_missing_data",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_missing_data",
+        "seed": "c0cd7d25",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 134,
+          "sha256": "8df4471ce8d3827edccd7726ec8bec03ee0601fa109467abe216fb0c35f13523",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_data_null",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_data_null",
+        "seed": "74a9af24",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 146,
+          "sha256": "ed2747666bae83ba353e89239856069d62f2783ee78ca10f00fc21df6a3fd904",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_object_array",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_object_array",
+        "seed": "49ec2476",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 155,
+          "sha256": "52e247ba69eb3dad27758cd6f8c2e6c2543e824edd608922a079151964fa44bd",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_missing_type",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_missing_type",
+        "seed": "182e6c5d",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 337,
+          "sha256": "7262cbfa8bdbc9a299f31b13d098e11b24c7ed84e7efd9902e68864cf84721e7",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_type_array",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_type_array",
+        "seed": "2528d05e",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 347,
+          "sha256": "c2ce2eed95ad167374bdba19bd17b1a96e745b08e4eb175db0f105154fb1391f",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_missing_id",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_missing_id",
+        "seed": "e5338b79",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 327,
+          "sha256": "83eab586b3bf4a6ceb538075e91a9703c405df6ffc8e96ed55eef4630a957fda",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-10",
+      "variant": "malformed_id_object",
+      "entry": {
+        "caseId": "W-10",
+        "target": "stripe.webhook",
+        "variant": "malformed_id_object",
+        "seed": "0f0748d3",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 335,
+          "sha256": "9b453e7de2756c580d6bcbec6511a43cfe59379ddb14d7be6ad591fd44392fb7",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-11",
+      "variant": "created_val_0",
+      "entry": {
+        "caseId": "W-11",
+        "target": "stripe.webhook",
+        "variant": "created_val_0",
+        "seed": "1793b808",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 365,
+          "sha256": "bc33504dd363ce1731e79b820cee6be13dd3172789bcdc1edff38925305e77eb",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-11",
+      "variant": "created_val_1",
+      "entry": {
+        "caseId": "W-11",
+        "target": "stripe.webhook",
+        "variant": "created_val_1",
+        "seed": "ecaf118c",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 373,
+          "sha256": "620d03af2c63baa4e90f6ccaf1435231563a08172dd100d23a07911a5d0d6c83",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-11",
+      "variant": "created_val_2",
+      "entry": {
+        "caseId": "W-11",
+        "target": "stripe.webhook",
+        "variant": "created_val_2",
+        "seed": "b300f06b",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 363,
+          "sha256": "262b9a695bbafebc4d8b002e6bc36182df47b750f35d7e89f3b28517b32568b1",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-11",
+      "variant": "created_val_3",
+      "entry": {
+        "caseId": "W-11",
+        "target": "stripe.webhook",
+        "variant": "created_val_3",
+        "seed": "09b539bd",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 364,
+          "sha256": "71e3b51cea633c0cda53e3e8abba3f7f549fc5d76c677012fdd5799bb6e9844b",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-11",
+      "variant": "created_val_4",
+      "entry": {
+        "caseId": "W-11",
+        "target": "stripe.webhook",
+        "variant": "created_val_4",
+        "seed": "a3209e23",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 374,
+          "sha256": "6ba2d09b95e3b72e1462d16f37defb837b305a99d9e545e1547d727d5d283edd",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-11",
+      "variant": "created_val_5",
+      "entry": {
+        "caseId": "W-11",
+        "target": "stripe.webhook",
+        "variant": "created_val_5",
+        "seed": "cbf91d20",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 377,
+          "sha256": "f9a4e1b3e81c32b98f5699eeb0cb55bb25e0bc44e3f44d72858ea5d3ed3bffe2",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_0_0",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_0_0",
+        "seed": "9b85ed64",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 367,
+          "sha256": "4488d9b11929f54de4549496d4f66e1b5b65516f4cff6199d539a0768bdbc9a7",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_1_-1",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_1_-1",
+        "seed": "67604094",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 368,
+          "sha256": "fcbad9b20c5f5aa8a8f29dc0c9ef333aa80f61c00137e4b95f8829e0508f5bcd",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_2_-99999",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_2_-99999",
+        "seed": "4645c31e",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 372,
+          "sha256": "d4194278590860f6aff1c82df314227e34ce3d466ea61a57845a61cf0feb78bf",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_3_9999",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_3_9999",
+        "seed": "d368701a",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 370,
+          "sha256": "a939bad8d3d9bf05732cb4a2c7518c46741953ba9bbb7bee1eb7508939450e38",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_4_10001",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_4_10001",
+        "seed": "1a940b29",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "009b6abc1fe3d2c00984b1a44283b1e38f7e7bde8b05c75be19ee4b3a19ce2c1",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_5_0.3000000000000",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_5_0.3000000000000",
+        "seed": "4f3028bd",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 385,
+          "sha256": "5a9acdf4707c4fed3cb2b427c1c37e0c60c1862d114fd7a14990ee518fa9a8e1",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_6_10000",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_6_10000",
+        "seed": "6368c6ee",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 373,
+          "sha256": "8dbf5064d0a239c5747e2eb726dbed88278c5cf6f891b310756fd6b5b2a55642",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_7_null",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_7_null",
+        "seed": "4437ffb4",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 370,
+          "sha256": "248ba96e06a15290564e71c9907b30bbe52ed7c72815ab9e3b6c7aa8cb2a71c3",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_8_[object Object]",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_8_[object Object]",
+        "seed": "e5b1e062",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 368,
+          "sha256": "83ef2df1a708e7b759c138b03ac2b6fbcbecef0e1c70cd472fbfde313d1b3adc",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_9_2147483647",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_9_2147483647",
+        "seed": "11f2cb45",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 376,
+          "sha256": "8a4430352d783a4a58e7fb297007dee7f06983a96301671015055c16afac7349",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-12",
+      "variant": "val_10_900719925474099",
+      "entry": {
+        "caseId": "W-12",
+        "target": "stripe.webhook",
+        "variant": "val_10_900719925474099",
+        "seed": "d78c3b6e",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 382,
+          "sha256": "2b126c95bab0d5dc515f50099c8bb926ed322fb3b6cdfb3e96b3bd827e66ea7d",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-13",
+      "variant": "val_0_usd",
+      "entry": {
+        "caseId": "W-13",
+        "target": "stripe.webhook",
+        "variant": "val_0_usd",
+        "seed": "f27d6bbe",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "67cfd0d218314736d700a0cdf4a5f70d4eb116fcc9694a0accaffdefe11c4eea",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-13",
+      "variant": "val_1_ thb ",
+      "entry": {
+        "caseId": "W-13",
+        "target": "stripe.webhook",
+        "variant": "val_1_ thb ",
+        "seed": "61bbb4ad",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 373,
+          "sha256": "77818e94cb33a5325f800f57fb16c8fa727f8fb51e79044dc759c696e2bf42ae",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-13",
+      "variant": "val_2_t​hb",
+      "entry": {
+        "caseId": "W-13",
+        "target": "stripe.webhook",
+        "variant": "val_2_t​hb",
+        "seed": "a4a6c5c3",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 374,
+          "sha256": "b540a715547fc13ecd3aaf15fdaf87ac7acbe2e17cc1ad568708c6c438bdd2cf",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-13",
+      "variant": "val_3_",
+      "entry": {
+        "caseId": "W-13",
+        "target": "stripe.webhook",
+        "variant": "val_3_",
+        "seed": "6270e5e4",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 368,
+          "sha256": "e6be3e2973ab428403d5e7e2f3e7cdae7388f7e14a369f1afc5aad62049618b5",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-13",
+      "variant": "val_4_null",
+      "entry": {
+        "caseId": "W-13",
+        "target": "stripe.webhook",
+        "variant": "val_4_null",
+        "seed": "14eb5e3f",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 370,
+          "sha256": "5110415db84aece76840262a8091cad2819177b4cbd46e9ff6922dcfd2dc696c",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-13",
+      "variant": "val_5_",
+      "entry": {
+        "caseId": "W-13",
+        "target": "stripe.webhook",
+        "variant": "val_5_",
+        "seed": "a1108450",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 368,
+          "sha256": "01a70504500878289ce5b14c48c0debd2327cd6d3cf5aa0806ae676f4f9e5593",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-13",
+      "variant": "val_6_[object Object]",
+      "entry": {
+        "caseId": "W-13",
+        "target": "stripe.webhook",
+        "variant": "val_6_[object Object]",
+        "seed": "b915ec71",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 368,
+          "sha256": "bca754ba217b734932fcb9c90de9014234a442b42a8e2a0879f3c7a44f6e222d",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-14",
+      "variant": "binding_other_payment_intent",
+      "entry": {
+        "caseId": "W-14",
+        "target": "stripe.webhook",
+        "variant": "binding_other_payment_intent",
+        "seed": "d47fa4c2",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 364,
+          "sha256": "3be6d864600b37c7db817795abea357fe9620f06750950d53e2c080af4790fae",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-14",
+      "variant": "binding_other_order_metadata",
+      "entry": {
+        "caseId": "W-14",
+        "target": "stripe.webhook",
+        "variant": "binding_other_order_metadata",
+        "seed": "7ac67acf",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 371,
+          "sha256": "eccdd0e9831dafe0b8fb20825042c2e34e5e472b30f1c5c99b4d5a99712566cb",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-14",
+      "variant": "binding_event_livemode_true",
+      "entry": {
+        "caseId": "W-14",
+        "target": "stripe.webhook",
+        "variant": "binding_event_livemode_true",
+        "seed": "d8e83f8a",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 370,
+          "sha256": "cc4233145632fe8d3528e13a6fdc5ee7fb7397576bd0cfa15bdeef11024c476d",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-14",
+      "variant": "binding_intent_livemode_true",
+      "entry": {
+        "caseId": "W-14",
+        "target": "stripe.webhook",
+        "variant": "binding_intent_livemode_true",
+        "seed": "3a0dfb02",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 370,
+          "sha256": "b006f02416aef772049a81e7640c8448e09c9c578d071b324551db985108a903",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-14",
+      "variant": "binding_foreign_account",
+      "entry": {
+        "caseId": "W-14",
+        "target": "stripe.webhook",
+        "variant": "binding_foreign_account",
+        "seed": "e07d3131",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 400,
+          "sha256": "cd2c73eb18c73c2264da94fcb1317e6fb0e697f4b7b127f6e3591e3ffc9e5001",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-14",
+      "variant": "binding_invalid_order_uuid",
+      "entry": {
+        "caseId": "W-14",
+        "target": "stripe.webhook",
+        "variant": "binding_invalid_order_uuid",
+        "seed": "ead2db08",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 345,
+          "sha256": "c2c23655fa466fca9241b7d49c75b15789c09b07f11c4b6e1a94d4e510b459ca",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-15",
+      "variant": "dup_same_event_twice_conc_1",
+      "entry": {
+        "caseId": "W-15",
+        "target": "stripe.webhook",
+        "variant": "dup_same_event_twice_conc_1",
+        "seed": "d8dee59f",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 2,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "9888ea81813100d037f83e2caba1aae64a2cd8023b8edfd3b2e987908ca99526",
+          "chunked": false
+        },
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "9888ea81813100d037f83e2caba1aae64a2cd8023b8edfd3b2e987908ca99526",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-15",
+      "variant": "dup_different_event_ids_same_pi_conc_1",
+      "entry": {
+        "caseId": "W-15",
+        "target": "stripe.webhook",
+        "variant": "dup_different_event_ids_same_pi_conc_1",
+        "seed": "fd0e446c",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 2,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "4b6604fd77bd344e5cfd0a47b8e99bb24a21def1f81b2fce5123cb43f5b72ac7",
+          "chunked": false
+        },
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "d8eaae790677a92af17cb6efa9040fc2c7fa5ca68737a9b9ef0fc4214cea9375",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 2,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-16",
+      "variant": "dup_same_event_conc_2",
+      "entry": {
+        "caseId": "W-16",
+        "target": "stripe.webhook",
+        "variant": "dup_same_event_conc_2",
+        "seed": "b69db441",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 2,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "80864608722f52fd9cd349efd94c845c108f9cb05f782622317155406af96f1d",
+          "chunked": false
+        },
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "80864608722f52fd9cd349efd94c845c108f9cb05f782622317155406af96f1d",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 2,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-16",
+      "variant": "dup_different_event_ids_same_pi_conc_2",
+      "entry": {
+        "caseId": "W-16",
+        "target": "stripe.webhook",
+        "variant": "dup_different_event_ids_same_pi_conc_2",
+        "seed": "69dc0b7b",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 2,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "15af252fdcca60e49dfdcea335adfdcfb6ab2487552196c0b8138516e752e1e9",
+          "chunked": false
+        },
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "ea2eb671073b4279d9e00956f7289d06254f7474f43528ddb232b2bf3f97cb01",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 2,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 2,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-17",
+      "variant": "sequence_payment_intent.succeeded_then_payment_intent.payment_failed",
+      "entry": {
+        "caseId": "W-17",
+        "target": "stripe.webhook",
+        "variant": "sequence_payment_intent.succeeded_then_payment_intent.payment_failed",
+        "seed": "8f52d460",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "b3b7f53944ef065021e44f9ed17ff52caffd56f1c135a05e24aa6d3757a0f31a",
+          "chunked": false
+        },
+        {
+          "status": 200,
+          "bytes": 376,
+          "sha256": "db2079fe27e14f0861aff1da7719d63c52334e1e6225e97858041cfeb84c39d3",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 2,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-18",
+      "variant": "ext_unhandled_type",
+      "entry": {
+        "caseId": "W-18",
+        "target": "stripe.webhook",
+        "variant": "ext_unhandled_type",
+        "seed": "49555a7d",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 1,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 376,
+          "sha256": "5443d7d747a37117a899f89a637526aeb37c8cf99002d723d97e2781f034751b",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-18",
+      "variant": "ext_additional_event_field",
+      "entry": {
+        "caseId": "W-18",
+        "target": "stripe.webhook",
+        "variant": "ext_additional_event_field",
+        "seed": "07860981",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 405,
+          "sha256": "eebe279f6757b0b58611956a027fb618fa7ed85c46362d7befb485a79a5f3d05",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-18",
+      "variant": "ext_additional_payment_intent_field",
+      "entry": {
+        "caseId": "W-18",
+        "target": "stripe.webhook",
+        "variant": "ext_additional_payment_intent_field",
+        "seed": "c5c02c0b",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 399,
+          "sha256": "da823971b8c69c6144e7e14edf27ddd56a8c5924373aa7d8bf0da3b9c886d042",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-19",
+      "variant": "stripe_proto_pollution",
+      "entry": {
+        "caseId": "W-19",
+        "target": "stripe.webhook",
+        "variant": "stripe_proto_pollution",
+        "seed": "d0a0e084",
+        "layer": "route_handler",
+        "actualWireStatus": 400,
+        "semanticResult": 400,
+        "dbDiff": {
+          "tablesModified": [],
+          "rowsChanged": 0,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 0,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "NO_POLLUTION"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 400,
+          "bytes": 400,
+          "sha256": "01eb9184f7c4f35ee87f3b72ad056234deaf1ea977b71ce01412c07e68d90adb",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "reserved",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 0,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-20",
+      "variant": "fault_at_fulfillment_transaction_commit",
+      "entry": {
+        "caseId": "W-20",
+        "target": "stripe.webhook",
+        "variant": "fault_at_fulfillment_transaction_commit",
+        "seed": "e85edb71",
+        "layer": "route_handler",
+        "actualWireStatus": 500,
+        "semanticResult": 500,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 2,
+          "resend": 1
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 500,
+          "bytes": 371,
+          "sha256": "bcaca8af01f7fbd41f6c3214fbc4f6ca5fbd350d86755d3bfc5a4c8d34558d1f",
+          "chunked": false
+        },
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "bcaca8af01f7fbd41f6c3214fbc4f6ca5fbd350d86755d3bfc5a4c8d34558d1f",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": true,
+        "rejectedUnchanged": true
+      }
+    },
+    {
+      "caseId": "W-21",
+      "variant": "fault_at_email_delivery",
+      "entry": {
+        "caseId": "W-21",
+        "target": "stripe.webhook",
+        "variant": "fault_at_email_delivery",
+        "seed": "c6073e62",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_email_jobs",
+            "order_status_history",
+            "orders",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 2,
+          "resend": 2
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "d53c89867f9f2f831cd2ff1154235ff38613ee9aa7285a244aca01247d28432a",
+          "chunked": false
+        },
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "d53c89867f9f2f831cd2ff1154235ff38613ee9aa7285a244aca01247d28432a",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "paid",
+          "payment_status": "paid",
+          "inventory_state": "consumed",
+          "total": "100.00"
+        },
+        "history": 1,
+        "emailJobs": 1,
+        "delivered": 1,
+        "ledger": 1,
+        "reconciliation": 0,
+        "stock": 9,
+        "pendingEmailObserved": true,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-22",
+      "variant": "late_pay_canceled",
+      "entry": {
+        "caseId": "W-22",
+        "target": "stripe.webhook",
+        "variant": "late_pay_canceled",
+        "seed": "3530d6ca",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "payment_reconciliation_jobs",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 2,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "e7306927833c49bceca995286c3a6db6838cec88c38c8c3dd26c679ea1c38841",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "cancelled",
+          "payment_status": "pending",
+          "inventory_state": "released",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 1,
+        "reconciliation": 1,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    },
+    {
+      "caseId": "W-22",
+      "variant": "late_pay_reservation_expired",
+      "entry": {
+        "caseId": "W-22",
+        "target": "stripe.webhook",
+        "variant": "late_pay_reservation_expired",
+        "seed": "0e12f24f",
+        "layer": "route_handler",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "payment_reconciliation_jobs",
+            "stripe_webhook_events"
+          ],
+          "rowsChanged": 2,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": 1,
+          "resend": 0
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "NO_LEAK",
+          "AT_MOST_ONCE"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at route_handler layer only."
+      },
+      "deliveries": [
+        {
+          "status": 200,
+          "bytes": 371,
+          "sha256": "0f980c138bf5070eb84ea141590914e56869cf3825c537cd38c1a7859ea2f9b1",
+          "chunked": false
+        }
+      ],
+      "providerCalls": [
+        {
+          "provider": "stripe",
+          "method": "GET",
+          "status": 200
+        }
+      ],
+      "providerUnchanged": true,
+      "barrierArrivals": 0,
+      "state": {
+        "order": {
+          "status": "pending",
+          "payment_status": "pending",
+          "inventory_state": "released",
+          "total": "100.00"
+        },
+        "history": 0,
+        "emailJobs": 0,
+        "delivered": 0,
+        "ledger": 1,
+        "reconciliation": 1,
+        "stock": 9,
+        "pendingEmailObserved": false,
+        "recoveryVerified": false,
+        "rejectedUnchanged": false
+      }
+    }
+  ],
+  "providerCleanup": {
+    "ownedIntents": 94,
+    "refunded": 94,
+    "cleaned": true
+  },
+  "scope": "Actual Next HTTP webhook, real Stripe test charges, owned PostgreSQL fixtures and localhost Resend capture; header clock alone controlled"
+}

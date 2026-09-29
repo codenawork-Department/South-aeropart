@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import { User, ShieldCheck, Car, MapPin, Calendar, Globe } from "lucide-react";
 import { SanitizedUserProfile } from "@/actions/profile.actions";
 import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";

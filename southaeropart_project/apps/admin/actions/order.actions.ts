@@ -23,7 +23,7 @@ import {
   ilike,
   sql,
 } from "@repo/db";
-import { validateSession, logAuditEvent } from "@/lib/auth";
+import { validateSession, logAuditEvent, hasRequiredRole } from "@/lib/auth";
 import { sendShipmentNotificationEmail } from "@/lib/shipment-email";
 import { notifyStorefrontCatalogChange } from "@/lib/realtime-notifier";
 
@@ -270,6 +270,7 @@ export async function getOrderByIdAction(orderId: string) {
         shippingCarrier: orders.shippingCarrier,
         shippingAddress: orders.shippingAddress,
         billingAddress: orders.billingAddress,
+        customerNote: orders.customerNote,
         assignedAdminId: orders.assignedAdminId,
         createdAt: orders.createdAt,
         updatedAt: orders.updatedAt,
@@ -482,6 +483,12 @@ export async function updateOrderFulfillmentAction(input: UpdateFulfillmentInput
     const admin = await validateSession();
     if (!admin) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    // [A-3] RBAC Guard: shipping a parcel is a privileged fulfillment action.
+    // Staff role must not be allowed to mark orders as shipped or set tracking info.
+    if (!hasRequiredRole(admin, ["admin", "super_admin"])) {
+      return { success: false, error: "Forbidden — คุณไม่มีสิทธิ์ดำเนินการจัดส่งคำสั่งซื้อ" };
     }
 
     const { orderId, trackingNumber, shippingCarrier, markAsShipped, note } =

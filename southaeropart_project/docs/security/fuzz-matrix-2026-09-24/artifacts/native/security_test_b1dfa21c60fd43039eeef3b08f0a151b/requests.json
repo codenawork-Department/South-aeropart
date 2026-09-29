@@ -1,0 +1,30 @@
+[
+  {
+    "target": "checkout.create",
+    "caseId": "A-06",
+    "variant": "checkout_stock_race",
+    "bytes": 417,
+    "sha256": "e0ac61570205e933c35db6b6652eeea3877eae00413b0b1e65beface9f38a25d"
+  },
+  {
+    "target": "checkout.create",
+    "caseId": "A-06",
+    "variant": "checkout_stock_race",
+    "bytes": 417,
+    "sha256": "e0ac61570205e933c35db6b6652eeea3877eae00413b0b1e65beface9f38a25d"
+  },
+  {
+    "target": "checkout.create",
+    "caseId": "A-06",
+    "variant": "checkout_stock_race",
+    "bytes": 417,
+    "sha256": "9f7b4f19b81598d63751899765dcad3bc008fde0d2006ae04c2a85d9ac62e065"
+  },
+  {
+    "target": "checkout.create",
+    "caseId": "A-06",
+    "variant": "checkout_stock_race",
+    "bytes": 417,
+    "sha256": "c38ea8b4d2475f2383b3f68194ac689088c4a389c31a23318ba0a90ac265434f"
+  }
+]

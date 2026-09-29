@@ -1,0 +1,12 @@
+{
+  "runId": "security_test_c7434c24afc446edb6ac755703a53f74",
+  "targets": [
+    "cart.add"
+  ],
+  "completedTargets": [],
+  "appCopies": true,
+  "nativeActionClient": true,
+  "mode": "development",
+  "emailSinkMessages": 0,
+  "reportScope": "offline observations plus completed native requests; supplemental sessions are separate"
+}

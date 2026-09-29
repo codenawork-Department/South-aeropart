@@ -7,6 +7,7 @@ config({ path: resolve(__dirname, "../../.env") });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   distDir: process.env.PORT === "3005" ? ".next-test" : ".next",
   transpilePackages: ["@repo/ui", "@repo/lib"],
   poweredByHeader: false,
@@ -59,6 +60,14 @@ const nextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin",
+          },
+          {
+            key: "Cross-Origin-Resource-Policy",
+            value: "same-origin",
           },
         ],
       },

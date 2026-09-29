@@ -15,7 +15,8 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import type { Order, OrderItem } from "@repo/db";
+import type { OrderItem } from "@repo/db";
+import type { OrderReadDto as Order } from "@/lib/order-read-dto";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { getLocalizedOrderItemName } from "@/lib/i18n-helpers";

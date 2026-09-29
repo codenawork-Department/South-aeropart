@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import { randomUUID } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import assert from "node:assert/strict";
 
@@ -11,7 +11,7 @@ const root = resolve(process.cwd(), "../..");
 const useStripe = process.argv.includes("--stripe");
 const originalUrl = process.env.DATABASE_URL;
 if (!originalUrl || process.env.ALLOW_ISOLATED_SECURITY_TESTS !== "true") throw new Error("Explicit isolated security test authorization is required");
-if (process.env.NODE_ENV === "production") throw new Error("Run this verifier in test mode only");
+if (process.env.NODE_ENV === "production" || process.env.APP_ENV === "production") throw new Error("Run this verifier in test mode only");
 if (useStripe && !process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_")) throw new Error("Stripe test key required");
 if (process.env.STRIPE_SECRET_KEY?.startsWith("sk_live_")) throw new Error("Live Stripe keys are forbidden");
 const schemaName = `security_test_${randomUUID().replaceAll("-", "")}`;
@@ -21,11 +21,18 @@ const testUrl = new URL(originalUrl);
 testUrl.hostname = testUrl.hostname.replace("-pooler.", ".");
 testUrl.searchParams.set("options", `-c search_path=${schemaName}`);
 process.env.DATABASE_URL = testUrl.toString();
-process.env.RESEND_API_KEY = ""; // Explicit email sink; never dispatch email from this verifier.
+process.env.RESEND_API_KEY = ""; // Disable external email; this is not a delivery-observation sink.
 process.env.APP_ENV = "test";
 (process.env as Record<string, string | undefined>).NODE_ENV = "test";
-const output: { run: string; checks: string[]; cleanup: boolean; stripeCleanup: boolean; error?: string } = { run: schemaName, checks: [], cleanup: false, stripeCleanup: true };
-writeFileSync(resolve(root, "audit/2026-09-14/neon-stripe-integration-results.json"), JSON.stringify(output, null, 2));
+const reportDir = resolve(root, "audit", new Date().toISOString().slice(0, 10));
+mkdirSync(reportDir, {recursive: true});
+const reportPath = resolve(reportDir, `${schemaName}.json`);
+const output: { run: string; generatedAt: string; checks: string[]; cleanup: boolean; stripeCleanup: boolean;
+  nativeHttpMeasured: boolean; emailDeliveryMeasured: boolean; inventory?: unknown; error?: string } = {
+    run: schemaName, generatedAt: new Date().toISOString(), checks: [], cleanup: false, stripeCleanup: true,
+    nativeHttpMeasured: false, emailDeliveryMeasured: false,
+  };
+writeFileSync(reportPath, JSON.stringify(output, null, 2));
 const { Pool, neonConfig } = await import("@neondatabase/serverless");
 neonConfig.webSocketConstructor = (await import("ws")).default;
 const control = new Pool({ connectionString: originalUrl, max: 1 });
@@ -110,6 +117,9 @@ try {
   assert.equal(rateResults.filter(Boolean).length, 3);
   passed("shared database rate limiter admits exactly three of eight concurrent requests");
 
+  const { verifyInventoryDatabase } = await import("./security-inventory-checks");
+  output.inventory = await verifyInventoryDatabase(root, schemaName, passed);
+
   if (useStripe) {
     const stripeModule = await import("@repo/lib/stripe");
     stripe = stripeModule.getStripe();
@@ -173,8 +183,9 @@ try {
   await control.end();
   console.error = savedError;
   console.warn = savedWarn;
-  writeFileSync(resolve(root, "audit/2026-09-14/neon-stripe-integration-results.json"), JSON.stringify(output, null, 2));
+  writeFileSync(reportPath, JSON.stringify(output, null, 2));
   console.log(JSON.stringify(output));
+  console.log(`Report: ${reportPath}`);
 }
 
 }

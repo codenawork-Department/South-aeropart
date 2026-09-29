@@ -1,0 +1,1416 @@
+{
+  "variants": [
+    {
+      "caseId": "T-11",
+      "variant": "val_0_' OR '1'='1' --",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_0_' OR '1'='1' --",
+            "seed": "bc8a8ab1",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_0_' OR '1'='1' --",
+            "seed": "bc8a8ab1",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_1_'); SELECT pg_s",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_1_'); SELECT pg_s",
+            "seed": "6c2d437b",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_1_'); SELECT pg_s",
+            "seed": "6c2d437b",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_2_O'Reilly",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_2_O'Reilly",
+            "seed": "c317c446",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_2_O'Reilly",
+            "seed": "c317c446",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_3_1 UNION SELECT ",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_3_1 UNION SELECT ",
+            "seed": "2fa0bc4e",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_3_1 UNION SELECT ",
+            "seed": "2fa0bc4e",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_0_<script>globalT",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_0_<script>globalT",
+            "seed": "6f0dbc01",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_0_<script>globalT",
+            "seed": "6f0dbc01",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_1_<img src=x oner",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_1_<img src=x oner",
+            "seed": "1064ad47",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_1_<img src=x oner",
+            "seed": "1064ad47",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_2_<svg onload=\"gl",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_2_<svg onload=\"gl",
+            "seed": "775441d6",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_2_<svg onload=\"gl",
+            "seed": "775441d6",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_3_javascript:glob",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_3_javascript:glob",
+            "seed": "330e3f2a",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_3_javascript:glob",
+            "seed": "330e3f2a",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_4_\"><img src=x on",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_4_\"><img src=x on",
+            "seed": "75ca1c21",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-13",
+            "target": "admin.product",
+            "variant": "val_4_\"><img src=x on",
+            "seed": "75ca1c21",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-14",
+      "variant": "val_0_<a href=\"javasc",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-14",
+            "target": "admin.product",
+            "variant": "val_0_<a href=\"javasc",
+            "seed": "c083caea",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-14",
+            "target": "admin.product",
+            "variant": "val_0_<a href=\"javasc",
+            "seed": "c083caea",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-14",
+      "variant": "val_1_<iframe srcdoc=",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-14",
+            "target": "admin.product",
+            "variant": "val_1_<iframe srcdoc=",
+            "seed": "52ace1f7",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-14",
+            "target": "admin.product",
+            "variant": "val_1_<iframe srcdoc=",
+            "seed": "52ace1f7",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    }
+  ],
+  "clerkCleaned": null,
+  "renderingChecks": [
+    {
+      "caseId": "T-11",
+      "variant": "val_0_' OR '1'='1' --",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_0_' OR '1'='1' --",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_1_'); SELECT pg_s",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_1_'); SELECT pg_s",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_2_O'Reilly",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_2_O'Reilly",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_3_1 UNION SELECT ",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_3_1 UNION SELECT ",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_0_<script>globalT",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10353,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_0_<script>globalT",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10353,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_1_<img src=x oner",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10380,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_1_<img src=x oner",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10380,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_2_<svg onload=\"gl",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10359,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_2_<svg onload=\"gl",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10359,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_3_javascript:glob",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10299,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_3_javascript:glob",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10299,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_4_\"><img src=x on",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10374,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-13",
+      "variant": "val_4_\"><img src=x on",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": {
+          "passed": true,
+          "actualResendSdk": true,
+          "sinkMessages": 1,
+          "externalDelivery": false,
+          "storedPayloadReadback": true,
+          "renderedHtmlBytes": 10374,
+          "scriptNodes": 0,
+          "dangerousAttributes": 0,
+          "marker": null,
+          "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+        }
+      }
+    },
+    {
+      "caseId": "T-14",
+      "variant": "val_0_<a href=\"javasc",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-14",
+      "variant": "val_0_<a href=\"javasc",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-14",
+      "variant": "val_1_<iframe srcdoc=",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-14",
+      "variant": "val_1_<iframe srcdoc=",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    }
+  ],
+  "recoveryChecks": []
+}

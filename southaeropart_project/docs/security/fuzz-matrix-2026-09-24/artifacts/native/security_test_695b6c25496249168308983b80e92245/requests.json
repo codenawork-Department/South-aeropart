@@ -1,0 +1,66 @@
+[
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_0_' OR '1'='1' --",
+    "binding": "productCreate",
+    "bytes": 206,
+    "sha256": "710b18818ef1c1868fac27c8a5f3e667bb85aa98cd36b0f8c61de2476e4a5838"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_0_' OR '1'='1' --",
+    "binding": "productUpdate",
+    "bytes": 245,
+    "sha256": "46ac858eaca1580635fd028f3a1d50d6a1068cb4c12910ed2cc65d13fab264de"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_1_'); SELECT pg_s",
+    "binding": "productCreate",
+    "bytes": 217,
+    "sha256": "dad0aeaa86cf20a5efd1b0cfdf007e6f7b611ebe5ae40f5170e32ef0a2696874"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_1_'); SELECT pg_s",
+    "binding": "productUpdate",
+    "bytes": 256,
+    "sha256": "fcba0a449a0d4878c667dcb12cb7e084a6301157178c69b4e28a81fc929c8d3a"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_2_O'Reilly",
+    "binding": "productCreate",
+    "bytes": 199,
+    "sha256": "1c33ea51304507f00f9dfb77f548f0f2b974378bc69e50534f3fdc120e8506fa"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_2_O'Reilly",
+    "binding": "productUpdate",
+    "bytes": 238,
+    "sha256": "24679f3feb066ab293e4cec7456ac3771a7385d0400c6ff605ecf82638ee72c2"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_3_1 UNION SELECT ",
+    "binding": "productCreate",
+    "bytes": 213,
+    "sha256": "6dda00507985fa10ff2a25ef073f05807ba05dd6487caa2e3cde1fc8e7eb0120"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_3_1 UNION SELECT ",
+    "binding": "productUpdate",
+    "bytes": 252,
+    "sha256": "5e786859c5c25273aa9f688d5f44dc00d50c53cbaf95260cebd7b4919b40a505"
+  }
+]

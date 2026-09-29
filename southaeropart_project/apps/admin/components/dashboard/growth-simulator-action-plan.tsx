@@ -62,7 +62,7 @@ export function GrowthSimulatorActionPlan() {
     },
     {
       id: "t3",
-      title: "ตั้งค่า Email Automation หลังส่งมอบสินค้า 14 วัน พร้อมมอบคูปองซื้อซ้ำ 10%",
+      title: "ตั้งค่า Email ติดตามความพึงพอใจหลังส่งมอบสินค้า 14 วัน",
       category: "Retention & CRM",
       priority: "P1",
       priorityLabel: "High Impact",

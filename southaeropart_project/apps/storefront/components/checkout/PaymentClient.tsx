@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import Link from "next/link";
 import QRCode from "qrcode";
 import {
@@ -29,7 +29,8 @@ import {
   Lock,
   Mail,
 } from "lucide-react";
-import type { Order, OrderItem, Address } from "@repo/db";
+import type { OrderItem, Address } from "@repo/db";
+import type { OrderReadDto as Order } from "@/lib/order-read-dto";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { useCart } from "@/components/providers/CartProvider";
@@ -204,9 +205,17 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
       return;
     }
 
+    let inFlight = false;
+    let nextPollAt = 0;
     const interval = setInterval(async () => {
+      if (inFlight || Date.now() < nextPollAt) return;
+      inFlight = true;
       try {
-        const res = await getOrderStatus(order.id, guestToken);
+        const res = await getOrderStatus({ orderId: order.id, guestToken });
+        if ("code" in res && res.code === "RATE_LIMITED" && "retryAfter" in res && typeof res.retryAfter === "number") {
+          nextPollAt = Date.now() + Math.max(1, res.retryAfter) * 1000;
+          return;
+        }
         if (res.success && res.paymentStatus && res.status) {
           if (res.paymentStatus !== currentPaymentStatus || res.status !== currentStatus) {
             setCurrentStatus(res.status);
@@ -225,6 +234,8 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
         }
       } catch (err) {
         // silent polling error
+      } finally {
+        inFlight = false;
       }
     }, 2500);
 

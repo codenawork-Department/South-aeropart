@@ -1,0 +1,4164 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "South Aero adversarial input test design",
+  "language": "th",
+  "generatedAt": "2026-09-24",
+  "evidence": {
+    "commit": "8d4101a",
+    "basis": "Static inspection of working tree, including pre-existing uncommitted edits. No runtime security tests executed.",
+    "nextDeclared": "15.5.24",
+    "scopeChange": "2026-09-25: Coupon deferred by customer instruction; N-26/N-27 removed from active scope (not passing tests). Inventory delta bound to Admin action and shared command."
+  },
+  "semantics": {
+    "purpose": "Recommended target contract, not a report of passing behavior.",
+    "expansion": "One test per case × target × value/recipe variant, always reset a valid fixture first. Never combine invalid mutations except explicitly named sequences.",
+    "http": "expected.httpStatus is keyed by target. Route handlers use real HTTP statuses. Normal handled Server Action failures use wire 200 plus success:false and semanticStatus; do not assert wire 422 on RSC. null means no HTTP boundary (unit only).",
+    "integration": "Adapters must expose raw response, normalized result, DB diff and provider/sink counts. Unit calls do not prove HTTP auth. Capture native Server Action requests via the current build; never invent action IDs or REST URLs.",
+    "gaps": "proposed_contract/adapter_required are future requirements, not existing features. A mismatch on an existing surface is FAIL; absent surface is UNIMPLEMENTED, never PASS or silently SKIP.",
+    "errorEnvelope": {
+      "success": false,
+      "error": {
+        "code": "INVALID_INPUT",
+        "message": "Invalid request",
+        "requestId": "<opaque>"
+      }
+    },
+    "errors": {
+      "400": [
+        "BAD_REQUEST",
+        "Invalid request"
+      ],
+      "401": [
+        "UNAUTHENTICATED",
+        "Authentication required"
+      ],
+      "403": [
+        "FORBIDDEN",
+        "Request not permitted"
+      ],
+      "404": [
+        "NOT_FOUND",
+        "Resource not found"
+      ],
+      "409": [
+        "CONFLICT",
+        "Request conflicts with current state"
+      ],
+      "413": [
+        "PAYLOAD_TOO_LARGE",
+        "Request too large"
+      ],
+      "415": [
+        "UNSUPPORTED_MEDIA_TYPE",
+        "Unsupported content type"
+      ],
+      "422": [
+        "INVALID_INPUT",
+        "Invalid request"
+      ],
+      "429": [
+        "RATE_LIMITED",
+        "Too many requests"
+      ],
+      "500": [
+        "INTERNAL_ERROR",
+        "Unable to process request"
+      ],
+      "503": [
+        "TEMPORARILY_UNAVAILABLE",
+        "Please retry later"
+      ]
+    },
+    "precedence": "Use valid auth and baseline below limits for input tests. Transport/body limits may reject first. For auth tests use otherwise valid bodies. For signed webhook structure tests sign the malformed raw bytes correctly so signature failure cannot mask schema failure.",
+    "safety": "Design only. Before side effects: explicit isolated DB allowlist and scoped credentials, Stripe test account/key, Clerk test users, Resend email sink, per-run fixtures/cleanup; guard must precede imports that initialize providers. No .env dump, production requests or broad load test.",
+    "metrics": "Record monotonic duration, peak worker RSS, bytes received, rows changed, outbound calls. Resource cases run serially, hard timeout 5000ms and isolated worker watchdog 256MiB growth budget (proposed test budgets, calibrate to baseline)."
+  },
+  "limits": {
+    "cartQuantityMax": 10,
+    "checkoutQuantityMax": 100,
+    "checkoutItemsMax": 100,
+    "amountMinSatang": 1,
+    "amountMaxSatang": 99999999,
+    "stockMax": 2147483647,
+    "deltaAbsMax": 2147483647,
+    "priceMaxMajor": "9999999999.99",
+    "skuMaxCodePoints": 100,
+    "nameMaxCodePoints": 255,
+    "descriptionMaxUtf8Bytes": 16384,
+    "noteMaxUtf8Bytes": 2048,
+    "jsonMaxDepth": 32,
+    "apiBodyMaxBytes": 1048576,
+    "stripeBodyMaxBytes": 1048576,
+    "actionBodyMaxBytes": 4194304,
+    "guestTokenHexLength": 64,
+    "guestTokenTtlSeconds": 604800,
+    "stripePastToleranceSeconds": 300,
+    "stripeFutureSkewSeconds": 30,
+    "provenance": "Cart/checkout limits, DB int/numeric types, webhook 1MiB and action 4mb are from code. Other field/depth/amount/future-skew/guest-expiry policies are proposed; amountMax is a merchant cap, not a universal provider limit. Payment-method minimum/maximum require account-specific fixtures."
+  },
+  "targets": {
+    "cart.add": {
+      "transport": "server_action",
+      "binding": "apps/storefront/actions/cart.actions.ts#addToCart",
+      "actor": "customer",
+      "fixture": "cart",
+      "notes": "Action currently validates but does not persist a cart."
+    },
+    "checkout.create": {
+      "transport": "server_action",
+      "binding": "apps/storefront/actions/checkout.actions.ts#createOrder",
+      "actor": "customer",
+      "fixture": "checkout",
+      "notes": "No public amount/currency fields; prices calculated from DB."
+    },
+    "guest.track": {
+      "transport": "server_action",
+      "binding": "apps/storefront/actions/checkout.actions.ts#getOrderDetails and getOrderStatus",
+      "actor": "guest",
+      "fixture": "guest",
+      "notes": "Run each case against both actions; normalized argument object maps to positional args. Clear ambient cookies for token tests."
+    },
+    "admin.product": {
+      "transport": "server_action",
+      "binding": "apps/admin/actions/product.actions.ts#createProductAction and updateProductAction",
+      "actor": "authorized_admin",
+      "fixture": "product",
+      "notes": "Run both create and update when applicable; update ID passed separately. DB price is decimal string, stockQuantity absolute."
+    },
+    "inventory.delta": {
+      "transport": "server_action",
+      "binding": "apps/admin/actions/inventory.actions.ts#adjustInventoryAction",
+      "actor": "authorized_admin",
+      "fixture": "inventory",
+      "notes": "Admin/super_admin only. Shared command has service_unit fixture coverage; PostgreSQL transaction and native HTTP remain separate evidence requirements."
+    },
+    "amount.validate": {
+      "transport": "unit",
+      "binding": null,
+      "actor": "internal",
+      "fixture": "amount",
+      "notes": "Proposed finite safe integer satang validator. Test conversion separately; current toSmallestCurrencyUnit takes major units."
+    },
+    "api.json": {
+      "transport": "contract_route",
+      "binding": null,
+      "actor": "customer",
+      "fixture": "generic",
+      "notes": "Abstract hardened JSON request contract; bind only to an actual JSON endpoint or an isolated test adapter."
+    },
+    "stripe.webhook": {
+      "transport": "route_handler",
+      "binding": "POST /api/webhooks/stripe",
+      "actor": "stripe_test_signer",
+      "fixture": "stripe",
+      "notes": "Use actual raw-body signature verification, not a mocked constructEvent."
+    },
+    "money.convert": {
+      "transport": "unit",
+      "binding": "packages/lib/src/stripe.ts#toSmallestCurrencyUnit",
+      "actor": "internal",
+      "fixture": "majorMoney",
+      "notes": "Proposed strict decimal-major-unit contract for existing converter."
+    }
+  },
+  "fixtures": {
+    "cart": {
+      "input": {
+        "productId": "10000000-0000-4000-8000-000000000001",
+        "quantity": 1
+      },
+      "stock": 1000
+    },
+    "checkout": {
+      "input": {
+        "shippingAddress": {
+          "recipientName": "QA Tester",
+          "phone": "0812345678",
+          "email": "qa@example.invalid",
+          "line1": "1 Test Road",
+          "subDistrict": "Test",
+          "district": "Test",
+          "province": "Bangkok",
+          "postalCode": "10110"
+        },
+        "items": [
+          {
+            "productId": "10000000-0000-4000-8000-000000000001",
+            "productName": "QA Product",
+            "quantity": 1,
+            "unitPrice": "100.00"
+          }
+        ],
+        "shippingMethod": "standard",
+        "paymentMethod": "promptpay",
+        "saveAddress": false
+      },
+      "dbProduct": {
+        "price": "100.00",
+        "stockQuantity": 1000,
+        "status": "active"
+      },
+      "notes": "Fresh product/order per test. Price expected from server DB plus actual shipping/tax/discount rules, using BigInt decimal oracle."
+    },
+    "guest": {
+      "input": {
+        "orderId": "20000000-0000-4000-8000-000000000002",
+        "guestToken": "<mint from isolated secret>"
+      },
+      "userId": "guest_qa",
+      "createdAt": "2026-09-24T00:00:00Z",
+      "now": "2026-09-24T00:00:01Z",
+      "notes": "Token = HMAC-SHA256 UTF8 guest_order:orderId:userId:createdAt -> lowercase hex. Never use this placeholder as a valid token. Separate order B and customer B. Cookie maxAge does not enforce server token expiry."
+    },
+    "product": {
+      "input": {
+        "sku": "QA-SKU-001",
+        "name": "QA Product",
+        "price": "100.00",
+        "stockQuantity": 100,
+        "status": "draft",
+        "description": "QA description"
+      },
+      "notes": "Generate unique SKU for each accepted variant; use seeded duplicate only in conflict test. Exclude uploads."
+    },
+    "inventory": {
+      "input": {
+        "productId": "10000000-0000-4000-8000-000000000001",
+        "delta": -1
+      },
+      "stockBefore": 100000
+    },
+    "amount": {
+      "input": {
+        "amountSatang": 10000,
+        "currency": "thb"
+      }
+    },
+    "generic": {
+      "input": {
+        "quantity": 1,
+        "label": "QA"
+      },
+      "notes": "Dedicated adapter with strict quantity integer 1..10 and label plain text <=255, no business side effects."
+    },
+    "stripe": {
+      "input": {
+        "id": "evt_qa_unique",
+        "object": "event",
+        "created": 1790208000,
+        "livemode": false,
+        "type": "payment_intent.succeeded",
+        "data": {
+          "object": {
+            "id": "pi_qa_bound",
+            "object": "payment_intent",
+            "amount": 10000,
+            "amount_received": 10000,
+            "currency": "thb",
+            "livemode": false,
+            "status": "succeeded",
+            "metadata": {
+              "orderId": "20000000-0000-4000-8000-000000000002"
+            }
+          }
+        }
+      },
+      "notes": "Clock fixed to 2026-09-24T00:00:00Z; overwrite created from frozen clock, generate unique event/PI IDs per case and bind DB order total 100.00 THB, reservation active. No live account. Sign final UTF8 body with isolated webhook secret."
+    },
+    "majorMoney": {
+      "input": {
+        "amount": "100.00"
+      }
+    }
+  },
+  "assertions": {
+    "NO_LEAK": "On all error surfaces (JSON/HTML/RSC/headers/redirects), only allowlisted generic code/message + opaque requestId; no payload reflection, SQLSTATE, SQL text/params, real table/constraint names, stack/path, provider error body, secret/key/token, PII, DB URL. Check keys recursively and scan rendered text plus error frames; seed recognizable sentinel errors. RequestId alone can vary.",
+    "REJECT_NO_EFFECT": "No order/payment/stock/privilege changes, no Stripe write, no Resend delivery. Security audit/rate-limit counter may change, with bounded redacted fields; explicitly check business-table diff rather than blanket no DB activity.",
+    "SAFE_ACCEPT": "Only intended fixture mutation; canonical validated value persisted; integer/decimal oracle exact; protected ownership unchanged; response DTO contains allowed fields only.",
+    "INTEGER_EXACT": "Use BigInt or decimal strings for expected arithmetic; reject non-finite, fractional, unsafe or out-of-policy amounts before provider call. No coercion, wrap, rounding/truncation, saturation or scientific-string parse fallback.",
+    "NO_POLLUTION": "Before/after process-isolated invocation, Object.prototype and fresh objects have no isAdmin/role/polluted properties; authorization unchanged. Parsing __proto__ alone is not proof of pollution.",
+    "PLAIN_TEXT": "SQL/XSS text is inert data. Check exact safe persistence/readback, parameterized queries where observable, no expanded result set, no script execution/event handler, JS URL or external request in storefront/admin/email rendering. Do not reject every apostrophe or all non-ASCII prose.",
+    "AT_MOST_ONCE": "One durable fulfillment/state transition and inventory-ledger effect for one business payment. Duplicate audit attempts allowed; one logical email/outbox delivery, external retries use idempotency. Do not claim exactly-once network delivery from DB transaction.",
+    "RESOURCE_BOUNDED": "Measure actual UTF8 request bytes (including JSON/Action envelope), max depth and memory/time; do not trust Content-Length alone; never assert body byte size using JS string.length.",
+    "GUEST_PRIVATE": "Same generic denial and same allowed DTO for wrong/expired/missing token, unauthorized owner and nonexistent well-formed order. No order/email/PII/token in denial or cache; do not demand nanosecond-identical latency.",
+    "AUTHORITATIVE": "Order/PaymentIntent amount/currency and owner derive from server DB/session, never client productName/unitPrice/total/currency/userId; shared bundle-part demand aggregated atomically."
+  },
+  "cases": [
+    {
+      "id": "N-01",
+      "targets": [
+        "cart.add"
+      ],
+      "summary": "quantity ศูนย์/ติดลบ",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/quantity",
+        "values": [
+          0,
+          -1,
+          -99999
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "cart.add": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-02",
+      "targets": [
+        "cart.add"
+      ],
+      "summary": "cart: ขอบที่ผ่าน 1,9,10",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/quantity",
+        "values": [
+          1,
+          9,
+          10
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "cart.add": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-03",
+      "targets": [
+        "cart.add"
+      ],
+      "summary": "cart: เกินเพดาน 11",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/quantity",
+        "values": [
+          11
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "cart.add": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-04",
+      "targets": [
+        "checkout.create"
+      ],
+      "summary": "checkout: ขอบที่ผ่าน 1,99,100",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/items/0/quantity",
+        "values": [
+          1,
+          99,
+          100
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "checkout.create": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-05",
+      "targets": [
+        "checkout.create"
+      ],
+      "summary": "checkout: ศูนย์/ติดลบ/เกิน 100",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/items/0/quantity",
+        "values": [
+          0,
+          -1,
+          -99999,
+          101
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "checkout.create": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-06",
+      "targets": [
+        "cart.add",
+        "checkout.create"
+      ],
+      "summary": "signed/unsigned 32-bit, safe integer, signed/unsigned 64-bit และ ±1",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "integerLexemes",
+        "args": {
+          "paths": {
+            "cart.add": "/quantity",
+            "checkout.create": "/items/0/quantity"
+          },
+          "lexemes": [
+            "2147483646",
+            "2147483647",
+            "2147483648",
+            "-2147483648",
+            "-2147483649",
+            "4294967295",
+            "4294967296",
+            "9007199254740990",
+            "9007199254740991",
+            "9007199254740992",
+            "9007199254740993",
+            "9223372036854775807",
+            "9223372036854775808",
+            "-9223372036854775808",
+            "-9223372036854775809",
+            "18446744073709551615",
+            "18446744073709551616",
+            "-4294967296"
+          ],
+          "encodings": [
+            "numeric_token",
+            "numeric_string"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "cart.add": 200,
+          "checkout.create": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": "Keep lexemes as strings until raw JSON emission. For native Action number argument, record representability; unrepresentable lexemes also require api.json raw parser test, not a rounded imitation."
+      }
+    },
+    {
+      "id": "N-07",
+      "targets": [
+        "cart.add",
+        "checkout.create"
+      ],
+      "summary": "fraction และ floating-point leak",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "fieldValuesByTarget",
+        "args": {
+          "paths": {
+            "cart.add": "/quantity",
+            "checkout.create": "/items/0/quantity"
+          },
+          "values": [
+            0.30000000000000004,
+            1E-08,
+            1.5,
+            -0.5
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "cart.add": 200,
+          "checkout.create": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-08",
+      "targets": [
+        "cart.add"
+      ],
+      "summary": "string encoded number/boolean/null",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/quantity",
+        "values": [
+          "010",
+          " 10 ",
+          "1e5",
+          "10",
+          "0x10",
+          "",
+          true,
+          false,
+          null
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "cart.add": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-09",
+      "targets": [
+        "amount.validate"
+      ],
+      "summary": "satang: ศูนย์/ติดลบ/fraction/unsafe",
+      "category": "N",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/amountSatang",
+        "values": [
+          0,
+          -1,
+          -99999,
+          0.30000000000000004,
+          1E-08,
+          100000000,
+          2147483647,
+          9007199254740991
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "amount.validate": null
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-10",
+      "targets": [
+        "amount.validate"
+      ],
+      "summary": "satang: 1, cap−1, cap",
+      "category": "N",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/amountSatang",
+        "values": [
+          1,
+          99999998,
+          99999999
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "amount.validate": null
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "Integer validator only. Provider minimum/method/currency rules checked separately; 1 satang need not be chargeable."
+      }
+    },
+    {
+      "id": "N-11",
+      "targets": [
+        "amount.validate"
+      ],
+      "summary": "native non-finite values",
+      "category": "N",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "nativeValues",
+        "args": {
+          "path": "/amountSatang",
+          "names": [
+            "NaN",
+            "Infinity",
+            "-Infinity"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "amount.validate": null
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Construct via switch; do not JSON.stringify (non-finite becomes null). Unit test has no HTTP."
+      }
+    },
+    {
+      "id": "N-12",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "NaN/Infinity เป็น raw JSON token ที่ผิด grammar",
+      "category": "N",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "raw",
+        "values": [
+          "{\"quantity\":NaN}",
+          "{\"quantity\":Infinity}",
+          "{\"quantity\":-Infinity}",
+          "{\"quantity\":010}"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "api.json": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-13",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "valid JSON exponent ล้น finite range",
+      "category": "N",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "raw",
+        "values": [
+          "{\"quantity\":1e309,\"label\":\"QA\"}",
+          "{\"quantity\":-1e309,\"label\":\"QA\"}"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "api.json": 422
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-14",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "mathematically integral JSON lexical forms",
+      "category": "N",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "raw",
+        "values": [
+          "{\"quantity\":1.0,\"label\":\"QA\"}",
+          "{\"quantity\":1e0,\"label\":\"QA\"}"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "api.json": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "JSON numeric 1.0/1e0 are integer value 1. Do not confuse with string '1e0'."
+      }
+    },
+    {
+      "id": "N-15",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "stockQuantity: ศูนย์/int32 boundary ที่ผ่าน",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/stockQuantity",
+        "values": [
+          0,
+          1,
+          2147483646,
+          2147483647
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "Schema-only or isolated fixture. No checkout/payment side effects. DB int32 stock cap may be lowered explicitly by merchant policy."
+      }
+    },
+    {
+      "id": "N-16",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "stockQuantity: negative/fraction/เกิน int32",
+      "category": "N",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/stockQuantity",
+        "values": [
+          -1,
+          -99999,
+          1.1,
+          2147483648,
+          4294967295,
+          9007199254740991
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-17",
+      "targets": [
+        "inventory.delta"
+      ],
+      "summary": "delta ติดลบที่ถูกต้องเมื่อ stock เพียงพอ",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/delta",
+        "values": [
+          -1,
+          -99999,
+          1
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "inventory.delta": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "stockBefore=100000; reset per variant; stockAfter=stockBefore+delta exactly. Negative delta is valid."
+      }
+    },
+    {
+      "id": "N-18",
+      "targets": [
+        "inventory.delta"
+      ],
+      "summary": "delta=0, fraction, string, out-of-range",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/delta",
+        "values": [
+          0,
+          1.1,
+          "-1",
+          -2147483648,
+          2147483648
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "inventory.delta": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-19",
+      "targets": [
+        "inventory.delta"
+      ],
+      "summary": "stock underflow/overflow หลังบวก delta",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stockArithmetic",
+        "args": {
+          "variants": [
+            {
+              "stockBefore": 0,
+              "delta": -1
+            },
+            {
+              "stockBefore": 2147483647,
+              "delta": 1
+            }
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 409,
+        "httpStatus": {
+          "inventory.delta": 200
+        },
+        "outcome": "reject",
+        "errorCode": "CONFLICT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-20",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "price decimal major-unit: ขอบ DB numeric(12,2)",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/price",
+        "values": [
+          "0.00",
+          "0.01",
+          "9999999999.98",
+          "9999999999.99"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "Catalog draft pricing only. Zero/free item may be stored; do not create a zero-amount Stripe charge. Payment total cap is separate."
+      }
+    },
+    {
+      "id": "N-21",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "price: fraction precision/negative/scientific/type/DB overflow",
+      "category": "N",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/price",
+        "values": [
+          "-1",
+          "-99999",
+          "0.001",
+          "10000000000.00",
+          "1e5",
+          " 10 ",
+          "NaN",
+          "Infinity",
+          0.1,
+          {},
+          []
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-22",
+      "targets": [
+        "money.convert"
+      ],
+      "summary": "decimal-safe conversion oracle",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "decimalConversion",
+        "args": {
+          "variants": [
+            {
+              "input": "0.10",
+              "expectedSatang": "10"
+            },
+            {
+              "input": "0.20",
+              "expectedSatang": "20"
+            },
+            {
+              "input": "0.30",
+              "expectedSatang": "30"
+            },
+            {
+              "input": "010",
+              "expectedSatang": "1000"
+            },
+            {
+              "input": "9999999999.99",
+              "expectedSatang": "999999999999"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "money.convert": null
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "INTEGER_EXACT"
+        ],
+        "detail": "Leading zero major-unit decimal accepted consistently with current price grammar. Expected results encoded as decimal strings, not monetary floats."
+      }
+    },
+    {
+      "id": "N-23",
+      "targets": [
+        "money.convert"
+      ],
+      "summary": "ห้าม truncate/coerce malformed decimal",
+      "category": "N",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/amount",
+        "values": [
+          "0.001",
+          "0.00000001",
+          "0.30000000000000004",
+          "1e5",
+          "1foo",
+          "NaN",
+          "Infinity",
+          "-Infinity",
+          " 10 "
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "money.convert": null
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "INTEGER_EXACT"
+        ],
+        "detail": "Strict converter regression contract; hardened implementation and current evidence are recorded in packages/security-harness/README.md."
+      }
+    },
+    {
+      "id": "N-24",
+      "targets": [
+        "checkout.create"
+      ],
+      "summary": "แก้ client unitPrice/productName ต้องยังคำนวณจาก DB",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "clientPriceTamper",
+        "args": {
+          "unitPrices": [
+            "0",
+            "0.01",
+            "9999999999999999",
+            "NaN"
+          ],
+          "productNames": [
+            "Changed title"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "checkout.create": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "AUTHORITATIVE"
+        ],
+        "detail": "Known unitPrice is a string hint currently ignored by authoritative price calculation. Never assert tampered total is used."
+      }
+    },
+    {
+      "id": "N-25",
+      "targets": [
+        "amount.validate"
+      ],
+      "summary": "currency: wrong type/case/whitespace/confusables",
+      "category": "N",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/currency",
+        "values": [
+          "THB",
+          " thb ",
+          "TH฿",
+          "t​hb",
+          "usd",
+          "",
+          null,
+          [],
+          {}
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "amount.validate": null
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Adapter policy accepts only canonical lowercase thb. DB stores THB; display currency never changes payment currency."
+      }
+    },
+    {
+      "id": "N-28",
+      "targets": [
+        "checkout.create"
+      ],
+      "summary": "aggregate duplicate items เกิน stock",
+      "category": "N",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "duplicateLineDemand",
+        "args": {
+          "stockBefore": 100,
+          "lines": [
+            {
+              "quantity": 60
+            },
+            {
+              "quantity": 60
+            }
+          ],
+          "sameProduct": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 409,
+        "httpStatus": {
+          "checkout.create": 200
+        },
+        "outcome": "reject",
+        "errorCode": "CONFLICT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "AUTHORITATIVE"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "N-29",
+      "targets": [
+        "amount.validate"
+      ],
+      "summary": "sum/multiply overflow รวม shipping/tax/discount",
+      "category": "N",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "moneyArithmetic",
+        "args": {
+          "variants": [
+            {
+              "unitSatang": "9007199254740991",
+              "quantity": "2"
+            },
+            {
+              "subtotalSatang": "99999999",
+              "shippingSatang": "1",
+              "discountSatang": "0"
+            },
+            {
+              "subtotalSatang": "100",
+              "shippingSatang": "0",
+              "discountSatang": "101"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "amount.validate": null
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": "Compute with BigInt/checked intermediate arithmetic; reject invalid final payable; do not clamp negative total."
+      }
+    },
+    {
+      "id": "S-01",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "Array/Object แทน SKU string",
+      "category": "S",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/sku",
+        "values": [
+          [],
+          [
+            "QA"
+          ],
+          {},
+          10,
+          true,
+          null
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-02",
+      "targets": [
+        "cart.add"
+      ],
+      "summary": "Object/Array แทน quantity number",
+      "category": "S",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/quantity",
+        "values": [
+          {},
+          {
+            "value": 1
+          },
+          {
+            "$gt": 0
+          },
+          [],
+          [
+            1
+          ]
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "cart.add": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-03",
+      "targets": [
+        "checkout.create"
+      ],
+      "summary": "items ผิดรูป/ว่าง/เกินขอบ",
+      "category": "S",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "checkoutItems",
+        "args": {
+          "variants": [
+            "null",
+            "object",
+            "string",
+            "empty_array",
+            "101_valid_items",
+            "array_with_null",
+            "array_with_scalar"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "checkout.create": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-04",
+      "targets": [
+        "checkout.create"
+      ],
+      "summary": "100 distinct valid items เป็น positive boundary",
+      "category": "S",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "checkoutItems",
+        "args": {
+          "variants": [
+            "100_valid_distinct_items"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "checkout.create": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-05",
+      "targets": [
+        "cart.add",
+        "admin.product",
+        "checkout.create"
+      ],
+      "summary": "missing required key",
+      "category": "S",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "deleteRequired",
+        "args": {
+          "fields": {
+            "cart.add": [
+              "productId",
+              "quantity"
+            ],
+            "admin.product": [
+              "sku",
+              "price"
+            ],
+            "checkout.create": [
+              "shippingAddress",
+              "items"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "cart.add": 200,
+          "admin.product": 200,
+          "checkout.create": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-06",
+      "targets": [
+        "cart.add",
+        "admin.product",
+        "checkout.create"
+      ],
+      "summary": "unknown fields/mass assignment",
+      "category": "S",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "mergeUnknown",
+        "args": {
+          "objects": [
+            {
+              "isAdmin": true
+            },
+            {
+              "role": "super_admin"
+            },
+            {
+              "userId": "customer_B"
+            },
+            {
+              "paymentStatus": "paid"
+            },
+            {
+              "total": 1
+            },
+            {
+              "currency": "usd"
+            },
+            {
+              "unexpectedField": "untrusted"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "cart.add": 200,
+          "admin.product": 200,
+          "checkout.create": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Strict client input allowlist proposed; current Zod may strip keys. Separately assert ignored fields never affect authorization/price."
+      }
+    },
+    {
+      "id": "S-07",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "prototype pollution keys preserved as own JSON members",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "raw",
+        "values": [
+          "{\"quantity\":1,\"label\":\"QA\",\"__proto__\":{\"isAdmin\":true}}",
+          "{\"quantity\":1,\"label\":\"QA\",\"constructor\":{\"prototype\":{\"polluted\":true}}}",
+          "{\"quantity\":1,\"label\":\"QA\",\"prototype\":{\"role\":\"super_admin\"}}"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "api.json": 422
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "NO_POLLUTION"
+        ],
+        "detail": "Use raw/JSON.parse. Object-literal __proto__ changes prototype; parsing this JSON alone is not proof of pollution."
+      }
+    },
+    {
+      "id": "S-08",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "prototype payload nested ใน allowed field",
+      "category": "S",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "prototypeNested",
+        "args": {
+          "path": "/description",
+          "rawObjects": [
+            "{\"__proto__\":{\"isAdmin\":true}}",
+            "{\"constructor\":{\"prototype\":{\"isAdmin\":true}}}"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "NO_POLLUTION"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-09",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "malformed JSON/truncated/comma/comments/empty",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "raw",
+        "values": [
+          "",
+          "{",
+          "{\"quantity\":1,}",
+          "{\"quantity\":",
+          "{\"quantity\":1 /*x*/}"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "api.json": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-10",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "valid JSON top-level ผิดชนิด",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "raw",
+        "values": [
+          "null",
+          "[]",
+          "\"text\"",
+          "1",
+          "true"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "api.json": 422
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-11",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "duplicate keys: ห้าม first/last-wins เงียบๆ",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "raw",
+        "values": [
+          "{\"quantity\":1,\"quantity\":-1,\"label\":\"QA\"}",
+          "{\"quantity\":-1,\"quantity\":1,\"label\":\"QA\"}"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "api.json": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Proposed duplicate-member rejection; after JSON.parse cannot detect duplicates. No regex-only parser."
+      }
+    },
+    {
+      "id": "S-12",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "nested JSON 100 ชั้น และเกิน depth32",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "nestedJson",
+        "args": {
+          "depths": [
+            33,
+            100
+          ],
+          "rootDepth": 1,
+          "container": "object",
+          "terminal": 1,
+          "layer": "parser_only"
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "api.json": 422
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "detail": "Use structural parser harness so rejection proves depth limit, not unknown-field policy. HTTP-equivalent 422."
+      }
+    },
+    {
+      "id": "S-13",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "parser depth accepted boundary",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "nestedJson",
+        "args": {
+          "depths": [
+            31,
+            32
+          ],
+          "rootDepth": 1,
+          "container": "object",
+          "terminal": 1,
+          "layer": "parser_only"
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "api.json": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "Parser harness only; HTTP-equivalent 200, not an accepted business request."
+      }
+    },
+    {
+      "id": "S-14",
+      "targets": [
+        "api.json",
+        "stripe.webhook"
+      ],
+      "summary": "over-limit raw body B+1 / chunked",
+      "category": "S",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "bodyBytes",
+        "args": {
+          "offsets": [
+            1
+          ],
+          "relativeTo": "target_limit",
+          "encodings": [
+            "ascii",
+            "thai",
+            "emoji"
+          ],
+          "delivery": [
+            "normal",
+            "chunked_no_content_length"
+          ],
+          "validEnvelope": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 413,
+        "httpStatus": {
+          "api.json": 413,
+          "stripe.webhook": 413
+        },
+        "outcome": "reject",
+        "errorCode": "PAYLOAD_TOO_LARGE",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-15",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "body B−1 และ B bytes",
+      "category": "S",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "bodyBytes",
+        "args": {
+          "offsets": [
+            -1,
+            0
+          ],
+          "relativeTo": "target_limit",
+          "encodings": [
+            "ascii",
+            "thai",
+            "emoji"
+          ],
+          "delivery": [
+            "normal"
+          ],
+          "validEnvelope": true,
+          "padding": "metadata.qa_padding",
+          "signFinalBytes": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "RESOURCE_BOUNDED"
+        ],
+        "detail": "Distinct supported events/order per variant; provider extension metadata allowed. Exactly B is not oversized."
+      }
+    },
+    {
+      "id": "S-16",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "Server Action envelope 4MiB+1",
+      "category": "S",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "actionBodyBytes",
+        "args": {
+          "bytes": 4194305,
+          "field": "description",
+          "includeRscOverhead": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 413,
+        "httpStatus": {
+          "admin.product": 413
+        },
+        "outcome": "reject",
+        "errorCode": "PAYLOAD_TOO_LARGE",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "detail": "Actual native protocol under controlled ingress; client serialization failure is not server rejection."
+      }
+    },
+    {
+      "id": "S-17",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "wrong Content-Type/unsupported encoding",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "headers",
+        "args": {
+          "variants": [
+            {
+              "content-type": "text/plain"
+            },
+            {
+              "content-type": "application/x-www-form-urlencoded"
+            },
+            {
+              "content-type": "application/json",
+              "content-encoding": "gzip"
+            }
+          ],
+          "body": "{\"quantity\":1,\"label\":\"QA\"}"
+        }
+      },
+      "expected": {
+        "semanticStatus": 415,
+        "httpStatus": {
+          "api.json": 415
+        },
+        "outcome": "reject",
+        "errorCode": "UNSUPPORTED_MEDIA_TYPE",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Proposed API policy rejects compression before inflation; no unbounded decompression."
+      }
+    },
+    {
+      "id": "S-18",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "invalid UTF8 bytes",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "rawBytes",
+        "args": {
+          "hex": [
+            "c328",
+            "eda080",
+            "ff"
+          ],
+          "insideJsonString": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "api.json": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-19",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "literal NUL inside JSON string",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "rawBytes",
+        "args": {
+          "hex": [
+            "00"
+          ],
+          "insideJsonString": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "api.json": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "S-20",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "escaped NUL: JSON ถูกต้องแต่ field ไม่ผ่าน",
+      "category": "S",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/sku",
+        "values": [
+          "QA\u0000SKU"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Wire contains escaped \\u0000. Also expand into name/description/note contracts, before DB text error."
+      }
+    },
+    {
+      "id": "S-21",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "raw 64-bit tokens ไม่สูญ precision ใน harness",
+      "category": "S",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "raw",
+        "values": [
+          "{\"quantity\":9007199254740993,\"label\":\"QA\"}",
+          "{\"quantity\":9223372036854775807,\"label\":\"QA\"}",
+          "{\"quantity\":18446744073709551615,\"label\":\"QA\"}"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "api.json": 422
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "T-01",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "SKU 0/101 และ whitespace after trim",
+      "category": "T",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stringLength",
+        "args": {
+          "path": "/sku",
+          "lengths": [
+            0,
+            101
+          ],
+          "fill": "A",
+          "extra": [
+            " ",
+            "\t",
+            "\r\n"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Trim before min-length validation; current .min(1).trim() ordering needs regression."
+      }
+    },
+    {
+      "id": "T-02",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "SKU 1/99/100 ASCII ผ่าน",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stringLength",
+        "args": {
+          "path": "/sku",
+          "lengths": [
+            1,
+            99,
+            100
+          ],
+          "fill": "A"
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "T-03",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "name 254/255 ASCII ผ่าน",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stringLength",
+        "args": {
+          "path": "/name",
+          "lengths": [
+            254,
+            255
+          ],
+          "fill": "A"
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "T-04",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "name 256/10KiB/1MiB ไม่ผ่าน field limit",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stringLength",
+        "args": {
+          "path": "/name",
+          "lengths": [
+            256,
+            10240,
+            1048576
+          ],
+          "fill": "A"
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "detail": "1MiB field below 4MiB Action limit; handled field failure, not automatically 413."
+      }
+    },
+    {
+      "id": "T-05",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "description 10KiB และ16KiB boundary ผ่าน",
+      "category": "T",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "utf8FieldBytes",
+        "args": {
+          "path": "/description",
+          "sizes": [
+            10240,
+            16383,
+            16384
+          ],
+          "fill": "A"
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "T-06",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "description 16KiB+1/1MiB",
+      "category": "T",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "utf8FieldBytes",
+        "args": {
+          "path": "/description",
+          "sizes": [
+            16385,
+            1048576
+          ],
+          "fill": "A"
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "RESOURCE_BOUNDED"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "T-07",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "SKU: RTL/ZWSP/ZWJ/homoglyph/control",
+      "category": "T",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/sku",
+        "values": [
+          "ABC‮123",
+          "⁦ABC⁩",
+          "AB​C",
+          "AB‍C",
+          "АBC",
+          "ＡＢＣ",
+          "ABC\u0000",
+          "ABC\r\nX"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "ASCII SKU policy; no aliasing Cyrillic/fullwidth to ASCII. Prose has different policy."
+      }
+    },
+    {
+      "id": "T-08",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "ไทย/Arabic/valid surrogate pair/NFC-NFD ผ่าน",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/name",
+        "values": [
+          "ชุดแต่งรถ",
+          "قطعة سيارة",
+          "A🚗B",
+          "é",
+          "é"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "detail": "Valid prose supported; compare using documented normalization."
+      }
+    },
+    {
+      "id": "T-09",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "unpaired surrogate และ bidi override",
+      "category": "T",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "escapedUnicode",
+        "args": {
+          "path": "/name",
+          "jsonStringTokens": [
+            "\"\\ud800\"",
+            "\"\\udfff\"",
+            "\"ABC\\u202eDEF\""
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Proposed Unicode policy. Preserve escaped lone surrogate bytes; serializer replacement U+FFFD must not masquerade as server validation."
+      }
+    },
+    {
+      "id": "T-10",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "emoji code-point boundary 255",
+      "category": "T",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stringLength",
+        "args": {
+          "path": "/name",
+          "lengths": [
+            255
+          ],
+          "fill": "🚗",
+          "unit": "unicode_code_points"
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "JSON Schema maxLength counts code points; Zod may count UTF16 units. Define one policy and flag mismatch."
+      }
+    },
+    {
+      "id": "T-11",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "SQLi ใน description ต้องเป็น inert text",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/description",
+        "values": [
+          "' OR '1'='1' --",
+          "'); SELECT pg_sleep(2); --",
+          "O'Reilly",
+          "1 UNION SELECT NULL --"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "detail": "Isolated DB/short statement timeout; no query expansion, execution or SQL-induced delay. Status alone cannot prove parameterization."
+      }
+    },
+    {
+      "id": "T-12",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "NoSQL operator object แทน string",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/description",
+        "values": [
+          {
+            "$ne": null
+          },
+          {
+            "$gt": ""
+          },
+          {
+            "$where": "return true"
+          }
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Postgres type-confusion probe; not a claim of MongoDB usage."
+      }
+    },
+    {
+      "id": "T-13",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "Stored XSS ในชื่อสินค้าเป็น plain text",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/name",
+        "values": [
+          "<script>globalThis.__qaXss=1</script>",
+          "<img src=x onerror=\"globalThis.__qaXss=1\">",
+          "<svg onload=\"globalThis.__qaXss=1\">",
+          "javascript:globalThis.__qaXss=1",
+          "\"><img src=x onerror=globalThis.__qaXss=1>"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "detail": "Check admin/storefront/error UI/email sink; no script, event handler or external request. CSP blocking alone not escaping."
+      }
+    },
+    {
+      "id": "T-14",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "Stored HTML ใน description",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/description",
+        "values": [
+          "<a href=\"javascript:globalThis.__qaXss=1\">click</a>",
+          "<iframe srcdoc=\"<script>parent.__qaXss=1</script>\"></iframe>"
+        ]
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "detail": "Plain-text policy. If rich HTML is explicit product behavior, define sanitizer allowlist/DOM assertions before adapting tests."
+      }
+    },
+    {
+      "id": "T-15",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "note field validator: oversize/NUL",
+      "category": "T",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "noteContract",
+        "args": {
+          "variants": [
+            {
+              "kind": "length",
+              "bytes": 2049
+            },
+            {
+              "kind": "length",
+              "bytes": 10240
+            },
+            {
+              "kind": "length",
+              "bytes": 1048576
+            },
+            {
+              "kind": "value",
+              "value": "hello\u0000world"
+            }
+          ],
+          "layer": "field_validator"
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "api.json": 422
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "No checkout note field; HTTP-equivalent for unit validator. Full 1MiB note body can exceed 1MiB including JSON overhead and get 413."
+      }
+    },
+    {
+      "id": "T-16",
+      "targets": [
+        "api.json"
+      ],
+      "summary": "note: HTML/SQL text และ2048-byte boundary ผ่าน",
+      "category": "T",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "noteContract",
+        "args": {
+          "variants": [
+            {
+              "kind": "value",
+              "value": "<img src=x onerror=globalThis.__qaXss=1>"
+            },
+            {
+              "kind": "value",
+              "value": "' OR 1=1 --"
+            },
+            {
+              "kind": "length",
+              "bytes": 2048
+            }
+          ],
+          "layer": "note_adapter"
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "api.json": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "T-17",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "duplicate SKU",
+      "category": "T",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "duplicateSku",
+        "args": {
+          "existing": "QA-SKU-001",
+          "candidate": "QA-SKU-001"
+        }
+      },
+      "expected": {
+        "semanticStatus": 409,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "CONFLICT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Generic conflict; no SQLSTATE/table/constraint. Case-fold equivalence requires explicit policy; exact DB uniqueness alone not case-insensitive."
+      }
+    },
+    {
+      "id": "G-01",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "orderId ผิด UUID/type",
+      "category": "G",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/orderId",
+        "values": [
+          "",
+          "not-a-uuid",
+          "20000000000040008000000000000002",
+          "20000000-0000-4000-8000-000000000002' OR 1=1 --",
+          null,
+          [],
+          {}
+        ]
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "G-02",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "token missing/null/type/length/charset/tamper",
+      "category": "G",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "guestToken",
+        "args": {
+          "variants": [
+            "missing",
+            "null",
+            "array",
+            "object",
+            "empty",
+            "length_63",
+            "length_65",
+            "non_hex_64",
+            "uppercase_valid",
+            "one_char_changed",
+            "leading_space",
+            "trailing_newline",
+            "embedded_nul",
+            "base64_instead_of_hex",
+            "jwt_instead_of_hmac"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 404,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "reject",
+        "errorCode": "NOT_FOUND",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "GUEST_PRIVATE"
+        ],
+        "detail": "Clear all guest cookies; missing explicit token must not accidentally authenticate via cookie."
+      }
+    },
+    {
+      "id": "G-03",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "valid token/order pair",
+      "category": "G",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "guestToken",
+        "args": {
+          "variants": [
+            "valid_parameter",
+            "valid_cookie_only"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "GUEST_PRIVATE"
+        ],
+        "detail": "Auth accepts only scoped DTO; no token reflection. Cookie attributes also asserted HttpOnly/Secure under production-like TLS/SameSite."
+      }
+    },
+    {
+      "id": "G-04",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "token A + order B / nonexistent UUID / customer B",
+      "category": "G",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "guestOwnership",
+        "args": {
+          "variants": [
+            "token_A_order_B",
+            "valid_shape_nonexistent_order",
+            "customer_B_session_order_A",
+            "customer_session_guest_order_wrong_token"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 404,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "reject",
+        "errorCode": "NOT_FOUND",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "GUEST_PRIVATE"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "G-05",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "expiry ก่อนขอบ 1 วินาที",
+      "category": "G",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "guestClock",
+        "args": {
+          "ageSeconds": [
+            604799
+          ],
+          "signedCreationTime": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "TTL=604800 proposed server rule. Cookie age does not substitute for this check."
+      }
+    },
+    {
+      "id": "G-06",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "expiry เท่าขอบ/เกินขอบ",
+      "category": "G",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "guestClock",
+        "args": {
+          "ageSeconds": [
+            604800,
+            604801
+          ],
+          "signedCreationTime": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 404,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "reject",
+        "errorCode": "NOT_FOUND",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "GUEST_PRIVATE"
+        ],
+        "detail": "Expired iff now >= createdAt+TTL. Current verifier lacks expiry enforcement; expected gap until implemented."
+      }
+    },
+    {
+      "id": "G-07",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "creation timestamp invalid/future/seconds-vs-ms",
+      "category": "G",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "guestClock",
+        "args": {
+          "creationValues": [
+            "invalid_date",
+            "now_plus_1_second",
+            "unix_seconds_as_milliseconds",
+            "out_of_date_range"
+          ],
+          "mintForFixture": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 404,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "reject",
+        "errorCode": "NOT_FOUND",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "GUEST_PRIVATE"
+        ],
+        "detail": "Server fixture/validator seam only; attacker cannot submit createdAt through current track API. No unsigned expiry input should be trusted."
+      }
+    },
+    {
+      "id": "G-08",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "token 10KiB/1MiB ใน Action argument",
+      "category": "G",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stringLength",
+        "args": {
+          "path": "/guestToken",
+          "lengths": [
+            10240,
+            1048576
+          ],
+          "fill": "a"
+        }
+      },
+      "expected": {
+        "semanticStatus": 404,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "reject",
+        "errorCode": "NOT_FOUND",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "GUEST_PRIVATE",
+          "RESOURCE_BOUNDED"
+        ],
+        "detail": "Body argument, not URL/cookie header. Header/URL limits tested separately (431/414 if configured), not conflated with 413."
+      }
+    },
+    {
+      "id": "G-09",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "expiry bypass ด้วย body field",
+      "category": "G",
+      "applicability": "adapter_required",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "mergeUnknown",
+        "args": {
+          "objects": [
+            {
+              "expiresAt": "9999-12-31T23:59:59Z"
+            },
+            {
+              "createdAt": "2026-09-24T00:00:00Z"
+            },
+            {
+              "userId": "guest_other"
+            }
+          ],
+          "layer": "normalized_adapter"
+        }
+      },
+      "expected": {
+        "semanticStatus": 422,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "reject",
+        "errorCode": "INVALID_INPUT",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Current actions are positional; applies only to proposed object adapter. Replaying valid token after real server expiry remains G-06."
+      }
+    },
+    {
+      "id": "W-01",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signature missing/empty/wrong secret/tampered",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeSignature",
+        "args": {
+          "variants": [
+            "missing",
+            "empty",
+            "wrong_secret",
+            "wrong_signature",
+            "v0_only",
+            "missing_t",
+            "missing_v1"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "W-02",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "valid signature over exact raw bytes",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeSignature",
+        "args": {
+          "variants": [
+            "valid",
+            "multiple_v1_one_valid",
+            "v1_valid_plus_v0"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "Multiple v1 values may be legitimate during key rotation; don't reject solely because more than one signature."
+      }
+    },
+    {
+      "id": "W-03",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "แก้ whitespace/key order/newline หลังเซ็น",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeSignature",
+        "args": {
+          "variants": [
+            "space_after_sign",
+            "reorder_after_sign",
+            "newline_after_sign",
+            "unicode_escape_after_sign"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Sign first, then mutate bytes. Equivalent parsed JSON is insufficient."
+      }
+    },
+    {
+      "id": "W-04",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signature timestamp age 299/300 seconds",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeTime",
+        "args": {
+          "headerOffsetsSeconds": [
+            -299,
+            -300
+          ],
+          "eventCreatedOffsetSeconds": 0,
+          "freezeClock": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "SDK past-age boundary, frozen integer-second clock. Verify installed version; at tolerance accepted."
+      }
+    },
+    {
+      "id": "W-05",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signature timestamp age 301 seconds",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeTime",
+        "args": {
+          "headerOffsetsSeconds": [
+            -301
+          ],
+          "eventCreatedOffsetSeconds": 0,
+          "freezeClock": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "W-06",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "future skew +30 ผ่านตาม policy",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeTime",
+        "args": {
+          "headerOffsetsSeconds": [
+            30
+          ],
+          "freezeClock": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "W-07",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "future skew +31/+301 ไม่ผ่าน",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeTime",
+        "args": {
+          "headerOffsetsSeconds": [
+            31,
+            301
+          ],
+          "freezeClock": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Additional application policy, not a claim Stripe SDK enforces symmetric ±300 seconds."
+      }
+    },
+    {
+      "id": "W-08",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "t header malformed/NaN/negative/overflow/ms",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeHeaderLexemes",
+        "args": {
+          "timestamps": [
+            "NaN",
+            "Infinity",
+            "-1",
+            "1.5",
+            "1e5",
+            "1790208000junk",
+            "1790208000000",
+            "18446744073709551615"
+          ],
+          "signLexemeExactly": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Tests strict timestamp grammar and range beyond signature digest. Avoid accidental parseInt acceptance."
+      }
+    },
+    {
+      "id": "W-09",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "old event.created แต่ fresh signature",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeTime",
+        "args": {
+          "headerOffsetsSeconds": [
+            0
+          ],
+          "eventCreatedOffsetSeconds": -86400,
+          "freezeClock": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "Valid delayed event for still-applicable fixture; event.created is not delivery signature t. Evaluate order state separately."
+      }
+    },
+    {
+      "id": "W-10",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signed malformed JSON/top-level/type/data.object",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeMalformed",
+        "args": {
+          "variants": [
+            "invalid_json",
+            "null_root",
+            "array_root",
+            "missing_data",
+            "data_null",
+            "object_array",
+            "missing_type",
+            "type_array",
+            "missing_id",
+            "id_object"
+          ],
+          "signFinalBytes": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Correct signature over malformed body; expect generic 400 without TypeError/DB query/500."
+      }
+    },
+    {
+      "id": "W-11",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signed event.created wrong type/noninteger/range",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeEventCreated",
+        "args": {
+          "values": [
+            null,
+            "1790208000",
+            -1,
+            1.5,
+            1790208000000,
+            9007199254740991
+          ],
+          "signFinalBytes": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "W-12",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signed amount_received mismatch/fraction/type",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/data/object/amount_received",
+        "values": [
+          0,
+          -1,
+          -99999,
+          9999,
+          10001,
+          0.30000000000000004,
+          "10000",
+          null,
+          {},
+          2147483647,
+          9007199254740991
+        ]
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "INTEGER_EXACT"
+        ],
+        "detail": "Re-sign each mutated final body. Server stored expected amount=10000; audit row may be inserted, no fulfillment."
+      }
+    },
+    {
+      "id": "W-13",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signed currency mismatch/type/Unicode",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "values",
+        "operation": "set",
+        "path": "/data/object/currency",
+        "values": [
+          "usd",
+          " thb ",
+          "t​hb",
+          "",
+          null,
+          [],
+          {}
+        ]
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Re-sign; malformed currency must not trigger .toLowerCase TypeError/500."
+      }
+    },
+    {
+      "id": "W-14",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signed binding/account/livemode mismatch",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeBinding",
+        "args": {
+          "variants": [
+            "other_payment_intent",
+            "other_order_metadata",
+            "event_livemode_true",
+            "intent_livemode_true",
+            "foreign_account",
+            "invalid_order_uuid"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "This deployment is direct-account-only; connected-account policy differs. Test account/PI/DB ownership, not just HMAC."
+      }
+    },
+    {
+      "id": "W-15",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "sequential duplicate/same PI distinct event IDs",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeDuplicates",
+        "args": {
+          "variants": [
+            "same_event_twice",
+            "different_event_ids_same_pi"
+          ],
+          "concurrency": 1
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "Assert all deliveries HTTP200 after durable success; inventory/state/email logical effects once."
+      }
+    },
+    {
+      "id": "W-16",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "concurrent duplicates",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeDuplicates",
+        "args": {
+          "variants": [
+            "same_event",
+            "different_event_ids_same_pi"
+          ],
+          "concurrency": 2,
+          "barrier": "before_state_transition"
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "Real overlap/barrier, not Promise.all on instant mocks. Retries in runner must not conceal unexpected 500."
+      }
+    },
+    {
+      "id": "W-17",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "out-of-order success แล้ว failed",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeSequence",
+        "args": {
+          "events": [
+            "payment_intent.succeeded",
+            "payment_intent.payment_failed"
+          ],
+          "freshSignatureEach": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "Final order stays paid/fulfilled; no stock restoration, no duplicate receipt."
+      }
+    },
+    {
+      "id": "W-18",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "valid unknown event/additive provider fields",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeExtensions",
+        "args": {
+          "variants": [
+            "unhandled_type",
+            "additional_event_field",
+            "additional_payment_intent_field"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept_or_noop_by_variant",
+        "errorCode": null,
+        "invariants": [
+          "SAFE_ACCEPT"
+        ],
+        "detail": "Unhandled valid event ACK with zero fulfillment; additive fields on handled event accepted. Do not apply client strict-unknown policy to whole Stripe event."
+      }
+    },
+    {
+      "id": "W-19",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "signed event มี prototype key",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripePrototype",
+        "args": {
+          "rawExtension": "\"__proto__\":{\"isAdmin\":true}",
+          "signFinalBytes": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 400,
+        "httpStatus": {
+          "stripe.webhook": 400
+        },
+        "outcome": "reject",
+        "errorCode": "BAD_REQUEST",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "NO_POLLUTION"
+        ],
+        "detail": "Dangerous prototype keys specifically forbidden despite normal provider extensions being allowed."
+      }
+    },
+    {
+      "id": "W-20",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "DB commit failure หลัง valid signature",
+      "category": "W",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "fault",
+        "args": {
+          "at": "fulfillment_transaction_commit",
+          "sentinel": "QA_DB_SENTINEL_SQLSTATE_23505_products_unique",
+          "recoverThenRetry": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 500,
+        "httpStatus": {
+          "stripe.webhook": 500
+        },
+        "outcome": "retry",
+        "errorCode": "INTERNAL_ERROR",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "First HTTP500 generic; retry after recovery HTTP200 exactly one committed fulfillment. No 2xx ACK before commit/durable enqueue."
+      }
+    },
+    {
+      "id": "W-21",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "Resend failure หลัง DB commit",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "fault",
+        "args": {
+          "at": "email_delivery",
+          "sentinel": "QA_RESEND_SENTINEL_SECRET",
+          "recoverThenRetry": true
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "NO_LEAK",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "Requires durable outbox/retry. Fulfillment remains committed once; one pending logical message eventually sent via sink. If durable work not recorded, cannot ACK 200."
+      }
+    },
+    {
+      "id": "W-22",
+      "targets": [
+        "stripe.webhook"
+      ],
+      "summary": "paid after canceled/reservation-expired",
+      "category": "W",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "stripeLatePayment",
+        "args": {
+          "states": [
+            "canceled",
+            "reservation_expired"
+          ],
+          "resolution": "durable_reconciliation"
+        }
+      },
+      "expected": {
+        "semanticStatus": 200,
+        "httpStatus": {
+          "stripe.webhook": 200
+        },
+        "outcome": "accept",
+        "errorCode": null,
+        "invariants": [
+          "NO_LEAK",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "200 only after durable reconciliation/refund job recorded. No blind fulfillment or new stock decrement; failure to persist recovery job ->500 in W-20-style fault test."
+      }
+    },
+    {
+      "id": "A-01",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "anonymous/expired/revoked session",
+      "category": "A",
+      "applicability": "current_surface",
+      "actor": "negative_auth",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "auth",
+        "args": {
+          "identities": [
+            "anonymous",
+            "expired_admin",
+            "revoked_admin",
+            "clerk_customer_without_admin_session"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 401,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "UNAUTHENTICATED",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": ""
+      }
+    },
+    {
+      "id": "A-02",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "authenticated admin role ไม่มี product-write permission",
+      "category": "A",
+      "applicability": "current_surface",
+      "actor": "negative_auth",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "auth",
+        "args": {
+          "identities": [
+            "staff_without_product_write"
+          ],
+          "overrides": [
+            {
+              "role": "super_admin",
+              "isAdmin": true
+            }
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 403,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "reject",
+        "errorCode": "FORBIDDEN",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Server session permission is authoritative; use a fixture role that really lacks this permission. Mere label 'staff' is not proof of denial."
+      }
+    },
+    {
+      "id": "A-03",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "cross-origin cookie-auth mutation",
+      "category": "A",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "origin",
+        "args": {
+          "variants": [
+            "untrusted_origin",
+            "forged_forwarded_host"
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 403,
+        "httpStatus": {
+          "admin.product": 403
+        },
+        "outcome": "reject",
+        "errorCode": "FORBIDDEN",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Native Action boundary; no mutation. Missing Origin is a separate documented proxy policy, not automatically equivalent."
+      }
+    },
+    {
+      "id": "A-04",
+      "targets": [
+        "guest.track"
+      ],
+      "summary": "rate limit exceeded",
+      "category": "A",
+      "applicability": "proposed_contract",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "rateLimit",
+        "args": {
+          "limitFixture": "configured_guest_tracking_limit",
+          "extraRequests": 1
+        }
+      },
+      "expected": {
+        "semanticStatus": 429,
+        "httpStatus": {
+          "guest.track": 200
+        },
+        "outcome": "reject",
+        "errorCode": "RATE_LIMITED",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Isolated rate-limit backend/key; bounded sequential requests; Retry-After present, no identity leak. Existing limit not assumed."
+      }
+    },
+    {
+      "id": "A-05",
+      "targets": [
+        "admin.product"
+      ],
+      "summary": "unexpected Drizzle/Neon error injection",
+      "category": "A",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "fault",
+        "args": {
+          "at": "product_write",
+          "sentinel": "QA_DB_SENTINEL_SQLSTATE_23505_products_unique_stack_secret"
+        }
+      },
+      "expected": {
+        "semanticStatus": 500,
+        "httpStatus": {
+          "admin.product": 200
+        },
+        "outcome": "retry",
+        "errorCode": "INTERNAL_ERROR",
+        "invariants": [
+          "NO_LEAK",
+          "REJECT_NO_EFFECT"
+        ],
+        "detail": "Handled Action wire200 + failure; semantic500. No raw error.message/cause/stack in client response."
+      }
+    },
+    {
+      "id": "A-06",
+      "targets": [
+        "checkout.create"
+      ],
+      "summary": "สอง checkout แย่งชิ้นสุดท้าย",
+      "category": "A",
+      "applicability": "current_surface",
+      "actor": "target_default",
+      "fixture": "target_default",
+      "input": {
+        "mode": "recipe",
+        "name": "checkoutRace",
+        "args": {
+          "stockBefore": 1,
+          "quantityEach": 1,
+          "requests": 2,
+          "barrier": "before_stock_reservation",
+          "expectedStatuses": [
+            200,
+            409
+          ]
+        }
+      },
+      "expected": {
+        "semanticStatus": 409,
+        "httpStatus": {
+          "checkout.create": 200
+        },
+        "outcome": "one_accept_one_conflict",
+        "errorCode": "CONFLICT",
+        "invariants": [
+          "NO_LEAK",
+          "AUTHORITATIVE",
+          "AT_MOST_ONCE"
+        ],
+        "detail": "One semantic200 and one409, both handled Action wire200. One order/reservation, stock0; rejecter no Stripe/Resend. Verify bundle shared-parts variant too."
+      }
+    }
+  ],
+  "recipeDefinitions": {
+    "integerLexemes": "Expand lexemes × encodings. raw JSON numeric_token: insert lexeme without Number()/parseInt()/JSON.stringify(number). numeric_string: JSON.stringify lexeme. For Server Action numbers outside representable range report lexical limitation and run raw-parser counterpart; never claim original 64-bit value reached handler.",
+    "fieldValuesByTarget": "For each target map its JSON pointer, set one listed value at a time on a fresh valid fixture.",
+    "nativeValues": "Use a fixed switch for NaN, Infinity, -Infinity. Invoke validator/Action only through supported native serialization. Do not eval, and never JSON.stringify nonfinite values as the intended test.",
+    "stockArithmetic": "For each variant seed stockBefore then call delta mutation with supplied delta. Expect unchanged row on under/overflow.",
+    "decimalConversion": "Call major-unit converter with variant.input; compare returned integer to BigInt(expectedSatang); reject unsafe intermediates. Do not convert expected decimal strings via float.",
+    "clientPriceTamper": "Change known item unitPrice for each variant and productName; keep valid product ID; expected DB price/name snapshot always server authoritative.",
+    "duplicateLineDemand": "Two lines reference same fixture product. Quantities aggregate before atomic reserve; also apply to bundle/shared child demand.",
+    "moneyArithmetic": "Run pure total calculation/validation seam with BigInt decimal oracle. Numeric validation and final payable cap both apply. Server client amount ignored test is separate.",
+    "checkoutItems": "Construct exactly the named structure; valid-items variants use complete valid rows and adequate stock. 100 distinct fixture products for success; no repeated IDs accidentally altering oracle.",
+    "deleteRequired": "Delete exactly one named required property per variant, not set to undefined/null. Native positional contracts map in adapter.",
+    "mergeUnknown": "Merge each extra object into otherwise valid root. Preserve own properties safely without generic unsafe deep merge. For positional Action adapter cases keep applicability unimplemented.",
+    "prototypeNested": "JSON.parse exact rawObject and set at named field; isolate process, capture Object.prototype before/after; do not synthesize __proto__ using JS object literal.",
+    "nestedJson": "Build bottom-up containers; depth includes root=1. Do not infer stack exhaustion from depth100; demonstrate configured parser depth limit. Parser-only harness has equivalent status and cannot prove business HTTP authorization.",
+    "bodyBytes": "Build otherwise-valid envelope with padding to exact UTF8 byte count B+offset using Buffer.byteLength, ASCII remainder for multi-byte fills. Stripe padding inside data.object.metadata, then sign final body. Missing/chunked Content-Length must preserve same actual bytes. No HTTP desynchronization required.",
+    "actionBodyBytes": "Capture actual current-build RSC action request, alter text payload and include protocol overhead in byte target. Verify controlled test ingress response separately from field validation. Do not invent action IDs.",
+    "headers": "Send given bytes unchanged under each declared header set to isolated JSON adapter; do not auto-serialize or auto-decompress unsupported request format.",
+    "rawBytes": "Splice given hex bytes inside JSON string value of label field of otherwise-valid body. Send Buffer bytes; verify client did not replace invalid UTF8. Literal NUL is invalid JSON; escaped NUL is valid syntax.",
+    "stringLength": "Construct fill repeated lengths times, respecting declared unit (default ASCII characters); apply extra strings as independent variants. Fresh accepted SKU per test or reset fixture; do not append suffix beyond boundary.",
+    "utf8FieldBytes": "Construct exact UTF8 field byte count. Total request body measured separately; multibyte variants may use ASCII remainder.",
+    "escapedUnicode": "Insert jsonStringTokens verbatim as field JSON tokens, or parse token to native value with a serializer that preserves escaped lone surrogates. Record bytes. Reject tests if client silently repairs input.",
+    "noteContract": "Separate field-validator/normalized-note adapter from actual checkout which has no note. Per-variant text/value/length; apply note byte cap 2048 and plain-text rendering rules.",
+    "duplicateSku": "Seed existing SKU then create another row (or update distinct row) with same candidate. Isolated transaction/unique constraint race optional; return generic409, no partial mutation.",
+    "guestToken": "Mint valid token using fixture server secret then derive each variant. missing deletes argument and cookie, null differs from missing. valid_cookie_only sets cookie and omits argument. Clear cookies between runs.",
+    "guestOwnership": "Prepare A/B orders and users, same shape UUIDs. Use cross-bound tokens/sessions. Nonexistent UUID should have same generic404 as inaccessible existing order.",
+    "guestClock": "Freeze server clock, not only browser. Seed authoritative createdAt or invoke verifier seam for malformed creationValues, mint matching token where representable. Expired iff now>=createdAt+TTL; no client-supplied expiry can extend.",
+    "stripeSignature": "Fresh valid bound event/order. Generate real HMAC signature except named corruption variants; multiple_v1 contains one valid plus invalid digest. For after_sign variants mutate bytes after computing digest and do not re-sign.",
+    "stripeTime": "Freeze integer-second clock; independently vary signature t and event.created. Sign each final body correctly at requested header timestamp; past tolerance300, proposed future skew30.",
+    "stripeHeaderLexemes": "Use HMAC over exact timestamp lexeme + '.' + raw body; generate header with malformed t. This tests parser strictness even if cryptographic bytes match.",
+    "stripeMalformed": "Construct each malformed variant directly from stripe baseline or raw invalid JSON; compute a valid signature for final bytes. No mocked verifier; schema failure cannot be masked by bad digest.",
+    "stripeEventCreated": "Replace event.created then sign final bytes. Timestamp should be nonnegative integer epoch seconds within valid service horizon; old legitimate delivery stays valid if signature/state valid.",
+    "stripeBinding": "Mutate only specified binding/account/mode; create order B with same total but different bound PI to isolate ownership failure. Sign final body.",
+    "stripeDuplicates": "Sequential duplicate sends or barrier-controlled two concurrent requests. Fresh state per variant; distinct event IDs can still refer to same PI. Re-sign all deliveries; assert durable business effect once.",
+    "stripeSequence": "Send ordered list of supported event types with correct final fields/status and fresh signatures; inspect final state and ledgers after all responses.",
+    "stripeExtensions": "Unhandled type =>200/no-op; normal additive field on supported event =>200/intended fulfillment. Dangerous prototype members tested separately.",
+    "stripePrototype": "Insert rawExtension as own key into signed envelope; no unsafe Object.assign fixture construction. Reject dangerous keys without prototype side effects.",
+    "fault": "Inject sentinel error at declared seam with isolated test dependency. Assert first expected status; recoverThenRetry retries same business identity with fresh webhook signature, expect200 and invariants. For email fault200 requires durable retry record before ACK.",
+    "stripeLatePayment": "Seed canceled/expired order and otherwise-valid confirmed payment. Capture durable reconciliation/refund job; no blind fulfillment or duplicate decrement. If unable to persist recovery job, expected500, as separate injected failure.",
+    "auth": "Supply otherwise-valid input and selected session. Role/input overrides never grant permission. Use real auth boundary rather than only mocking validateSession.",
+    "origin": "Send cookie-authenticated native Action with exact Origin/proxy headers; trusted test reverse-proxy setup required. No side effects, generic403 from controlled ingress.",
+    "rateLimit": "Set known test-only limit in isolated backend, issue bounded requests from fixed test identity/key, first request above limit429 and Retry-After. Unknown configuration is UNIMPLEMENTED.",
+    "checkoutRace": "Barrier-controlled two checkout requests against same last-stock row; one success one conflict, unordered expected semantic statuses [200,409]. Repeat for two bundles sharing the same final child part."
+  }
+}

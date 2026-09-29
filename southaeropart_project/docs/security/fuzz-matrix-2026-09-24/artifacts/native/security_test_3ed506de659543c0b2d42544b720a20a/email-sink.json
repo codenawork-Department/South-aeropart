@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "actualResendSdk": true,
+  "sinkMessages": 1,
+  "externalDelivery": false,
+  "storedPayloadReadback": true,
+  "renderedHtmlBytes": 10671,
+  "scriptNodes": 0,
+  "dangerousAttributes": 0,
+  "marker": null,
+  "scope": "Shipment helper via test-only copied-app action; email HTML in Chromium, not an email client or corpus-wide PLAIN_TEXT proof"
+}

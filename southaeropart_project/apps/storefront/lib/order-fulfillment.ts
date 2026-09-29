@@ -5,6 +5,8 @@ import {
   db,
   orders,
   orderEmailJobs,
+  stripeWebhookEvents,
+  paymentReconciliationJobs,
   orderItems,
   orderStatusHistory,
   orderItemBundleParts,
@@ -30,6 +32,7 @@ export interface FulfillPaymentParams {
   method: "stripe" | "promptpay" | "mock";
   chargeId?: string;
   note?: string;
+  webhook?: { eventId: string; eventType: string };
 }
 
 /**
@@ -100,12 +103,21 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
       throw new Error("Payment is not confirmed by the provider");
     }
     const txResult = await db.transaction(async (tx) => {
+      if (params.webhook) {
+        const [claimed] = await tx.insert(stripeWebhookEvents).values({ ...params.webhook, orderId }).onConflictDoNothing().returning({ eventId: stripeWebhookEvents.eventId });
+        if (!claimed) {
+          const [existing] = await tx.select({ orderId: stripeWebhookEvents.orderId }).from(stripeWebhookEvents).where(eq(stripeWebhookEvents.eventId, params.webhook.eventId));
+          if (existing?.orderId !== orderId) throw new Error("Event binding mismatch");
+          return { notFound: false, alreadyPaid: true, partsToSync: [] };
+        }
+      }
       const [order] = await tx
         .select({
           id: orders.id,
           paymentStatus: orders.paymentStatus,
           status: orders.status,
           inventoryState: orders.inventoryState,
+          reservationExpiresAt: orders.reservationExpiresAt,
           total: orders.total,
           currency: orders.currency,
           stripePaymentIntentId: orders.stripePaymentIntentId,
@@ -113,7 +125,7 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
         })
         .from(orders)
         .where(eq(orders.id, orderId))
-        .limit(1);
+        .limit(1).for("no key update");
 
       if (!order) {
         return { notFound: true, alreadyPaid: false, partsToSync: [] };
@@ -126,7 +138,11 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
         return { notFound: false, alreadyPaid: true, partsToSync: [] };
       }
 
-      if (order.status !== "pending" || !["pending", "failed", "authorized"].includes(order.paymentStatus) || order.inventoryState !== "reserved") {
+      if (order.status !== "pending" || !["pending", "failed", "authorized"].includes(order.paymentStatus) || order.inventoryState !== "reserved" || (order.reservationExpiresAt && order.reservationExpiresAt.getTime() <= Date.now())) {
+        if (verifiedIntent) {
+          await tx.insert(paymentReconciliationJobs).values({ orderId, paymentIntentId: verifiedIntent.id, reason: "confirmed_payment_without_active_reservation" }).onConflictDoNothing();
+          return { notFound: false, alreadyPaid: false, reconciliation: true, partsToSync: [] };
+        }
         throw new Error("Order requires payment reconciliation");
       }
       // 1. Atomic update to mark paid
@@ -176,9 +192,7 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
       return { success: false, error: "Order not found" };
     }
 
-    if (txResult.alreadyPaid) {
-      return { success: true, message: "Order is already paid" };
-    }
+    if ("reconciliation" in txResult && txResult.reconciliation) return { success: true, reconciliationPending: true };
 
     // 4. Synchronize bundle stock for constituent parts (post-transaction)
     for (const partId of txResult.partsToSync) {
@@ -189,8 +203,10 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
     try {
       await dispatchOrderEmailJob(orderId);
     } catch (emailErr) {
-      console.warn("[fulfillOrderPayment] Failed to send order confirmation email:", emailErr);
+      process.stderr.write(JSON.stringify({ event: "payment.email.pending" }) + "\n");
     }
+
+    if (txResult.alreadyPaid) return { success: true, message: "Order is already paid" };
 
     safeRevalidatePath(`/orders/${orderId}`);
     safeRevalidatePath(`/checkout/payment/${orderId}`);
@@ -198,7 +214,7 @@ export async function fulfillOrderPayment(orderId: string, params: FulfillPaymen
 
     return { success: true, message: "ชำระเงินสำเร็จเรียบร้อยแล้ว!" };
   } catch (error) {
-    console.error("[fulfillOrderPayment] Error:", error);
+    process.stderr.write(JSON.stringify({ event: "payment.fulfillment.failed" }) + "\n");
     return { success: false, error: "Failed to fulfill payment" };
   }
 }

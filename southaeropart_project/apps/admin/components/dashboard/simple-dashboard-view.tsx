@@ -229,7 +229,7 @@ export function SimpleDashboardView({ onSwitchToAnalyst }: SimpleDashboardViewPr
                 <span className="text-[10px] font-mono text-emerald-400 font-bold">Repeat 35%</span>
               </div>
               <p className="text-[11px] text-gray-400 leading-relaxed">
-                ยิง Automation หลังซื้อ 14 วัน มอบคูปอง 10% สำหรับชิ้นถัดไป ลดพึ่งพาค่าแอด
+                ติดตามความพึงพอใจหลังซื้อ 14 วัน และแนะนำสินค้าที่ตรงกับการใช้งาน
               </p>
             </div>
 

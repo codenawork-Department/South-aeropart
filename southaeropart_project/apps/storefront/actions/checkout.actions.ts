@@ -47,6 +47,9 @@ import {
 } from "@repo/lib";
 import { syncUserWithClerk } from "@/lib/user-sync";
 import { fulfillOrderPayment, syncBundleStockForChildPart } from "@/lib/order-fulfillment";
+import { orderReadDto } from "@/lib/order-read-dto";
+import { parseOrderReadInput, type OrderReadInput } from "@/lib/order-read-input";
+import { orderReadLimit } from "@/lib/order-read-limit";
 import {
   generateGuestOrderToken,
   verifyGuestOrderToken,
@@ -64,36 +67,9 @@ import {
    ZOD SCHEMAS & TYPES
    ========================================================================= */
 
-const addressSchema = z.object({
-  recipientName: z.string().trim().min(1, "กรุณากรอกชื่อผู้รับ"),
-  phone: z.string().trim().min(8, "กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง"),
-  email: z.string().trim().email("กรุณากรอกอีเมลที่ถูกต้อง").optional().or(z.literal("")),
-  line1: z.string().trim().min(1, "กรุณากรอกที่อยู่ (บ้านเลขที่, ถนน/ซอย)"),
-  line2: z.string().trim().optional(),
-  subDistrict: z.string().trim().min(1, "กรุณากรอกตำบล/แขวง"),
-  district: z.string().trim().min(1, "กรุณากรอกอำเภอ/เขต"),
-  province: z.string().trim().min(1, "กรุณากรอกจังหวัด"),
-  postalCode: z.string().trim().length(5, "รหัสไปรษณีย์ต้องเป็น 5 หลัก"),
-});
-
-const checkoutItemSchema = z.object({
-  productId: z.string().uuid("รหัสสินค้าไม่ถูกต้อง"),
-  productName: z.string().min(1),
-  quantity: z.number().int().positive().max(100),
-  unitPrice: z.string(),
-  variant: z.string().optional(),
-});
-
-const checkoutSchema = z.object({
-  shippingAddress: addressSchema,
-  billingAddress: addressSchema.optional(),
-  shippingMethod: z.enum(["standard", "express"]).default("standard"),
-  paymentMethod: z.enum(["credit_card", "promptpay"]).default("promptpay"),
-  items: z.array(checkoutItemSchema).min(1, "ตะกร้าสินค้าว่างเปล่า").max(100),
-  saveAddress: z.boolean().optional().default(false),
-});
-
-export type CheckoutInput = z.infer<typeof checkoutSchema>;
+import { checkoutSchema, type CheckoutInput } from "@/lib/checkout-input";
+import { checkoutFailure, checkoutException } from "@/lib/checkout-errors";
+import { checkedPayableSatang, formatSatang } from "@repo/lib/money-arithmetic";
 
 /* =========================================================================
    CHECKOUT ACTIONS
@@ -110,7 +86,7 @@ export async function createOrder(input: CheckoutInput) {
     try {
       clerkUserId = (await auth()).userId;
     } catch {
-      return { success: false, error: "Unable to verify authentication" };
+      return checkoutFailure("UNAUTHENTICATED");
     }
 
     let orderUserId = clerkUserId;
@@ -123,12 +99,12 @@ export async function createOrder(input: CheckoutInput) {
         .where(eq(users.id, orderUserId))
         .limit(1);
 
-      if (existing?.isBanned) return { success: false, error: "Account is disabled" };
+      if (existing?.isBanned) return checkoutFailure("FORBIDDEN");
       if (!existing) {
         const clerkUser = await currentUser();
         const verifiedEmail = clerkUser?.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId && e.verification?.status === "verified");
         if (!clerkUser || clerkUser.id !== orderUserId || !verifiedEmail) {
-          return { success: false, error: "Verified account email is required" };
+          return checkoutFailure("FORBIDDEN");
         }
         const email = verifiedEmail.emailAddress;
         const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || validated.shippingAddress.recipientName;
@@ -154,17 +130,14 @@ export async function createOrder(input: CheckoutInput) {
         // Fallback in test runner without request headers
       }
 
-      if (!await takeRateLimit(`guest-checkout:${clientIp}`, 5, 15 * 60000)) return { success: false, error: "Too many checkout attempts" };
+      if (!await takeRateLimit(`guest-checkout:${clientIp}`, 5, 15 * 60000)) return checkoutFailure("RATE_LIMITED");
       const ipRateCheck = globalStorefrontRateLimiter.check(
         `guest_checkout_${clientIp}`,
         RATE_LIMIT_PRESETS.SENSITIVE
       );
 
       if (!ipRateCheck.success) {
-        return {
-          success: false,
-          error: `คำขอสร้างคำสั่งซื้อเกินจำนวนที่กำหนด กรุณารอ ${ipRateCheck.retryAfter} วินาที หรือเข้าสู่ระบบเพื่อดำเนินการต่อ`,
-        };
+        return checkoutFailure("RATE_LIMITED");
       }
 
       // Also enforce DB email check
@@ -181,21 +154,12 @@ export async function createOrder(input: CheckoutInput) {
         );
 
       if (recentGuestOrders.length >= 5) {
-        return {
-          success: false,
-          error: "คุณสร้างคำสั่งซื้อเกินจำนวนที่กำหนดสำหรับลูกค้าทั่วไป กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ",
-        };
+        return checkoutFailure("RATE_LIMITED");
       }
 
       // A supplied email never grants identity or ownership of an existing user.
       const generatedGuestId = `guest_${randomBytes(24).toString("hex")}`;
-      const [createdGuest] = await db.insert(users).values({
-        id: generatedGuestId,
-        email: `${generatedGuestId}@southaero.local`,
-        fullName: validated.shippingAddress.recipientName,
-        phone: validated.shippingAddress.phone,
-      }).returning({ id: users.id });
-      orderUserId = createdGuest.id;
+      orderUserId = generatedGuestId;
     }
 
     if (!orderUserId) {
@@ -214,7 +178,7 @@ export async function createOrder(input: CheckoutInput) {
     }
 
     const verifiedItems: VerifiedItem[] = [];
-    let subtotalSatang = 0;
+    let subtotalSatang = 0n;
 
     const itemProductIds = Array.from(new Set(validated.items.map((i) => i.productId)));
     const productRows = await db
@@ -258,27 +222,18 @@ export async function createOrder(input: CheckoutInput) {
       const productRow = productMap.get(item.productId);
 
       if (!productRow) {
-        return {
-          success: false,
-          error: `ไม่พบข้อมูลสินค้า "${item.productName}" ในระบบ`,
-        };
+        return checkoutFailure("CONFLICT");
       }
 
       if (productRow.status !== "active") {
-        return {
-          success: false,
-          error: `สินค้า "${productRow.name}" ขณะนี้ยังไม่เปิดจำหน่ายหรือสินค้าหมดชั่วคราว`,
-        };
+        return checkoutFailure("CONFLICT");
       }
 
       // Non-authoritative stock check for early UX feedback
       if (productRow.stockQuantity < item.quantity) {
         const label = productRow.productType === "bundle" ? "ชุดแต่ง" : "สินค้า";
         const unit = productRow.productType === "bundle" ? "ชุด" : "ชิ้น";
-        return {
-          success: false,
-          error: `${label} "${productRow.name}" มีสต็อกคงเหลือไม่เพียงพอ (คงเหลือ ${productRow.stockQuantity} ${unit}, ท่านสั่งซื้อ ${item.quantity} ${unit})`,
-        };
+        return checkoutFailure("CONFLICT");
       }
 
       // Bundle child parts: check status and stock (non-authoritative)
@@ -286,25 +241,19 @@ export async function createOrder(input: CheckoutInput) {
         const childParts = bundlePartsMap.get(item.productId) || [];
         for (const childPart of childParts) {
           if (childPart.childStatus !== "active") {
-            return {
-              success: false,
-              error: `ชิ้นส่วน "${childPart.childName}" ในชุดแต่ง "${productRow.name}" ขณะนี้ไม่พร้อมจำหน่าย`,
-            };
+            return checkoutFailure("CONFLICT");
           }
           const requiredChildQuantity = childPart.partQtyInBundle * item.quantity;
           if (childPart.childStock < requiredChildQuantity) {
-            return {
-              success: false,
-              error: `ชิ้นส่วน "${childPart.childName}" ในชุดแต่ง "${productRow.name}" มีสต็อกไม่เพียงพอ (คงเหลือ ${childPart.childStock} ชิ้น, จำเป็นต้องใช้ ${requiredChildQuantity} ชิ้น)`,
-            };
+            return checkoutFailure("CONFLICT");
           }
         }
       }
 
       // Authoritative server-side price calculation (SEC-01 & decimal-safe satang arithmetic)
       const authoritativeUnitPrice = productRow.price;
-      const unitPriceSatang = toSmallestCurrencyUnit(authoritativeUnitPrice);
-      const itemTotalSatang = unitPriceSatang * item.quantity;
+      const unitPriceSatang = BigInt(toSmallestCurrencyUnit(authoritativeUnitPrice));
+      const itemTotalSatang = unitPriceSatang * BigInt(item.quantity);
       subtotalSatang += itemTotalSatang;
 
       verifiedItems.push({
@@ -313,24 +262,24 @@ export async function createOrder(input: CheckoutInput) {
         variant: item.variant,
         quantity: item.quantity,
         unitPrice: authoritativeUnitPrice,
-        lineTotal: (itemTotalSatang / 100).toFixed(2),
+        lineTotal: formatSatang(itemTotalSatang),
         productType: productRow.productType as "single" | "bundle",
       });
     }
 
     // Calculate shipping fee using exact satang units
-    let shippingFeeSatang = 0;
+    let shippingFeeSatang = 0n;
     if (validated.shippingMethod === "express") {
-      shippingFeeSatang = 450 * 100;
+      shippingFeeSatang = 45000n;
     } else {
       // Standard: 150 THB, free if subtotal >= 15,000 THB (1,500,000 satang)
-      shippingFeeSatang = subtotalSatang >= 15000 * 100 ? 0 : 150 * 100;
+      shippingFeeSatang = subtotalSatang >= 1500000n ? 0n : 15000n;
     }
 
-    const totalSatang = subtotalSatang + shippingFeeSatang;
-    const subtotalStr = (subtotalSatang / 100).toFixed(2);
-    const shippingFeeStr = (shippingFeeSatang / 100).toFixed(2);
-    const totalStr = (totalSatang / 100).toFixed(2);
+    const totalSatang = checkedPayableSatang([subtotalSatang, shippingFeeSatang]);
+    const subtotalStr = formatSatang(subtotalSatang);
+    const shippingFeeStr = formatSatang(shippingFeeSatang);
+    const totalStr = formatSatang(totalSatang);
 
     // Audit #16: Cryptographically random 8-char hex suffix prevents collision (4.3B combinations/day)
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -363,6 +312,11 @@ export async function createOrder(input: CheckoutInput) {
 
     // ── Audit #2 & CRIT-01: Atomic Multi-Table Transaction ─────────────────────
     const createdOrder = await db.transaction(async (tx) => {
+      // Guest identity is committed only with its successful order/reservation.
+      if (!clerkUserId) await tx.insert(users).values({
+        id: orderUserId, email: `${orderUserId}@southaero.local`,
+        fullName: validated.shippingAddress.recipientName, phone: validated.shippingAddress.phone,
+      });
       // 1. Insert order
       const [newOrder] = await tx
         .insert(orders)
@@ -385,6 +339,7 @@ export async function createOrder(input: CheckoutInput) {
               : "South Aero Standard Logistics",
           shippingAddress: formattedShippingAddress,
           billingAddress: formattedBillingAddress,
+          customerNote: validated.customerNote?.trim() ? validated.customerNote : null,
         })
         .returning();
 
@@ -493,14 +448,7 @@ export async function createOrder(input: CheckoutInput) {
       redirectUrl,
     };
   } catch (error) {
-    console.error("[createOrder] Error:", error);
-    return {
-      success: false,
-      error:
-        error instanceof Error && error.message.startsWith("สินค้า")
-          ? error.message
-          : "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง",
-    };
+    return checkoutException(error);
   }
 }
 
@@ -516,12 +464,22 @@ export interface OrderItemBundlePartDetail {
   createdAt: Date;
 }
 
+function orderReadFailure(code: "INVALID_INPUT" | "NOT_FOUND" | "INTERNAL_ERROR" | "RATE_LIMITED") {
+  const messages = { INVALID_INPUT: "Invalid request", NOT_FOUND: "Resource not found", INTERNAL_ERROR: "Unable to process request", RATE_LIMITED:"Too many requests" };
+  // Keep the string error for existing callers; add a stable code without exposing identity.
+  return { success: false as const, code, error: messages[code], data: null };
+}
+
 /**
  * Retrieves full order details including items, products, and status history.
  */
-export async function getOrderDetails(orderId: string, guestToken?: string) {
+export async function getOrderDetails(input: string | OrderReadInput, positionalToken?: string) {
+  const parsed = parseOrderReadInput(input, positionalToken);
+  if (!parsed) return orderReadFailure("INVALID_INPUT");
+  const { orderId, guestToken } = parsed;
   try {
-    z.string().uuid().parse(orderId);
+    const limit=await orderReadLimit();
+    if(!limit.allowed)return {...orderReadFailure("RATE_LIMITED"),retryAfter:limit.retryAfter};
 
     const [order] = await db
       .select()
@@ -529,7 +487,7 @@ export async function getOrderDetails(orderId: string, guestToken?: string) {
       .where(eq(orders.id, orderId))
       .limit(1);
     if (!order) {
-      return { success: false, error: "Order not found", data: null };
+      return orderReadFailure("NOT_FOUND");
     }
 
     // IDOR Security Guard (SEC §5.1):
@@ -543,20 +501,20 @@ export async function getOrderDetails(orderId: string, guestToken?: string) {
       }
 
       if (!currentUserId || currentUserId !== order.userId) {
-        return { success: false, error: "Unauthorized access to order details", data: null };
+        return orderReadFailure("NOT_FOUND");
       }
     } else {
       // 2. Guest orders must present a valid cryptographic access token (via param or HttpOnly cookie)
-      const effectiveToken = guestToken || await getGuestTokenFromCookie(orderId);
+      const effectiveToken = guestToken === undefined ? await getGuestTokenFromCookie(orderId) : guestToken;
       const isTokenValid = verifyGuestOrderToken(
-        effectiveToken,
+        typeof effectiveToken === "string" ? effectiveToken : null,
         order.id,
         order.userId,
         order.createdAt
       );
 
       if (!isTokenValid) {
-        return { success: false, error: "Unauthorized access to guest order details", data: null };
+        return orderReadFailure("NOT_FOUND");
       }
     }
 
@@ -636,7 +594,8 @@ export async function getOrderDetails(orderId: string, guestToken?: string) {
 
     // Fetch status history
     const history = await db
-      .select()
+      .select({ id: orderStatusHistory.id, orderId: orderStatusHistory.orderId,
+        status: orderStatusHistory.status, createdAt: orderStatusHistory.createdAt })
       .from(orderStatusHistory)
       .where(eq(orderStatusHistory.orderId, orderId))
       .orderBy(desc(orderStatusHistory.createdAt));
@@ -645,23 +604,27 @@ export async function getOrderDetails(orderId: string, guestToken?: string) {
       success: true,
       error: null,
       data: {
-        order,
+        order: orderReadDto(order),
         items: itemsWithImages,
         history,
       },
     };
   } catch (error) {
-    console.error("[getOrderDetails] Error:", error);
-    return { success: false, error: "Failed to load order details", data: null };
+    console.error("[getOrderDetails] Lookup failed");
+    return orderReadFailure("INTERNAL_ERROR");
   }
 }
 
 /**
  * Fast check for order payment status (used for Polling on the payment page).
  */
-export async function getOrderStatus(orderId: string, guestToken?: string) {
+export async function getOrderStatus(input: string | OrderReadInput, positionalToken?: string) {
+  const parsed = parseOrderReadInput(input, positionalToken);
+  if (!parsed) return orderReadFailure("INVALID_INPUT");
+  const { orderId, guestToken } = parsed;
   try {
-    z.string().uuid().parse(orderId);
+    const limit=await orderReadLimit();
+    if(!limit.allowed)return {...orderReadFailure("RATE_LIMITED"),retryAfter:limit.retryAfter};
     const [order] = await db
       .select({
         id: orders.id,
@@ -676,7 +639,7 @@ export async function getOrderStatus(orderId: string, guestToken?: string) {
       .limit(1);
 
     if (!order) {
-      return { success: false, error: "Order not found" };
+      return orderReadFailure("NOT_FOUND");
     }
 
     // IDOR Security Guard (SEC §5.1): Registered users check ownership; guests check cryptographic token
@@ -689,18 +652,18 @@ export async function getOrderStatus(orderId: string, guestToken?: string) {
       }
 
       if (!currentUserId || currentUserId !== order.userId) {
-        return { success: false, error: "Unauthorized access to order status" };
+        return orderReadFailure("NOT_FOUND");
       }
     } else {
-      const effectiveToken = guestToken || await getGuestTokenFromCookie(orderId);
+      const effectiveToken = guestToken === undefined ? await getGuestTokenFromCookie(orderId) : guestToken;
       const isTokenValid = verifyGuestOrderToken(
-        effectiveToken,
+        typeof effectiveToken === "string" ? effectiveToken : null,
         order.id,
         order.userId,
         order.createdAt
       );
       if (!isTokenValid) {
-        return { success: false, error: "Unauthorized access to order status" };
+        return orderReadFailure("NOT_FOUND");
       }
     }
 
@@ -712,7 +675,7 @@ export async function getOrderStatus(orderId: string, guestToken?: string) {
       orderNumber: order.orderNumber,
     };
   } catch (error) {
-    return { success: false, error: "Failed to check status" };
+    return orderReadFailure("INTERNAL_ERROR");
   }
 }
 
@@ -872,6 +835,7 @@ export async function createOrGetStripePaymentIntent(
               note: "ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Auto-recovered in createOrGetStripePaymentIntent)",
             });
             if (!recovered.success) return recovered;
+            if ("reconciliationPending" in recovered && recovered.reconciliationPending) return { success: false, error: "Payment is awaiting review" };
             return {
               success: true,
               isAlreadyPaid: true,

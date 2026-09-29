@@ -46,6 +46,7 @@ export const orders = pgTable("orders", {
   shippingCarrier: text("shipping_carrier"),
   shippingAddress: jsonb("shipping_address").$type<Address>().notNull(),
   billingAddress: jsonb("billing_address").$type<Address>(),
+  customerNote: text("customer_note"),
   // Which admin is currently handling this order (support / fulfillment).
   assignedAdminId: uuid("assigned_admin_id").references(() => adminUsers.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -56,6 +57,7 @@ export const orders = pgTable("orders", {
   createdAtIdx: index("orders_created_at_idx").on(table.createdAt),
   stripeIntentUnique: uniqueIndex("orders_stripe_intent_unique").on(table.stripePaymentIntentId),
   inventoryStateCheck: check("orders_inventory_state_check", sql`${table.inventoryState} IN ('legacy', 'reserved', 'consumed', 'released')`),
+  customerNoteSizeCheck: check("orders_customer_note_size_check", sql`octet_length(${table.customerNote}) <= 2048`),
 }));
 
 export const orderItems = pgTable("order_items", {
@@ -89,6 +91,22 @@ export const orderEmailJobs = pgTable("order_email_jobs", {
   leaseId: uuid("lease_id"),
   leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
   sentAt: timestamp("sent_at", { withTimezone: true }),
+});
+
+export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
+  eventId: text("event_id").primaryKey(),
+  eventType: text("event_type").notNull(),
+  orderId: uuid("order_id").references(() => orders.id),
+  processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** A late confirmed payment needs operator reconciliation, never blind stock consumption. */
+export const paymentReconciliationJobs = pgTable("payment_reconciliation_jobs", {
+  paymentIntentId: text("payment_intent_id").primaryKey(),
+  orderId: uuid("order_id").notNull().references(() => orders.id),
+  reason: text("reason").notNull(),
+  state: text("state").notNull().default("pending_review"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 /**

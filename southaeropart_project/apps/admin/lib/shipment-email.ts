@@ -1,4 +1,6 @@
 import { sendEmail, getCarrierTrackingUrl } from "@repo/lib";
+import { escapeHtml } from "@repo/lib/html";
+import { renderOrderNoteEmail } from "@repo/lib/order-note-email";
 import {
   db,
   orders,
@@ -34,7 +36,7 @@ function generateShipmentEmailHtml({
   shippingCarrier,
 }: SendShipmentEmailParams): string {
   const siteUrl = process.env.NEXT_PUBLIC_STOREFRONT_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const orderUrl = `${siteUrl}/orders/${order.id}`;
+  const orderUrl = `${siteUrl}/orders/${encodeURIComponent(order.id)}`;
   const hasRealTracking = Boolean(trackingNumber && trackingNumber.trim() && trackingNumber !== "อยู่ระหว่างเตรียมส่งมอบให้ขนส่ง");
   const carrierTrackingUrl = hasRealTracking
     ? getCarrierTrackingUrl(shippingCarrier, trackingNumber) || orderUrl
@@ -49,7 +51,7 @@ function generateShipmentEmailHtml({
     `${address.subDistrict}, ${address.district}`,
     `${address.province} ${address.postalCode}`,
   ].filter(Boolean);
-  const addressStr = addressParts.join("<br/>");
+  const addressStr = addressParts.map(part => escapeHtml(part || "")).join("<br/>");
 
   const itemsRows = items
     .map((item) => {
@@ -64,7 +66,7 @@ function generateShipmentEmailHtml({
                 ${item.bundleParts
                   .map(
                     (part) =>
-                      `<li>${part.childProductNameSnapshot} &times; ${part.quantity} ชิ้น</li>`
+                      `<li>${escapeHtml(part.childProductNameSnapshot || "")} &times; ${escapeHtml(String(part.quantity))} ชิ้น</li>`
                   )
                   .join("")}
               </ul>
@@ -75,9 +77,9 @@ function generateShipmentEmailHtml({
       return `
       <tr>
         <td style="padding: 14px 0; border-bottom: 1px solid #222222; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #FFFFFF; vertical-align: top;">
-          <strong style="color: #FFFFFF; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">${item.productNameSnapshot}</strong>
+          <strong style="color: #FFFFFF; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(item.productNameSnapshot || "")}</strong>
           <div style="color: #888888; font-size: 12px; margin-top: 3px;">
-            จำนวน: ${item.quantity} ชิ้น
+            จำนวน: ${escapeHtml(String(item.quantity))} ชิ้น
           </div>
           ${partsHtml}
         </td>
@@ -92,7 +94,7 @@ function generateShipmentEmailHtml({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>แจ้งจัดส่งสินค้าและหมายเลขพัสดุ #${order.orderNumber} - SOUTH AERO</title>
+  <title>แจ้งจัดส่งสินค้าและหมายเลขพัสดุ #${escapeHtml(order.orderNumber || "")} - SOUTH AERO</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #0A0A0A; color: #E5E5E5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
   <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0A0A0A; padding: 30px 15px;">
@@ -123,7 +125,7 @@ function generateShipmentEmailHtml({
                 สินค้าของคุณกำลังเดินทางถึงคุณ!
               </h1>
               <p style="margin: 0; font-size: 13px; color: #A3A3A3; line-height: 1.6;">
-                ชิ้นงานแอโรพาร์ตคุณภาพพรีเมียมจากคำสั่งซื้อ <strong style="color: #FFFFFF;">#${order.orderNumber}</strong> ได้รับการตรวจสอบคุณภาพและบรรจุส่งมอบให้บริษัทขนส่งเรียบร้อยแล้ว
+                ชิ้นงานแอโรพาร์ตคุณภาพพรีเมียมจากคำสั่งซื้อ <strong style="color: #FFFFFF;">#${escapeHtml(order.orderNumber || "")}</strong> ได้รับการตรวจสอบคุณภาพและบรรจุส่งมอบให้บริษัทขนส่งเรียบร้อยแล้ว
               </p>
             </td>
           </tr>
@@ -138,7 +140,7 @@ function generateShipmentEmailHtml({
                       บริษัทขนส่ง (SHIPPING CARRIER)
                     </div>
                     <div style="font-size: 16px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
-                      ${shippingCarrier}
+                      ${escapeHtml(shippingCarrier || "")}
                     </div>
 
                     <div style="font-size: 11px; font-weight: bold; color: #D60000; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
@@ -148,12 +150,12 @@ function generateShipmentEmailHtml({
                     <!-- Prominent Tracking Badge -->
                     <div style="background-color: #0A0A0A; border: 1px solid #D60000; border-radius: 8px; padding: 14px 20px; display: inline-block; margin-bottom: 18px; box-shadow: 0 0 15px rgba(214, 0, 0, 0.25);">
                       <span style="font-family: 'Courier New', Courier, monospace; font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #FFFFFF;">
-                        ${trackingNumber}
+                        ${escapeHtml(trackingNumber || "")}
                       </span>
                     </div>
 
                     <div>
-                      <a href="${carrierTrackingUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #D60000; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 12px 28px; border-radius: 6px; box-shadow: 0 4px 14px rgba(214, 0, 0, 0.4);">
+                      <a href="${escapeHtml(carrierTrackingUrl || "")}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #D60000; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 12px 28px; border-radius: 6px; box-shadow: 0 4px 14px rgba(214, 0, 0, 0.4);">
                         ${hasRealTracking ? "คลิกเพื่อตรวจสอบสถานะพัสดุ (TRACK PACKAGE)" : "คลิกเพื่อดูรายละเอียดคำสั่งซื้อ (VIEW ORDER)"} &rarr;
                       </a>
                     </div>
@@ -193,6 +195,8 @@ function generateShipmentEmailHtml({
             </td>
           </tr>
 
+          ${renderOrderNoteEmail(order.customerNote)}
+
           <!-- Inspection Guidance Tip -->
           <tr>
             <td style="padding: 0 32px 28px 32px;">
@@ -214,7 +218,7 @@ function generateShipmentEmailHtml({
           <!-- View Order CTA -->
           <tr>
             <td style="padding: 0 32px 32px 32px; text-align: center;">
-              <a href="${orderUrl}" target="_blank" rel="noopener noreferrer" style="color: #A3A3A3; text-decoration: underline; font-size: 12px;">
+              <a href="${escapeHtml(orderUrl || "")}" target="_blank" rel="noopener noreferrer" style="color: #A3A3A3; text-decoration: underline; font-size: 12px;">
                 ดูรายละเอียดประวัติคำสั่งซื้อทั้งหมดบนเว็บไซต์ South Aero &rarr;
               </a>
             </td>
@@ -224,7 +228,7 @@ function generateShipmentEmailHtml({
           <tr>
             <td style="padding: 24px 32px; background-color: #0E0E0E; border-top: 1px solid #222222; text-align: center;">
               <p style="margin: 0 0 6px 0; font-size: 11px; color: #666666;">
-                อีเมลนี้ถูกส่งให้กับ <span style="color: #888888;">${customerEmail}</span> โดยอัตโนมัติจากการทำรายการจัดส่งสินค้า
+                อีเมลนี้ถูกส่งให้กับ <span style="color: #888888;">${escapeHtml(customerEmail || "")}</span> โดยอัตโนมัติจากการทำรายการจัดส่งสินค้า
               </p>
               <p style="margin: 0; font-size: 10px; color: #444444; text-transform: uppercase; letter-spacing: 1px;">
                 &copy; ${new Date().getFullYear()} SOUTH AERO PERFORMANCE. ALL RIGHTS RESERVED.

@@ -1,0 +1,110 @@
+{
+  "runId": "security_test_a1e660ce4de94452873d9a2714d8dc4f",
+  "generatedAt": "2026-09-29T11:04:15.636Z",
+  "checks": [
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/checkout/payment/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/pay/mock/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "route": "/checkout/payment/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "route": "/pay/mock/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200,
+        404
+      ],
+      "notFoundRendered": true,
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    }
+  ],
+  "builds": [
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "passed": true
+    }
+  ],
+  "uiChecks": [
+    {
+      "mode": "turbopack",
+      "locale": "th",
+      "width": 390,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    },
+    {
+      "mode": "turbopack",
+      "locale": "en",
+      "width": 1440,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    },
+    {
+      "mode": "production",
+      "locale": "th",
+      "width": 390,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    },
+    {
+      "mode": "production",
+      "locale": "en",
+      "width": 1440,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    }
+  ]
+}

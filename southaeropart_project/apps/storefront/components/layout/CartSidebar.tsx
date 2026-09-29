@@ -5,7 +5,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 
 export function CartSidebar() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, itemCount, subtotal } = useCart();

@@ -10,6 +10,14 @@ export async function reserveOrderStock(tx: InventoryTransaction, orderId: strin
   if (!demand.size) throw new Error("An order must reserve physical inventory");
   for (const [productId, quantity] of [...demand.entries()].sort(([a], [b]) => a.localeCompare(b))) {
     if (!Number.isSafeInteger(quantity) || quantity <= 0) throw new Error("Invalid stock quantity");
+
+    // Lock stock changes without conflicting with the key-share locks held by
+    // order_items foreign keys. FOR UPDATE lets two new orders deadlock while
+    // upgrading those locks; this operation never changes the product's key.
+    // Sorted productId order (enforced by .sort() above) prevents deadlocks
+    // when two concurrent transactions reserve overlapping product sets.
+    await tx.execute(sql`SELECT 1 FROM ${products} WHERE ${products.id} = ${productId} FOR NO KEY UPDATE`);
+
     const [reserved] = await tx.update(products).set({
       stockQuantity: sql`${products.stockQuantity} - ${quantity}`,
       updatedAt: new Date(),

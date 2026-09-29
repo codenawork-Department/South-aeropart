@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -26,7 +26,8 @@ import {
   Star,
   ExternalLink,
 } from "lucide-react";
-import type { Order, OrderItem, OrderItemBundlePart, OrderStatusHistory } from "@repo/db";
+import type { OrderItem, OrderItemBundlePart } from "@repo/db";
+import type { OrderReadDto as Order, OrderHistoryReadDto as OrderStatusHistory } from "@/lib/order-read-dto";
 import type { OrderItemBundlePartDetail } from "@/actions/checkout.actions";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -835,6 +836,13 @@ export function OrderDetailClient({ order, items, history, guestToken }: OrderDe
               )}
             </div>
           </div>
+
+          {order.customerNote && (
+            <section aria-labelledby="customer-note-title" className="bg-[#121212] border border-[#222222] rounded-2xl p-4 sm:p-6 shadow-xl space-y-3">
+              <h3 id="customer-note-title" className="font-heading text-xs font-bold text-white tracking-wider">{t.orders.customerNote}</h3>
+              <p data-customer-order-note className="text-sm text-gray-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{order.customerNote}</p>
+            </section>
+          )}
 
           {/* Logistics & Payment Method Card */}
           <div className="bg-[#121212] border border-[#222222] rounded-2xl p-6 shadow-xl space-y-4">

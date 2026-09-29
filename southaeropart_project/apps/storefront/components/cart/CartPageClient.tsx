@@ -4,7 +4,7 @@ import { useCart } from "@/components/providers/CartProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import {
   Trash2,
   Minus,

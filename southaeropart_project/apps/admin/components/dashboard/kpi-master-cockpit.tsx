@@ -618,7 +618,7 @@ export function KpiMasterCockpit() {
           <div className="space-y-2 text-xs">
             <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/20 space-y-1">
               <span className="text-[11px] font-bold text-emerald-300 flex items-start gap-1"><CheckCircle2 size={13} className="shrink-0 mt-0.5" /><span>สร้าง Loyalty / Email CRM เพื่อดึง Repeat Rate กลับสู่ 35%</span></span>
-              <p className="text-[10px] text-gray-400 pl-4">ยิง Automation หลังซื้อ 14 วัน มอบคูปอง 10% สำหรับชิ้นถัดไป</p>
+              <p className="text-[10px] text-gray-400 pl-4">ติดตามความพึงพอใจหลังซื้อ 14 วัน และแนะนำสินค้าที่ตรงกับการใช้งาน</p>
             </div>
             <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/20 space-y-1">
               <span className="text-[11px] font-bold text-emerald-300 flex items-start gap-1"><CheckCircle2 size={13} className="shrink-0 mt-0.5" /><span>เพิ่ม Bundle Set &amp; Free Shipping Threshold ฿3,500</span></span>

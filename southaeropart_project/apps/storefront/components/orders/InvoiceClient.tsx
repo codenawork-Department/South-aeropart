@@ -16,7 +16,8 @@ import {
   QrCode as QrIcon,
   ExternalLink,
 } from "lucide-react";
-import type { Order, OrderItem, Address } from "@repo/db";
+import type { OrderItem, Address } from "@repo/db";
+import type { OrderReadDto as Order } from "@/lib/order-read-dto";
 import type { OrderItemBundlePartDetail } from "@/actions/checkout.actions";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";

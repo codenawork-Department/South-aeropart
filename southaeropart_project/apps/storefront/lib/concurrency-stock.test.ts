@@ -13,6 +13,7 @@ const mockDb = vi.hoisted(() => ({
   orderItems: new Map<string, any[]>(),
   orderStatusHistory: [] as any[],
   productBundleItems: [] as any[],
+  reconciliationJobs: [] as any[],
 }));
 
 vi.mock("@/lib/order-email-jobs", () => ({
@@ -51,7 +52,7 @@ vi.mock("@repo/db", () => {
             rows = Array.from(mockDb.products.values());
           }
           return Object.assign(Promise.resolve(rows), {
-            limit: (n: number) => Promise.resolve(rows.slice(0, n)),
+            limit: (n: number) => Object.assign(Promise.resolve(rows.slice(0, n)), { for: () => Promise.resolve(rows.slice(0, n)) }),
           });
         },
         innerJoin: () => ({
@@ -85,6 +86,7 @@ vi.mock("@repo/db", () => {
         if (table._name === "orderStatusHistory") {
           mockDb.orderStatusHistory.push(values);
         }
+        if (table._name === "paymentReconciliationJobs") mockDb.reconciliationJobs.push(values);
         return Object.assign(Promise.resolve(), { onConflictDoNothing: () => Promise.resolve() });
       },
     }),
@@ -121,6 +123,8 @@ vi.mock("@repo/db", () => {
     },
     orders: makeTable("orders"),
     orderEmailJobs: makeTable("orderEmailJobs"),
+    stripeWebhookEvents: makeTable("stripeWebhookEvents"),
+    paymentReconciliationJobs: makeTable("paymentReconciliationJobs"),
     orderItems: makeTable("orderItems"),
     orderStatusHistory: makeTable("orderStatusHistory"),
     orderItemBundleParts: makeTable("orderItemBundleParts"),
@@ -149,6 +153,7 @@ describe("Concurrency & Atomic Stock Fulfillment (CLAUDE.md §5.3, §6.2)", () =
     mockDb.orderItems.clear();
     mockDb.orderStatusHistory.length = 0;
     mockDb.productBundleItems.length = 0;
+    mockDb.reconciliationJobs.length = 0;
     (process.env as Record<string, string | undefined>).NODE_ENV = "test";
   });
 
@@ -157,7 +162,7 @@ describe("Concurrency & Atomic Stock Fulfillment (CLAUDE.md §5.3, §6.2)", () =
   });
 
   describe("Concurrent Payment Fulfillment (Double-Spend / Webhook Replay Race Condition)", () => {
-    it.each(["cancelled", "refunded", "legacy", "wrong-binding", "zero-received"])("rejects %s without inventory or paid-state writes", async (scenario) => {
+    it.each(["cancelled", "refunded", "legacy", "wrong-binding", "zero-received"])("handles %s without inventory or paid-state writes", async (scenario) => {
       const id = "550e8400-e29b-41d4-a716-446655440099";
       const order = { id, paymentStatus: "pending", status: "pending", inventoryState: "reserved", total: "100.00", currency: "THB", stripePaymentIntentId: "pi_owned" };
       if (scenario === "cancelled" || scenario === "refunded") order.status = scenario;
@@ -165,7 +170,13 @@ describe("Concurrency & Atomic Stock Fulfillment (CLAUDE.md §5.3, §6.2)", () =
       if (scenario === "wrong-binding") order.stripePaymentIntentId = "pi_other";
       if (scenario === "zero-received") vi.mocked(retrievePaymentIntent).mockResolvedValueOnce({ id: "pi_owned", status: "succeeded", amount: 10000, amount_received: 0, currency: "thb", livemode: false } as Awaited<ReturnType<typeof retrievePaymentIntent>>);
       mockDb.orders.set(id, order);
-      expect((await fulfillOrderPayment(id, { method: "stripe", chargeId: "pi_owned" })).success).toBe(false);
+      const result = await fulfillOrderPayment(id, { method: "stripe", chargeId: "pi_owned" });
+      const needsReview = ["cancelled", "refunded", "legacy"].includes(scenario);
+      expect(result.success).toBe(needsReview);
+      if (needsReview) {
+        expect(result).toMatchObject({ reconciliationPending: true });
+        expect(mockDb.reconciliationJobs).toEqual([{ orderId: id, paymentIntentId: "pi_owned", reason: "confirmed_payment_without_active_reservation" }]);
+      } else expect(mockDb.reconciliationJobs).toHaveLength(0);
       expect(mockDb.orders.get(id).paymentStatus).toBe("pending");
       expect(mockDb.orderStatusHistory).toHaveLength(0);
     });

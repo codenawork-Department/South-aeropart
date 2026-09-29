@@ -28,7 +28,7 @@ export default async function OrderDetailPage({
 }) {
   const { orderId } = await params;
   const guestToken = (await searchParams)?.token;
-  let res = await getOrderDetails(orderId, guestToken);
+  let res = await getOrderDetails({ orderId, guestToken });
 
   if (!res.success || !res.data) {
     notFound();
@@ -76,10 +76,10 @@ export default async function OrderDetailPage({
               note: `ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Instant Fallback Confirmation, Amount: ${(receivedAmount / 100).toFixed(2)} ${receivedCurrency.toUpperCase()})`,
             });
 
-            if (fulfillRes.success) {
+            if (fulfillRes.success && !("reconciliationPending" in fulfillRes && fulfillRes.reconciliationPending)) {
               console.log(`[OrderDetailPage] Order ${orderId} successfully marked as PAID via instant fallback.`);
               // Reload fresh order details after fulfillment
-              res = await getOrderDetails(orderId, guestToken);
+              res = await getOrderDetails({ orderId, guestToken });
             } else {
               console.error(`[OrderDetailPage] Failed to fulfill order ${orderId}:`, fulfillRes.error);
             }

@@ -1,0 +1,72 @@
+[
+  {
+    "target": "inventory.delta",
+    "caseId": "N-17",
+    "variant": "val_0_-1",
+    "bytes": 65,
+    "sha256": "7a1ce9457a07b724de1a1ae0f5a8632b125d87692f11244a58f5fb17fa71d0d0"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-17",
+    "variant": "val_1_-99999",
+    "bytes": 69,
+    "sha256": "d94820b4f8066cae40cac5d9e136529d141489d51af0dca0449097ab3d78e5d0"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-17",
+    "variant": "val_2_1",
+    "bytes": 64,
+    "sha256": "21ebd437224a059576b395cadb070caa14f821921c0dae57dd8997860b3964d1"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-18",
+    "variant": "val_0_0",
+    "bytes": 64,
+    "sha256": "55109018ddd4f049f4417c7ce5b2c7cc497cc8ab7905014951881d6e7f5d9c1d"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-18",
+    "variant": "val_1_1.1",
+    "bytes": 66,
+    "sha256": "c5798a8196704bd15573ad8850330ff6b8d8fd5d268cef664887a012845956d9"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-18",
+    "variant": "val_2_-1",
+    "bytes": 67,
+    "sha256": "b496c6748e57c1fb998f9561813ec06df9be20de2c7744af4e3b07c5607a73ed"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-18",
+    "variant": "val_3_-2147483648",
+    "bytes": 74,
+    "sha256": "3689ba7197366539f3136cb22472925bbadf03c4802507141dd7de7dbd84f1e1"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-18",
+    "variant": "val_4_2147483648",
+    "bytes": 73,
+    "sha256": "486595bdf7460774742aedac963b8cbbd184e09b000fd65472e50942957e2e28"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-19",
+    "variant": "stock_before_0_delta_-1",
+    "bytes": 65,
+    "sha256": "fd5376180970c48e068f459ec8b0db8eb38e7e496db77921ff1ab99e1455314f"
+  },
+  {
+    "target": "inventory.delta",
+    "caseId": "N-19",
+    "variant": "stock_before_2147483647_delta_1",
+    "bytes": 64,
+    "sha256": "909d461f1c63f07d6b0b33d7bbd2dbbfd6c046effae3dd2df64a7aa6374e2247"
+  }
+]

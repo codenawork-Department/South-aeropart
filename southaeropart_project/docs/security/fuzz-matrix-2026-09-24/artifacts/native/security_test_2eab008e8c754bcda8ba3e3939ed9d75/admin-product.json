@@ -1,0 +1,559 @@
+{
+  "variants": [
+    {
+      "caseId": "T-11",
+      "variant": "val_0_' OR '1'='1' --",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_0_' OR '1'='1' --",
+            "seed": "bc8a8ab1",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_0_' OR '1'='1' --",
+            "seed": "bc8a8ab1",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_1_'); SELECT pg_s",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_1_'); SELECT pg_s",
+            "seed": "6c2d437b",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_1_'); SELECT pg_s",
+            "seed": "6c2d437b",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_2_O'Reilly",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_2_O'Reilly",
+            "seed": "c317c446",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_2_O'Reilly",
+            "seed": "c317c446",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_3_1 UNION SELECT ",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_3_1 UNION SELECT ",
+            "seed": "2fa0bc4e",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "T-11",
+            "target": "admin.product",
+            "variant": "val_3_1 UNION SELECT ",
+            "seed": "2fa0bc4e",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 200,
+            "dbDiff": {
+              "tablesModified": [
+                "products"
+              ],
+              "rowsChanged": 1,
+              "leakFree": false
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "SAFE_ACCEPT",
+              "PLAIN_TEXT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "A-05",
+      "variant": "fault_at_product_write",
+      "actions": [
+        {
+          "binding": "productCreate",
+          "entry": {
+            "caseId": "A-05",
+            "target": "admin.product",
+            "variant": "fault_at_product_write",
+            "seed": "799b30ea",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 500,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        },
+        {
+          "binding": "productUpdate",
+          "entry": {
+            "caseId": "A-05",
+            "target": "admin.product",
+            "variant": "fault_at_product_write",
+            "seed": "799b30ea",
+            "layer": "server_action",
+            "actualWireStatus": 200,
+            "semanticResult": 500,
+            "dbDiff": {
+              "tablesModified": [],
+              "rowsChanged": 0,
+              "leakFree": true
+            },
+            "providerCalls": {
+              "stripe": null,
+              "resend": null
+            },
+            "result": "PASS",
+            "invariantsPassed": [
+              "NO_LEAK",
+              "REJECT_NO_EFFECT"
+            ],
+            "invariantsFailed": [],
+            "invariantsNotMeasured": [],
+            "leakDetected": false,
+            "evidence": "Assertions satisfied at server_action layer only."
+          }
+        }
+      ]
+    }
+  ],
+  "clerkCleaned": null,
+  "renderingChecks": [
+    {
+      "caseId": "T-11",
+      "variant": "val_0_' OR '1'='1' --",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_0_' OR '1'='1' --",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_1_'); SELECT pg_s",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_1_'); SELECT pg_s",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_2_O'Reilly",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_2_O'Reilly",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_3_1 UNION SELECT ",
+      "binding": "productCreate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    },
+    {
+      "caseId": "T-11",
+      "variant": "val_3_1 UNION SELECT ",
+      "binding": "productUpdate",
+      "evidence": {
+        "passed": true,
+        "surfaces": [
+          {
+            "surface": "admin",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          },
+          {
+            "surface": "storefront",
+            "marker": 0,
+            "executablePayloadNodes": 0,
+            "executableAttributes": 0
+          }
+        ],
+        "beacons": 0,
+        "email": null
+      }
+    }
+  ],
+  "recoveryChecks": [
+    {
+      "binding": "productCreate",
+      "recovered": true,
+      "rowsChanged": 1,
+      "auditRows": 1
+    },
+    {
+      "binding": "productUpdate",
+      "recovered": true,
+      "rowsChanged": 1,
+      "auditRows": 1
+    }
+  ]
+}

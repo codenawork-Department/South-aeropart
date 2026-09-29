@@ -8,8 +8,8 @@ import {
   updateProductAction,
   generateSuggestedSkuAction,
   checkSkuAvailabilityAction,
-  type ProductInput,
 } from "@/actions/product.actions";
+import type { ProductInput } from "@/lib/product-input";
 import { translateProductAction } from "@/actions/translate.actions";
 import { parseSku } from "@/lib/sku-helper";
 import { ImageUploader, type ImageUploadItem } from "./image-uploader";
@@ -170,6 +170,8 @@ export function ProductForm({
 
   // Active Language Tab for General Info / Descriptions / Features (Default: English)
   const [activeLangTab, setActiveLangTab] = useState<"th" | "en">("en");
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => setIsHydrated(true), []);
   const [isTranslating, setIsTranslating] = useState(false);
 
   // Form states
@@ -839,6 +841,8 @@ export function ProductForm({
                 <button
                   type="button"
                   onClick={() => setActiveLangTab("en")}
+                  disabled={!isHydrated}
+                  aria-pressed={activeLangTab === "en"}
                   className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
                     activeLangTab === "en"
                       ? "bg-red-600 text-white shadow"
@@ -851,6 +855,8 @@ export function ProductForm({
                 <button
                   type="button"
                   onClick={() => setActiveLangTab("th")}
+                  disabled={!isHydrated}
+                  aria-pressed={activeLangTab === "th"}
                   className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
                     activeLangTab === "th"
                       ? "bg-red-600 text-white shadow"

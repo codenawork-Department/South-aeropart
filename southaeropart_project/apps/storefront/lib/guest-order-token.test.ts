@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from "vitest";
 import {
   generateGuestOrderToken,
   verifyGuestOrderToken,
@@ -7,6 +7,9 @@ import {
 beforeAll(() => {
   process.env.ORDER_TOKEN_SECRET = "test_guest_order_hmac_secret_key_12345";
 });
+
+beforeEach(() => vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-09-14T10:00:01.000Z")));
+afterEach(() => vi.restoreAllMocks());
 
 describe("guest-order-token (IDOR & Cryptographic Signature Defense)", () => {
   const mockOrderId = "order-550e8400-e29b-41d4-a716-446655440000";
@@ -99,5 +102,18 @@ describe("guest-order-token (IDOR & Cryptographic Signature Defense)", () => {
     expect(verifyGuestOrderToken(undefined, mockOrderId, mockUserId, mockDate)).toBe(false);
     expect(verifyGuestOrderToken("", mockOrderId, mockUserId, mockDate)).toBe(false);
     expect(verifyGuestOrderToken("short_token", mockOrderId, mockUserId, mockDate)).toBe(false);
+  });
+
+  it("fails closed when ORDER_TOKEN_SECRET is missing or short", () => {
+    const original = process.env.ORDER_TOKEN_SECRET;
+    try {
+      delete process.env.ORDER_TOKEN_SECRET;
+      expect(() => generateGuestOrderToken(mockOrderId, mockUserId, mockDate)).toThrow("ORDER_TOKEN_SECRET");
+
+      process.env.ORDER_TOKEN_SECRET = "too_short_key";
+      expect(() => generateGuestOrderToken(mockOrderId, mockUserId, mockDate)).toThrow("at least 32 characters");
+    } finally {
+      process.env.ORDER_TOKEN_SECRET = original;
+    }
   });
 });

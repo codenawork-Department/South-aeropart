@@ -21,7 +21,7 @@ export default async function OrderInvoicePage({
   const guestToken = (await searchParams)?.token;
 
   // Authoritative server-side IDOR guard via getOrderDetails
-  const res = await getOrderDetails(orderId, guestToken);
+  const res = await getOrderDetails({ orderId, guestToken });
 
   if (!res.success || !res.data) {
     notFound();

@@ -1,0 +1,629 @@
+{
+  "runId": "security_test_ab624898c1d64f1aaa2224c6dc62a4ea",
+  "generatedAt": "2026-09-29T11:01:56.776Z",
+  "checks": [
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/about",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/aerodynamics",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/cart",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/checkout",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/checkout/payment/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/collection",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/gallery",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/orders",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/orders/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/orders/[orderId]/invoice",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/pay/mock/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/products",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/products/[slug]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/profile",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/sign-in",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/sign-in/sso-callback",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/sign-up",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/sign-up/sso-callback",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "route": "/wishlist",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/bundles",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/bundles/[id]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/bundles/new",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/catalog",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/homepage",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/login",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/newsletters",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/orders",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/orders/[id]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/products",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/products/[id]/edit",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/products/new",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/reviews",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/security/enroll",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/services",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "route": "/setup",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "route": "/",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "route": "/checkout",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "route": "/checkout/payment/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "route": "/orders/[orderId]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "route": "/pay/mock/[orderId]",
+      "passed": false,
+      "errorName": "TimeoutError"
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "route": "/products/[slug]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "production",
+      "route": "/",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "production",
+      "route": "/orders/[id]",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "production",
+      "route": "/products",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "production",
+      "route": "/products/[id]/edit",
+      "status": 200,
+      "expectedStatuses": [
+        200
+      ],
+      "compileError": false,
+      "pageErrors": [],
+      "passed": true
+    }
+  ],
+  "builds": [
+    {
+      "app": "storefront",
+      "mode": "turbopack",
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "turbopack",
+      "passed": true
+    },
+    {
+      "app": "storefront",
+      "mode": "production",
+      "passed": true
+    },
+    {
+      "app": "admin",
+      "mode": "production",
+      "passed": true
+    }
+  ],
+  "uiChecks": [
+    {
+      "mode": "turbopack",
+      "locale": "th",
+      "width": 390,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    },
+    {
+      "mode": "turbopack",
+      "locale": "en",
+      "width": 1440,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    },
+    {
+      "mode": "production",
+      "locale": "th",
+      "width": 390,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    },
+    {
+      "mode": "production",
+      "locale": "en",
+      "width": 1440,
+      "overLimitError": true,
+      "editRecovery": true,
+      "keyboardTab": true,
+      "noHorizontalOverflow": true,
+      "passed": true
+    }
+  ]
+}

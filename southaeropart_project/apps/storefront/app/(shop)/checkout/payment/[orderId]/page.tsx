@@ -1,10 +1,11 @@
 import { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { getOrderDetails } from "@/actions/checkout.actions";
 import { fulfillOrderPayment } from "@/lib/order-fulfillment";
 import { retrievePaymentIntent } from "@repo/lib";
 import { PaymentClient } from "@/components/checkout/PaymentClient";
+import { PaidOrderRedirect } from "@/components/checkout/PaidOrderRedirect";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +23,17 @@ export default async function PaymentPage({
 }) {
   const { orderId } = await params;
   const guestToken = (await searchParams)?.token;
-  const res = await getOrderDetails(orderId, guestToken);
+  const res = await getOrderDetails({ orderId, guestToken });
 
   if (!res.success || !res.data) {
     notFound();
   }
 
   const { order, items } = res.data;
+
+  if (order.paymentStatus === "paid" || order.status === "paid") {
+    return <PaidOrderRedirect orderId={order.id} guestToken={guestToken} />;
+  }
 
   // Retrieve logged-in Clerk account email as default receipt email
   let accountEmail: string | null = null;
@@ -39,28 +44,22 @@ export default async function PaymentPage({
     accountEmail = null;
   }
 
-  // 1. If order is already paid, redirect to order details immediately
-  if (order.paymentStatus === "paid" || order.status === "paid") {
-    redirect(guestToken ? `/orders/${orderId}?paid=true&token=${guestToken}` : `/orders/${orderId}?paid=true`);
-  }
-
   // 2. If order has a stripePaymentIntentId, check if it already succeeded
   if (order.stripePaymentIntentId) {
     try {
       const intent = await retrievePaymentIntent(order.stripePaymentIntentId);
       if (intent && intent.status === "succeeded") {
         console.log(`[PaymentPage] PaymentIntent ${order.stripePaymentIntentId} has already succeeded! Fulfilling and redirecting...`);
-        await fulfillOrderPayment(orderId, {
+        const fulfillment = await fulfillOrderPayment(orderId, {
           method: "stripe",
           chargeId: intent.id,
           note: "ชำระเงินสำเร็จผ่าน Stripe Payment Gateway (Auto-recovered before payment mount)",
         });
-        redirect(guestToken ? `/orders/${orderId}?paid=true&token=${guestToken}` : `/orders/${orderId}?paid=true`);
+        if (fulfillment.success && !("reconciliationPending" in fulfillment && fulfillment.reconciliationPending)) {
+          return <PaidOrderRedirect orderId={order.id} guestToken={guestToken} />;
+        }
       }
     } catch (err) {
-      if (err instanceof Error && (err.message === "NEXT_REDIRECT" || (err as any).digest?.startsWith("NEXT_REDIRECT"))) {
-        throw err;
-      }
       console.warn("[PaymentPage] Error checking PaymentIntent status:", err);
     }
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import { Star, MessageSquarePlus, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { submitReview, getProductReviews } from "@/actions/review.actions";
 

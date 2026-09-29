@@ -1,0 +1,16 @@
+{
+  "runId": "security_test_1cd2f184a7f7419f8c93763ceba385ee",
+  "targets": [
+    "inventory.delta",
+    "cart.add"
+  ],
+  "completedTargets": [
+    "inventory.delta",
+    "cart.add"
+  ],
+  "appCopies": true,
+  "nativeActionClient": true,
+  "mode": "development",
+  "emailSinkMessages": 1,
+  "reportScope": "offline observations plus completed native requests; supplemental sessions are separate"
+}

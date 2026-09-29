@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { AboutStory } from "@/components/about/AboutStory";
 import Link from "next/link";
 import {
   Shield,
@@ -63,63 +63,10 @@ function AboutPage() {
 
   return (
     <div className="bg-[#0A0A0A] min-h-screen">
-      {/* 1. Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#141414] via-[#0E0E0E] to-[#0A0A0A] border-b border-[#1E1E1E]">
-        <div className="container-main py-16 md:py-24 text-center max-w-3xl mx-auto relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#181818] border border-[#2B2B2B] rounded-full text-[0.65rem] font-heading font-bold tracking-widest text-[var(--accent-red)] uppercase mb-4">
-            {t.about.heroBadge}
-          </div>
-
-          <h1 className="heading-xl text-white">
-            {t.about.heroTitle} <span className="text-[var(--accent-red)]">{t.about.heroHighlight}</span>
-          </h1>
-
-          <p className="font-heading text-sm md:text-base tracking-[0.25em] text-[var(--text-secondary)] mt-3 uppercase font-semibold">
-            {t.about.heroTagline}
-          </p>
-
-          <p className="body-md text-[var(--text-secondary)] mt-4 leading-relaxed">
-            {t.about.heroDesc}
-          </p>
-        </div>
-      </section>
-
-      {/* 2. Story & Showcase Dual Column */}
-      <section className="py-12 md:py-20 border-b border-[#1C1C1C]">
-        <div className="container-main">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-center">
-            <div className="order-2 md:order-1 md:col-span-6 lg:col-span-6 space-y-4">
-              <span className="text-xs font-heading font-bold text-[var(--accent-red)] tracking-widest uppercase">
-                {t.about.storyBadge}
-              </span>
-              <h2 className="heading-lg text-white">
-                {t.about.storyTitle}
-              </h2>
-              <p className="body-md text-[var(--text-secondary)]">
-                {t.about.storyDesc1}
-              </p>
-              <p className="body-md text-[var(--text-secondary)]">
-                {t.about.storyDesc2}
-              </p>
-            </div>
-
-            <div className="order-1 md:order-2 md:col-span-6 lg:col-span-6">
-              <div className="relative aspect-[16/10] rounded-sm overflow-hidden border border-[#242424] bg-[#121212] shadow-2xl">
-                <Image
-                  src="/images/SOUTH IG/Artboard 1.png"
-                  alt="South Aero Performance Identity"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 600px"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <AboutStory />
 
       {/* 3. 4-Stage Engineering Process */}
-      <section className="py-12 md:py-20 bg-[#0E0E0E] border-b border-[#1C1C1C]">
+      <section id="about-engineering" tabIndex={-1} style={{ scrollMarginTop: 120 }} className="py-12 md:py-20 bg-[#0E0E0E] border-b border-[#1C1C1C]">
         <div className="container-main">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-xs font-heading font-bold text-[var(--accent-red)] tracking-widest uppercase">

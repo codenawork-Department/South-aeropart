@@ -1,0 +1,98 @@
+[
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_0_' OR '1'='1' --",
+    "binding": "productCreate",
+    "bytes": 206,
+    "sha256": "884ca0aee9b97139ab077c128c84f18c84afc978889e21d6c2750b2d0544ad27"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_0_' OR '1'='1' --",
+    "binding": "productUpdate",
+    "bytes": 245,
+    "sha256": "a5c915cedc76d7c4d0a2235f02333e7bd047ad3d4c1e4dd75335c6e7fd062374"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_1_'); SELECT pg_s",
+    "binding": "productCreate",
+    "bytes": 217,
+    "sha256": "e3f4270580a4eeeae3932f714a5d0dd14713606bb02dc1dc0dc4c50b0fd54f26"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_1_'); SELECT pg_s",
+    "binding": "productUpdate",
+    "bytes": 256,
+    "sha256": "cecae16bc63cac12d41d90fa7279867439e2f28af0781e1b749190d1274ae551"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_2_O'Reilly",
+    "binding": "productCreate",
+    "bytes": 199,
+    "sha256": "de7f8cc865339be67dc2a2a2a690ac0fe8a6c1a341be1ece8cd234c986d8638a"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_2_O'Reilly",
+    "binding": "productUpdate",
+    "bytes": 238,
+    "sha256": "71e63717f454fe065782094d83a40a4fb83f87462e2c64fd5b95ed06ae3f115a"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_3_1 UNION SELECT ",
+    "binding": "productCreate",
+    "bytes": 213,
+    "sha256": "6440e85926754d2ee42480655d9b5dec5677653791140e7137c6641be7b9e619"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "T-11",
+    "variant": "val_3_1 UNION SELECT ",
+    "binding": "productUpdate",
+    "bytes": 252,
+    "sha256": "46b5529e8915412188a41c3ce00edeee8db3a8b10414e5f17bd7758ec4e3b7bf"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "A-05",
+    "variant": "fault_at_product_write",
+    "binding": "productCreate:recovery",
+    "bytes": 205,
+    "sha256": "4dafeb487982b649a3047dc4bd4e5a6218aa355bdfb4221cb6915c127b8b1cdb"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "A-05",
+    "variant": "fault_at_product_write",
+    "binding": "productCreate",
+    "bytes": 205,
+    "sha256": "4dafeb487982b649a3047dc4bd4e5a6218aa355bdfb4221cb6915c127b8b1cdb"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "A-05",
+    "variant": "fault_at_product_write",
+    "binding": "productUpdate:recovery",
+    "bytes": 244,
+    "sha256": "d01a5d67c2530025a4e1989e1dbcecca2fd93045cd8ea148a597f3a7ef3a4f0c"
+  },
+  {
+    "target": "admin.product",
+    "caseId": "A-05",
+    "variant": "fault_at_product_write",
+    "binding": "productUpdate",
+    "bytes": 244,
+    "sha256": "d01a5d67c2530025a4e1989e1dbcecca2fd93045cd8ea148a597f3a7ef3a4f0c"
+  }
+]

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/image";
 import Link from "next/link";
 import { ArrowRight, Wind, Gauge, Check, Layers } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";

@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "build": "production",
+  "environment": "staging with test providers and temporary schema",
+  "transport": "HTTPS loopback, ephemeral certificate",
+  "actualCheckout": true,
+  "mediaProvider": "disabled transport; media operations are outside this check",
+  "secure": true,
+  "httpOnly": true,
+  "sameSite": "Lax",
+  "path": "/",
+  "scriptReadable": false,
+  "ttlSeconds": 604800,
+  "reads": [
+    {
+      "binding": "guestDetails",
+      "wireStatus": 200,
+      "accepted": true,
+      "tokenArgumentAbsent": true
+    },
+    {
+      "binding": "guestStatus",
+      "wireStatus": 200,
+      "accepted": true,
+      "tokenArgumentAbsent": true
+    }
+  ],
+  "requests": [
+    {
+      "binding": "checkout",
+      "bytes": 425,
+      "sha256": "eaa4fb827f170dab3fae74749a513bc861cc36a3ace772c898f6c13262e36c7d"
+    },
+    {
+      "binding": "guestDetails",
+      "bytes": 52,
+      "sha256": "b2431b045773e3420cecfbefeb0df325a77364748fc0473f6cbc327f6cdd9590"
+    },
+    {
+      "binding": "guestStatus",
+      "bytes": 52,
+      "sha256": "b2431b045773e3420cecfbefeb0df325a77364748fc0473f6cbc327f6cdd9590"
+    }
+  ],
+  "businessRowsChangedByReads": 0,
+  "emailRequests": 0
+}

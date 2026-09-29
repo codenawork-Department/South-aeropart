@@ -1,5 +1,7 @@
 import { generateGuestOrderToken } from "./guest-order-token";
 import { sendEmail } from "@repo/lib";
+import { escapeHtml } from "@repo/lib/html";
+import { renderOrderNoteEmail } from "@repo/lib/order-note-email";
 import {
   db,
   orders,
@@ -11,10 +13,6 @@ import {
   type OrderItem,
   type OrderItemBundlePart,
 } from "@repo/db";
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-}
 
 export type OrderItemWithParts = OrderItem & {
   bundleParts?: OrderItemBundlePart[];
@@ -257,6 +255,8 @@ function generateOrderEmailHtml({
               </table>
             </td>
           </tr>
+
+          ${renderOrderNoteEmail(order.customerNote)}
 
           <!-- CTA Button -->
           <tr>

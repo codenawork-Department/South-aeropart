@@ -1,0 +1,246 @@
+{
+  "observations": [
+    {
+      "variant": "note_0_value",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_0_value",
+        "seed": "2f976cbd",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "noteBytes": 40,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": false,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 477,
+        "sha256": "cc3e206922fd3a1ee6453f3963e1c63a4f59ee26c25575a6f85df13a08178dc2"
+      }
+    },
+    {
+      "variant": "note_1_value",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_1_value",
+        "seed": "7f64c730",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "noteBytes": 11,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": false,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 448,
+        "sha256": "148a2791ec3ab6dc6be0a9752c08138e30eed69a77c3f02a9d4dbd466edf7cae"
+      }
+    },
+    {
+      "variant": "note_2_length",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_2_length",
+        "seed": "2dba751b",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products",
+            "users"
+          ],
+          "rowsChanged": 5,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "noteBytes": 2048,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": true,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 2485,
+        "sha256": "b57ce38177f5044169810c6b5249564f4b33511025a4438df8798d5b125a7827"
+      }
+    }
+  ],
+  "supplemental": [
+    {
+      "label": "ascii_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "thai_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "emoji_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "null",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "object",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "nul",
+      "rejectedWithoutMutation": true
+    }
+  ],
+  "clerkCleaned": true,
+  "scope": "Unchanged T-16 notes mapped to createOrder.customerNote, real owner/admin pages and two actual email helpers via loopback SDK sink; not a new API endpoint"
+}

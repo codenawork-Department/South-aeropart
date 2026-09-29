@@ -29,6 +29,20 @@
       "when": 1789449988439,
       "tag": "0003_security_runtime",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790611200000,
+      "tag": "0004_payment_webhook_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790618400000,
+      "tag": "0005_customer_order_note",
+      "breakpoints": true
     }
   ]
 }

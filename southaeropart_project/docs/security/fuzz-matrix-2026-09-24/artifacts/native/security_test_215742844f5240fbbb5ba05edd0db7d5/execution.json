@@ -1,0 +1,36 @@
+{
+  "runId": "security_test_215742844f5240fbbb5ba05edd0db7d5",
+  "targets": [
+    "inventory.delta",
+    "cart.add",
+    "guest.track"
+  ],
+  "completedTargets": [
+    "inventory.delta",
+    "cart.add",
+    "guest.track"
+  ],
+  "appCopies": true,
+  "nativeActionClient": true,
+  "mode": "development",
+  "sourceDigests": {
+    "pnpm-lock.yaml": "24048916e72a68bdc1d019f19798bd839dcd0aeb84069e182deddbdd7bca8706",
+    "apps/storefront/actions/checkout.actions.ts": "c625237c4c7139890e18eeef8f689bd60145584aa6eb96d275ba9fcf0790f9b4",
+    "apps/storefront/lib/guest-order-token.ts": "dab0a453e74a75e3daa4d92ff002cd8fb5bdb3bf6564ccb7fd48e46c20fa68b8",
+    "apps/storefront/lib/order-token-clock.ts": "c0dfee6b22d36dc34f73b56ff5fe195a1f6cdb65c0cb6c0c8b2930b3ab974a12",
+    "apps/storefront/lib/order-read-dto.ts": "7535ec5d230bf3a4579ffd0304375e1ef1beae7ac95e0123a013b5da7ab1863d",
+    "apps/storefront/next.config.mjs": "e76018e123cbbf3b0a4eb409c0e9fda03dc5fc06ae4e4defe96e73a3c3b52b09",
+    "packages/security-harness/src/cli/native.ts": "91c231b17dbf8170c96cdf30c2fdefd5376fff4d1dae12b25d92e36889441f26",
+    "packages/security-harness/src/integration/native-runtime.ts": "c3a8e4b117d3a2539dbec89fe5ebe153d2cea8db3584c90ad0c1587e15c5bd3b",
+    "packages/security-harness/src/integration/native-action.ts": "db384a5e79c3aff1c45451d9d1c9eda55b250ffb6bbfa803d9eb6c013dfb8f91",
+    "packages/security-harness/src/integration/guest-tracking.ts": "8957520be558f0120a75d7c11c79ab41d3d89c29ef740ce0595ab0a7388ff101",
+    "packages/security-harness/src/integration/guest-fixture.ts": "7c0b644c05aa87adc9321de9940733774e845adfe659258697f6238e80820e3d",
+    "packages/security-harness/src/integration/clerk-actors.ts": "8c4e21406c2e2ea36b66126c3e26053ba678df51ef46402809708a5e7d001e76",
+    "packages/security-harness/src/integration/resource-observer.ts": "bac4d45376da3adb1b62f12ffca550b0f950cbde8bc186084bcb53778ab7e207",
+    "packages/security-harness/src/integration/resource-watchdog.cjs": "765d12d9d6cc926ace37c3945c4a853210942cbdb6401b227c9d0b693c89331d"
+  },
+  "guestClockMs": 1790537757646,
+  "guestClockScope": "Only the disposable storefront order-token-clock module; session clocks unchanged",
+  "emailSinkMessages": 1,
+  "reportScope": "offline observations plus completed native requests; supplemental sessions are separate"
+}

@@ -1,0 +1,39 @@
+# Dependencies & package cache
+node_modules
+.pnpm-store
+.npm
+.yarn
+
+# Next.js Build Outputs & Caches
+.next
+.next-test
+.turbo
+dist
+build
+out
+
+# Environment variables & secrets (CRITICAL: Never include in image)
+.env
+.env*.local
+.env.development
+.env.test
+.env.production
+
+# Git
+.git
+.gitignore
+.gitleaks.toml
+
+# Testing & Artifacts
+coverage
+test-results
+playwright-report
+blob-report
+e2e
+
+# IDE & OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.log

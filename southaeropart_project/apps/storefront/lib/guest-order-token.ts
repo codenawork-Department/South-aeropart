@@ -1,13 +1,13 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { orderTokenNowMs } from "./order-token-clock";
+
+export const GUEST_ORDER_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 function getSecretKey(): string {
-  const secret =
-    process.env.ORDER_TOKEN_SECRET ||
-    process.env.CLERK_SECRET_KEY ||
-    process.env.STRIPE_SECRET_KEY;
-  if (!secret) {
-    throw new Error("Missing server secret key for guest order token generation");
+  const secret = process.env.ORDER_TOKEN_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error("ORDER_TOKEN_SECRET must be configured and at least 32 characters");
   }
   return secret;
 }
@@ -27,7 +27,7 @@ export function generateGuestOrderToken(
 }
 
 /**
- * Validates whether the provided token matches the order's cryptographic signature.
+ * Verify the canonical signature and the signed creation time's server-side lifetime.
  */
 export function verifyGuestOrderToken(
   token: string | null | undefined,
@@ -35,8 +35,13 @@ export function verifyGuestOrderToken(
   userId: string,
   createdAt: Date | string
 ): boolean {
-  if (!token || typeof token !== "string") return false;
+  if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) return false;
   try {
+    const createdMs = typeof createdAt === "string" ? Date.parse(createdAt) : createdAt.getTime();
+    const nowMs = orderTokenNowMs();
+    const ageMs = nowMs - createdMs;
+    if (!Number.isFinite(createdMs) || !Number.isFinite(nowMs) || ageMs < 0 ||
+      ageMs >= GUEST_ORDER_TOKEN_TTL_SECONDS * 1000) return false;
     const expected = generateGuestOrderToken(orderId, userId, createdAt);
     const bufA = Buffer.from(token, "utf8");
     const bufB = Buffer.from(expected, "utf8");
@@ -70,7 +75,7 @@ export async function setGuestTokenCookie(orderId: string, token: string): Promi
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: GUEST_ORDER_TOKEN_TTL_SECONDS,
     });
   } catch {
     // Gracefully ignore when invoked outside request context

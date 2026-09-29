@@ -2,6 +2,10 @@ import { securedNextResponse } from "@/lib/csp";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import {
+  isActionOriginAllowed,
+  inspectActionBody,
+} from "@repo/lib/action-ingress";
 
 /**
  * Admin middleware — protects all routes except /login.
@@ -47,7 +51,10 @@ function getSessionSecret(): Uint8Array {
 
 export async function middleware(request: NextRequest) {
   // Only trust this header when Cloudflare is the sole permitted ingress.
-  const ip = process.env.TRUSTED_PROXY === "cloudflare" ? (request.headers.get("cf-connecting-ip") || "unknown") : "unknown";
+  const ip =
+    process.env.TRUSTED_PROXY === "cloudflare"
+      ? request.headers.get("cf-connecting-ip") || "unknown"
+      : "unknown";
 
   if (isRateLimited(ip)) {
     return new NextResponse("Too Many Requests", {
@@ -60,6 +67,34 @@ export async function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
+  if (
+    request.method === "POST" &&
+    request.headers.has("next-action") &&
+    !isActionOriginAllowed(request.headers, request.url)
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: { code: "FORBIDDEN", message: "Request not permitted" },
+      },
+      {
+        status: 403,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
+  const bodyError = await inspectActionBody(request);
+  if (bodyError)
+    return NextResponse.json(
+      {
+        success: false,
+        error: { code: bodyError.code, message: bodyError.message },
+      },
+      {
+        status: bodyError.status,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
 
   // Allow public paths
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {

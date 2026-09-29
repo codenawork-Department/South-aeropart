@@ -1,0 +1,244 @@
+{
+  "observations": [
+    {
+      "variant": "note_0_value",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_0_value",
+        "seed": "2f976cbd",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "noteBytes": 40,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": false,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 477,
+        "sha256": "039c07ebb0497d630b2a79fc507def1377a94b6db758d553faf298c4ad13fff5"
+      }
+    },
+    {
+      "variant": "note_1_value",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_1_value",
+        "seed": "7f64c730",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products"
+          ],
+          "rowsChanged": 4,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "noteBytes": 11,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": false,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 448,
+        "sha256": "9d9198ba41a1c9ba7a89b1ff76179653d615e8faa67bc99ac8c3073e46e98ac1"
+      }
+    },
+    {
+      "variant": "note_2_length",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_2_length",
+        "seed": "2dba751b",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products",
+            "users"
+          ],
+          "rowsChanged": 5,
+          "leakFree": true
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "PASS",
+        "invariantsPassed": [
+          "SAFE_ACCEPT",
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [],
+        "invariantsNotMeasured": [],
+        "leakDetected": false,
+        "evidence": "Assertions satisfied at server_action layer only."
+      },
+      "noteBytes": 2048,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": true,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 2485,
+        "sha256": "6eb6946dd3639436213c9c1a099ea312feaf109aa4c38efeaf5a636b2bff43bf"
+      }
+    }
+  ],
+  "supplemental": [
+    {
+      "label": "ascii_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "thai_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "emoji_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "null",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "object",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "nul",
+      "rejectedWithoutMutation": true
+    }
+  ]
+}

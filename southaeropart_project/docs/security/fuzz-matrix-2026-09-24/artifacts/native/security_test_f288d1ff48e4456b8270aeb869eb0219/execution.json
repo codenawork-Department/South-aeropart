@@ -1,0 +1,34 @@
+{
+  "runId": "security_test_f288d1ff48e4456b8270aeb869eb0219",
+  "targets": [
+    "inventory.delta",
+    "cart.add",
+    "guest.track"
+  ],
+  "completedTargets": [
+    "inventory.delta",
+    "cart.add",
+    "guest.track"
+  ],
+  "appCopies": true,
+  "nativeActionClient": true,
+  "mode": "development",
+  "sourceDigests": {
+    "pnpm-lock.yaml": "24048916e72a68bdc1d019f19798bd839dcd0aeb84069e182deddbdd7bca8706",
+    "apps/storefront/actions/checkout.actions.ts": "c625237c4c7139890e18eeef8f689bd60145584aa6eb96d275ba9fcf0790f9b4",
+    "apps/storefront/lib/guest-order-token.ts": "dab0a453e74a75e3daa4d92ff002cd8fb5bdb3bf6564ccb7fd48e46c20fa68b8",
+    "apps/storefront/lib/order-token-clock.ts": "c0dfee6b22d36dc34f73b56ff5fe195a1f6cdb65c0cb6c0c8b2930b3ab974a12",
+    "apps/storefront/lib/order-read-dto.ts": "7535ec5d230bf3a4579ffd0304375e1ef1beae7ac95e0123a013b5da7ab1863d",
+    "apps/storefront/next.config.mjs": "e76018e123cbbf3b0a4eb409c0e9fda03dc5fc06ae4e4defe96e73a3c3b52b09",
+    "packages/security-harness/src/cli/native.ts": "d3af0f1c84c150d9a3e77f22ec4d573f8a67795e6b5dfd6f7df60c6f997d31b7",
+    "packages/security-harness/src/integration/native-runtime.ts": "c60f850a713749e593cfb22004bc1af294da6fcdf60d4a2b2b0c5fad9523b2e4",
+    "packages/security-harness/src/integration/native-action.ts": "62e02f5a455f5656211bcc789aa2afc8be19954bf5527ab4160428d3935f3f2a",
+    "packages/security-harness/src/integration/guest-tracking.ts": "90d289ba47da7cfd188e906863ab014daefc097ffcb6176cfc598ef8261e5056",
+    "packages/security-harness/src/integration/guest-fixture.ts": "7c0b644c05aa87adc9321de9940733774e845adfe659258697f6238e80820e3d",
+    "packages/security-harness/src/integration/clerk-actors.ts": "8c4e21406c2e2ea36b66126c3e26053ba678df51ef46402809708a5e7d001e76"
+  },
+  "guestClockMs": 1790536833293,
+  "guestClockScope": "Only the disposable storefront order-token-clock module; session clocks unchanged",
+  "emailSinkMessages": 1,
+  "reportScope": "offline observations plus completed native requests; supplemental sessions are separate"
+}

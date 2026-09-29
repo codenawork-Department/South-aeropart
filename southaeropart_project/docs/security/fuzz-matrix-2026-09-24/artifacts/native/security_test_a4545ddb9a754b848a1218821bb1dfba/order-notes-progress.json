@@ -1,0 +1,250 @@
+{
+  "observations": [
+    {
+      "variant": "note_0_value",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_0_value",
+        "seed": "2f976cbd",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products"
+          ],
+          "rowsChanged": 4,
+          "leakFree": false
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "FAIL",
+        "invariantsPassed": [
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsNotMeasured": [],
+        "leakDetected": true,
+        "evidence": "Measured invariants failed: SAFE_ACCEPT; Response leakage detected: Windows / POSIX absolute file path leaked: \"C:\\\\Users\\\\thana\\\\south_aero_project\\\\southaeropart_project\\\\.security-runs\\\\security_test_a4545ddb9a754b848a1218821bb1dfba\\\\storefront-turbo\\\\.next\\\\server\\\\chunks\\\\ssr\\\\b6a38_security_test_a4545ddb9a754b848a1218821bb1dfba_storefront-turbo_bc7fae76._.js\"",
+        "gapReason": "Measured invariants failed: SAFE_ACCEPT; Response leakage detected: Windows / POSIX absolute file path leaked: \"C:\\\\Users\\\\thana\\\\south_aero_project\\\\southaeropart_project\\\\.security-runs\\\\security_test_a4545ddb9a754b848a1218821bb1dfba\\\\storefront-turbo\\\\.next\\\\server\\\\chunks\\\\ssr\\\\b6a38_security_test_a4545ddb9a754b848a1218821bb1dfba_storefront-turbo_bc7fae76._.js\""
+      },
+      "noteBytes": 40,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": false,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 477,
+        "sha256": "8cbe67c47e130f6982eea4df1d8fc137cb5a9483f321fc5141dace878b926006"
+      }
+    },
+    {
+      "variant": "note_1_value",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_1_value",
+        "seed": "7f64c730",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products"
+          ],
+          "rowsChanged": 4,
+          "leakFree": false
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "FAIL",
+        "invariantsPassed": [
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsNotMeasured": [],
+        "leakDetected": true,
+        "evidence": "Measured invariants failed: SAFE_ACCEPT; Response leakage detected: Windows / POSIX absolute file path leaked: \"C:\\\\Users\\\\thana\\\\south_aero_project\\\\southaeropart_project\\\\.security-runs\\\\security_test_a4545ddb9a754b848a1218821bb1dfba\\\\storefront-turbo\\\\.next\\\\server\\\\chunks\\\\ssr\\\\b6a38_security_test_a4545ddb9a754b848a1218821bb1dfba_storefront-turbo_bc7fae76._.js\"",
+        "gapReason": "Measured invariants failed: SAFE_ACCEPT; Response leakage detected: Windows / POSIX absolute file path leaked: \"C:\\\\Users\\\\thana\\\\south_aero_project\\\\southaeropart_project\\\\.security-runs\\\\security_test_a4545ddb9a754b848a1218821bb1dfba\\\\storefront-turbo\\\\.next\\\\server\\\\chunks\\\\ssr\\\\b6a38_security_test_a4545ddb9a754b848a1218821bb1dfba_storefront-turbo_bc7fae76._.js\""
+      },
+      "noteBytes": 11,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": false,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 448,
+        "sha256": "eec3870249bbe765fd84bd7b9ad2d25cc94b9155b3eb4ccb9f761981123d1aeb"
+      }
+    },
+    {
+      "variant": "note_2_length",
+      "entry": {
+        "caseId": "T-16",
+        "target": "api.json",
+        "variant": "note_2_length",
+        "seed": "2dba751b",
+        "layer": "server_action",
+        "actualWireStatus": 200,
+        "semanticResult": 200,
+        "dbDiff": {
+          "tablesModified": [
+            "order_items",
+            "order_status_history",
+            "order_stock_reservations",
+            "orders",
+            "products",
+            "users"
+          ],
+          "rowsChanged": 5,
+          "leakFree": false
+        },
+        "providerCalls": {
+          "stripe": null,
+          "resend": null
+        },
+        "result": "FAIL",
+        "invariantsPassed": [
+          "PLAIN_TEXT"
+        ],
+        "invariantsFailed": [
+          "SAFE_ACCEPT"
+        ],
+        "invariantsNotMeasured": [],
+        "leakDetected": true,
+        "evidence": "Measured invariants failed: SAFE_ACCEPT; Response leakage detected: Windows / POSIX absolute file path leaked: \"C:\\\\Users\\\\thana\\\\south_aero_project\\\\southaeropart_project\\\\.security-runs\\\\security_test_a4545ddb9a754b848a1218821bb1dfba\\\\storefront-turbo\\\\.next\\\\server\\\\chunks\\\\ssr\\\\b6a38_security_test_a4545ddb9a754b848a1218821bb1dfba_storefront-turbo_bc7fae76._.js\"",
+        "gapReason": "Measured invariants failed: SAFE_ACCEPT; Response leakage detected: Windows / POSIX absolute file path leaked: \"C:\\\\Users\\\\thana\\\\south_aero_project\\\\southaeropart_project\\\\.security-runs\\\\security_test_a4545ddb9a754b848a1218821bb1dfba\\\\storefront-turbo\\\\.next\\\\server\\\\chunks\\\\ssr\\\\b6a38_security_test_a4545ddb9a754b848a1218821bb1dfba_storefront-turbo_bc7fae76._.js\""
+      },
+      "noteBytes": 2048,
+      "storedExactly": true,
+      "ownerRead": true,
+      "otherCustomerDenied": true,
+      "guest": true,
+      "surfaces": [
+        {
+          "surface": "storefront",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "admin",
+          "exactText": true,
+          "childElements": 0,
+          "marker": 0
+        },
+        {
+          "surface": "receipt-email",
+          "exactText": true,
+          "childElements": 0
+        },
+        {
+          "surface": "shipment-email",
+          "exactText": true,
+          "childElements": 0
+        }
+      ],
+      "beacons": 0,
+      "localEmailRequests": 2,
+      "request": {
+        "bytes": 2485,
+        "sha256": "8066d21e70bf9f8db4f5ff79568e98f289aff3316a95e0af86b212c7d73f9599"
+      }
+    }
+  ],
+  "supplemental": [
+    {
+      "label": "ascii_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "thai_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "emoji_over_limit",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "null",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "object",
+      "rejectedWithoutMutation": true
+    },
+    {
+      "label": "nul",
+      "rejectedWithoutMutation": true
+    }
+  ]
+}

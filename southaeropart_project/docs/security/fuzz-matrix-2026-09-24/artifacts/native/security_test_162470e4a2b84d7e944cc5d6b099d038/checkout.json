@@ -1,0 +1,47 @@
+{
+  "variants": [],
+  "raceChecks": [
+    [
+      {
+        "kind": "single",
+        "barrierArrivals": 2,
+        "wireStatuses": [
+          200,
+          200
+        ],
+        "semanticStatuses": [
+          null,
+          200
+        ],
+        "passed": false,
+        "leakFree": true,
+        "orderRows": 1,
+        "itemRows": 1,
+        "reservationRows": 1,
+        "physicalStock": 0,
+        "emailRequests": 0
+      },
+      {
+        "kind": "shared_bundle_part",
+        "barrierArrivals": 2,
+        "wireStatuses": [
+          200,
+          200
+        ],
+        "semanticStatuses": [
+          200,
+          null
+        ],
+        "passed": false,
+        "leakFree": true,
+        "orderRows": 1,
+        "itemRows": 1,
+        "reservationRows": 1,
+        "physicalStock": 0,
+        "emailRequests": 0
+      }
+    ]
+  ],
+  "clerkCleaned": true,
+  "scope": "Authenticated native createOrder with owned catalog fixtures; payment-intent creation is a separate action."
+}

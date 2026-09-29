@@ -1,0 +1,45 @@
+{
+  "runId": "security_test_e034c078fe014bbaab743827959ea235",
+  "targets": [
+    "guest.track"
+  ],
+  "completedTargets": [
+    "guest.track"
+  ],
+  "appCopies": true,
+  "nativeActionClient": true,
+  "mode": "development",
+  "sourceDigests": {
+    "pnpm-lock.yaml": "24048916e72a68bdc1d019f19798bd839dcd0aeb84069e182deddbdd7bca8706",
+    "docs/security/fuzz-matrix-2026-09-24/corpus.json": "715ccba2b68621ed2f26138a86e8a4235da4f12dacb0ea080d29a741f2bc69aa",
+    "docs/security/fuzz-matrix-2026-09-24/corpus.schema.json": "8a2be45c587be29d0e83b9bc56ba808f81b9659e9895eda4fc4c7acf40399ec4",
+    "apps/admin/actions/product.actions.ts": "fb2fff80eb65fea32ad125979155827ff7581e15a506061e7934f28d813a8675",
+    "apps/admin/lib/product-input.ts": "13a59a078987fe4c4b30cb794476df57f019ffaf86ae192e6d4ce6ac44c34a29",
+    "apps/admin/lib/product-errors.ts": "675eeaf7558c1bb1e45f1e59abf021d99f9df7e18859c36d3c1a4c47373d9e9d",
+    "apps/admin/middleware.ts": "35087bc15226ff2ae738c46a02390bc7bb12f8892f2460a5c2f1a80d1bfcfec2",
+    "apps/storefront/middleware.ts": "4f650b44dd1155b92ad98057151bddcacfabfb86935ec4170f34bb3f278c9f42",
+    "packages/lib/src/action-ingress.ts": "f103ea18eccf19c7ebbb03d3932e25677d00c81f465313944ab890c95e2649b8",
+    "apps/admin/next.config.mjs": "8b0d52d6a559b9936b189c1866e9e62c19edb49f34c78eebb81c02a9a6ad3639",
+    "packages/security-harness/src/integration/admin-product.ts": "fc7f7c72618136928c374027fa8e798dc039af4d6a9db89db3c5c6f471f509cd",
+    "packages/security-harness/src/integration/product-rendering.ts": "fd4207397cc5454a042cdf89b7ff17cdf282c53bf9b93a01f6d4c571d216f59f",
+    "packages/security-harness/src/integration/email-sink.ts": "d489fda7194c4b1fc884e8fac257d4097daf4f23d5c0ecd95b22ee803206f3bc",
+    "apps/storefront/actions/checkout.actions.ts": "75715d113e48bfb4f9851c8d409e9f37d2024c0ee33990dd1454538d2e2258ca",
+    "apps/storefront/lib/guest-order-token.ts": "dab0a453e74a75e3daa4d92ff002cd8fb5bdb3bf6564ccb7fd48e46c20fa68b8",
+    "apps/storefront/lib/order-token-clock.ts": "c0dfee6b22d36dc34f73b56ff5fe195a1f6cdb65c0cb6c0c8b2930b3ab974a12",
+    "apps/storefront/lib/order-read-dto.ts": "7535ec5d230bf3a4579ffd0304375e1ef1beae7ac95e0123a013b5da7ab1863d",
+    "apps/storefront/lib/order-read-input.ts": "6fc6357ad831e564dd043801b257ef239441ab4e56667b4e6e6d3e10c866b0be",
+    "apps/storefront/next.config.mjs": "e76018e123cbbf3b0a4eb409c0e9fda03dc5fc06ae4e4defe96e73a3c3b52b09",
+    "packages/security-harness/src/cli/native.ts": "2fbfbd030f9e2d873c8ea2f373ff907e2588c1765479db4a0aa5786aba201e0e",
+    "packages/security-harness/src/integration/native-runtime.ts": "8f81b14976e85d5bbb33559480257682853a60876aaa4dee1374d22ef7374d14",
+    "packages/security-harness/src/integration/native-action.ts": "bf530840b0ba408dd7926930f9f9a701cd91ce37313f693a80ef148e6a353592",
+    "packages/security-harness/src/integration/guest-tracking.ts": "8ac95d2caecbf20f0e1ff0ffe9cfda1b427ce67ee1c8db94cbea2190941c8114",
+    "packages/security-harness/src/integration/guest-fixture.ts": "e68adca1dfe2849193bcd49d0eea6c935488551ec822babf9f3f658c2cc010f4",
+    "packages/security-harness/src/integration/clerk-actors.ts": "8c4e21406c2e2ea36b66126c3e26053ba678df51ef46402809708a5e7d001e76",
+    "packages/security-harness/src/integration/resource-observer.ts": "bac4d45376da3adb1b62f12ffca550b0f950cbde8bc186084bcb53778ab7e207",
+    "packages/security-harness/src/integration/resource-watchdog.cjs": "765d12d9d6cc926ace37c3945c4a853210942cbdb6401b227c9d0b693c89331d"
+  },
+  "guestClockMs": 1790576516162,
+  "guestClockScope": "Only the disposable storefront order-token-clock module; session clocks unchanged",
+  "emailSinkMessages": 0,
+  "reportScope": "offline observations plus completed native requests; supplemental sessions are separate"
+}

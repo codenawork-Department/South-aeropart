@@ -1,0 +1,14 @@
+{
+  "runId": "security_test_d96c38ac6f8040aba8ae3e9aea6468aa",
+  "targets": [
+    "guest.track"
+  ],
+  "completedTargets": [
+    "guest.track"
+  ],
+  "appCopies": true,
+  "nativeActionClient": true,
+  "mode": "development",
+  "emailSinkMessages": 0,
+  "reportScope": "offline observations plus completed native requests; supplemental sessions are separate"
+}

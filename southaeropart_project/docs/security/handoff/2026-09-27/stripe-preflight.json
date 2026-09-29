@@ -1,0 +1,8 @@
+{
+  "checkedAt": "2026-09-27T19:14:02.631Z",
+  "method": "GET",
+  "endpoint": "/v1/balance",
+  "authenticated": true,
+  "livemode": false,
+  "paymentWrites": false
+}

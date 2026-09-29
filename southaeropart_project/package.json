@@ -19,10 +19,14 @@
     "verify:stripe": "pnpm --filter storefront verify:stripe",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
-    "test:e2e:stateful": "node scripts/run-stateful-e2e.mjs",
-    "test:security": "pnpm --filter e2e test:security"
+    "test:security": "pnpm --filter e2e test:security",
+    "test:security:corpus": "pnpm --filter @repo/security-harness test",
+    "validate:corpus": "pnpm --filter @repo/security-harness validate",
+    "generate:manifest": "pnpm --filter @repo/security-harness manifest"
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "prettier": "^3.9.9",
     "turbo": "^2.11.3"
   },
