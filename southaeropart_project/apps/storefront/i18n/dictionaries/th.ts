@@ -329,7 +329,7 @@ export const th = {
       archive: "บันทึกตัวตน",
       edition: "ดีไซน์ในแบบของเรา",
       specimen: "SOUTH AERO / มุมมองการออกแบบ",
-      statements: [{"line1": "NOT LOUD.", "line2": "DIFFERENT."}, {"line1": "BORN TO", "line2": "STAND OUT."}, {"line1": "OBSESS", "line2": "OVER DETAIL."}, {"line1": "YOUR CAR.", "line2": "YOUR RULES."}],
+      statements: [{"line1": "NOT LOUD,", "line2": "JUST DIFFERENT."}, {"line1": "BORN TO", "line2": "STAND OUT."}, {"line1": "OBSESS", "line2": "OVER DETAIL."}, {"line1": "YOUR CAR.", "line2": "YOUR RULES."}],
       "identity": "ตัวตนของเรา",
       "origin": "จุดเริ่มต้น",
       "detail": "ทุกรายละเอียด",

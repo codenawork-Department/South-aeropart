@@ -12,7 +12,7 @@ const chapterPosition = (index: number) => index === 0 ? 0 : (index + 0.2) / 3.8
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
 const ease = (value: number) => {
   const progress = clamp(value);
-  return progress * progress * (3 - 2 * progress);
+  return progress * progress * progress * (progress * (progress * 6 - 15) + 10);
 };
 
 export function AboutStory() {
@@ -49,19 +49,18 @@ export function AboutStory() {
       // Every layer shares the same smoothed position, including on reversal.
       const timeline = position * 3.8;
       const active = Math.min(3, Math.floor(timeline + 0.21));
-      element.style.setProperty("--journey", String(position));
       element.style.setProperty("--flow-offset", String(-position * 900));
       panels.current.forEach((panel, index) => {
         if (!panel) return;
         const offset = timeline - index;
-        const enter = index === 0 ? 1 : ease((offset + 0.42) / 0.42);
+        const enter = index === 0 ? 1 : ease((offset + 0.65) / 0.65);
         // Blend over the outgoing scene to keep the background continuous.
         const visible = enter > 0 && (index === 3 || offset < 1);
         panel.style.visibility = staticLayout || visible ? "visible" : "hidden";
         if (staticLayout || visible) {
           panel.style.setProperty("--visibility", String(enter));
-          const textIn = index === 0 ? 1 : ease((offset + 0.16) / 0.16);
-          const textOut = index === 3 ? 1 : 1 - ease((offset - 0.58) / 0.16);
+          const textIn = index === 0 ? 1 : ease((offset + 0.3) / 0.3);
+          const textOut = index === 3 ? 1 : 1 - ease((offset - 0.35) / 0.3);
           panel.style.setProperty("--copy-opacity", String(textIn * textOut));
           panel.style.setProperty("--text-y", `${(1 - enter) * 45}px`);
           panel.style.setProperty("--photo-scale", String(1.02 + ease(offset) * 0.08));
@@ -84,7 +83,7 @@ export function AboutStory() {
       const elapsed = lastTime ? Math.min(now - lastTime, 64) : 1000 / 60;
       lastTime = now;
       // Time-based damping feels the same on 60 Hz and high-refresh displays.
-      position += (target - position) * (1 - Math.exp(-elapsed / 110));
+      position += (target - position) * (1 - Math.exp(-elapsed / 150));
       const settled = Math.abs(target - position) < 0.00003;
       if (settled) position = target;
       render();
@@ -162,7 +161,7 @@ export function AboutStory() {
               <span>{copy.statements[index].line2}<i>+</i></span>
             </div>
             <div className={styles.photo}>
-              <Image src={photos[index]} alt="" fill sizes="(max-width: 767px) 120vw, 80vw" priority={index === 0} className={styles.image} />
+              <Image src={photos[index]} alt="" fill sizes="(max-width: 767px) 120vw, 80vw" priority={index === 0} loading={index === 0 ? undefined : "eager"} className={styles.image} />
             </div>
             <div className={styles.shade} />
             <svg className={styles.airflow} viewBox="0 0 1200 600" fill="none" preserveAspectRatio="none" aria-hidden="true">
@@ -171,7 +170,6 @@ export function AboutStory() {
               ))}
             </svg>
             <div className={styles.scan} aria-hidden="true" />
-            <div className={styles.target} aria-hidden="true"><span />+</div>
             <div className={styles.specimen} aria-hidden="true">SA—0{index + 1}<span>{copy.specimen}</span></div>
             <div className={styles.number} aria-hidden="true">/ 0{index + 1}</div>
             <div className={styles.copy}>

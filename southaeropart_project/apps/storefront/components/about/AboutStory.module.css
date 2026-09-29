@@ -29,9 +29,6 @@
 .number { position: absolute; right: 4%; bottom: 17%; font: 400 54px/1 var(--font-heading), sans-serif; color: var(--paper); }
 .specimen { position: absolute; right: 5%; top: 18%; z-index: 4; font: 500 12px/1.5 monospace; color: var(--paper); border-top: 1px solid #999; padding-top: 12px; }
 .specimen span { display: block; font: 400 8px/2 var(--font-body), sans-serif; letter-spacing: .1em; margin-top: 3px; }
-.target { position: absolute; z-index: 4; left: 69%; top: 60%; color: white; font: 200 25px/1 monospace; }
-.target span { position: absolute; width: 90px; height: 90px; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(calc(var(--journey, 0) * 180deg)); border: 1px solid #eee4; border-radius: 50%; }
-.target span::after { content: ''; position: absolute; width: 6px; height: 6px; top: 8px; right: 11px; background: var(--accent-red); }
 .airflow { position: absolute; z-index: 2; inset: 18% -10% 0; width: 120%; height: 65%; opacity: 0; stroke: #ef3338; stroke-width: 1; stroke-dasharray: 200 35; stroke-dashoffset: var(--flow-offset, 0); transform: rotate(-8deg); }
 .scan { display: none; }
 .sideLabel { position: absolute; z-index: 7; right: 18px; top: 37%; writing-mode: vertical-rl; font-size: 8px; letter-spacing: .16em; color: #ddd; mix-blend-mode: difference; }
@@ -49,6 +46,7 @@
 .track { position: absolute; z-index: 9; bottom: 0; left: 0; right: 0; height: 3px; background: #333; }
 .track > div { height: 100%; background: var(--accent-red); transform: scaleX(0); transform-origin: left; }
 .story a:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
+.panel[data-scene="0"] .wordmark { font-size: clamp(54px, 7.8vw, 145px); }
 /* Origin: an editorial light spread and a vertical specimen photograph. */
 .panel[data-scene="1"] { background: var(--paper); }
 .panel[data-scene="1"] .wordmark { font-size: clamp(65px, 8.6vw, 150px); color: #111; }
@@ -58,7 +56,6 @@
 .panel[data-scene="1"] .shade { background: linear-gradient(90deg, var(--paper) 0%, transparent 65%); opacity: .35; }
 .panel[data-scene="1"] .copy h2, .panel[data-scene="1"] .number, .panel[data-scene="1"] .specimen { color: #111; }
 .panel[data-scene="1"] .eyebrow, .panel[data-scene="1"] .description { color: #494949; }
-.panel[data-scene="1"] .target { color: #111; }
 /* Detail: scan lines, airflow and a close-up inspection frame. */
 .panel[data-scene="2"] .wordmark { font-size: clamp(65px, 8vw, 145px); }
 .panel[data-scene="2"] .photo { width: 61%; height: 69%; top: 15%; right: 3%; mask-image: linear-gradient(90deg, transparent, black 20%); clip-path: polygon(12% 0, 100% 0, 100% 85%, 87% 100%, 0 100%, 0 15%); }
@@ -66,15 +63,15 @@
 .panel[data-scene="2"] .blueprint { opacity: .5; mask-image: none; }
 .panel[data-scene="2"] .airflow { opacity: .5; }
 .panel[data-scene="2"] .scan { display: block; position: absolute; z-index: 3; width: 57%; height: 69%; top: 15%; left: 40%; pointer-events: none; transform: translate3d(calc(var(--scan-progress, 0) * 100%), 0, 0); }
-/* Finale: a red takeover, a large outlined headline and a direct invitation. */
-.panel[data-scene="3"] { background: #c51a21; }
-.panel[data-scene="3"] .photo { top: 0; height: 100%; right: -10%; width: 83%; mix-blend-mode: luminosity; mask-image: linear-gradient(90deg, transparent, black 35%); }
-.panel[data-scene="3"] .image { filter: brightness(.65) contrast(1.25); }
-.panel[data-scene="3"] .shade { background: linear-gradient(90deg, #c51a21, transparent 80%); opacity: .5; }
+/* Finale: horizontal red-to-white fade with a neutral photograph. */
+.panel[data-scene="3"] { background: linear-gradient(90deg, #c51a21 0%, #c51a21 24%, #e38286 53%, #fff 85%); }
+.panel[data-scene="3"] .photo { top: 0; height: 100%; right: -10%; width: 83%; mask-image: linear-gradient(90deg, transparent, black 50%); }
+.panel[data-scene="3"] .image { filter: saturate(.4) brightness(1.03) contrast(1.05); }
+.panel[data-scene="3"] .shade { background: linear-gradient(90deg, #c51a21 0%, #c51a21e6 25%, #c51a2140 55%, transparent 80%); opacity: 1; }
+.panel[data-scene="3"] .number, .panel[data-scene="3"] .specimen { color: #222; }
 .panel[data-scene="3"] .wordmark > span:nth-child(2) { color: transparent; -webkit-text-stroke: 1.5px var(--paper); }
 .panel[data-scene="3"] .description, .panel[data-scene="3"] .eyebrow { color: #f4dfe0; }
 .panel[data-scene="3"] .eyebrow > span { background: white; }
-.panel[data-scene="3"] .target { display: none; }
 @media (min-width: 1600px) { .copy { bottom: 21%; } }
 @media (max-width: 900px) { .archive, .sideLabel { display: none; } .chapterLabel { font-size: 8px; } .chapters { gap: 12px; } }
 @media (max-width: 767px) {
@@ -84,6 +81,7 @@
   .skip { font-size: 9px; gap: 6px; }
   .statusDot { width: 4px; height: 4px; margin-right: 2px; }
   .wordmark, .panel[data-scene="1"] .wordmark, .panel[data-scene="2"] .wordmark { top: 12%; left: 6%; font-size: clamp(48px, 13.3vw, 95px); }
+  .panel[data-scene="0"] .wordmark { font-size: clamp(34px, 10.5vw, 80px); }
   .wordmark i { font-size: 9px; padding-top: 5px; margin-left: 4px; }
   .photo { width: 110%; height: 56%; right: -20%; top: 24%; mask-image: linear-gradient(0deg, transparent, black 30%, black 75%, transparent); }
   .copy { width: 82%; left: 6%; bottom: 15%; }
@@ -92,8 +90,6 @@
   .eyebrow { font-size: 8px; margin-bottom: 8px; }
   .specimen { top: 43%; right: 7%; font-size: 9px; }
   .specimen span { display: none; }
-  .target { top: 49%; left: 60%; }
-  .target span { width: 56px; height: 56px; }
   .number { right: 7%; bottom: 35%; font-size: 29px; }
   .footer { left: 6%; right: 6%; bottom: 20px; gap: 15px; }
   .hint { font-size: 9px; max-width: 130px; gap: 8px; }
@@ -107,7 +103,7 @@
   .panel[data-scene="2"] .scan { top: 30%; height: 41%; }
   .panel[data-scene="2"] .airflow { top: 26%; height: 40%; }
   .panel[data-scene="3"] .photo { width: 120%; height: 70%; top: 10%; right: -30%; mask-image: linear-gradient(0deg, transparent, black 40%, black 80%, transparent); }
-  .panel[data-scene="3"] .copy { bottom: 14%; }
+  .panel[data-scene="3"] .copy { bottom: 14%; width: 82%; padding: 14px 16px; background: #a8141bed; border-left: 2px solid #ffffff80; }
   .cta { margin-top: 12px; padding: 12px 16px; min-height: 44px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce), (max-height: 600px) {
@@ -119,7 +115,6 @@
   .copy { bottom: 10%; }
   .panel[data-scene="3"] .copy { bottom: 10%; }
   .footer, .track, .sideLabel, .scan { display: none !important; }
-  .target span { transform: translate(-50%, -50%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -128,7 +123,7 @@
 
 .panel[data-scene="2"] .scan::after { content: ""; position: absolute; inset: 0 auto 0 0; width: 2px; background: #ff4349; box-shadow: 0 0 24px 4px #e51d2440; }
 
-.wordmark, .copy, .number, .specimen, .target { opacity: var(--copy-opacity, 1); }
+.wordmark, .copy, .number, .specimen { opacity: var(--copy-opacity, 1); }
 @media (prefers-reduced-motion: reduce), (max-height: 600px) {
-  .wordmark, .copy, .number, .specimen, .target { opacity: 1; }
+  .wordmark, .copy, .number, .specimen { opacity: 1; }
 }

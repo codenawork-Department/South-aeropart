@@ -331,7 +331,7 @@ export const en: Dictionary = {
       archive: "THE BRAND FILE",
       edition: "DESIGN WITHOUT COMPROMISE",
       specimen: "SOUTH AERO / DESIGN STUDY",
-      statements: [{"line1": "NOT LOUD.", "line2": "DIFFERENT."}, {"line1": "BORN TO", "line2": "STAND OUT."}, {"line1": "OBSESS", "line2": "OVER DETAIL."}, {"line1": "YOUR CAR.", "line2": "YOUR RULES."}],
+      statements: [{"line1": "NOT LOUD,", "line2": "JUST DIFFERENT."}, {"line1": "BORN TO", "line2": "STAND OUT."}, {"line1": "OBSESS", "line2": "OVER DETAIL."}, {"line1": "YOUR CAR.", "line2": "YOUR RULES."}],
       "identity": "The identity",
       "origin": "Our origins",
       "detail": "Every detail",
