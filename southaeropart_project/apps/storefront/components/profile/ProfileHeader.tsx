@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Image from "@/components/ui/image";
-import { User, ShieldCheck, Car, MapPin, Calendar, Globe } from "lucide-react";
+import { User, ShieldCheck, Car, MapPin, Calendar, Globe, FileText } from "lucide-react";
 import { SanitizedUserProfile } from "@/actions/profile.actions";
 import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
@@ -94,7 +95,7 @@ export function ProfileHeader({
         </div>
 
         {/* Right: Quick Stats Cards */}
-        <div className="flex items-center gap-3 w-full md:w-auto border-t md:border-t-0 border-[#222222] pt-4 md:pt-0">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto border-t md:border-t-0 border-[#222222] pt-4 md:pt-0">
           <div className="flex-1 md:flex-initial flex items-center gap-3 px-4 py-3 bg-[#171717] border border-[#262626] rounded-md min-w-[130px]">
             <div className="p-2 rounded bg-[var(--accent-red)]/10 text-[var(--accent-red)]">
               <Car size={18} />
@@ -122,6 +123,23 @@ export function ProfileHeader({
               </span>
             </div>
           </div>
+
+          <Link
+            href="/shipping-quotes"
+            className="flex-1 md:flex-initial flex items-center gap-3 px-4 py-3 bg-[#171717] hover:bg-[#1f1f1f] border border-[#262626] hover:border-amber-500/50 rounded-md min-w-[140px] transition-all group cursor-pointer"
+          >
+            <div className="p-2 rounded bg-amber-500/10 text-amber-400 group-hover:scale-105 transition-transform">
+              <FileText size={18} />
+            </div>
+            <div>
+              <span className="block text-xs font-semibold text-[var(--text-muted)] group-hover:text-amber-400 uppercase tracking-wider transition-colors">
+                {language === "th" ? "คำขอราคาค่าจัดส่ง" : "Shipping Quotes"}
+              </span>
+              <span className="text-xs font-heading text-neutral-300">
+                {language === "th" ? "ดูรายการ →" : "View all →"}
+              </span>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

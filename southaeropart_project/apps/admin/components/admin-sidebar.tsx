@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
 import { RealtimeSyncWidget } from "@/components/ui/realtime-sync-widget";
+import { useRealtimeSync } from "@/components/providers/realtime-provider";
 
 interface AdminSidebarProps {
   adminEmail?: string;
@@ -39,6 +40,7 @@ export function AdminSidebar({
   const pathname = usePathname();
   const { pendingPathname } = useNavigation();
   const activePath = pendingPathname || pathname;
+  const { pendingQuotesCount } = useRealtimeSync();
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -113,6 +115,18 @@ export function AdminSidebar({
       icon: Star,
       badge: null,
     },
+    ...(adminRole === "admin" || adminRole === "super_admin"
+      ? [
+          {
+            label: "ค่าจัดส่ง / Shipping",
+            sublabel: "Rates & Quote Requests",
+            href: "/shipping",
+            icon: Package,
+            badge: pendingQuotesCount > 0 ? String(pendingQuotesCount) : null,
+            badgeColor: "bg-amber-500/25 text-amber-300 border border-amber-500/40",
+          },
+        ]
+      : []),
     {
       label: "ข่าวสาร & จดหมายข่าว",
       sublabel: "Subscribers & Email Drops",

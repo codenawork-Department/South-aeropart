@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "@/components/ui/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { Menu, Search, ShoppingCart, X, LogOut, User as UserIcon, Package, ChevronDown, Heart, ArrowRight, Loader2 } from "lucide-react";
+import { Menu, Search, ShoppingCart, X, LogOut, User as UserIcon, Package, ChevronDown, Heart, ArrowRight, Loader2, FileText } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
 import { quickSearchAction, ShopProductItem } from "@/actions/product.actions";
 import { CartSidebar } from "./CartSidebar";
@@ -307,6 +307,14 @@ export function Navbar() {
                           >
                             <Package size={16} />
                             {t.common.myOrders}
+                          </Link>
+                          <Link
+                            href="/shipping-quotes"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
+                          >
+                            <FileText size={16} />
+                            {lang === "th" ? "คำขอราคาจัดส่ง" : "Shipping Quotes"}
                           </Link>
                         </div>
 

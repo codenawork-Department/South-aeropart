@@ -35,7 +35,18 @@ export function AddToCartButton({
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem(product, variant || product.finish || "Gloss Black");
+    const primary = product.primaryImage || product.images?.[0];
+    const normalizedProduct: CartableProduct = {
+      ...product,
+      primaryImage: primary,
+      images:
+        product.images && product.images.length > 0
+          ? product.images
+          : primary
+            ? [primary]
+            : [],
+    };
+    addItem(normalizedProduct, variant || product.finish || "Gloss Black");
     setAdded(true);
     openCart();
     setTimeout(() => setAdded(false), 1500);

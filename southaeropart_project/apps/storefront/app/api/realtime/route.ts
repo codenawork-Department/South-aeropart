@@ -195,6 +195,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const action = body?.action || "catalog_update";
+    const payload = body?.payload || null;
     const timestamp = Date.now();
 
     // Invalidate Storefront Next.js page & layout caches
@@ -204,6 +205,10 @@ export async function POST(request: NextRequest) {
       revalidatePath("/collection");
       revalidatePath("/products");
       revalidatePath("/orders");
+      revalidatePath("/shipping-quotes");
+      if (payload && typeof payload === "object" && "quoteId" in payload && typeof payload.quoteId === "string") {
+        revalidatePath(`/shipping-quotes/${payload.quoteId}`);
+      }
     } catch {
       // ignore
     }
@@ -211,8 +216,8 @@ export async function POST(request: NextRequest) {
     broadcastEvent({
       type: "refresh",
       version: timestamp,
-      action: "catalog_update",
-      payload: null,
+      action,
+      payload,
       timestamp,
     });
 

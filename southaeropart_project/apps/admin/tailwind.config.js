@@ -9,6 +9,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["'Century Gothic'", "CenturyGothic", "AppleGothic", "sans-serif"],
+      },
       screens: {
         xs: "420px",
         "3xl": "1920px",

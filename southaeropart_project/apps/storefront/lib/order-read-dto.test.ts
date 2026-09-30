@@ -29,6 +29,7 @@ describe("Order read privacy", () => {
       assignedAdminId: "PRIVATE_ADMIN",
       subtotal: "100.00",
       shippingFee: "10.00",
+      shippingDetails: { method: "quote", terms: "DAP", parcels: [{ contents: "Spoiler", lengthCm: 120, widthCm: 30, heightCm: 20, weightKg: 8 }] },
       taxAmount: "7.00",
       total: "117.00",
       currency: "THB",
@@ -44,6 +45,7 @@ describe("Order read privacy", () => {
     const dto = orderReadDto(row);
     expect(dto.total).toBe("117.00");
     expect(dto.customerNote).toBe(row.customerNote);
+    expect(dto.shippingDetails?.terms).toBe("DAP");
     expect(dto.shippingAddress.email).toBe(address.email);
     expect(dto.stripePaymentIntentId).toBe("pi_owned_receipt");
     expect(JSON.stringify(dto)).not.toContain("PRIVATE_");

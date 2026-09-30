@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getBundleDetailAction } from "@/actions/bundle.actions";
 import { getCategoriesAndBrandsAction } from "@/actions/product.actions";
 import { BundleForm } from "@/components/bundles/bundle-form";
+import { ProductShippingCard } from "@/components/shipping/ProductShippingCard";
 
 export const metadata = {
   title: "แก้ไขชุดเซ็ตสินค้า | South Aero Admin",
@@ -33,6 +34,7 @@ export default async function EditBundlePage({ params }: EditBundlePageProps) {
         initialData={bundleRes.bundle as any}
         isEdit={true}
       />
+      <ProductShippingCard productId={bundleRes.bundle.id} />
     </div>
   );
 }

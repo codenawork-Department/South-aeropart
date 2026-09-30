@@ -20,6 +20,16 @@ export interface NewOrderAlert {
   formattedTime: string;
 }
 
+export interface NewQuoteAlert {
+  id: string;
+  recipientName: string;
+  phone: string;
+  subtotal: string;
+  createdAt: string;
+  createdAtMs: number;
+  formattedTime: string;
+}
+
 interface RealtimeContextValue {
   syncInterval: number; // in milliseconds, 0 = paused
   setSyncInterval: (interval: number) => void;
@@ -33,6 +43,11 @@ interface RealtimeContextValue {
   dismissAlert: (orderId?: string) => void;
   dismissAllAlerts: () => void;
   totalOrders: number;
+  pendingQuotesCount: number;
+  newQuoteAlerts: NewQuoteAlert[];
+  latestNewQuote: NewQuoteAlert | null;
+  dismissQuoteAlert: (quoteId?: string) => void;
+  dismissAllQuoteAlerts: () => void;
 }
 
 const RealtimeContext = createContext<RealtimeContextValue | null>(null);
@@ -88,11 +103,18 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const [isSoundEnabled, setIsSoundEnabledState] = useState<boolean>(true);
   const [newOrderAlerts, setNewOrderAlerts] = useState<NewOrderAlert[]>([]);
   const [totalOrders, setTotalOrders] = useState<number>(0);
+  const [pendingQuotesCount, setPendingQuotesCount] = useState<number>(0);
+  const [newQuoteAlerts, setNewQuoteAlerts] = useState<NewQuoteAlert[]>([]);
 
   // Tracking state refs to detect deltas without component re-binding
   const previousOrdersRef = useRef<number | null>(null);
   const previousUpdatedRef = useRef<string | null>(null);
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
+
+  const previousQuotesRef = useRef<number | null>(null);
+  const previousQuoteUpdatedRef = useRef<string | null>(null);
+  const knownQuoteIdsRef = useRef<Set<string>>(new Set());
+
   const isSyncingRef = useRef<boolean>(false);
 
   // Load user preferences from localStorage on mount
@@ -140,6 +162,18 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     setNewOrderAlerts([]);
   }, []);
 
+  const dismissQuoteAlert = useCallback((quoteId?: string) => {
+    if (quoteId) {
+      setNewQuoteAlerts((prev) => prev.filter((q) => q.id !== quoteId));
+    } else {
+      setNewQuoteAlerts([]);
+    }
+  }, []);
+
+  const dismissAllQuoteAlerts = useCallback(() => {
+    setNewQuoteAlerts([]);
+  }, []);
+
   // Main synchronization routine
   const syncNow = useCallback(async () => {
     if (isSyncingRef.current) return;
@@ -150,22 +184,32 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       const res = await getAdminRealtimeHeartbeatAction();
 
       if (res.success && res.data) {
-        const { totalOrders: currentOrders, latestOrderUpdated, recentOrders } = res.data;
-        setTotalOrders(currentOrders);
+        const {
+          totalOrders: currentOrders,
+          latestOrderUpdated,
+          recentOrders,
+          pendingQuotesCount: currentPendingQuotes,
+          latestQuoteUpdated,
+          recentPendingQuotes,
+        } = res.data;
 
-        // First run: establish baseline with existing orders
+        setTotalOrders(currentOrders);
+        setPendingQuotesCount(currentPendingQuotes);
+
+        let shouldPlayChime = false;
+        let shouldRefresh = false;
+
+        // 1. Check Orders
         if (previousOrdersRef.current === null) {
           previousOrdersRef.current = currentOrders;
           previousUpdatedRef.current = latestOrderUpdated;
           knownOrderIdsRef.current = new Set(recentOrders.map((o) => o.id));
         } else {
-          // Detect newly arrived orders not seen before
           const newArrivals = recentOrders.filter(
             (o) => !knownOrderIdsRef.current.has(o.id)
           );
 
           if (newArrivals.length > 0) {
-            // Register new IDs
             newArrivals.forEach((o) => knownOrderIdsRef.current.add(o.id));
 
             const formattedNewOrders: NewOrderAlert[] = newArrivals.map((o) => ({
@@ -181,7 +225,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
               }),
             }));
 
-            // Prepend new orders, deduplicate by ID, cap at maximum 5
             setNewOrderAlerts((prev) => {
               const combined = [...formattedNewOrders, ...prev];
               const uniqueMap = new Map<string, NewOrderAlert>();
@@ -193,22 +236,76 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
               return Array.from(uniqueMap.values()).slice(0, 5);
             });
 
-            if (isSoundEnabled) {
-              playLuxuryChime();
-            }
-
-            // Trigger Next.js Server Components revalidation
-            router.refresh();
+            shouldPlayChime = true;
+            shouldRefresh = true;
           } else if (
             currentOrders !== previousOrdersRef.current ||
             latestOrderUpdated !== previousUpdatedRef.current
           ) {
-            // Updated status or cancelled order
-            router.refresh();
+            shouldRefresh = true;
           }
 
           previousOrdersRef.current = currentOrders;
           previousUpdatedRef.current = latestOrderUpdated;
+        }
+
+        // 2. Check Shipping Quotes
+        if (previousQuotesRef.current === null) {
+          previousQuotesRef.current = currentPendingQuotes;
+          previousQuoteUpdatedRef.current = latestQuoteUpdated;
+          knownQuoteIdsRef.current = new Set((recentPendingQuotes || []).map((q) => q.id));
+        } else {
+          const newQuoteArrivals = (recentPendingQuotes || []).filter(
+            (q) => !knownQuoteIdsRef.current.has(q.id)
+          );
+
+          if (newQuoteArrivals.length > 0) {
+            newQuoteArrivals.forEach((q) => knownQuoteIdsRef.current.add(q.id));
+
+            const formattedNewQuotes: NewQuoteAlert[] = newQuoteArrivals.map((q) => ({
+              id: q.id,
+              recipientName: q.recipientName,
+              phone: q.phone,
+              subtotal: q.subtotal,
+              createdAt: q.createdAt,
+              createdAtMs: q.createdAtMs || Date.now(),
+              formattedTime: new Date(q.createdAtMs || q.createdAt).toLocaleTimeString("th-TH", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              }),
+            }));
+
+            setNewQuoteAlerts((prev) => {
+              const combined = [...formattedNewQuotes, ...prev];
+              const uniqueMap = new Map<string, NewQuoteAlert>();
+              combined.forEach((item) => {
+                if (!uniqueMap.has(item.id)) {
+                  uniqueMap.set(item.id, item);
+                }
+              });
+              return Array.from(uniqueMap.values()).slice(0, 5);
+            });
+
+            shouldPlayChime = true;
+            shouldRefresh = true;
+          } else if (
+            currentPendingQuotes !== previousQuotesRef.current ||
+            latestQuoteUpdated !== previousQuoteUpdatedRef.current
+          ) {
+            shouldRefresh = true;
+          }
+
+          previousQuotesRef.current = currentPendingQuotes;
+          previousQuoteUpdatedRef.current = latestQuoteUpdated;
+        }
+
+        if (shouldPlayChime && isSoundEnabled) {
+          playLuxuryChime();
+        }
+
+        if (shouldRefresh) {
+          router.refresh();
         }
       } else {
         router.refresh();
@@ -271,6 +368,11 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         dismissAlert,
         dismissAllAlerts,
         totalOrders,
+        pendingQuotesCount,
+        newQuoteAlerts,
+        latestNewQuote: newQuoteAlerts[0] || null,
+        dismissQuoteAlert,
+        dismissAllQuoteAlerts,
       }}
     >
       {children}

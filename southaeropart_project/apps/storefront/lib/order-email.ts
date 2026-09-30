@@ -50,6 +50,7 @@ function generateOrderEmailHtml({
     address.line2,
     `${address.subDistrict}, ${address.district}`,
     `${address.province} ${address.postalCode}`,
+    address.country || "TH",
   ].filter(Boolean);
   const addressStr = addressParts.map(part => escapeHtml(part || "")).join("<br/>");
 

@@ -47,9 +47,9 @@ export function VehicleBundleHero({
     // When a specific vehicle is filtered but has no body kit bundle:
     // Render a sleek, compact horizontal notification card (NOT a large empty box)
     return (
-      <div className="bg-zinc-950/60 border-b border-zinc-800/60">
-        <div className="container-main py-3.5">
-          <div className="bg-zinc-950 border border-zinc-800/80 rounded-sm px-4 py-3 md:px-5 md:py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+      <div className="pt-6 pb-2 md:pt-8 md:pb-3">
+        <div className="container-main">
+          <div className="bg-zinc-950 border border-zinc-800/80 rounded-xl px-4 py-3.5 md:px-5 md:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-sm bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[var(--accent-red)] flex-shrink-0">
                 <PackageX size={16} />
@@ -95,15 +95,18 @@ export function VehicleBundleHero({
   const displayDescription = localizedDescription || localizedShortDescription;
 
   // ---------------------------------------------------------------------------
-  // 3. Active Bundle Showcase (Aggressive Dark Motorsport Aesthetic)
+  // 3. Active Bundle Showcase (Elevated Motorsport Card with Generous Spacing)
   // ---------------------------------------------------------------------------
   return (
-    <section className="bg-zinc-950 border-b border-zinc-800/80 relative overflow-hidden">
-      {/* Subtle glowing motorsport red atmosphere */}
-      <div className="absolute top-0 right-1/4 w-[500px] h-[250px] bg-[radial-gradient(ellipse_at_center,rgba(229,29,36,0.08)_0%,transparent_70%)] pointer-events-none" />
+    <section className="pt-6 pb-2 sm:pt-8 sm:pb-3 md:pt-10 md:pb-4 relative" id="featured-bundle-hero">
+      <div className="container-main">
+        {/* Flagship Kit Card with generous spacing, subtle border & glow */}
+        <div className="relative rounded-2xl border border-zinc-800/90 bg-gradient-to-br from-[#161616] via-[#101010] to-[#0A0A0A] p-6 sm:p-8 md:p-9 lg:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden">
+          {/* Subtle glowing motorsport red atmosphere inside card */}
+          <div className="absolute top-0 right-1/4 w-[500px] h-[260px] bg-[radial-gradient(ellipse_at_center,rgba(229,29,36,0.12)_0%,transparent_70%)] pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-[300px] h-[200px] bg-[radial-gradient(ellipse_at_center,rgba(229,29,36,0.06)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="container-main py-6 md:py-10 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-center relative z-10">
           {/* Left Column: Details, Telemetry, & CTAs (order-2 on mobile, md:order-1 on tablet/desktop) */}
           <div className="order-2 md:order-1 md:col-span-6 lg:col-span-6 space-y-3 sm:space-y-3.5">
             {/* Top Row: Vehicle Breadcrumb + Priority Waterfall Badge */}
@@ -208,9 +211,9 @@ export function VehicleBundleHero({
             )}
 
             {/* Price & Action CTAs */}
-            <div className="pt-2 flex flex-wrap items-center gap-3.5">
+            <div className="pt-2 sm:pt-3 flex flex-wrap items-center gap-3.5">
               <div>
-                <p className="font-heading text-lg md:text-xl font-bold text-white tracking-wide">
+                <p className="font-heading text-xl md:text-2xl font-bold text-white tracking-wide">
                   {formatPrice(bundle.price, { showCode: true })}
                 </p>
                 {bundle.compareAtPrice && (
@@ -222,7 +225,7 @@ export function VehicleBundleHero({
 
               <Link
                 href={`/products/${bundle.slug}`}
-                className="btn-primary gap-2 text-xs py-2.5 px-5 shadow-lg shadow-red-950/30"
+                className="btn-primary gap-2 text-xs py-2.5 px-6 shadow-lg shadow-red-950/40 hover:shadow-red-600/20 active:scale-[0.98] transition-all"
                 id="view-bundle-package-btn"
               >
                 VIEW COMPLETE PACKAGE <ArrowRight size={13} />
@@ -239,7 +242,7 @@ export function VehicleBundleHero({
           <div className="order-1 md:order-2 md:col-span-6 lg:col-span-6">
             <Link
               href={`/products/${bundle.slug}`}
-              className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-sm overflow-hidden border border-zinc-800 bg-zinc-900/60 shadow-xl group block"
+              className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-950/80 shadow-2xl group block"
             >
               <Image
                 src={bundle.primaryImage || "/images/FRONT.png"}
@@ -250,8 +253,8 @@ export function VehicleBundleHero({
                 sizes="(max-width: 1024px) 100vw, 600px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                <span className="text-[0.65rem] font-heading font-semibold text-zinc-300 bg-zinc-950/90 backdrop-blur-sm border border-zinc-800/80 px-2.5 py-1 rounded-sm shadow">
+              <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2">
+                <span className="text-[0.65rem] font-heading font-semibold text-zinc-300 bg-zinc-950/90 backdrop-blur-sm border border-zinc-800/80 px-2.5 py-1 rounded shadow">
                   {bundle.bundleItems.length > 0
                     ? `FULL KIT INSTALLED • ${bundle.bundleItems.length} PIECES`
                     : "FULL KIT INSTALLED"}
@@ -261,6 +264,7 @@ export function VehicleBundleHero({
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
   );
 }

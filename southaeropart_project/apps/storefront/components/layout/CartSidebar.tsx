@@ -78,9 +78,9 @@ export function CartSidebar() {
               >
                 {/* Product Thumbnail */}
                 <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-[#1C1C1C] rounded overflow-hidden relative border border-[#2A2A2A]">
-                  {item.product.images?.[0] ? (
+                  {(item.product.images?.[0] || item.product.primaryImage) ? (
                     <Image
-                      src={item.product.images[0]}
+                      src={item.product.images?.[0] || item.product.primaryImage!}
                       alt={item.product.name}
                       fill
                       className="object-cover"

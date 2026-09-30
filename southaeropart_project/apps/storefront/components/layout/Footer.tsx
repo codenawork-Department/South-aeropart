@@ -12,7 +12,7 @@ const SOCIAL_LINKS = [
 ];
 
 export function Footer() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const footerLinks = {
     shop: {
@@ -38,6 +38,7 @@ export function Footer() {
     support: {
       title: t.footer.support,
       links: [
+        { label: lang === "th" ? "คำขอราคาจัดส่งของฉัน" : "My shipping requests", href: "/shipping-quotes" },
         { label: t.footer.shippingPolicy, href: "/about" },
         { label: t.footer.returnPolicy, href: "/about" },
         { label: t.footer.faq, href: "/about" },

@@ -21,7 +21,7 @@ export default function AdminGlobalError({ error, reset }: GlobalErrorProps) {
           backgroundColor: "#0A0A0A",
           color: "#FFFFFF",
           fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            '"Century Gothic", CenturyGothic, AppleGothic, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",

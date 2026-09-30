@@ -141,9 +141,9 @@ export function CartPageClient() {
                   {/* Product Info */}
                   <div className="sm:col-span-6 flex gap-4 items-center">
                     <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-[#1A1A1A] border border-[#2D2D2D] rounded-md overflow-hidden relative">
-                      {item.product.images?.[0] ? (
+                      {(item.product.images?.[0] || item.product.primaryImage) ? (
                         <Image
-                          src={item.product.images[0]}
+                          src={item.product.images?.[0] || item.product.primaryImage!}
                           alt={item.product.name}
                           fill
                           className="object-cover"

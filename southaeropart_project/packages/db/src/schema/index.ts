@@ -168,3 +168,4 @@ export * from "./user-interests";
 export * from "./showcase";
 export * from "./newsletter";
 export * from "./security";
+export * from "./shipping";

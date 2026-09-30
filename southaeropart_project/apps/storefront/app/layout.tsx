@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter, Oswald } from "next/font/google";
 import { cookies } from "next/headers";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AuthSessionTracker } from "@/components/auth/AuthSessionTracker";
@@ -11,19 +10,6 @@ import { Language, DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME, sanitizeLanguage } fr
 import { Currency, DEFAULT_CURRENCY, CURRENCY_COOKIE_NAME, sanitizeCurrency } from "@/lib/currency";
 import { CustomerShipmentAlertToast } from "@/components/orders/CustomerShipmentAlertToast";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
-});
-
-const oswald = Oswald({
-  subsets: ["latin"],
-  variable: "--font-heading",
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "South Aero Performance — Not Loud, Just Different",
@@ -80,8 +66,8 @@ export default async function RootLayout({
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
     >
-      <html lang={initialLang} className={`${inter.variable} ${oswald.variable}`}>
-        <body className="min-h-screen flex flex-col">
+      <html lang={initialLang}>
+        <body className="min-h-screen flex flex-col font-sans">
           <AuthSessionTracker />
           <LanguageProvider initialLang={initialLang}>
             <CurrencyProvider initialCurrency={initialCurrency}>

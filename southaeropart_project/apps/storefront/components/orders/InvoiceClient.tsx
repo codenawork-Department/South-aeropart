@@ -280,7 +280,7 @@ export function InvoiceClient({ order, items, guestToken }: InvoiceClientProps) 
               {billingAddr.line1}
               {billingAddr.line2 ? ` ${billingAddr.line2}` : ""},{" "}
               {billingAddr.subDistrict}, {billingAddr.district},{" "}
-              {billingAddr.province} {billingAddr.postalCode}
+              {billingAddr.province} {billingAddr.postalCode} {billingAddr.country || "TH"}
             </p>
             <p className="text-neutral-600 font-mono">
               Tel: {billingAddr.phone || shippingAddr.phone}
@@ -302,18 +302,19 @@ export function InvoiceClient({ order, items, guestToken }: InvoiceClientProps) 
               {shippingAddr.line1}
               {shippingAddr.line2 ? ` ${shippingAddr.line2}` : ""},{" "}
               {shippingAddr.subDistrict}, {shippingAddr.district},{" "}
-              {shippingAddr.province} {shippingAddr.postalCode}
+              {shippingAddr.province} {shippingAddr.postalCode} {shippingAddr.country || "TH"}
             </p>
             <div className="pt-1 font-mono text-[0.7rem] text-neutral-600 space-y-0.5">
               <p>
                 <strong>Carrier:</strong> {order.shippingCarrier || "South Aero Standard Logistics"}
               </p>
+              {order.shippingDetails?.method === "quote" && <div className="space-y-1"><p><strong>Confirmed delivery terms:</strong> {order.shippingDetails.terms}</p>{order.shippingDetails.deliveryEstimate && <p><strong>Estimate:</strong> {order.shippingDetails.deliveryEstimate}</p>}{order.shippingDetails.parcels?.map((p, i) => <p key={i}>{i + 1}. {p.contents} — {p.lengthCm} × {p.widthCm} × {p.heightCm} cm / {p.weightKg} kg</p>)}</div>}
               {order.trackingNumber && (
                 <p>
                   <strong>Tracking #:</strong> {order.trackingNumber}
                 </p>
               )}
-              {!isThaiMode && (
+              {!isThaiMode && order.shippingDetails?.method !== "quote" && (
                 <p className="text-neutral-500">
                   <strong>Terms of Delivery:</strong> DAP (Delivered at Place) / Express Courier
                 </p>

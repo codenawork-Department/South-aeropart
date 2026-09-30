@@ -43,6 +43,13 @@
       "when": 1790618400000,
       "tag": "0005_customer_order_note",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790751384500,
+      "tag": "0006_shipping_quotes",
+      "breakpoints": true
     }
   ]
 }

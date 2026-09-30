@@ -21,7 +21,9 @@ const isProtectedRoute = createRouteMatcher([
   "/account(.*)",
   "/wishlist(.*)",
   "/profile(.*)",
-  "/orders$",
+  "/orders(.*)",
+  "/checkout(.*)",
+  "/shipping-quotes(.*)",
 ]);
 
 export default clerkMiddleware(

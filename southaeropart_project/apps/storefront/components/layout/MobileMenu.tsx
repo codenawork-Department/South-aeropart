@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, User, Search, ArrowRight, Heart } from "lucide-react";
+import { X, User, Search, ArrowRight, Heart, Package, FileText } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { CurrencySwitcher } from "./CurrencySwitcher";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -104,6 +104,22 @@ export function MobileMenu({ isOpen, onClose, links, onOpenSearch }: MobileMenuP
         {/* Bottom User / Account Row */}
         <div className="p-4 border-t border-[#202020] bg-[#0A0A0A] space-y-2">
           <Link
+            href="/orders"
+            onClick={onClose}
+            className="flex items-center gap-3 py-2.5 px-4 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white rounded hover:bg-white/5 transition-colors"
+          >
+            <Package size={16} />
+            <span>{t.common.myOrders}</span>
+          </Link>
+          <Link
+            href="/shipping-quotes"
+            onClick={onClose}
+            className="flex items-center gap-3 py-2.5 px-4 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white rounded hover:bg-white/5 transition-colors"
+          >
+            <FileText size={16} />
+            <span>{t.checkout.shippingMethod || "Shipping Quotes"}</span>
+          </Link>
+          <Link
             href="/wishlist"
             onClick={onClose}
             className="flex items-center gap-3 py-2.5 px-4 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white rounded hover:bg-white/5 transition-colors"
@@ -112,12 +128,12 @@ export function MobileMenu({ isOpen, onClose, links, onOpenSearch }: MobileMenuP
             <span>{t.common.myWishlist}</span>
           </Link>
           <Link
-            href="/sign-in"
+            href="/profile"
             onClick={onClose}
             className="flex items-center gap-3 py-2.5 px-4 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white rounded hover:bg-white/5 transition-colors"
           >
             <User size={16} />
-            <span>{t.common.signIn}</span>
+            <span>{t.common.myProfile}</span>
           </Link>
         </div>
       </div>

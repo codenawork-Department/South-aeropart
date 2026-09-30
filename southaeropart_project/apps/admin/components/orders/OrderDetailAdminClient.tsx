@@ -288,6 +288,7 @@ export function OrderDetailAdminClient({
 
             {/* Calculations Breakdown */}
             <div className="pt-4 border-t border-[#222222] space-y-2 text-xs">
+              {order.shippingDetails?.method === "quote" && <div className="space-y-1 rounded border border-neutral-700 p-3 text-xs text-neutral-300"><p className="font-semibold">ยืนยันเงื่อนไขจัดส่ง: {order.shippingDetails.terms}</p><p>{order.shippingDetails.deliveryEstimate}</p>{order.shippingDetails.parcels?.map((p: { contents: string; lengthCm: number; widthCm: number; heightCm: number; weightKg: number }, i: number) => <p key={i}>{i + 1}. {p.contents} — {p.lengthCm} × {p.widthCm} × {p.heightCm} cm / {p.weightKg} kg</p>)}</div>}
               <div className="flex justify-between text-gray-400">
                 <span>ยอดรวมสินค้า (Subtotal)</span>
                 <span className="font-mono font-semibold text-white">
@@ -503,7 +504,7 @@ export function OrderDetailAdminClient({
               {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
               <p>
                 {order.shippingAddress.subDistrict}, {order.shippingAddress.district},{" "}
-                {order.shippingAddress.province} {order.shippingAddress.postalCode}
+                {order.shippingAddress.province} {order.shippingAddress.postalCode} {order.shippingAddress.country || "TH"}
               </p>
             </div>
           </div>

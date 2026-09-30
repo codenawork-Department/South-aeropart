@@ -29,6 +29,7 @@ import {
   users,
   userAddresses,
   products,
+  shippingQuotes,
   productImages,
   eq,
   sql,
@@ -70,6 +71,19 @@ import {
 import { checkoutSchema, type CheckoutInput } from "@/lib/checkout-input";
 import { checkoutFailure, checkoutException } from "@/lib/checkout-errors";
 import { checkedPayableSatang, formatSatang } from "@repo/lib/money-arithmetic";
+import { ShippingConflict, moneySatang, shippingItemsSchema } from "@repo/lib/shipping";
+import { loadShippingBasket, shippingRates, shippingIdentity, quoteOwner, hashShipping, shippingRateLimit } from "@/lib/shipping-service";
+
+async function orderCheckoutResult(order: typeof orders.$inferSelect) {
+  let guestToken: string | undefined;
+  if (order.userId.startsWith("guest_")) {
+    if (Date.now() - order.createdAt.getTime() >= 7 * 86400000) throw new ShippingConflict();
+    guestToken = generateGuestOrderToken(order.id, order.userId, order.createdAt);
+    await setGuestTokenCookie(order.id, guestToken);
+  }
+  return { success: true as const, orderId: order.id, orderNumber: order.orderNumber, total: order.total,
+    guestToken, redirectUrl: `/checkout/payment/${order.id}` };
+}
 
 /* =========================================================================
    CHECKOUT ACTIONS
@@ -82,6 +96,17 @@ import { checkedPayableSatang, formatSatang } from "@repo/lib/money-arithmetic";
 export async function createOrder(input: CheckoutInput) {
   try {
     const validated = checkoutSchema.parse(input);
+    const shippingItems = shippingItemsSchema.parse(validated.items.map(({ productId, quantity, variant }) => ({ productId, quantity, variant })));
+    const quoteIdentity = validated.shippingQuote ? await shippingIdentity() : null;
+    if (validated.shippingQuote && quoteIdentity) {
+      await shippingRateLimit("accept", 20, quoteIdentity.userId);
+      const [previous] = await db.select({ orderId: shippingQuotes.orderId }).from(shippingQuotes).where(and(eq(shippingQuotes.id, validated.shippingQuote.id), quoteOwner(quoteIdentity))).limit(1);
+      if (previous?.orderId) {
+        const [order] = await db.select().from(orders).where(eq(orders.id, previous.orderId)).limit(1);
+        if (!order) return checkoutFailure("CONFLICT");
+        return orderCheckoutResult(order);
+      }
+    }
     let clerkUserId: string | null = null;
     try {
       clerkUserId = (await auth()).userId;
@@ -89,81 +114,36 @@ export async function createOrder(input: CheckoutInput) {
       return checkoutFailure("UNAUTHENTICATED");
     }
 
-    let orderUserId = clerkUserId;
-
-    // If signed in, ensure user exists in the database
-    if (orderUserId) {
-      const [existing] = await db
-        .select({ id: users.id, isBanned: users.isBanned })
-        .from(users)
-        .where(eq(users.id, orderUserId))
-        .limit(1);
-
-      if (existing?.isBanned) return checkoutFailure("FORBIDDEN");
-      if (!existing) {
-        const clerkUser = await currentUser();
-        const verifiedEmail = clerkUser?.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId && e.verification?.status === "verified");
-        if (!clerkUser || clerkUser.id !== orderUserId || !verifiedEmail) {
-          return checkoutFailure("FORBIDDEN");
-        }
-        const email = verifiedEmail.emailAddress;
-        const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || validated.shippingAddress.recipientName;
-        
-        await syncUserWithClerk({
-          userId: orderUserId,
-          email,
-          fullName,
-          phone: validated.shippingAddress.phone,
-          avatarUrl: clerkUser?.imageUrl || null,
-        });
-      }
-    } else {
-      // Guest customer handling: Create or reuse a guest record to maintain FK
-      const guestEmail = validated.shippingAddress.email || `guest_${Date.now()}@southaero.local`;
-
-      // CRIT-03: Rate limit guest orders by IP (Max 5 guest orders per 15 minutes)
-      let clientIp = "127.0.0.1";
-      try {
-        const headerList = await headers();
-        clientIp = getClientIp({ headers: headerList });
-      } catch {
-        // Fallback in test runner without request headers
-      }
-
-      if (!await takeRateLimit(`guest-checkout:${clientIp}`, 5, 15 * 60000)) return checkoutFailure("RATE_LIMITED");
-      const ipRateCheck = globalStorefrontRateLimiter.check(
-        `guest_checkout_${clientIp}`,
-        RATE_LIMIT_PRESETS.SENSITIVE
-      );
-
-      if (!ipRateCheck.success) {
-        return checkoutFailure("RATE_LIMITED");
-      }
-
-      // Also enforce DB email check
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-      const recentGuestOrders = await db
-        .select({ id: orders.id })
-        .from(orders)
-        .where(
-          and(
-            sql`${orders.userId} LIKE 'guest_%'`,
-            gte(orders.createdAt, fifteenMinutesAgo),
-            sql`${orders.shippingAddress}->>'email' = ${guestEmail}`
-          )
-        );
-
-      if (recentGuestOrders.length >= 5) {
-        return checkoutFailure("RATE_LIMITED");
-      }
-
-      // A supplied email never grants identity or ownership of an existing user.
-      const generatedGuestId = `guest_${randomBytes(24).toString("hex")}`;
-      orderUserId = generatedGuestId;
+    if (!clerkUserId) {
+      return checkoutFailure("UNAUTHENTICATED");
     }
 
-    if (!orderUserId) {
-      throw new Error("Unable to determine customer identity");
+    const orderUserId = clerkUserId;
+
+    // Ensure user exists in the database
+    const [existing] = await db
+      .select({ id: users.id, isBanned: users.isBanned })
+      .from(users)
+      .where(eq(users.id, orderUserId))
+      .limit(1);
+
+    if (existing?.isBanned) return checkoutFailure("FORBIDDEN");
+    if (!existing) {
+      const clerkUser = await currentUser();
+      const verifiedEmail = clerkUser?.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId && e.verification?.status === "verified");
+      if (!clerkUser || clerkUser.id !== orderUserId || !verifiedEmail) {
+        return checkoutFailure("FORBIDDEN");
+      }
+      const email = verifiedEmail.emailAddress;
+      const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || validated.shippingAddress.recipientName;
+      
+      await syncUserWithClerk({
+        userId: orderUserId,
+        email,
+        fullName,
+        phone: validated.shippingAddress.phone,
+        avatarUrl: clerkUser?.imageUrl || null,
+      });
     }
 
     // Pre-flight Price, Status & Stock Verification (MED-03: Batch queries)
@@ -230,7 +210,7 @@ export async function createOrder(input: CheckoutInput) {
       }
 
       // Non-authoritative stock check for early UX feedback
-      if (productRow.stockQuantity < item.quantity) {
+      if (!validated.shippingQuote && productRow.stockQuantity < item.quantity) {
         const label = productRow.productType === "bundle" ? "ชุดแต่ง" : "สินค้า";
         const unit = productRow.productType === "bundle" ? "ชุด" : "ชิ้น";
         return checkoutFailure("CONFLICT");
@@ -244,7 +224,7 @@ export async function createOrder(input: CheckoutInput) {
             return checkoutFailure("CONFLICT");
           }
           const requiredChildQuantity = childPart.partQtyInBundle * item.quantity;
-          if (childPart.childStock < requiredChildQuantity) {
+          if (!validated.shippingQuote && childPart.childStock < requiredChildQuantity) {
             return checkoutFailure("CONFLICT");
           }
         }
@@ -267,14 +247,16 @@ export async function createOrder(input: CheckoutInput) {
       });
     }
 
-    // Calculate shipping fee using exact satang units
-    let shippingFeeSatang = 0n;
-    if (validated.shippingMethod === "express") {
-      shippingFeeSatang = 45000n;
-    } else {
-      // Standard: 150 THB, free if subtotal >= 15,000 THB (1,500,000 satang)
-      shippingFeeSatang = subtotalSatang >= 1500000n ? 0n : 15000n;
-    }
+    const shippingBasket = await loadShippingBasket(shippingItems);
+    if (moneySatang(shippingBasket.subtotal) !== subtotalSatang) throw new ShippingConflict();
+    const quote = validated.shippingQuote && quoteIdentity ? (await db.select().from(shippingQuotes).where(and(eq(shippingQuotes.id, validated.shippingQuote.id), quoteOwner(quoteIdentity))).limit(1))[0] : null;
+    const rates = quote ? null : await shippingRates(shippingBasket, validated.shippingAddress.country);
+    if (validated.shippingQuote && !quote) return checkoutFailure("FORBIDDEN");
+    if (rates?.requiresQuote) return checkoutFailure("CONFLICT");
+    if (rates && validated.shippingPreviewKey && validated.shippingPreviewKey !== rates.key) return checkoutFailure("CONFLICT");
+    const rate = quote ? quote.fee : rates?.[validated.shippingMethod];
+    if (rate == null) return checkoutFailure("CONFLICT");
+    const shippingFeeSatang = moneySatang(rate);
 
     const totalSatang = checkedPayableSatang([subtotalSatang, shippingFeeSatang]);
     const subtotalStr = formatSatang(subtotalSatang);
@@ -287,6 +269,7 @@ export async function createOrder(input: CheckoutInput) {
     const orderNumber = `SA-${dateStr}-${randomSuffix}`;
 
     const formattedShippingAddress: Address = {
+      country: validated.shippingAddress.country,
       recipientName: validated.shippingAddress.recipientName,
       phone: validated.shippingAddress.phone,
       email: validated.shippingAddress.email || undefined,
@@ -299,6 +282,7 @@ export async function createOrder(input: CheckoutInput) {
     };
 
     const formattedBillingAddress: Address | undefined = validated.billingAddress ? {
+      country: validated.billingAddress.country,
       recipientName: validated.billingAddress.recipientName,
       phone: validated.billingAddress.phone,
       email: validated.billingAddress.email || undefined,
@@ -312,6 +296,26 @@ export async function createOrder(input: CheckoutInput) {
 
     // ── Audit #2 & CRIT-01: Atomic Multi-Table Transaction ─────────────────────
     const createdOrder = await db.transaction(async (tx) => {
+      if (validated.shippingQuote && quoteIdentity) {
+        // Serialize acceptance, offer revisions and cancellation on one durable row.
+        const [locked] = await tx.select().from(shippingQuotes).where(and(eq(shippingQuotes.id, validated.shippingQuote.id), quoteOwner(quoteIdentity))).for("update");
+        if (!locked) throw new ShippingConflict();
+        if (locked.status === "converted" && locked.orderId) {
+          const [existing] = await tx.select().from(orders).where(eq(orders.id, locked.orderId));
+          if (!existing) throw new ShippingConflict();
+          return existing;
+        }
+        if (locked.status !== "offered" || locked.version !== validated.shippingQuote.version ||
+            !locked.offerExpiresAt || locked.offerExpiresAt.getTime() <= Date.now() ||
+            locked.accessExpiresAt.getTime() <= Date.now() || locked.fee !== quote?.fee ||
+            hashShipping(locked.address) !== hashShipping(validated.shippingAddress) ||
+            (locked.customerNote || "") !== (validated.customerNote || "")) throw new ShippingConflict();
+        // Keep the existing physical-stock lock mode and deterministic ordering.
+        for (const id of shippingBasket.productIds) await tx.execute(sql`SELECT 1 FROM ${products} WHERE ${products.id} = ${id} FOR NO KEY UPDATE`);
+        const currentBasket = await loadShippingBasket(shippingItems, tx);
+        if (currentBasket.fingerprint !== locked.basketFingerprint || currentBasket.fingerprint !== shippingBasket.fingerprint)
+          throw new ShippingConflict();
+      }
       // Guest identity is committed only with its successful order/reservation.
       if (!clerkUserId) await tx.insert(users).values({
         id: orderUserId, email: `${orderUserId}@southaero.local`,
@@ -330,11 +334,11 @@ export async function createOrder(input: CheckoutInput) {
           paymentStatus: "pending",
           subtotal: subtotalStr,
           shippingFee: shippingFeeStr,
+          shippingDetails: quote ? { quoteId: quote.id, quoteVersion: quote.version, method: "quote", terms: quote.terms || "", deliveryEstimate: quote.deliveryEstimate || "", parcels: quote.parcels } : { method: validated.shippingMethod },
           taxAmount: "0.00", // Tax included in prices
           total: totalStr,
           currency: "THB",
-          shippingCarrier:
-            validated.shippingMethod === "express"
+          shippingCarrier: quote ? quote.carrier : validated.shippingMethod === "express"
               ? "South Aero Express Crated Logistics"
               : "South Aero Standard Logistics",
           shippingAddress: formattedShippingAddress,
@@ -403,6 +407,9 @@ export async function createOrder(input: CheckoutInput) {
       if (clerkUserId && validated.saveAddress) {
         try {
           await tx.insert(userAddresses).values({
+            country: validated.shippingAddress.country,
+            city: validated.shippingAddress.country === "TH" ? null : validated.shippingAddress.district,
+            stateOrProvince: validated.shippingAddress.country === "TH" ? null : validated.shippingAddress.province,
             userId: clerkUserId,
             recipientName: validated.shippingAddress.recipientName,
             phone: validated.shippingAddress.phone,
@@ -419,10 +426,12 @@ export async function createOrder(input: CheckoutInput) {
         }
       }
 
+      if (quote) await tx.update(shippingQuotes).set({ status: "converted", orderId: newOrder.id, version: quote.version + 1, updatedAt: new Date() }).where(eq(shippingQuotes.id, quote.id));
       return newOrder;
     });
 
     safeRevalidatePath("/orders");
+    safeRevalidatePath("/shipping-quotes");
 
     // SEC §5.1: Generate cryptographic guest order token if guest checkout
     let guestToken: string | undefined;

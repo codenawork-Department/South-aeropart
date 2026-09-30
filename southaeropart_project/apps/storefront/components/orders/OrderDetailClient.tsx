@@ -826,7 +826,7 @@ export function OrderDetailClient({ order, items, history, guestToken }: OrderDe
                 {order.shippingAddress.line1}
                 {order.shippingAddress.line2 ? ` ${order.shippingAddress.line2}` : ""},{" "}
                 {order.shippingAddress.subDistrict}, {order.shippingAddress.district},{" "}
-                {order.shippingAddress.province} {order.shippingAddress.postalCode}
+                {order.shippingAddress.province} {order.shippingAddress.postalCode} {order.shippingAddress.country || "TH"}
               </p>
               {order.shippingAddress.email && (
                 <div className="pt-2 mt-2 border-t border-white/5 flex items-center gap-1.5 text-neutral-300">
@@ -836,6 +836,8 @@ export function OrderDetailClient({ order, items, history, guestToken }: OrderDe
               )}
             </div>
           </div>
+
+          {order.shippingDetails?.method === "quote" && <section aria-label="Confirmed shipping terms" className="space-y-2 rounded-xl border border-neutral-800 bg-[#121212] p-4 sm:p-6"><h3 className="text-sm font-semibold text-white">{lang === "th" ? "เงื่อนไขและกล่องจัดส่งที่ยืนยัน" : "Confirmed shipping terms and parcels"}</h3>{order.shippingDetails.deliveryEstimate && <p className="text-sm text-neutral-300">{order.shippingDetails.deliveryEstimate}</p>}{order.shippingDetails.terms && <p className="whitespace-pre-wrap text-sm text-neutral-300">{order.shippingDetails.terms}</p>}{order.shippingDetails.parcels?.map((p, i) => <p key={i} className="text-xs text-neutral-400">{i + 1}. {p.contents} — {p.lengthCm} × {p.widthCm} × {p.heightCm} cm / {p.weightKg} kg</p>)}</section>}
 
           {order.customerNote && (
             <section aria-labelledby="customer-note-title" className="bg-[#121212] border border-[#222222] rounded-2xl p-4 sm:p-6 shadow-xl space-y-3">

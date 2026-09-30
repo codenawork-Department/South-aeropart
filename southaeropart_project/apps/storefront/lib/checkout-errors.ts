@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { ZodError } from "zod";
 import { InvalidPayableAmountError } from "@repo/lib/money-arithmetic";
+import { ShippingConflict } from "@repo/lib/shipping";
 const messages = {
   INVALID_INPUT: "Invalid request",
   CONFLICT: "Request conflicts with current state",
@@ -13,6 +14,7 @@ export function checkoutFailure(code: keyof typeof messages) {
   return { success: false as const, code, error: messages[code] };
 }
 export function checkoutException(error: unknown) {
+  if (error instanceof ShippingConflict) return checkoutFailure("CONFLICT");
   if (error instanceof ZodError || error instanceof InvalidPayableAmountError)
     return checkoutFailure("INVALID_INPUT");
   if (

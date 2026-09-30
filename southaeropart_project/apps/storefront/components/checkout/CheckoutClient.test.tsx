@@ -11,6 +11,30 @@ vi.mock("@/components/providers/CartProvider", () => ({ useCart: () => ({
   items: [{ id: "fixture", product: { id: "10000000-0000-4000-8000-000000000001", name: "Fixture", price: "100.00", images: [] }, quantity: 1 }],
   itemCount: 1, subtotal: "100.00", clearCart: vi.fn(), isHydrated: true,
 }) }));
+vi.mock("@clerk/nextjs", () => ({
+  useUser: () => ({
+    isSignedIn: true,
+    isLoaded: true,
+    user: {
+      id: "user-123",
+      fullName: "Customer",
+      primaryEmailAddress: { emailAddress: "fixture@example.invalid" },
+    },
+  }),
+}));
+vi.mock("@/actions/shipping.actions", () => ({
+  previewShipping: vi.fn().mockResolvedValue({
+    success: true,
+    data: {
+      standard: "150.00",
+      express: "450.00",
+      subtotal: "100.00",
+      requiresQuote: false,
+      key: "mock-preview-key",
+    },
+  }),
+  requestShippingQuote: vi.fn(),
+}));
 vi.mock("@/actions/checkout.actions", () => ({ createOrder: state.createOrder, getSavedCheckoutAddresses: async () => ({
   success: true, userProfile: { email: "fixture@example.invalid" }, addresses: [{ id: "address", isDefault: true, recipientName: "Customer", phone: "0800000000", line1: "Fixture", subDistrict: "Fixture", district: "Fixture", province: "Bangkok", postalCode: "10110" }],
 }) }));
@@ -26,6 +50,7 @@ describe("checkout order-note interaction", () => {
     state.createOrder.mockResolvedValueOnce({ success: false, error: "Please retry" }).mockResolvedValueOnce({ success: true, orderId: "owned-order" });
     const { container } = render(<CheckoutClient />);
     await screen.findByDisplayValue("Customer");
+    await screen.findByText(copy.checkout.standardShipping);
     const note = screen.getByLabelText(copy.checkout.customerNote);
     const text = "กรุณาโทรก่อนจัดส่ง\n  Please call <before> delivery";
     fireEvent.change(note, { target: { value: text } });

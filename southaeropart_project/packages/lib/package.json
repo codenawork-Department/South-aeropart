@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "exports": {
+    "./shipping": "./src/shipping.ts",
     ".": "./src/index.ts",
     "./cloudinary": "./src/cloudinary.ts",
     "./resend": "./src/resend.ts",

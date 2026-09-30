@@ -23,8 +23,9 @@ module.exports = {
         success: "var(--success)",
       },
       fontFamily: {
-        heading: ["var(--font-heading)", "sans-serif"],
-        body: ["var(--font-body)", "sans-serif"],
+        sans: ["'Century Gothic'", "CenturyGothic", "AppleGothic", "sans-serif"],
+        heading: ["var(--font-heading)", "'Century Gothic'", "CenturyGothic", "AppleGothic", "sans-serif"],
+        body: ["var(--font-body)", "'Century Gothic'", "CenturyGothic", "AppleGothic", "sans-serif"],
       },
       animation: {
         "slide-in-right": "slideInRight 0.3s ease-out",

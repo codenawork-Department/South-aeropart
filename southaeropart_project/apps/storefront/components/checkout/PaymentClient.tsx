@@ -680,13 +680,14 @@ export function PaymentClient({ order, items, accountEmail, guestToken }: Paymen
                 <span className="text-[var(--text-secondary)]">{t.orders.shippingAddress}:</span>
                 <span className="text-white text-right max-w-[200px] leading-relaxed">
                   {order.shippingAddress.line1}, {order.shippingAddress.subDistrict}, {order.shippingAddress.district},{" "}
-                  {order.shippingAddress.province} {order.shippingAddress.postalCode}
+                  {order.shippingAddress.province} {order.shippingAddress.postalCode} {order.shippingAddress.country || "TH"}
                 </span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-[#1C1C1C]">
                 <span className="text-[var(--text-secondary)]">{t.orders.carrier}:</span>
                 <span className="text-white">{order.shippingCarrier || "South Aero Standard Logistics"}</span>
               </div>
+              {order.shippingDetails?.method === "quote" && <div className="mt-3 space-y-2 border-t border-white/10 pt-3 text-sm"><p className="font-semibold">{lang === "th" ? "เงื่อนไขและกล่องจัดส่งที่ยืนยัน" : "Confirmed shipping terms and parcels"}</p>{order.shippingDetails.deliveryEstimate && <p>{order.shippingDetails.deliveryEstimate}</p>}{order.shippingDetails.terms && <p className="whitespace-pre-wrap">{order.shippingDetails.terms}</p>}{order.shippingDetails.parcels?.map((p, i) => <p key={i} className="text-xs text-neutral-400">{i + 1}. {p.contents} — {p.lengthCm} × {p.widthCm} × {p.heightCm} cm / {p.weightKg} kg</p>)}</div>}
             </div>
 
             {/* Items Breakdown */}

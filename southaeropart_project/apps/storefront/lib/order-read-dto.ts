@@ -2,6 +2,7 @@ import type { Address, Order, OrderStatusHistory } from "@repo/db";
 
 function addressDto(address: Address): Address {
   return {
+    country: address.country || "TH",
     recipientName: address.recipientName,
     phone: address.phone,
     email: address.email,
@@ -27,6 +28,7 @@ export function orderReadDto(order: Order) {
     stripePaymentIntentId: order.stripePaymentIntentId,
     subtotal: order.subtotal,
     shippingFee: order.shippingFee,
+    shippingDetails: order.shippingDetails,
     taxAmount: order.taxAmount,
     total: order.total,
     currency: order.currency,

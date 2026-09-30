@@ -41,7 +41,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          setItems(parsed);
+          const normalized = parsed.map((item: CartItem) => {
+            if (item?.product) {
+              const primary = item.product.primaryImage || item.product.images?.[0];
+              const imgs =
+                item.product.images && item.product.images.length > 0
+                  ? item.product.images
+                  : primary
+                    ? [primary]
+                    : [];
+              return {
+                ...item,
+                product: {
+                  ...item.product,
+                  primaryImage: primary,
+                  images: imgs,
+                },
+              };
+            }
+            return item;
+          });
+          setItems(normalized);
         }
       }
     } catch (e) {
@@ -66,9 +86,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const toggleCart = useCallback(() => setIsOpen((prev) => !prev), []);
 
   const addItem = useCallback((product: CartableProduct, variant = "Gloss Black") => {
+    const primary = product.primaryImage || product.images?.[0];
+    const normalizedProduct: CartableProduct = {
+      ...product,
+      primaryImage: primary,
+      images:
+        product.images && product.images.length > 0
+          ? product.images
+          : primary
+            ? [primary]
+            : [],
+    };
+
     setItems((prev) => {
       const existing = prev.find(
-        (item) => item.product.id === product.id && item.variant === variant
+        (item) => item.product.id === normalizedProduct.id && item.variant === variant
       );
       if (existing) {
         return prev.map((item) =>
@@ -80,8 +112,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [
         ...prev,
         {
-          id: `${product.id}-${variant}-${Date.now()}`,
-          product,
+          id: `${normalizedProduct.id}-${variant}-${Date.now()}`,
+          product: normalizedProduct,
           quantity: 1,
           variant,
         },

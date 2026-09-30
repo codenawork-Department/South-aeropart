@@ -15,6 +15,7 @@ export const paymentStatusEnum = pgEnum("payment_status", [
 ]);
 
 export type Address = {
+  country?: string;
   recipientName: string;
   phone: string;
   email?: string;
@@ -24,6 +25,10 @@ export type Address = {
   district: string;
   province: string;
   postalCode: string;
+};
+export type OrderShippingDetails = {
+  quoteId?: string; quoteVersion?: number; method: string; terms?: string; deliveryEstimate?: string;
+  parcels?: { contents: string; lengthCm: number; widthCm: number; heightCm: number; weightKg: number }[];
 };
 
 export const orders = pgTable("orders", {
@@ -39,6 +44,7 @@ export const orders = pgTable("orders", {
   reservationExpiresAt: timestamp("reservation_expires_at", { withTimezone: true }),
   subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
   shippingFee: numeric("shipping_fee", { precision: 12, scale: 2 }).notNull().default("0"),
+  shippingDetails: jsonb("shipping_details").$type<OrderShippingDetails>(),
   taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }).notNull().default("0"),
   total: numeric("total", { precision: 12, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("THB"),

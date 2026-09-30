@@ -17,6 +17,7 @@ import {
   Clock,
   Sparkles,
   ShoppingBag,
+  Package,
 } from "lucide-react";
 import { useRealtimeSync } from "@/components/providers/realtime-provider";
 
@@ -39,6 +40,10 @@ export function RealtimeSyncWidget({ compact = false }: { compact?: boolean }) {
     newOrderAlerts,
     dismissAlert,
     dismissAllAlerts,
+    pendingQuotesCount,
+    newQuoteAlerts,
+    dismissQuoteAlert,
+    dismissAllQuoteAlerts,
   } = useRealtimeSync();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -98,6 +103,9 @@ export function RealtimeSyncWidget({ compact = false }: { compact?: boolean }) {
   const freshCount = displayOrders.filter(
     (order) => currentTimeMs - order.createdAtMs < 60000
   ).length;
+
+  // Up to 5 quote requests
+  const displayQuotes = newQuoteAlerts.slice(0, 5);
 
   return (
     <>
@@ -418,6 +426,114 @@ export function RealtimeSyncWidget({ compact = false }: { compact?: boolean }) {
                 className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-gray-300 text-xs font-medium transition-colors cursor-pointer"
               >
                 รับทราบทั้งหมด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────
+          Floating Luxury Quote Requests Notification Toast (Max 5)
+      ────────────────────────────────────────────────────────── */}
+      {displayQuotes.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md w-full animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-[#101010]/95 backdrop-blur-2xl border-2 border-amber-500/80 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.8),0_0_30px_rgba(245,158,11,0.25)] relative overflow-hidden">
+            {/* Glowing Accent Bar */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-300 to-amber-500" />
+
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-bounce shrink-0">
+                  <Package size={18} />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-300 font-extrabold border border-amber-500/40 flex items-center gap-1">
+                      <Package size={11} />
+                      <span>
+                        {displayQuotes.length === 1
+                          ? "NEW SHIPPING QUOTE REQUEST"
+                          : `${displayQuotes.length} NEW QUOTE REQUESTS`}
+                      </span>
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-extrabold text-white mt-1">
+                    {displayQuotes.length === 1
+                      ? "มีคำขอเสนอราคาค่าจัดส่งใหม่!"
+                      : `มีคำขอเสนอราคาเข้ามา ${displayQuotes.length} รายการ!`}
+                  </h4>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => dismissAllQuoteAlerts()}
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                title="ปิดการแจ้งเตือนทั้งหมด"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Quote Items Stack (Max 5) */}
+            <div className="mt-3.5 space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
+              {displayQuotes.map((quote) => (
+                <div
+                  key={quote.id}
+                  className="rounded-xl p-3 bg-gradient-to-r from-amber-950/40 to-[#221A10] border border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.12)] relative overflow-hidden"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1 pl-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-white tracking-wider">
+                          #{quote.id.slice(0, 8)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+                          <span>📦 รอประเมิน</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-300">
+                        <span className="truncate">ลูกค้า: {quote.recipientName} ({quote.phone || "—"})</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <div className="text-right">
+                        <span className="text-xs font-mono font-extrabold text-amber-400 block">
+                          ฿{Number(quote.subtotal || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => dismissQuoteAlert(quote.id)}
+                        className="text-gray-500 hover:text-gray-300 p-1 rounded-md hover:bg-white/10 transition-colors"
+                        title="ปิดรายการนี้"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="mt-3.5 pt-3 border-t border-white/10 flex items-center gap-2">
+              <Link
+                href="/shipping"
+                onClick={() => dismissAllQuoteAlerts()}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold transition-all shadow-md shadow-amber-950/60"
+              >
+                <span>เปิดดูและประเมินค่าจัดส่ง (Shipping)</span>
+                <ExternalLink size={13} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => dismissAllQuoteAlerts()}
+                className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-gray-300 text-xs font-medium transition-colors cursor-pointer"
+              >
+                รับทราบ
               </button>
             </div>
           </div>

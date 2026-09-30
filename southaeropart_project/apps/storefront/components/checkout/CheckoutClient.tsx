@@ -4,30 +4,23 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "@/components/ui/image";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import { useCart } from "@/components/providers/CartProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { createOrder, getSavedCheckoutAddresses } from "@/actions/checkout.actions";
+import { previewShipping, requestShippingQuote } from "@/actions/shipping.actions";
+import { SHIPPING_COUNTRIES, shippingAddressSchema, moneySatang } from "@repo/lib/shipping";
+import { formatSatang } from "@repo/lib/money-arithmetic";
 import { MAX_ORDER_NOTE_BYTES, orderNoteByteLength, orderNoteSchema } from "@repo/lib/order-note";
-import {
-  ShieldCheck,
-  Truck,
-  QrCode,
-  CreditCard,
-  Check,
-  AlertCircle,
-  ArrowRight,
-  ShoppingCart,
-  MapPin,
-  Lock,
-  ChevronRight,
-} from "lucide-react";
+import { QrCode, CreditCard, AlertCircle, ArrowRight, ShoppingCart, MapPin, Lock } from "lucide-react";
 import type { UserAddress } from "@repo/db";
 import { CheckoutPageSkeleton } from "@/components/ui/skeleton";
 
 export function CheckoutClient() {
   const router = useRouter();
-  const { items, itemCount, subtotal, clearCart, isHydrated } = useCart();
+  const { user, isSignedIn, isLoaded: isUserLoaded } = useUser();
+  const { items, itemCount, subtotal, isHydrated } = useCart();
   const { formatPrice, currency } = useCurrency();
   const { lang, t } = useLanguage();
 
@@ -44,6 +37,11 @@ export function CheckoutClient() {
   const [district, setDistrict] = useState("");
   const [province, setProvince] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("TH");
+  const [quoteRequestId, setQuoteRequestId] = useState<string | null>(null);
+  const [retryPreview, setRetryPreview] = useState(0);
+  const [shippingPreview, setShippingPreview] = useState<{ scope: string; data: Extract<Awaited<ReturnType<typeof previewShipping>>, { success: true }>["data"] } | null>(null);
+  const [previewError, setPreviewError] = useState(false);
   const [saveAddress, setSaveAddress] = useState(true);
   const [customerNote, setCustomerNote] = useState("");
   const noteBytes = orderNoteByteLength(customerNote);
@@ -58,9 +56,30 @@ export function CheckoutClient() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const subtotalNum = parseFloat(subtotal || "0");
-  const shippingFeeNum = shippingMethod === "express" ? 450 : subtotalNum >= 15000 ? 0 : 150;
-  const totalNum = subtotalNum + shippingFeeNum;
+  const previewScope = JSON.stringify({ country, items: items.map(i => ({ productId: i.product.id, quantity: i.quantity, variant: i.variant })) });
+  const rates = shippingPreview?.scope === previewScope ? shippingPreview.data : null;
+  const requiresQuote = country !== "TH" || rates?.requiresQuote === true;
+  const effectiveMethod = shippingMethod === "express" && rates?.express != null ? "express" : "standard";
+  const subtotalNum = Number(rates?.subtotal || subtotal || "0");
+  const shippingFee = rates?.[effectiveMethod] ?? null;
+  const shippingFeeNum = shippingFee === null ? 0 : Number(shippingFee);
+  const totalNum = shippingFee === null || !rates ? subtotalNum : Number(formatSatang(moneySatang(rates.subtotal) + moneySatang(shippingFee)));
+  const countryNames = new Intl.DisplayNames([lang], { type: "region" });
+  useEffect(() => {
+    let active = true;
+    setPreviewError(false);
+    const timer = setTimeout(async () => {
+      if (!JSON.parse(previewScope).items.length) return;
+      try {
+        const result = await previewShipping(JSON.parse(previewScope));
+        if (!active) return;
+        if (result.success) setShippingPreview({ scope: previewScope, data: result.data });
+        else { setShippingPreview(null); setPreviewError(true); }
+      } catch { if (active) { setShippingPreview(null); setPreviewError(true); } }
+    }, 250);
+    return () => { active = false; clearTimeout(timer); };
+  }, [previewScope, retryPreview]);
+  useEffect(() => { setQuoteRequestId(null); }, [previewScope, recipientName, phone, email, line1, line2, subDistrict, district, province, postalCode, customerNote]);
 
   // Pre-load saved addresses & user details if logged in
   useEffect(() => {
@@ -90,13 +109,14 @@ export function CheckoutClient() {
   }, []);
 
   function applyAddress(addr: UserAddress) {
+    setCountry(addr.country || "TH");
     setRecipientName(addr.recipientName);
     setPhone(addr.phone);
     setLine1(addr.line1);
     setLine2(addr.line2 || "");
     setSubDistrict(addr.subDistrict || "");
-    setDistrict(addr.district || "");
-    setProvince(addr.province || "");
+    setDistrict(addr.district || addr.city || "");
+    setProvince(addr.province || addr.stateOrProvince || "");
     setPostalCode(addr.postalCode);
   }
 
@@ -121,6 +141,10 @@ export function CheckoutClient() {
   async function handleSubmitOrder(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
+    if (isUserLoaded && !isSignedIn) {
+      router.push("/sign-in?redirect_url=/checkout");
+      return;
+    }
     if (noteInvalid) {
       setErrorMsg(t.checkout.noteInvalid);
       document.getElementById("customer-order-note")?.focus();
@@ -136,11 +160,11 @@ export function CheckoutClient() {
       setErrorMsg("กรุณาระบุเบอร์โทรศัพท์ที่ถูกต้อง (อย่างน้อย 8-10 หลัก)");
       return;
     }
-    if (!line1.trim() || !subDistrict.trim() || !district.trim() || !province.trim()) {
+    if (!line1.trim() || !district.trim() || (country === "TH" && (!subDistrict.trim() || !province.trim()))) {
       setErrorMsg("กรุณากรอกข้อมูลที่อยู่จัดส่งให้ครบถ้วน");
       return;
     }
-    if (!postalCode.trim() || postalCode.trim().length !== 5) {
+    if (country === "TH" && !/^\d{5}$/.test(postalCode.trim())) {
       setErrorMsg("กรุณาระบุรหัสไปรษณีย์ 5 หลัก");
       return;
     }
@@ -153,8 +177,17 @@ export function CheckoutClient() {
     setLoading(true);
 
     try {
+      if (!rates) { setErrorMsg(lang === "th" ? "กรุณารอคำนวณค่าจัดส่ง" : "Please wait for shipping rates"); setLoading(false); return; }
+      if (requiresQuote) {
+        const requestId = quoteRequestId || crypto.randomUUID(); setQuoteRequestId(requestId);
+        const res = await requestShippingQuote({ requestId, address: shippingAddressSchema.parse({ country, recipientName, phone, email: email || undefined, line1, line2: line2 || undefined, subDistrict, district, province, postalCode }), customerNote, items: JSON.parse(previewScope).items });
+        if (res.success) { setIsRedirecting(true); router.push(`/shipping-quotes/${res.quoteId}`); }
+        else { setErrorMsg(res.error); setLoading(false); }
+        return;
+      }
       const res = await createOrder({
         shippingAddress: {
+          country,
           recipientName: recipientName.trim(),
           phone: phone.trim(),
           email: email.trim() || undefined,
@@ -165,7 +198,8 @@ export function CheckoutClient() {
           province: province.trim(),
           postalCode: postalCode.trim(),
         },
-        shippingMethod,
+        shippingMethod: effectiveMethod,
+        shippingPreviewKey: rates.key,
         paymentMethod,
         saveAddress,
         customerNote,
@@ -202,6 +236,40 @@ export function CheckoutClient() {
 
   if (!isHydrated) {
     return <CheckoutPageSkeleton />;
+  }
+
+  if (isUserLoaded && !isSignedIn) {
+    return (
+      <div className="container-main py-16 md:py-24 text-center">
+        <div className="max-w-md mx-auto bg-[#121212] border border-[#222222] rounded-xl p-8 sm:p-10 shadow-2xl">
+          <div className="w-16 h-16 rounded-full bg-red-950/40 border border-red-800/50 text-[var(--accent-red)] mx-auto flex items-center justify-center mb-4">
+            <Lock size={28} />
+          </div>
+          <h2 className="font-heading text-xl font-bold uppercase tracking-wider text-white">
+            {lang === "th" ? "กรุณาเข้าสู่ระบบก่อนสั่งซื้อสินค้า" : "PLEASE SIGN IN TO CHECKOUT"}
+          </h2>
+          <p className="text-xs text-[var(--text-secondary)] mt-2 leading-relaxed">
+            {lang === "th"
+              ? "เพื่อความปลอดภัยในการบันทึกคำสั่งซื้อ ติดตามสถานะจัดส่ง และดูประวัติการเสนอราคาค่าจัดส่ง กรุณาเข้าสู่ระบบก่อนดำเนินการต่อ"
+              : "To ensure secure order tracking, shipping quote management, and warranty records, please sign in before placing your order."}
+          </p>
+          <div className="mt-6 flex flex-col gap-3">
+            <Link
+              href="/sign-in?redirect_url=/checkout"
+              className="btn-primary w-full justify-center py-3.5 text-xs font-heading font-bold uppercase tracking-wider"
+            >
+              {lang === "th" ? "เข้าสู่ระบบด้วยบัญชีของคุณ" : "SIGN IN TO YOUR ACCOUNT"}
+            </Link>
+            <Link
+              href="/sign-up?redirect_url=/checkout"
+              className="btn-outline w-full justify-center py-3 text-xs font-heading font-semibold uppercase tracking-wider"
+            >
+              {lang === "th" ? "สร้างบัญชีใหม่" : "CREATE NEW ACCOUNT"}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (items.length === 0 && !isRedirecting) {
@@ -356,6 +424,11 @@ export function CheckoutClient() {
                 />
               </div>
 
+              <label className="block text-sm">{lang === "th" ? "ประเทศปลายทาง" : "Destination country"}
+                <select required value={country} onChange={e => setCountry(e.target.value)} className="mt-2 w-full rounded border border-neutral-700 bg-neutral-950 p-3 text-white">
+                  {SHIPPING_COUNTRIES.map(code => <option key={code} value={code}>{countryNames.of(code)} ({code})</option>)}
+                </select>
+              </label>
               {/* Address Line 1 */}
               <div>
                 <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
@@ -389,11 +462,11 @@ export function CheckoutClient() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    {t.checkout.subDistrict} <span className="text-[var(--accent-red)]">*</span>
+                    {t.checkout.subDistrict} {country === "TH" ? "*" : "(optional)"}
                   </label>
                   <input
                     type="text"
-                    required
+                    required={country === "TH"}
                     value={subDistrict}
                     onChange={(e) => setSubDistrict(e.target.value)}
                     placeholder={lang === "th" ? "คลองตันเหนือ" : "Sub-district"}
@@ -402,7 +475,7 @@ export function CheckoutClient() {
                 </div>
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    {t.checkout.district} <span className="text-[var(--accent-red)]">*</span>
+                    {country === "TH" ? t.checkout.district : (lang === "th" ? "เมือง" : "City")} <span className="text-[var(--accent-red)]">*</span>
                   </label>
                   <input
                     type="text"
@@ -419,11 +492,11 @@ export function CheckoutClient() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-heading font-medium tracking-wider text-[var(--text-secondary)] uppercase mb-1.5">
-                    {t.checkout.province} <span className="text-[var(--accent-red)]">*</span>
+                    {country === "TH" ? t.checkout.province : (lang === "th" ? "รัฐ / ภูมิภาค (ถ้ามี)" : "State / Region (if applicable)")}
                   </label>
                   <input
                     type="text"
-                    required
+                    required={country === "TH"}
                     value={province}
                     onChange={(e) => setProvince(e.target.value)}
                     placeholder={lang === "th" ? "กรุงเทพมหานคร" : "Bangkok"}
@@ -436,8 +509,8 @@ export function CheckoutClient() {
                   </label>
                   <input
                     type="text"
-                    maxLength={5}
-                    required
+                    maxLength={country === "TH" ? 5 : 20}
+                    required={country === "TH"}
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     placeholder="10110"
@@ -486,94 +559,13 @@ export function CheckoutClient() {
             {noteInvalid && <p id="customer-order-note-error" role="alert" className="text-xs text-red-300 mt-2">{t.checkout.noteInvalid}</p>}
           </div>
 
-          {/* Section 2: Shipping Method */}
-          <div className="bg-[#121212] border border-[#222222] rounded-xl p-6 sm:p-7 shadow-xl">
-            <div className="flex items-center gap-2.5 pb-4 border-b border-[#222222] mb-5">
-              <div className="w-7 h-7 rounded bg-[var(--accent-red)] text-white font-heading font-bold flex items-center justify-center text-xs">
-                2
-              </div>
-              <h2 className="font-heading text-base sm:text-lg font-bold uppercase tracking-wider text-white">
-                {t.checkout.shippingMethod}
-              </h2>
-            </div>
-
-            <div className="space-y-3">
-              {/* Standard */}
-              <label
-                onClick={() => setShippingMethod("standard")}
-                className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all ${
-                  shippingMethod === "standard"
-                    ? "border-[var(--accent-red)] bg-[#1A1112]"
-                    : "border-[#222222] bg-[#161616] hover:border-[#333333]"
-                }`}
-              >
-                <div className="flex items-center gap-3.5">
-                  <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      shippingMethod === "standard"
-                        ? "border-[var(--accent-red)] bg-[var(--accent-red)]"
-                        : "border-[#444444]"
-                    }`}
-                  >
-                    {shippingMethod === "standard" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <p className="font-heading text-sm font-bold text-white uppercase tracking-wider">
-                      {t.checkout.standardShipping}
-                    </p>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                      {t.checkout.standardShippingDesc}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-heading text-sm font-bold text-white">
-                    {subtotalNum >= 15000 ? (
-                      <span className="text-[var(--success)] uppercase">{t.checkout.free}</span>
-                    ) : (
-                      formatPrice(150, { showCode: true })
-                    )}
-                  </span>
-                </div>
-              </label>
-
-              {/* Express */}
-              <label
-                onClick={() => setShippingMethod("express")}
-                className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all ${
-                  shippingMethod === "express"
-                    ? "border-[var(--accent-red)] bg-[#1A1112]"
-                    : "border-[#222222] bg-[#161616] hover:border-[#333333]"
-                }`}
-              >
-                <div className="flex items-center gap-3.5">
-                  <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      shippingMethod === "express"
-                        ? "border-[var(--accent-red)] bg-[var(--accent-red)]"
-                        : "border-[#444444]"
-                    }`}
-                  >
-                    {shippingMethod === "express" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <p className="font-heading text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      {t.checkout.expressShipping}
-                      <span className="badge-red text-[0.6rem] px-1.5 py-0.5">{t.checkout.recommended}</span>
-                    </p>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                      {t.checkout.expressShippingDesc}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-heading text-sm font-bold text-white">
-                    {formatPrice(450, { showCode: true })}
-                  </span>
-                </div>
-              </label>
-            </div>
-          </div>
+          <section className="space-y-4 rounded-xl border border-neutral-800 bg-neutral-900 p-6">
+            <h2 className="text-lg font-semibold">{t.checkout.shippingMethod}</h2>
+            <Link href="/shipping-quotes" className="text-sm underline">{lang === "th" ? "ดูคำขอราคาจัดส่งของฉัน" : "My shipping requests"}</Link>
+            {previewError ? <p role="alert">{lang === "th" ? "คำนวณค่าจัดส่งไม่สำเร็จ" : "Shipping rates unavailable"} <button type="button" className="underline" onClick={() => setRetryPreview(n => n + 1)}>{lang === "th" ? "ลองใหม่" : "Retry"}</button></p> : !rates ? <p role="status">{lang === "th" ? "กำลังตรวจค่าจัดส่ง…" : "Checking shipping…"}</p> : requiresQuote ? <p className="text-amber-300">{lang === "th" ? "ออเดอร์นี้ต้องประเมินค่าจัดส่งทั้งตะกร้า ร้านจะตรวจการแพ็กและปลายทางก่อนเสนอราคา ยังไม่มีการเรียกเก็บเงินหรือกันสต็อก ติดตามราคาได้จากหน้าคำขอ" : "This cart needs a shipping quote. We will review packing and destination before offering a price. No payment or stock reservation yet. Check your requests page for updates."}</p> : <div className="space-y-3">
+              {(["standard", "express"] as const).filter(method => rates[method] !== null).map(method => <label key={method} className="flex items-center gap-3 rounded border border-neutral-700 p-4"><input type="radio" name="shippingMethod" value={method} checked={effectiveMethod === method} onChange={() => setShippingMethod(method)} /><span className="flex-1">{method === "standard" ? t.checkout.standardShipping : t.checkout.expressShipping}</span><span>{formatPrice(rates[method]!, { showCode: true })}</span></label>)}
+            </div>}
+          </section>
 
           {/* Section 3: Payment Method */}
           <div className="bg-[#121212] border border-[#222222] rounded-xl p-4 sm:p-6 md:p-7 shadow-xl">
@@ -669,9 +661,9 @@ export function CheckoutClient() {
               {items.map((item) => (
                 <div key={item.id} className="pt-3 first:pt-0 flex items-center gap-3">
                   <div className="w-14 h-14 bg-[#1C1C1C] border border-[#2A2A2A] rounded overflow-hidden relative flex-shrink-0">
-                    {item.product.images?.[0] ? (
+                    {(item.product.images?.[0] || item.product.primaryImage) ? (
                       <Image
-                        src={item.product.images[0]}
+                        src={item.product.images?.[0] || item.product.primaryImage!}
                         alt={item.product.name}
                         fill
                         className="object-cover"
@@ -712,7 +704,7 @@ export function CheckoutClient() {
               <div className="flex items-center justify-between text-[var(--text-secondary)]">
                 <span>{t.checkout.shippingFee}</span>
                 <span className="font-heading font-semibold text-white">
-                  {shippingFeeNum === 0 ? (
+                  {requiresQuote || !rates ? (lang === "th" ? "รอประเมิน" : "Awaiting quote") : shippingFeeNum === 0 ? (
                     <span className="text-[var(--success)] uppercase">{t.checkout.free}</span>
                   ) : (
                     formatPrice(shippingFeeNum, { showCode: true })
@@ -736,13 +728,13 @@ export function CheckoutClient() {
                 </div>
                 <div className="text-right">
                   <span className="font-heading text-2xl font-extrabold text-[var(--accent-red)]">
-                    {formatPrice(totalNum)}
+                    {requiresQuote || !rates ? "—" : formatPrice(totalNum)}
                   </span>
                   <span className="text-[0.7rem] text-[var(--text-muted)] block font-mono">{currency}</span>
                 </div>
               </div>
 
-              {currency !== "THB" && (
+              {currency !== "THB" && !requiresQuote && rates && (
                 <p className="text-[0.65rem] text-[var(--text-muted)] text-right pt-1 font-sans">
                   {t.checkout.actualChargeNotice.replace("{amount}", totalNum.toLocaleString(undefined, { minimumFractionDigits: 2 }))}
                 </p>
@@ -759,7 +751,7 @@ export function CheckoutClient() {
             {/* Submit Action */}
             <button
               type="submit"
-              disabled={loading || isRedirecting}
+              disabled={loading || isRedirecting || !rates}
               id="place-order-btn"
               className="btn-primary w-full justify-center gap-2 py-4 text-xs tracking-widest font-heading font-bold uppercase shadow-xl shadow-[var(--accent-red)]/20 disabled:opacity-50"
             >
@@ -775,7 +767,7 @@ export function CheckoutClient() {
                 </div>
               ) : (
                 <>
-                  {t.checkout.placeOrder} <ArrowRight size={16} />
+                  {requiresQuote ? (lang === "th" ? "ขอราคาจัดส่ง" : "Request shipping quote") : t.checkout.placeOrder} <ArrowRight size={16} />
                 </>
               )}
             </button>

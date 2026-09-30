@@ -4,6 +4,7 @@ import {
   getCategoriesAndBrandsAction,
 } from "@/actions/product.actions";
 import { ProductForm } from "@/components/products/product-form";
+import { ProductShippingCard } from "@/components/shipping/ProductShippingCard";
 
 export const metadata = {
   title: "แก้ไขสินค้า | South Aero Admin",
@@ -36,6 +37,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         installations={installations}
         isEdit={true}
       />
+      <ProductShippingCard productId={product.id} />
     </div>
   );
 }

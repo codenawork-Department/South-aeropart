@@ -33,6 +33,10 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { getLocalizedOrderItemName } from "@/lib/i18n-helpers";
 import { ProductReviewModal } from "@/components/reviews/ProductReviewModal";
 import { getUserProductReviewsAction } from "@/actions/review.actions";
+import {
+  ShippingQuotesListClient,
+  type CustomerShippingQuote,
+} from "@/components/checkout/ShippingQuotesListClient";
 
 export interface OrderWithCount {
   id: string;
@@ -55,9 +59,18 @@ export interface OrderWithCount {
   items?: UserOrderItemDetail[];
 }
 
-export function OrdersListClient({ initialOrders }: { initialOrders: OrderWithCount[] }) {
+export function OrdersListClient({
+  initialOrders,
+  initialQuotes = [],
+}: {
+  initialOrders: OrderWithCount[];
+  initialQuotes?: CustomerShippingQuote[];
+}) {
   const router = useRouter();
   const [orders, setOrders] = useState<OrderWithCount[]>(initialOrders);
+  const [activeTab, setActiveTab] = useState<"orders" | "quotes">(
+    initialOrders.length === 0 && (initialQuotes?.length ?? 0) > 0 ? "quotes" : "orders"
+  );
   const { formatPrice, currency } = useCurrency();
   const { lang, t } = useLanguage();
   const [copiedTracking, setCopiedTracking] = useState<string | null>(null);
@@ -156,8 +169,11 @@ export function OrdersListClient({ initialOrders }: { initialOrders: OrderWithCo
   };
 
   const activeShipments = orders.filter((o) => o.status === "shipped");
+  const pendingOfferedQuotes = (initialQuotes || []).filter(
+    (q) => q.status === "offered" && (!q.offerExpiresAt || new Date(q.offerExpiresAt).getTime() > Date.now())
+  );
 
-  if (orders.length === 0) {
+  if (orders.length === 0 && (initialQuotes || []).length === 0) {
     return (
       <div className="container-main py-16 md:py-24 text-center">
         <div className="max-w-md mx-auto bg-[#121212] border border-[#222222] rounded-2xl p-8 sm:p-12 shadow-2xl">
@@ -196,7 +212,7 @@ export function OrdersListClient({ initialOrders }: { initialOrders: OrderWithCo
       </nav>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between pb-6 border-b border-[#222222] gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between pb-6 border-b border-[#222222] gap-4 mb-6">
         <div>
           <div className="flex items-center gap-3">
             <span className="h-2 w-2 rounded-full bg-[var(--accent-red)] animate-pulse" />
@@ -208,55 +224,165 @@ export function OrdersListClient({ initialOrders }: { initialOrders: OrderWithCo
             {t.orders.title}
           </h1>
         </div>
-        <span className="text-xs font-heading uppercase tracking-wider text-[var(--text-muted)]">
-          {lang === "th" ? "คำสั่งซื้อทั้งหมด: " : "TOTAL ORDERS: "}<strong className="text-white font-mono">{orders.length}</strong>
-        </span>
+        <div className="flex items-center gap-4 text-xs font-heading uppercase tracking-wider text-[var(--text-muted)]">
+          <span>
+            {lang === "th" ? "คำสั่งซื้อ: " : "ORDERS: "}<strong className="text-white font-mono">{orders.length}</strong>
+          </span>
+          <span>•</span>
+          <span>
+            {lang === "th" ? "คำขอราคาค่าจัดส่ง: " : "QUOTES: "}<strong className="text-amber-400 font-mono">{(initialQuotes || []).length}</strong>
+          </span>
+        </div>
       </div>
 
-      {/* Active In-Transit Shipments Top Highlight Banner */}
-      {activeShipments.length > 0 && (
-        <div className="mb-8 rounded-2xl bg-gradient-to-r from-red-950/40 via-[#161616] to-[#121212] border border-red-500/40 p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-          <div className="absolute -top-10 right-10 w-48 h-32 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/50 flex items-center justify-center text-red-400 flex-shrink-0">
-                <Truck size={20} className="animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-heading font-black tracking-wider uppercase text-red-400">
-                    {lang === "th" ? "พัสดุกำลังจัดส่งถึงคุณ (IN TRANSIT)" : "ORDERS IN TRANSIT"}
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                </div>
-                <p className="text-xs text-neutral-300 mt-0.5">
-                  {lang === "th"
-                    ? `มีคำสั่งซื้อที่อยู่ระหว่างการนำส่งจำนวน ${activeShipments.length} รายการ`
-                    : `${activeShipments.length} order(s) currently out for delivery`}
-                </p>
-              </div>
+      {/* Pending Offered Quotes Top Notification Banner */}
+      {pendingOfferedQuotes.length > 0 && (
+        <div className="mb-6 rounded-2xl bg-gradient-to-r from-amber-950/40 via-[#181510] to-[#121212] border border-amber-500/40 p-5 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 flex-shrink-0 animate-bounce">
+              <Sparkles size={20} />
             </div>
-
-            <div className="flex flex-wrap items-center gap-2.5">
-              {activeShipments.map((shipment) => (
-                <Link
-                  key={shipment.id}
-                  href={`/orders/${shipment.id}`}
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#0F0F0F] border border-red-500/40 hover:border-red-400 text-xs text-white hover:text-red-300 transition-all font-mono"
-                >
-                  <span className="text-red-400 font-bold">#{shipment.orderNumber}</span>
-                  {shipment.trackingNumber && (
-                    <span className="text-neutral-400 text-[0.7rem] hidden sm:inline">
-                      ({shipment.trackingNumber})
-                    </span>
-                  )}
-                  <ArrowRight size={12} className="text-red-400" />
-                </Link>
-              ))}
+            <div>
+              <span className="text-xs font-heading font-black tracking-wider uppercase text-amber-400">
+                {lang === "th" ? "คุณมีข้อเสนอค่าจัดส่งรอการยืนยัน" : "SHIPPING QUOTE READY"}
+              </span>
+              <p className="text-xs text-neutral-300 mt-0.5">
+                {lang === "th"
+                  ? `แอดมินได้ประเมินค่าจัดส่ง ${pendingOfferedQuotes.length} รายการแล้ว พร้อมให้คุณยืนยันและชำระเงิน`
+                  : `Admin has offered shipping rates for ${pendingOfferedQuotes.length} request(s). Ready for checkout.`}
+              </p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab("quotes")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20 flex-shrink-0 cursor-pointer"
+          >
+            {lang === "th" ? "ดูข้อเสนอค่าจัดส่ง" : "Review Quotes"}
+            <ArrowRight size={14} />
+          </button>
         </div>
       )}
+
+      {/* Dual Tab Switcher */}
+      <div className="flex items-center gap-3 border-b border-[#222222] mb-8">
+        <button
+          type="button"
+          onClick={() => setActiveTab("orders")}
+          className={`pb-3.5 px-3 text-sm font-heading font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "orders"
+              ? "border-[var(--accent-red)] text-white"
+              : "border-transparent text-[var(--text-muted)] hover:text-white"
+          }`}
+        >
+          <Package size={16} />
+          {lang === "th" ? "คำสั่งซื้อทั้งหมด" : "Orders"}
+          <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-[#1A1A1A] text-neutral-300">
+            {orders.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("quotes")}
+          className={`pb-3.5 px-3 text-sm font-heading font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "quotes"
+              ? "border-amber-500 text-amber-400"
+              : "border-transparent text-[var(--text-muted)] hover:text-white"
+          }`}
+        >
+          <FileText size={16} />
+          {lang === "th" ? "คำขอราคาค่าจัดส่ง" : "Shipping Quotes"}
+          {(initialQuotes || []).length > 0 && (
+            <span
+              className={`text-xs font-mono px-2 py-0.5 rounded-full ${
+                pendingOfferedQuotes.length > 0
+                  ? "bg-amber-500 text-neutral-950 font-bold"
+                  : "bg-[#1A1A1A] text-neutral-300"
+              }`}
+            >
+              {(initialQuotes || []).length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Tab Content: Quotes */}
+      {activeTab === "quotes" && (
+        <div className="mb-12">
+          <ShippingQuotesListClient
+            initialQuotes={initialQuotes || []}
+            page={1}
+            hasMore={false}
+          />
+        </div>
+      )}
+
+      {/* Tab Content: Orders */}
+      {activeTab === "orders" && orders.length === 0 && (
+        <div className="py-12 text-center bg-[#121212] border border-[#222222] rounded-2xl p-8 mb-12">
+          <Package size={30} className="text-[var(--accent-red)] mx-auto mb-3" />
+          <h2 className="font-heading text-lg font-bold uppercase text-white">
+            {t.orders.empty}
+          </h2>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
+            {t.orders.emptyDesc}
+          </p>
+          <Link
+            href="/products"
+            className="btn-primary mt-5 text-xs gap-2 py-2.5 px-5 font-heading uppercase inline-flex"
+          >
+            {t.orders.startShopping} <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
+
+      {activeTab === "orders" && orders.length > 0 && (
+        <>
+          {/* Active In-Transit Shipments Top Highlight Banner */}
+          {activeShipments.length > 0 && (
+            <div className="mb-8 rounded-2xl bg-gradient-to-r from-red-950/40 via-[#161616] to-[#121212] border border-red-500/40 p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+              <div className="absolute -top-10 right-10 w-48 h-32 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/50 flex items-center justify-center text-red-400 flex-shrink-0">
+                    <Truck size={20} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-heading font-black tracking-wider uppercase text-red-400">
+                        {lang === "th" ? "พัสดุกำลังจัดส่งถึงคุณ (IN TRANSIT)" : "ORDERS IN TRANSIT"}
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    </div>
+                    <p className="text-xs text-neutral-300 mt-0.5">
+                      {lang === "th"
+                        ? `มีคำสั่งซื้อที่อยู่ระหว่างการนำส่งจำนวน ${activeShipments.length} รายการ`
+                        : `${activeShipments.length} order(s) currently out for delivery`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {activeShipments.map((shipment) => (
+                    <Link
+                      key={shipment.id}
+                      href={`/orders/${shipment.id}`}
+                      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#0F0F0F] border border-red-500/40 hover:border-red-400 text-xs text-white hover:text-red-300 transition-all font-mono"
+                    >
+                      <span className="text-red-400 font-bold">#{shipment.orderNumber}</span>
+                      {shipment.trackingNumber && (
+                        <span className="text-neutral-400 text-[0.7rem] hidden sm:inline">
+                          ({shipment.trackingNumber})
+                        </span>
+                      )}
+                      <ArrowRight size={12} className="text-red-400" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
       {/* Orders List */}
       <div className="space-y-6">
@@ -571,6 +697,8 @@ export function OrdersListClient({ initialOrders }: { initialOrders: OrderWithCo
           );
         })}
       </div>
+      </>
+      )}
 
       {/* Product Review Modal */}
       <ProductReviewModal
