@@ -7,6 +7,10 @@ config({ path: resolve(__dirname, "../../.env") });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: [
+    "*.trycloudflare.com",
+    "bit-wendy-exercise-shopper.trycloudflare.com",
+  ],
   output: "standalone",
   transpilePackages: ["@repo/ui", "@repo/lib"],
   poweredByHeader: false,

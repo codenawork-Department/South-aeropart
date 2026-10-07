@@ -7,6 +7,10 @@ config({ path: resolve(__dirname, "../../.env") });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: [
+    "*.trycloudflare.com",
+    "bit-wendy-exercise-shopper.trycloudflare.com",
+  ],
   output: "standalone",
   distDir: process.env.PORT === "3005" ? ".next-test" : ".next",
   transpilePackages: ["@repo/ui", "@repo/lib"],
