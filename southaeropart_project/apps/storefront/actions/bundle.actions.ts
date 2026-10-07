@@ -130,6 +130,16 @@ export interface VehicleBundleData {
   pieces: string[];
   bundleItems: VehicleBundleItem[];
   totalSales: number;
+  material?: string | null;
+  materialEn?: string | null;
+  materialDescription?: string | null;
+  materialDescriptionEn?: string | null;
+  materialIcon?: string | null;
+  installation?: string | null;
+  installationEn?: string | null;
+  installationDescription?: string | null;
+  installationDescriptionEn?: string | null;
+  installationIcon?: string | null;
 }
 
 /**
@@ -188,12 +198,26 @@ export async function getFeaturedBundleForVehicle(
         carModelName: carModels.name,
         carModelSlug: carModels.slug,
         carModelGen: carModels.generation,
+        materialName: materials.name,
+        materialNameEn: materials.nameEn,
+        materialDescription: materials.description,
+        materialDescriptionEn: materials.descriptionEn,
+        materialIcon: materials.iconName,
+        installationName: installations.name,
+        installationNameEn: installations.nameEn,
+        installationDescription: installations.description,
+        installationDescriptionEn: installations.descriptionEn,
+        installationIcon: installations.iconName,
+        productInstallation: products.installation,
+        productInstallationEn: products.installationEn,
         createdAt: products.createdAt,
         updatedAt: products.updatedAt,
       })
       .from(products)
       .leftJoin(brands, eq(products.brandId, brands.id))
       .leftJoin(carModels, eq(products.carModelId, carModels.id))
+      .leftJoin(materials, eq(products.materialId, materials.id))
+      .leftJoin(installations, eq(products.installationId, installations.id))
       .where(and(...conditions));
 
     if (!rawBundles || rawBundles.length === 0) {
@@ -288,10 +312,24 @@ export async function getFeaturedBundleForVehicle(
           dragN: products.dragN,
           categoryName: categories.name,
           categoryNameEn: categories.nameEn,
+          materialName: materials.name,
+          materialNameEn: materials.nameEn,
+          materialDescription: materials.description,
+          materialDescriptionEn: materials.descriptionEn,
+          materialIcon: materials.iconName,
+          installationName: installations.name,
+          installationNameEn: installations.nameEn,
+          installationDescription: installations.description,
+          installationDescriptionEn: installations.descriptionEn,
+          installationIcon: installations.iconName,
+          productInstallation: products.installation,
+          productInstallationEn: products.installationEn,
         })
         .from(productBundleItems)
         .innerJoin(products, eq(productBundleItems.childProductId, products.id))
         .leftJoin(categories, eq(products.categoryId, categories.id))
+        .leftJoin(materials, eq(products.materialId, materials.id))
+        .leftJoin(installations, eq(products.installationId, installations.id))
         .where(eq(productBundleItems.bundleProductId, selectedBundle.id))
         .orderBy(asc(productBundleItems.position)),
     ]);
@@ -355,6 +393,38 @@ export async function getFeaturedBundleForVehicle(
 
     const pieces = bundleItems.map((p) => `${p.categoryName}: ${p.name}`);
 
+    // Resolve effective Material with child part fallbacks
+    const childWithMaterial = childRows.find((c) => c.materialName);
+    const effectiveMaterialName = selectedBundle.materialName || childWithMaterial?.materialName || null;
+    const effectiveMaterialNameEn = selectedBundle.materialNameEn || childWithMaterial?.materialNameEn || null;
+    const effectiveMaterialDesc = selectedBundle.materialDescription || childWithMaterial?.materialDescription || null;
+    const effectiveMaterialDescEn = selectedBundle.materialDescriptionEn || childWithMaterial?.materialDescriptionEn || null;
+    const effectiveMaterialIcon = selectedBundle.materialIcon || childWithMaterial?.materialIcon || null;
+
+    // Resolve effective Installation Method with child part / legacy text fallbacks
+    const childWithInstallation = childRows.find((c) => c.installationName || c.productInstallation);
+    const effectiveInstallationName =
+      selectedBundle.installationName ||
+      selectedBundle.productInstallation ||
+      childWithInstallation?.installationName ||
+      childWithInstallation?.productInstallation ||
+      null;
+    const effectiveInstallationNameEn =
+      selectedBundle.installationNameEn ||
+      selectedBundle.productInstallationEn ||
+      childWithInstallation?.installationNameEn ||
+      childWithInstallation?.productInstallationEn ||
+      null;
+    const effectiveInstallationDesc =
+      selectedBundle.installationDescription ||
+      childWithInstallation?.installationDescription ||
+      null;
+    const effectiveInstallationDescEn =
+      selectedBundle.installationDescriptionEn ||
+      childWithInstallation?.installationDescriptionEn ||
+      null;
+    const effectiveInstallationIcon = selectedBundle.installationIcon || childWithInstallation?.installationIcon || null;
+
     return {
       id: selectedBundle.id,
       name: selectedBundle.name,
@@ -392,6 +462,16 @@ export async function getFeaturedBundleForVehicle(
       pieces: pieces.length > 0 ? pieces : ["Full Aerodynamic Kit Package"],
       bundleItems,
       totalSales: selectedBundle.totalSales,
+      material: effectiveMaterialName,
+      materialEn: effectiveMaterialNameEn,
+      materialDescription: effectiveMaterialDesc,
+      materialDescriptionEn: effectiveMaterialDescEn,
+      materialIcon: effectiveMaterialIcon,
+      installation: effectiveInstallationName,
+      installationEn: effectiveInstallationNameEn,
+      installationDescription: effectiveInstallationDesc,
+      installationDescriptionEn: effectiveInstallationDescEn,
+      installationIcon: effectiveInstallationIcon,
     };
   } catch (error) {
     console.error("[getFeaturedBundleForVehicle] Error querying featured bundle:", error);

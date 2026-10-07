@@ -28,6 +28,7 @@ import {
   Star,
   Languages,
 } from "lucide-react";
+import { AppIcon } from "@/components/icons/app-icon";
 import {
   createBundleAction,
   updateBundleAction,
@@ -55,12 +56,14 @@ interface MaterialOption {
   id: string;
   name: string;
   slug: string;
+  iconName?: string | null;
 }
 
 interface InstallationOption {
   id: string;
   name: string;
   slug: string;
+  iconName?: string | null;
 }
 
 interface AvailablePart {
@@ -247,6 +250,14 @@ export function BundleForm({
   const selectedPartsList = useMemo(() => {
     return availableParts.filter((p) => selectedPartIds.includes(p.id));
   }, [availableParts, selectedPartIds]);
+
+  const selectedMaterial = useMemo(() => {
+    return materials.find((m) => m.id === materialId);
+  }, [materials, materialId]);
+
+  const selectedInstallation = useMemo(() => {
+    return installations.find((i) => i.id === installationId);
+  }, [installations, installationId]);
 
   // Calculations
   const calculatedTotalPrice = useMemo(() => {
@@ -862,9 +873,17 @@ export function BundleForm({
 
               {/* Row 3 Left: Material */}
               <div>
-                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                  วัสดุหลักของเซ็ต (MATERIAL)
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    วัสดุหลักของเซ็ต (MATERIAL)
+                  </label>
+                  {selectedMaterial && (
+                    <span className="text-[11px] text-teal-400 flex items-center gap-1.5 bg-teal-950/40 border border-teal-800/40 px-2 py-0.5 rounded-md font-mono">
+                      <AppIcon icon={selectedMaterial.iconName || "Layers"} size={12} fallbackIcon="Layers" />
+                      <span>{selectedMaterial.iconName || "Layers"}</span>
+                    </span>
+                  )}
+                </div>
                 <select
                   value={materialId}
                   onChange={(e) => setMaterialId(e.target.value)}
@@ -873,7 +892,7 @@ export function BundleForm({
                   <option value="">เลือกวัสดุ (ตามชิ้นส่วนย่อย)</option>
                   {materials.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.name}
+                      {m.name} {m.iconName ? `[ไอคอน: ${m.iconName}]` : ""}
                     </option>
                   ))}
                 </select>
@@ -881,9 +900,17 @@ export function BundleForm({
 
               {/* Row 3 Right: Installation Method */}
               <div>
-                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                  วิธีการติดตั้ง (INSTALLATION METHOD)
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    วิธีการติดตั้ง (INSTALLATION METHOD)
+                  </label>
+                  {selectedInstallation && (
+                    <span className="text-[11px] text-orange-400 flex items-center gap-1.5 bg-orange-950/40 border border-orange-800/40 px-2 py-0.5 rounded-md font-mono">
+                      <AppIcon icon={selectedInstallation.iconName || "Wrench"} size={12} fallbackIcon="Wrench" />
+                      <span>{selectedInstallation.iconName || "Wrench"}</span>
+                    </span>
+                  )}
+                </div>
                 <select
                   value={installationId}
                   onChange={(e) => setInstallationId(e.target.value)}
@@ -892,7 +919,7 @@ export function BundleForm({
                   <option value="">เลือกวิธีการติดตั้ง</option>
                   {installations.map((i) => (
                     <option key={i.id} value={i.id}>
-                      {i.name}
+                      {i.name} {i.iconName ? `[ไอคอน: ${i.iconName}]` : ""}
                     </option>
                   ))}
                 </select>

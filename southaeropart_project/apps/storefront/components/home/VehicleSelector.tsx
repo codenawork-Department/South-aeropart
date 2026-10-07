@@ -210,7 +210,7 @@ export function VehicleSelector({
 
   return (
     <section className="bg-zinc-950 border-b border-zinc-800/80 relative z-30">
-      <div className="container-main py-4 md:py-5">
+      <div className="container-main pt-4 pb-6 md:pt-5 md:pb-8">
         {/* =========================================================================
             1. TOP ROW: Title & Integrated My Garage Shortcut (Clean & Balanced)
            ========================================================================= */}

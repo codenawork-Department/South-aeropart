@@ -127,6 +127,7 @@ async function _fetchCategoriesAndBrands() {
         name: materials.name,
         slug: materials.slug,
         description: materials.description,
+        iconName: materials.iconName,
       })
       .from(materials)
       .where(eq(materials.isActive, true))
@@ -138,6 +139,7 @@ async function _fetchCategoriesAndBrands() {
         name: installations.name,
         slug: installations.slug,
         description: installations.description,
+        iconName: installations.iconName,
       })
       .from(installations)
       .where(eq(installations.isActive, true))

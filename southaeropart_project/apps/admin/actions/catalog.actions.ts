@@ -61,6 +61,7 @@ const materialSchema = z.object({
   name: z.string().min(1, "กรุณากรอกชื่อวัสดุ").max(150).trim(),
   slug: z.string().optional(),
   description: z.string().max(500).optional().nullable().or(z.literal("")),
+  iconName: z.string().optional().nullable().or(z.literal("")),
   isActive: z.boolean().default(true),
 });
 
@@ -68,6 +69,7 @@ const installationSchema = z.object({
   name: z.string().min(1, "กรุณากรอกชื่อวิธีการติดตั้ง").max(150).trim(),
   slug: z.string().optional(),
   description: z.string().max(500).optional().nullable().or(z.literal("")),
+  iconName: z.string().optional().nullable().or(z.literal("")),
   isActive: z.boolean().default(true),
 });
 
@@ -734,6 +736,7 @@ export async function getMaterialsAction() {
       name: materials.name,
       slug: materials.slug,
       description: materials.description,
+      iconName: materials.iconName,
       isActive: materials.isActive,
       createdAt: materials.createdAt,
       updatedAt: materials.updatedAt,
@@ -793,6 +796,7 @@ export async function createMaterialAction(
         name: data.name,
         slug,
         description: data.description || null,
+        iconName: data.iconName || null,
         isActive: data.isActive,
       })
       .returning({ id: materials.id });
@@ -849,6 +853,7 @@ export async function updateMaterialAction(
       .set({
         name: data.name,
         description: data.description || null,
+        iconName: data.iconName || null,
         isActive: data.isActive,
         updatedAt: new Date(),
       })
@@ -937,6 +942,7 @@ export async function getInstallationsAction() {
       name: installations.name,
       slug: installations.slug,
       description: installations.description,
+      iconName: installations.iconName,
       isActive: installations.isActive,
       createdAt: installations.createdAt,
       updatedAt: installations.updatedAt,
@@ -996,6 +1002,7 @@ export async function createInstallationAction(
         name: data.name,
         slug,
         description: data.description || null,
+        iconName: data.iconName || null,
         isActive: data.isActive,
       })
       .returning({ id: installations.id });
@@ -1052,6 +1059,7 @@ export async function updateInstallationAction(
       .set({
         name: data.name,
         description: data.description || null,
+        iconName: data.iconName || null,
         isActive: data.isActive,
         updatedAt: new Date(),
       })

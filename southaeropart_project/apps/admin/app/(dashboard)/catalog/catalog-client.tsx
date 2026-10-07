@@ -23,7 +23,8 @@ import {
   Palette,
 } from "lucide-react";
 import { IconsTab } from "./components/icons-tab";
-import type { IconData } from "@/components/icons/app-icon";
+import { AppIcon, type IconData } from "@/components/icons/app-icon";
+import { IconPicker } from "@/components/icons/icon-picker";
 import {
   createBrandAction,
   updateBrandAction,
@@ -86,6 +87,7 @@ interface MaterialItem {
   name: string;
   slug: string;
   description?: string | null;
+  iconName?: string | null;
   isActive: boolean;
   productsCount: number;
   createdAt: Date;
@@ -97,6 +99,7 @@ interface InstallationItem {
   name: string;
   slug: string;
   description?: string | null;
+  iconName?: string | null;
   isActive: boolean;
   productsCount: number;
   createdAt: Date;
@@ -156,14 +159,14 @@ export function CatalogClient({
     isOpen: false,
     item: null,
   });
-  const [materialForm, setMaterialForm] = useState<MaterialInput>({ name: "", description: "", isActive: true });
+  const [materialForm, setMaterialForm] = useState<MaterialInput>({ name: "", description: "", iconName: "", isActive: true });
 
   // Installation Modal State
   const [installationModal, setInstallationModal] = useState<{ isOpen: boolean; item?: InstallationItem | null }>({
     isOpen: false,
     item: null,
   });
-  const [installationForm, setInstallationForm] = useState<InstallationInput>({ name: "", description: "", isActive: true });
+  const [installationForm, setInstallationForm] = useState<InstallationInput>({ name: "", description: "", iconName: "", isActive: true });
 
   // Form states for modals
   const [brandForm, setBrandForm] = useState<BrandInput>({ name: "", slug: "", logoUrl: "", isActive: true });
@@ -309,7 +312,14 @@ export function CatalogClient({
           setMaterials((prev) =>
             prev.map((m) =>
               m.id === materialModal.item!.id
-                ? { ...m, name: materialForm.name, description: materialForm.description ?? null, isActive: materialForm.isActive, updatedAt: new Date() }
+                ? {
+                    ...m,
+                    name: materialForm.name,
+                    description: materialForm.description ?? null,
+                    iconName: materialForm.iconName ?? null,
+                    isActive: materialForm.isActive,
+                    updatedAt: new Date(),
+                  }
                 : m
             )
           );
@@ -341,7 +351,14 @@ export function CatalogClient({
           setInstallations((prev) =>
             prev.map((inst) =>
               inst.id === installationModal.item!.id
-                ? { ...inst, name: installationForm.name, description: installationForm.description ?? null, isActive: installationForm.isActive, updatedAt: new Date() }
+                ? {
+                    ...inst,
+                    name: installationForm.name,
+                    description: installationForm.description ?? null,
+                    iconName: installationForm.iconName ?? null,
+                    isActive: installationForm.isActive,
+                    updatedAt: new Date(),
+                  }
                 : inst
             )
           );
@@ -461,7 +478,7 @@ export function CatalogClient({
           {activeTab === "materials" && (
             <button
               onClick={() => {
-                setMaterialForm({ name: "", description: "", isActive: true });
+                setMaterialForm({ name: "", description: "", iconName: "", isActive: true });
                 setMaterialModal({ isOpen: true, item: null });
               }}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-md shadow-teal-950/40 transition-all cursor-pointer"
@@ -473,7 +490,7 @@ export function CatalogClient({
           {activeTab === "installations" && (
             <button
               onClick={() => {
-                setInstallationForm({ name: "", description: "", isActive: true });
+                setInstallationForm({ name: "", description: "", iconName: "", isActive: true });
                 setInstallationModal({ isOpen: true, item: null });
               }}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold shadow-md shadow-orange-950/40 transition-all cursor-pointer"
@@ -978,11 +995,21 @@ export function CatalogClient({
                 {filteredMaterials.map((mat) => (
                   <tr key={mat.id} className="hover:bg-[#161616] transition-colors">
                     <td className="py-3 px-4 font-semibold text-white">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded bg-teal-950/60 border border-teal-800/40 flex items-center justify-center">
-                          <Shield size={12} className="text-teal-400" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-400 shrink-0">
+                          <AppIcon icon={mat.iconName || "Layers"} size={15} fallbackIcon="Layers" />
                         </div>
-                        {mat.name}
+                        <div>
+                          <div className="font-medium text-white">{mat.name}</div>
+                          {mat.iconName ? (
+                            <span className="text-[10px] text-teal-400/90 font-mono font-normal flex items-center gap-1">
+                              <span>ไอคอน:</span>
+                              <span className="bg-teal-950/40 px-1 py-0.2 rounded border border-teal-800/30">{mat.iconName}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-gray-500 font-mono font-normal">ไอคอนเริ่มต้น (Layers)</span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="py-3 px-4 text-gray-400 max-w-xs truncate">
@@ -1002,7 +1029,12 @@ export function CatalogClient({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => {
-                            setMaterialForm({ name: mat.name, description: mat.description ?? "", isActive: mat.isActive });
+                            setMaterialForm({
+                              name: mat.name,
+                              description: mat.description ?? "",
+                              iconName: mat.iconName ?? "",
+                              isActive: mat.isActive,
+                            });
                             setMaterialModal({ isOpen: true, item: mat });
                           }}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#252525] transition-colors"
@@ -1058,11 +1090,21 @@ export function CatalogClient({
                 {filteredInstallations.map((inst) => (
                   <tr key={inst.id} className="hover:bg-[#161616] transition-colors">
                     <td className="py-3 px-4 font-semibold text-white">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded bg-orange-950/60 border border-orange-800/40 flex items-center justify-center">
-                          <Wrench size={12} className="text-orange-400" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-orange-950/60 border border-orange-800/40 flex items-center justify-center text-orange-400 shrink-0">
+                          <AppIcon icon={inst.iconName || "Wrench"} size={15} fallbackIcon="Wrench" />
                         </div>
-                        {inst.name}
+                        <div>
+                          <div className="font-medium text-white">{inst.name}</div>
+                          {inst.iconName ? (
+                            <span className="text-[10px] text-orange-400/90 font-mono font-normal flex items-center gap-1">
+                              <span>ไอคอน:</span>
+                              <span className="bg-orange-950/40 px-1 py-0.2 rounded border border-orange-800/30">{inst.iconName}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-gray-500 font-mono font-normal">ไอคอนเริ่มต้น (Wrench)</span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="py-3 px-4 text-gray-400 max-w-xs truncate">
@@ -1082,7 +1124,12 @@ export function CatalogClient({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => {
-                            setInstallationForm({ name: inst.name, description: inst.description ?? "", isActive: inst.isActive });
+                            setInstallationForm({
+                              name: inst.name,
+                              description: inst.description ?? "",
+                              iconName: inst.iconName ?? "",
+                              isActive: inst.isActive,
+                            });
                             setInstallationModal({ isOpen: true, item: inst });
                           }}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#252525] transition-colors"
@@ -1444,6 +1491,26 @@ export function CatalogClient({
             </div>
 
             <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                ไอคอนวัสดุ
+              </label>
+              <IconPicker
+                value={materialForm.iconName}
+                onChange={(icon) =>
+                  setMaterialForm({
+                    ...materialForm,
+                    iconName: icon.lucideName || icon.slug,
+                  })
+                }
+                onClear={() => setMaterialForm({ ...materialForm, iconName: "" })}
+                label="เลือกไอคอนวัสดุ (แสดงในสเปกชุดแต่งและหน้าร้าน)"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">
+                หากไม่เลือก ระบบจะใช้ไอคอนเริ่มต้น (<code className="text-teal-400 font-mono">Layers</code>) อัตโนมัติ
+              </p>
+            </div>
+
+            <div>
               <label className="block text-xs font-semibold text-gray-300 mb-1">
                 คำอธิบายวัสดุ <span className="text-gray-500">(ไม่บังคับ)</span>
               </label>
@@ -1514,6 +1581,26 @@ export function CatalogClient({
                 className="w-full px-3 py-2 rounded-lg bg-[#1A1A1A] border border-[#2E2E2E] text-white placeholder-gray-500 text-xs focus:outline-none focus:border-orange-500"
                 required
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                ไอคอนวิธีการติดตั้ง
+              </label>
+              <IconPicker
+                value={installationForm.iconName}
+                onChange={(icon) =>
+                  setInstallationForm({
+                    ...installationForm,
+                    iconName: icon.lucideName || icon.slug,
+                  })
+                }
+                onClear={() => setInstallationForm({ ...installationForm, iconName: "" })}
+                label="เลือกไอคอนวิธีการติดตั้ง (แสดงในสเปกชุดแต่งและหน้าร้าน)"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">
+                หากไม่เลือก ระบบจะใช้ไอคอนเริ่มต้น (<code className="text-orange-400 font-mono">Wrench</code>) อัตโนมัติ
+              </p>
             </div>
 
             <div>

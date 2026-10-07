@@ -1,0 +1,1018 @@
+.hero {
+  --paper: #e9e6df;
+  position: relative;
+  background: #090909;
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.stage {
+  position: relative;
+  height: 92svh;
+  min-height: 680px;
+  max-height: 960px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #0a0a0a;
+}
+
+.stageFocus {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  will-change: filter, opacity, transform;
+  transition: filter 0.2s ease-out, opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+/* ═══════════════════════════════════════════
+   1. MASTHEAD (TOP BAR)
+   ═══════════════════════════════════════════ */
+.masthead {
+  position: absolute;
+  z-index: 8;
+  top: clamp(42px, 4.6vw, 56px);
+  left: 4%;
+  right: 4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  mix-blend-mode: difference;
+  color: white;
+}
+
+.mastheadTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: .08em;
+  font-family: var(--font-heading), sans-serif;
+  text-transform: uppercase;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.archive {
+  opacity: .65;
+  margin-left: 12px;
+}
+
+.skip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  min-height: 30px;
+  font-family: var(--font-heading), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: white;
+  transition: opacity .2s;
+}
+
+.skip:hover {
+  opacity: .75;
+}
+
+/* ═══════════════════════════════════════════
+   2. BACKGROUND ATMOSPHERE & BLUEPRINT
+   ═══════════════════════════════════════════ */
+.blueprint {
+  position: absolute;
+  inset: 0;
+  opacity: .18;
+  background-image:
+    linear-gradient(#6663 1px, transparent 1px),
+    linear-gradient(90deg, #6663 1px, transparent 1px);
+  background-size: 68px 68px;
+  mask-image: radial-gradient(ellipse at 40% 50%, black 30%, transparent 75%);
+  pointer-events: none;
+}
+
+.glow {
+  position: absolute;
+  top: 35%;
+  right: 15%;
+  width: 700px;
+  height: 450px;
+  background: radial-gradient(ellipse at center, rgba(229, 29, 36, 0.16) 0%, rgba(0,0,0,0) 70%);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.watermark {
+  position: absolute;
+  z-index: 1;
+  bottom: -25px;
+  right: 2%;
+  font: 900 19vw/0.8 var(--font-heading), sans-serif;
+  color: rgba(255, 255, 255, 0.025);
+  pointer-events: none;
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+}
+
+/* ═══════════════════════════════════════════
+   3. UNIFIED BALANCED LEFT COLUMN
+   ═══════════════════════════════════════════ */
+.leftColumn {
+  position: absolute;
+  z-index: 6;
+  left: 6%;
+  top: clamp(98px, 13.5%, 130px);
+  bottom: 8%;
+  width: min(520px, 44%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: auto;
+}
+
+.heroBrandBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modelBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: .18em;
+  color: #aaa;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.modelBadgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  box-shadow: 0 0 8px var(--accent-red);
+  flex-shrink: 0;
+}
+
+.modelBadgeDivider {
+  color: #555;
+}
+
+.modelBadgeSub {
+  color: var(--accent-red);
+  font-family: monospace;
+}
+
+.unifiedWordmark {
+  font: 700 clamp(44px, 6.2vw, 105px)/.94 var(--font-heading), sans-serif;
+  letter-spacing: -.045em;
+  color: var(--paper);
+  text-transform: uppercase;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+.unifiedWordmark > span {
+  display: block;
+  white-space: nowrap;
+}
+
+.unifiedWordmarkAccent {
+  color: var(--accent-red) !important;
+  text-shadow: 0 0 35px rgba(229, 29, 36, 0.4);
+}
+
+.unifiedWordmarkDot {
+  display: inline-block;
+  font-weight: 400;
+  color: var(--accent-red);
+  margin-left: 2px;
+}
+
+/* Middle Narrative Block */
+.storyBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 480px;
+  margin: 8px 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #bbb;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 600;
+}
+
+.eyebrow > span {
+  width: 18px;
+  height: 2px;
+  background: var(--accent-red);
+}
+
+/* ─── Interactive Specs Eyebrow Row ─── */
+.specsEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 25;
+  margin-bottom: 2px;
+}
+
+.eyebrowBar {
+  width: 20px;
+  height: 2px;
+  background: var(--accent-red);
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(229, 29, 36, 0.6);
+}
+
+.specChipsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── Spec Icon Chip (Button) ─── */
+.specChipWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.specChipButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #a1a1aa;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 0;
+}
+
+.specChipButton:hover,
+.specChipButton:focus-visible,
+.specChipWrapper[data-open="true"] .specChipButton {
+  background: rgba(229, 29, 36, 0.14);
+  border-color: var(--accent-red);
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(229, 29, 36, 0.4), 0 2px 10px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.chipIcon {
+  flex-shrink: 0;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s;
+}
+
+.specChipButton:hover .chipIcon,
+.specChipWrapper[data-open="true"] .chipIcon {
+  transform: scale(1.1);
+  color: #ffffff;
+}
+
+.chipDot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.specChipButton:hover .chipDot,
+.specChipWrapper[data-open="true"] .chipDot {
+  background: var(--accent-red);
+  box-shadow: 0 0 6px var(--accent-red);
+}
+
+/* ─── Tooltip Popover (Floating Card) ─── */
+.tooltipPopover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  min-width: 240px;
+  max-width: 320px;
+  padding: 12px 14px;
+  background: linear-gradient(145deg, rgba(22, 22, 26, 0.98) 0%, rgba(12, 12, 14, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 2px solid var(--accent-red);
+  border-radius: 8px;
+  box-shadow: 
+    0 16px 36px rgba(0, 0, 0, 0.85),
+    0 0 24px rgba(229, 29, 36, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Bridge gap between button and tooltip so hovering remains active */
+.tooltipPopover::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.specChipWrapper:hover .tooltipPopover,
+.specChipWrapper:focus-within .tooltipPopover,
+.specChipWrapper[data-open="true"] .tooltipPopover {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.tooltipArrow {
+  position: absolute;
+  top: 100%;
+  left: 12px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(14, 14, 16, 0.98);
+}
+
+.tooltipHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.tooltipBadgeDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  box-shadow: 0 0 6px var(--accent-red);
+  flex-shrink: 0;
+}
+
+.tooltipCategory {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+
+.tooltipValue {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tooltipDesc {
+  margin-top: 5px;
+  font-family: sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #a1a1aa;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 5px;
+}
+
+.eyebrowFallback {
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #bbb;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 600;
+}
+
+.storyTitle {
+  font-size: clamp(17px, 1.5vw, 24px);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--paper);
+  font-family: var(--font-heading), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+.storyDesc {
+  color: #999;
+  font-size: 12px;
+  line-height: 1.8;
+  max-width: 440px;
+}
+
+/* Bottom Cockpit Deck: Telemetry Grid + Price/CTAs */
+.footerDeck {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.telemetryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 440px;
+}
+
+.telemetryCard {
+  background: rgba(18, 18, 18, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 8px 12px;
+  backdrop-filter: blur(8px);
+}
+
+.telemetryHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8px;
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: .12em;
+  color: #777;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.telemetryDownforceIcon {
+  color: #34d399;
+}
+
+.telemetryDragIcon {
+  color: var(--accent-red);
+}
+
+.telemetryPartsIcon {
+  color: #ddd;
+}
+
+.telemetryValueGreen {
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #34d399;
+  margin-top: 3px;
+}
+
+.telemetryValueRed {
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-red);
+  margin-top: 3px;
+}
+
+.telemetryValueWhite {
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 3px;
+}
+
+/* Price & Action Row */
+.commerceRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.priceContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.priceMeta {
+  font-size: 8px;
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: .16em;
+  color: #777;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.priceAmount {
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-top: 2px;
+}
+
+.ctaGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ctaPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  background: var(--paper);
+  color: #111;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-heading), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  transition: background .2s, color .2s, transform .2s, box-shadow .2s;
+  border-radius: 2px;
+}
+
+.ctaPrimary:hover {
+  background: var(--accent-red);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(229, 29, 36, 0.4);
+}
+
+/* ═══════════════════════════════════════════
+   4. PHOTO & MASK (SEAMLESS ABOUT US BLEND)
+   ═══════════════════════════════════════════ */
+.photo {
+  position: absolute;
+  width: 66%;
+  height: 90%;
+  right: -4%;
+  top: 8%;
+  mask-image:
+    linear-gradient(90deg, transparent, black 10%),
+    linear-gradient(0deg, transparent, black 10%, black 94%, transparent);
+  mask-composite: intersect;
+  z-index: 2;
+  transition: transform 0.6s ease-out;
+}
+
+.stage:hover .photo {
+  transform: scale(1.015);
+}
+
+.image {
+  object-fit: cover;
+  object-position: center 50%;
+  filter: saturate(0.96) brightness(1) contrast(1.04);
+  transition: opacity 0.4s ease-out, filter 0.4s ease-out;
+}
+
+.stage:hover .image {
+  filter: saturate(1) brightness(1.03) contrast(1.04);
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(0deg, #090909 0%, transparent 16%),
+    linear-gradient(
+      90deg,
+      #090909 0%,
+      #090909 25%,
+      rgba(9, 9, 9, 0.6) 33%,
+      rgba(9, 9, 9, 0.12) 41%,
+      transparent 47%
+    );
+  opacity: 1;
+  z-index: 3;
+}
+
+/* On-image Photo Nav Chevrons */
+.photoNav {
+  position: absolute;
+  z-index: 6;
+  right: 3%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.navButton {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  background: rgba(14, 14, 14, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.navButton:hover {
+  background: rgba(229, 29, 36, 0.3);
+  border-color: var(--accent-red);
+  color: #fff;
+  transform: scale(1.06);
+}
+
+/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════════
+   5. MOTORSPORT TECH HUD BADGE (TOP-RIGHT)
+   ═══════════════════════════════════════════ */
+.specimenBadge {
+  position: absolute;
+  right: 4.5%;
+  top: 16%;
+  z-index: 5;
+  background: rgba(12, 12, 14, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 8px 14px 9px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 175px;
+}
+
+.specimenHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+}
+
+.specimenPulseDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  box-shadow: 0 0 8px var(--accent-red);
+  flex-shrink: 0;
+  animation: pulseBeacon 2.4s ease-in-out infinite;
+}
+
+@keyframes pulseBeacon {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.specimenCategory {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #8e8e96;
+  text-transform: uppercase;
+}
+
+.specimenAngle {
+  margin-left: auto;
+  font-family: monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #aaaab6;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.specimenBody {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.specimenCode {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.specimenDivider {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.specimenView {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #dddddf;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.number {
+  position: absolute;
+  right: 4%;
+  bottom: 17%;
+  font: 400 54px/1 var(--font-heading), sans-serif;
+  color: #ffffff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7), 0 0 3px rgba(0, 0, 0, 0.6);
+  z-index: 5;
+  pointer-events: none;
+  user-select: none;
+  transition: all 0.3s ease;
+}
+
+.sideLabel {
+  position: absolute;
+  z-index: 7;
+  right: 18px;
+  top: 37%;
+  writing-mode: vertical-rl;
+  font-size: 8px;
+  letter-spacing: .16em;
+  color: #aaa;
+  mix-blend-mode: difference;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════
+   6. FOOTER (INTERACTIVE PHOTO SLIDER TABS)
+   ═══════════════════════════════════════════ */
+.footer {
+  position: absolute;
+  z-index: 8;
+  bottom: 24px;
+  left: 4%;
+  right: 4%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  color: white;
+  mix-blend-mode: difference;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10px;
+  font-family: var(--font-heading), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  max-width: 240px;
+  line-height: 1.6;
+}
+
+.hint svg {
+  flex-shrink: 0;
+}
+
+.chapters {
+  display: flex;
+  width: min(640px, 62%);
+  gap: 16px;
+}
+
+.chapterItem {
+  position: relative;
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  font-size: 9px;
+  opacity: .5;
+  text-decoration: none;
+  color: white;
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  padding: 0 4px 8px;
+  cursor: pointer;
+  outline: none;
+  transition: opacity .2s, transform .2s;
+  text-align: left;
+}
+
+.chapterItem:hover {
+  opacity: .85;
+}
+
+.chapterItemActive {
+  opacity: 1 !important;
+}
+
+.chapterItemActive .chapterIndex {
+  color: var(--accent-red) !important;
+}
+
+.chapterItemActive .chapterLabel {
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.chapterIndex {
+  font: 600 14px var(--font-heading), sans-serif;
+  transition: color .2s;
+}
+
+.chapterLabel {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+  transition: color .2s;
+}
+
+.chapterLine {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  width: 100%;
+  background: #444;
+  transition: background .2s, box-shadow .2s;
+}
+
+.chapterLineActive {
+  background: var(--accent-red) !important;
+  box-shadow: 0 0 10px rgba(229, 29, 36, 0.7);
+}
+
+.track {
+  position: absolute;
+  z-index: 9;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #222;
+}
+
+.trackFill {
+  height: 100%;
+  background: var(--accent-red);
+  transition: width 0.3s ease-out;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE DESIGN
+   ═══════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .unifiedWordmark {
+    font-size: clamp(38px, 6vw, 75px);
+  }
+  .leftColumn {
+    width: 48%;
+  }
+  .chapterLabel {
+    max-width: 90px;
+  }
+}
+
+@media (max-width: 900px) {
+  .archive, .sideLabel {
+    display: none;
+  }
+  .chapters {
+    gap: 10px;
+  }
+  .photoNav {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .stage {
+    height: auto;
+    min-height: 600px;
+    padding-bottom: 70px;
+  }
+  .masthead {
+    top: 24px;
+    left: 6%;
+    right: 6%;
+  }
+  .leftColumn {
+    position: relative;
+    width: 88%;
+    left: 6%;
+    top: auto;
+    bottom: auto;
+    margin-top: 320px;
+    gap: 20px;
+  }
+  .unifiedWordmark {
+    font-size: clamp(34px, 10vw, 60px);
+  }
+  .photo {
+    width: 110%;
+    height: 52%;
+    right: -20%;
+    top: 20%;
+    mask-image: linear-gradient(0deg, transparent, black 30%, black 80%, transparent);
+  }
+  .specimenBadge {
+    top: 66px;
+    right: 6%;
+    padding: 6px 10px 7px;
+    min-width: auto;
+  }
+  .specimenCategory {
+    font-size: 7.5px;
+  }
+  .specimenAngle {
+    font-size: 7.5px;
+    padding: 1px 4px;
+  }
+  .specimenCode {
+    font-size: 11px;
+  }
+  .specimenView {
+    font-size: 9.5px;
+  }
+  .number {
+    right: 7%;
+    bottom: 28%;
+    font-size: 32px;
+  }
+  .footer {
+    position: relative;
+    left: 6%;
+    right: 6%;
+    bottom: auto;
+    margin-top: 30px;
+    gap: 15px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .chapters {
+    width: 100%;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stageFocus {
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
