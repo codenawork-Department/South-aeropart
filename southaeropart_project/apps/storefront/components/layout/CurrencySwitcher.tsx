@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
-import { Currency, SUPPORTED_CURRENCIES } from "@/lib/currency";
+import { Currency, SUPPORTED_CURRENCIES, getRateAgainstUSD } from "@/lib/currency";
 import { Coins, ChevronDown, Check } from "lucide-react";
 
 interface CurrencySwitcherProps {
@@ -102,7 +102,7 @@ export function CurrencySwitcher({
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-1.5 w-48 rounded-md bg-[#121212] border border-[#2A2A2A] shadow-2xl z-[100] py-1.5 animate-fadeIn"
+          className="absolute right-0 mt-1.5 w-52 rounded-md bg-[#121212] border border-[#2A2A2A] shadow-2xl z-[100] py-1.5 animate-fadeIn"
           role="menu"
           aria-orientation="vertical"
         >
@@ -113,12 +113,16 @@ export function CurrencySwitcher({
           {SUPPORTED_CURRENCIES.map((code) => {
             const meta = allMetadata[code];
             const isSelected = currency === code;
-            const rate = rates[code];
+            const rateAgainstUsd = getRateAgainstUSD(code, rates);
             const rateText =
-              code === "THB"
+              code === "USD"
                 ? "Base currency"
-                : rate
-                ? `1 THB ≈ ${rate >= 1 ? rate.toFixed(2) : rate.toFixed(4)} ${meta.symbol}`
+                : rateAgainstUsd > 0
+                ? `1 USD ≈ ${
+                    rateAgainstUsd >= 0.1
+                      ? rateAgainstUsd.toFixed(2)
+                      : rateAgainstUsd.toFixed(4)
+                  } ${meta.symbol}`
                 : "";
 
             return (

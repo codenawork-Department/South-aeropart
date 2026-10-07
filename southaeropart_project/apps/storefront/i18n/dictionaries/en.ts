@@ -48,6 +48,14 @@ export const en: Dictionary = {
     remove: "Remove",
     each: "each",
     continueShopping: "Continue Shopping",
+    secureCheckout: "SECURE CHECKOUT",
+    secureCheckoutDesc: "Your payment is 100% secure.",
+    premiumQuality: "PREMIUM QUALITY",
+    premiumQualityDesc: "Built for performance and style.",
+    easyReturns: "EASY RETURNS",
+    easyReturnsDesc: "Hassle-free 30-day policy.",
+    dedicatedSupport: "DEDICATED SUPPORT",
+    dedicatedSupportDesc: "We're here to help you.",
   },
   product: {
     addToCart: "ADD TO CART",
@@ -88,6 +96,10 @@ export const en: Dictionary = {
     rightsReserved: "All rights reserved.",
     privacyPolicy: "Privacy Policy",
     termsOfService: "Terms of Service",
+    paymentMethods: "PAYMENT METHODS",
+    securePayment: "SECURE PAYMENT",
+    securePaymentDesc: "Your payment is 100% encrypted & secure.",
+    designedInThailand: "DESIGNED & ENGINEERED IN THAILAND",
   },
   home: {
     // InfoSections
@@ -495,5 +507,17 @@ export const en: Dictionary = {
     verifiedQrNotice: "Scan QR code to verify digital invoice authenticity (VERIFIED DIGITAL INVOICE)",
     customsDeclaration: "HS 8708.29.90 — High-performance carbon fiber aerodynamic components for motor vehicles",
     stripeRef: "Stripe Ref (Transaction ID):",
+  },
+  errors: {
+    pageNotFoundBadge: "ERROR 404",
+    pageNotFoundTitle: "PAGE NOT FOUND",
+    pageNotFoundDesc: "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    backToHome: "Back to Home",
+    browseProducts: "Browse Products",
+    systemErrorBadge: "SYSTEM ERROR",
+    systemErrorTitle: "SOMETHING WENT WRONG",
+    systemErrorDesc: "An unexpected error occurred while loading this page. Please try again or return to the homepage.",
+    errorCode: "Error Code:",
+    tryAgain: "Try Again",
   },
 };

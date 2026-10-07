@@ -154,7 +154,7 @@ const DEFAULT_BLOCKS: EmailCanvasBlock[] = [
 ];
 
 const FONT_OPTIONS = [
-  { label: "Century Gothic (Brand Default)", value: "Century Gothic" },
+  { label: "Josefin Sans (Brand Default)", value: "Josefin Sans" },
   { label: "Oswald (Heading/Motorsport)", value: "Oswald" },
   { label: "Inter (Modern Sans)", value: "Inter" },
   { label: "Montserrat (Clean Display)", value: "Montserrat" },

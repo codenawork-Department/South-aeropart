@@ -85,6 +85,22 @@ export function sanitizeCurrency(value: unknown): Currency {
 }
 
 /**
+ * Calculate the exchange rate of a currency against 1 USD (Base currency USD).
+ * Since internal rates are relative to THB (1 THB = rates[code]):
+ * Rate relative to 1 USD = rates[code] / rates.USD.
+ */
+export function getRateAgainstUSD(
+  code: Currency,
+  rates: Record<Currency, number> = DEFAULT_RATES
+): number {
+  if (code === "USD") return 1.0;
+  const usdRate = rates?.USD || DEFAULT_RATES.USD || 0.030356;
+  if (usdRate <= 0) return 0;
+  const targetRate = rates?.[code] ?? DEFAULT_RATES[code] ?? 0;
+  return targetRate / usdRate;
+}
+
+/**
  * Convert an amount in THB to the target currency.
  */
 export function convertPrice(

@@ -3,44 +3,75 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════
-   CENTURY GOTHIC FONT DEFINITIONS
+   JOSEFIN SANS FONT DEFINITIONS
    ═══════════════════════════════════════════ */
 @font-face {
-  font-family: 'Century Gothic';
-  src: local('Century Gothic'),
-       local('CenturyGothic'),
-       local('AppleGothic'),
-       url('/fonts/gothic-regular.ttf') format('truetype');
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans'),
+       local('JosefinSans'),
+       url('/fonts/JosefinSans-VariableFont_wght.ttf') format('truetype-variations'),
+       url('/fonts/JosefinSans-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Italic'),
+       local('JosefinSans-Italic'),
+       url('/fonts/JosefinSans-Italic-VariableFont_wght.ttf') format('truetype-variations'),
+       url('/fonts/JosefinSans-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Regular'),
+       local('JosefinSans-Regular'),
+       url('/fonts/JosefinSans-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Century Gothic';
-  src: local('Century Gothic Bold'),
-       local('CenturyGothic-Bold'),
-       url('/fonts/gothic-bold.ttf') format('truetype');
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans SemiBold'),
+       local('JosefinSans-SemiBold'),
+       url('/fonts/JosefinSans-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Bold'),
+       local('JosefinSans-Bold'),
+       url('/fonts/JosefinSans-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Century Gothic';
-  src: local('Century Gothic Italic'),
-       local('CenturyGothic-Italic'),
-       url('/fonts/gothic-italic.ttf') format('truetype');
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Italic'),
+       local('JosefinSans-Italic'),
+       url('/fonts/JosefinSans-Italic.ttf') format('truetype');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Century Gothic';
-  src: local('Century Gothic Bold Italic'),
-       local('CenturyGothic-BoldItalic'),
-       url('/fonts/gothic-bold-italic.ttf') format('truetype');
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Bold Italic'),
+       local('JosefinSans-BoldItalic'),
+       url('/fonts/JosefinSans-BoldItalic.ttf') format('truetype');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -74,7 +105,7 @@
 body {
   background-color: var(--bg-root);
   color: var(--foreground);
-  font-family: 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+  font-family: 'Josefin Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -598,6 +629,12 @@ body {
 
 .top-loader-glow {
   box-shadow: 0 0 15px #FF2E55, 0 0 8px #FF4D4D;
+}
+
+/* Accessibility: Global visible focus indicator for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--accent-red, #E51D24);
+  outline-offset: 2px;
 }
 
 

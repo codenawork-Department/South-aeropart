@@ -31,7 +31,7 @@ export function MobileMenu({ isOpen, onClose, links, onOpenSearch }: MobileMenuP
 
       {/* Menu Drawer */}
       <div
-        className="absolute inset-y-0 left-0 w-full max-w-xs bg-[#0E0E0E] border-r border-[#222222] flex flex-col shadow-2xl z-10 animate-slide-in-right"
+        className="absolute inset-y-0 left-0 w-full max-w-xs bg-[#0E0E0E] border-r border-[#222222] flex flex-col shadow-2xl z-10 animate-slide-in-left"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#202020]">

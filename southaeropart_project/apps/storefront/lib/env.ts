@@ -36,7 +36,16 @@ const envSchema = z
       for (const [key, value] of [["ORDER_TOKEN_SECRET", data.ORDER_TOKEN_SECRET], ["REALTIME_SECRET", data.REALTIME_SECRET], ["MAINTENANCE_SECRET", data.MAINTENANCE_SECRET]]) {
         if (!value || value.length < 32) ctx.addIssue({code:z.ZodIssueCode.custom,path:[key!],message:"Dedicated secret must be 32+ characters"});
       }
-      if (data.APP_ENV === "production" && !data.NEXT_PUBLIC_STOREFRONT_URL.startsWith("https://")) ctx.addIssue({code:z.ZodIssueCode.custom,path:["NEXT_PUBLIC_STOREFRONT_URL"],message:"HTTPS storefront URL is required"});
+      if (data.APP_ENV === "production" && !data.NEXT_PUBLIC_STOREFRONT_URL.startsWith("https://")) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["NEXT_PUBLIC_STOREFRONT_URL"], message: "HTTPS storefront URL is required" });
+      }
+      if (data.APP_ENV === "production" && !data.DATABASE_URL.includes("sslmode=require")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["DATABASE_URL"],
+          message: "DATABASE_URL must enforce sslmode=require in production",
+        });
+      }
       if (!data.CLERK_WEBHOOK_SECRET || data.CLERK_WEBHOOK_SECRET.startsWith("whsec_xxx")) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

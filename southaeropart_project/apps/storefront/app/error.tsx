@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -10,6 +11,8 @@ interface ErrorPageProps {
 }
 
 export default function Error({ error, reset }: ErrorPageProps) {
+  const { t } = useLanguage();
+
   useEffect(() => {
     // Log exception for debugging in client console without leaking sensitive internal state
     console.error("[Storefront Boundary Error]:", error);
@@ -24,17 +27,17 @@ export default function Error({ error, reset }: ErrorPageProps) {
 
         <div className="space-y-2">
           <span className="text-xs font-semibold tracking-widest uppercase text-[var(--accent-red,#E51D24)] font-heading">
-            SYSTEM ERROR
+            {t.errors.systemErrorBadge}
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-wider text-white font-heading">
-            SOMETHING WENT WRONG
+            {t.errors.systemErrorTitle}
           </h1>
           <p className="text-sm text-[var(--text-secondary,#9CA3AF)] leading-relaxed">
-            เกิดข้อผิดพลาดขึ้นในระบบขณะโหลดหน้านี้ กรุณากดลองใหม่อีกครั้ง หรือกลับสู่หน้าหลัก
+            {t.errors.systemErrorDesc}
           </p>
           {error.digest && (
             <p className="text-[10px] text-[var(--text-muted,#6B7280)] font-mono">
-              Error Code: {error.digest}
+              {t.errors.errorCode} {error.digest}
             </p>
           )}
         </div>
@@ -46,14 +49,14 @@ export default function Error({ error, reset }: ErrorPageProps) {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm bg-[var(--accent-red,#E51D24)] hover:bg-[var(--accent-red-hover,#FF2E36)] text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-lg cursor-pointer"
           >
             <RefreshCw size={15} />
-            ลองใหม่อีกครั้ง
+            {t.errors.tryAgain}
           </button>
           <Link
             href="/"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm bg-[#1A1A1A] hover:bg-[#252525] border border-[#333333] text-white text-xs font-semibold uppercase tracking-wider transition-colors"
           >
             <Home size={15} />
-            กลับสู่หน้าหลัก
+            {t.errors.backToHome}
           </Link>
         </div>
       </div>

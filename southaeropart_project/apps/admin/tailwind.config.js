@@ -10,7 +10,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["'Century Gothic'", "CenturyGothic", "AppleGothic", "sans-serif"],
+        sans: ["'Josefin Sans'", "sans-serif"],
       },
       screens: {
         xs: "420px",

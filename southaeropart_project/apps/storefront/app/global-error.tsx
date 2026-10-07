@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface GlobalErrorProps {
   error: Error & { digest?: string };
@@ -8,12 +8,24 @@ interface GlobalErrorProps {
 }
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
+  const [lang, setLang] = useState<"th" | "en">("th");
+
   useEffect(() => {
     console.error("[Storefront Global Fatal Error]:", error);
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)south_aero_lang=([^;]+)/);
+      if (match && match[1] === "en") {
+        setLang("en");
+      }
+    } catch {
+      // fallback to th
+    }
   }, [error]);
 
+  const isEn = lang === "en";
+
   return (
-    <html lang="th">
+    <html lang={lang}>
       <body
         style={{
           margin: 0,
@@ -21,7 +33,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           backgroundColor: "#0A0A0A",
           color: "#FFFFFF",
           fontFamily:
-            '"Century Gothic", CenturyGothic, AppleGothic, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            '\'Josefin Sans\', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
@@ -80,7 +92,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               textTransform: "uppercase",
             }}
           >
-            CRITICAL APPLICATION ERROR
+            {isEn ? "CRITICAL SYSTEM ERROR" : "เกิดข้อผิดพลาดร้ายแรงในระบบ"}
           </h1>
 
           <p
@@ -91,7 +103,9 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               marginBottom: "24px",
             }}
           >
-            เกิดข้อผิดพลาดรุนแรงระดับโครงสร้างระบบ กรุณาลองใหม่อีกครั้ง
+            {isEn
+              ? "A critical application error occurred. Please try again or return to the homepage."
+              : "เกิดข้อผิดพลาดรุนแรงระดับโครงสร้างระบบ กรุณากดลองใหม่อีกครั้ง หรือกลับสู่หน้าหลัก"}
           </p>
 
           <div
@@ -117,7 +131,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                 textTransform: "uppercase",
               }}
             >
-              ลองใหม่อีกครั้ง (Try Again)
+              {isEn ? "Try Again" : "ลองใหม่อีกครั้ง"}
             </button>
             {/* A full document navigation resets the failed root layout. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
@@ -137,7 +151,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                 textTransform: "uppercase",
               }}
             >
-              กลับสู่หน้าหลัก
+              {isEn ? "Back to Home" : "กลับสู่หน้าหลัก"}
             </a>
           </div>
         </div>

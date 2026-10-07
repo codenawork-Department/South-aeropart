@@ -23,13 +23,15 @@ module.exports = {
         success: "var(--success)",
       },
       fontFamily: {
-        sans: ["'Century Gothic'", "CenturyGothic", "AppleGothic", "sans-serif"],
-        heading: ["var(--font-heading)", "'Century Gothic'", "CenturyGothic", "AppleGothic", "sans-serif"],
-        body: ["var(--font-body)", "'Century Gothic'", "CenturyGothic", "AppleGothic", "sans-serif"],
+        sans: ["'Josefin Sans'", "sans-serif"],
+        heading: ["var(--font-heading)", "'Josefin Sans'", "sans-serif"],
+        body: ["var(--font-body)", "'Josefin Sans'", "sans-serif"],
       },
       animation: {
         "slide-in-right": "slideInRight 0.3s ease-out",
         "slide-out-right": "slideOutRight 0.3s ease-in",
+        "slide-in-left": "slideInLeft 0.3s ease-out",
+        "slide-out-left": "slideOutLeft 0.3s ease-in",
         "fade-in": "fadeIn 0.3s ease-out",
         "fade-out": "fadeOut 0.3s ease-in",
       },
@@ -41,6 +43,14 @@ module.exports = {
         slideOutRight: {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(100%)" },
+        },
+        slideInLeft: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
+        slideOutLeft: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-100%)" },
         },
         fadeIn: {
           "0%": { opacity: "0" },

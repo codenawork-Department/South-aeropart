@@ -3,6 +3,7 @@ import {
   sanitizeCurrency,
   convertPrice,
   formatPrice,
+  getRateAgainstUSD,
   DEFAULT_RATES,
   type Currency,
 } from "./currency";
@@ -72,4 +73,37 @@ describe("currency helpers (Storefront Multi-Currency Support)", () => {
       expect(formatted).toBe("฿15,000.00");
     });
   });
+
+  describe("getRateAgainstUSD", () => {
+    it("returns 1 for USD as base currency", () => {
+      expect(getRateAgainstUSD("USD")).toBe(1);
+    });
+
+    it("calculates rate against 1 USD for THB and other currencies", () => {
+      const customRates = {
+        THB: 1.0,
+        USD: 0.03, // 1 USD = ~33.33 THB
+        EUR: 0.027, // 1 USD = 0.9 EUR
+        JPY: 4.5, // 1 USD = 150 JPY
+        SGD: 0.039, // 1 USD = 1.3 SGD
+      };
+      expect(getRateAgainstUSD("THB", customRates)).toBeCloseTo(33.333, 2);
+      expect(getRateAgainstUSD("EUR", customRates)).toBeCloseTo(0.9, 2);
+      expect(getRateAgainstUSD("JPY", customRates)).toBeCloseTo(150, 1);
+      expect(getRateAgainstUSD("SGD", customRates)).toBeCloseTo(1.3, 2);
+    });
+
+    it("handles fallback gracefully when USD rate is zero or missing", () => {
+      const brokenRates = {
+        THB: 1.0,
+        USD: 0,
+        EUR: 0,
+        JPY: 0,
+        SGD: 0,
+      };
+      expect(getRateAgainstUSD("USD", brokenRates)).toBe(1);
+      expect(getRateAgainstUSD("THB", brokenRates)).toBeGreaterThan(0);
+    });
+  });
 });
+

@@ -14,10 +14,12 @@ export default async function ProductDetailPage({
   const product = await getProductBySlug(slug);
 
   if (!product) {
-    // Check mock fallback
-    const mock = MOCK_PRODUCTS.find((p) => p.slug === slug);
-    if (mock) {
-      return <ProductDetailClient product={mock} />;
+    // In development mode, allow mock fallback for local preview
+    if (process.env.NODE_ENV !== "production") {
+      const mock = MOCK_PRODUCTS.find((p) => p.slug === slug);
+      if (mock) {
+        return <ProductDetailClient product={mock} />;
+      }
     }
     return notFound();
   }

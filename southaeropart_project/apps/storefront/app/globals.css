@@ -3,44 +3,75 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════
-   CENTURY GOTHIC FONT DEFINITIONS
+   JOSEFIN SANS FONT DEFINITIONS
    ═══════════════════════════════════════════ */
 @font-face {
-  font-family: 'Century Gothic';
-  src: local('Century Gothic'),
-       local('CenturyGothic'),
-       local('AppleGothic'),
-       url('/fonts/gothic-regular.ttf') format('truetype');
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans'),
+       local('JosefinSans'),
+       url('/fonts/JosefinSans-VariableFont_wght.ttf') format('truetype-variations'),
+       url('/fonts/JosefinSans-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Italic'),
+       local('JosefinSans-Italic'),
+       url('/fonts/JosefinSans-Italic-VariableFont_wght.ttf') format('truetype-variations'),
+       url('/fonts/JosefinSans-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Regular'),
+       local('JosefinSans-Regular'),
+       url('/fonts/JosefinSans-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Century Gothic';
-  src: local('Century Gothic Bold'),
-       local('CenturyGothic-Bold'),
-       url('/fonts/gothic-bold.ttf') format('truetype');
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans SemiBold'),
+       local('JosefinSans-SemiBold'),
+       url('/fonts/JosefinSans-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Bold'),
+       local('JosefinSans-Bold'),
+       url('/fonts/JosefinSans-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Century Gothic';
-  src: local('Century Gothic Italic'),
-       local('CenturyGothic-Italic'),
-       url('/fonts/gothic-italic.ttf') format('truetype');
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Italic'),
+       local('JosefinSans-Italic'),
+       url('/fonts/JosefinSans-Italic.ttf') format('truetype');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Century Gothic';
-  src: local('Century Gothic Bold Italic'),
-       local('CenturyGothic-BoldItalic'),
-       url('/fonts/gothic-bold-italic.ttf') format('truetype');
+  font-family: 'Josefin Sans';
+  src: local('Josefin Sans Bold Italic'),
+       local('JosefinSans-BoldItalic'),
+       url('/fonts/JosefinSans-BoldItalic.ttf') format('truetype');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -87,8 +118,8 @@
   --section-padding: 80px;
 
   /* Typography */
-  --font-heading: 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
-  --font-body: 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+  --font-heading: 'Josefin Sans', sans-serif;
+  --font-body: 'Josefin Sans', sans-serif;
 }
 
 /* ═══════════════════════════════════════════
@@ -109,7 +140,7 @@ html {
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font-body), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+  font-family: var(--font-body), 'Josefin Sans', sans-serif;
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -149,7 +180,7 @@ body {
   }
 
   .heading-xl {
-    font-family: var(--font-heading), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+    font-family: var(--font-heading), 'Josefin Sans', sans-serif;
     font-size: clamp(2.25rem, 5.5vw, 4.5rem);
     font-weight: 700;
     text-transform: uppercase;
@@ -158,7 +189,7 @@ body {
   }
 
   .heading-lg {
-    font-family: var(--font-heading), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+    font-family: var(--font-heading), 'Josefin Sans', sans-serif;
     font-size: clamp(1.5rem, 3.2vw, 2.75rem);
     font-weight: 700;
     text-transform: uppercase;
@@ -167,7 +198,7 @@ body {
   }
 
   .heading-md {
-    font-family: var(--font-heading), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+    font-family: var(--font-heading), 'Josefin Sans', sans-serif;
     font-size: clamp(1.125rem, 2.2vw, 1.875rem);
     font-weight: 600;
     text-transform: uppercase;
@@ -176,7 +207,7 @@ body {
   }
 
   .heading-sm {
-    font-family: var(--font-heading), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+    font-family: var(--font-heading), 'Josefin Sans', sans-serif;
     font-size: clamp(0.875rem, 1.5vw, 1.125rem);
     font-weight: 600;
     text-transform: uppercase;
@@ -254,7 +285,7 @@ body {
     gap: 0.5rem;
     background-color: var(--accent-red);
     color: #ffffff;
-    font-family: var(--font-heading), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+    font-family: var(--font-heading), 'Josefin Sans', sans-serif;
     font-weight: 700;
     font-size: 0.875rem;
     letter-spacing: 0.1em;
@@ -283,7 +314,7 @@ body {
     gap: 0.5rem;
     background-color: transparent;
     color: var(--text-primary);
-    font-family: var(--font-heading), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+    font-family: var(--font-heading), 'Josefin Sans', sans-serif;
     font-weight: 600;
     font-size: 0.8125rem;
     letter-spacing: 0.12em;
@@ -365,7 +396,7 @@ body {
      NAVBAR LINKS & BADGES
      ═══════════════════════════════════════════ */
   .nav-link {
-    font-family: var(--font-heading), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+    font-family: var(--font-heading), 'Josefin Sans', sans-serif;
     font-size: 0.875rem;
     font-weight: 600;
     letter-spacing: 0.15em;
@@ -414,7 +445,7 @@ body {
     backdrop-filter: blur(8px);
     padding: 0.4rem 0.85rem;
     border-radius: 2px;
-    font-family: var(--font-heading), 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+    font-family: var(--font-heading), 'Josefin Sans', sans-serif;
     font-size: 0.8125rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -468,5 +499,11 @@ body {
   );
   background-size: 200% 100%;
   animation: shimmerWave 1.8s ease-in-out infinite;
+}
+
+/* Accessibility: Global visible focus indicator for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--accent-red, #E51D24);
+  outline-offset: 2px;
 }
 

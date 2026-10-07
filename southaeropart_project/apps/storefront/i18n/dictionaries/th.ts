@@ -46,6 +46,14 @@ export const th = {
     remove: "ลบ",
     each: "ชิ้นละ",
     continueShopping: "เลือกสินค้าต่อ",
+    secureCheckout: "ชำระเงินปลอดภัย",
+    secureCheckoutDesc: "การชำระเงินปลอดภัย 100%",
+    premiumQuality: "คุณภาพระดับพรีเมียม",
+    premiumQualityDesc: "เพื่อสมรรถนะและความสวยงาม",
+    easyReturns: "เปลี่ยน/คืนง่าย",
+    easyReturnsDesc: "นโยบายรับประกันความพึงพอใจ 30 วัน",
+    dedicatedSupport: "บริการช่วยเหลือเฉพาะทาง",
+    dedicatedSupportDesc: "ทีมงานพร้อมให้คำแนะนำเสมอ",
   },
   product: {
     addToCart: "เพิ่มลงตะกร้า",
@@ -86,6 +94,10 @@ export const th = {
     rightsReserved: "สงวนลิขสิทธิ์ทั้งหมด",
     privacyPolicy: "นโยบายความเป็นส่วนตัว",
     termsOfService: "ข้อกำหนดและเงื่อนไข",
+    paymentMethods: "วิธีการชำระเงิน",
+    securePayment: "ระบบชำระเงินปลอดภัย",
+    securePaymentDesc: "การชำระเงินของคุณได้รับการเข้ารหัสและปลอดภัย 100%",
+    designedInThailand: "ออกแบบและพัฒนาในประเทศไทย",
   },
   home: {
     // InfoSections
@@ -493,6 +505,18 @@ export const th = {
     verifiedQrNotice: "สแกน QR เพื่อตรวจสอบความถูกต้องของเอกสาร (VERIFIED DIGITAL INVOICE)",
     customsDeclaration: "พิกัดศุลกากร 8708.29.90 — ชิ้นส่วนแอโรไดนามิกคาร์บอนไฟเบอร์สำหรับยานยนต์สมรรถนะสูง",
     stripeRef: "รหัสอ้างอิงธุรกรรม (Transaction ID):",
+  },
+  errors: {
+    pageNotFoundBadge: "ERROR 404",
+    pageNotFoundTitle: "ไม่พบหน้าที่ต้องการ",
+    pageNotFoundDesc: "ไม่พบหน้าที่คุณต้องการ หน้าดังกล่าวอาจถูกย้าย ลบ หรือ URL ไม่ถูกต้อง",
+    backToHome: "กลับสู่หน้าหลัก",
+    browseProducts: "เลือกดูสินค้า",
+    systemErrorBadge: "ข้อผิดพลาดระบบ",
+    systemErrorTitle: "เกิดข้อผิดพลาดขึ้น",
+    systemErrorDesc: "เกิดข้อผิดพลาดขึ้นในระบบขณะโหลดหน้านี้ กรุณากดลองใหม่อีกครั้ง หรือกลับสู่หน้าหลัก",
+    errorCode: "รหัสข้อผิดพลาด:",
+    tryAgain: "ลองใหม่อีกครั้ง",
   },
 };
 

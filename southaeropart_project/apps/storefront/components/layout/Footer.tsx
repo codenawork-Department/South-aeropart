@@ -4,11 +4,13 @@ import Link from "next/link";
 import { Facebook, Instagram, Youtube, Music2, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
+// Social profile links for South Aero Performance
+// TODO: Replace handle placeholders with verified official profile URLs once finalized
 const SOCIAL_LINKS = [
-  { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-  { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
-  { icon: Youtube, href: "https://youtube.com", label: "YouTube" },
-  { icon: Music2, href: "https://tiktok.com", label: "TikTok" },
+  { icon: Facebook, href: "https://facebook.com/southaeroperformance", label: "Facebook" },
+  { icon: Instagram, href: "https://instagram.com/southaeroperformance", label: "Instagram" },
+  { icon: Youtube, href: "https://youtube.com/@southaeroperformance", label: "YouTube" },
+  { icon: Music2, href: "https://tiktok.com/@southaeroperformance", label: "TikTok" },
 ];
 
 export function Footer() {
@@ -109,21 +111,25 @@ export function Footer() {
           {/* Payment Methods Column */}
           <div>
             <h3 className="font-heading text-xs font-bold tracking-[0.15em] uppercase text-white mb-4">
-              PAYMENT METHODS
+              {t.footer.paymentMethods}
             </h3>
-            <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               {/* Visa Badge */}
-              <div className="h-7 px-2.5 bg-white rounded flex items-center justify-center shadow-sm">
+              <div className="h-7 px-2.5 bg-white rounded flex items-center justify-center shadow-sm" title="Visa">
                 <span className="text-[#1A1F71] font-black text-xs italic tracking-wider">VISA</span>
               </div>
               {/* Mastercard Badge */}
-              <div className="h-7 px-2.5 bg-white rounded flex items-center justify-center gap-0.5 shadow-sm">
+              <div className="h-7 px-2.5 bg-white rounded flex items-center justify-center gap-0.5 shadow-sm" title="Mastercard">
                 <div className="w-3.5 h-3.5 rounded-full bg-[#EB001B]" />
                 <div className="w-3.5 h-3.5 rounded-full bg-[#F79E1B] -ml-1.5" />
               </div>
-              {/* PayPal Badge */}
-              <div className="h-7 px-2.5 bg-white rounded flex items-center justify-center shadow-sm">
-                <span className="text-[#003087] font-bold text-xs">Pay<span className="text-[#009CDE]">Pal</span></span>
+              {/* PromptPay Badge */}
+              <div className="h-7 px-2.5 bg-[#003D6D] text-white rounded flex items-center justify-center shadow-sm font-bold text-[0.68rem] tracking-tight" title="PromptPay QR">
+                PromptPay
+              </div>
+              {/* Stripe Payment Badge */}
+              <div className="h-7 px-2.5 bg-[#635BFF] text-white rounded flex items-center justify-center shadow-sm font-bold text-[0.7rem] tracking-wide" title="Stripe Secure Payments">
+                stripe
               </div>
             </div>
             
@@ -131,10 +137,10 @@ export function Footer() {
               <ShieldCheck size={16} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[0.7rem] font-heading font-bold text-white uppercase tracking-wider">
-                  SECURE PAYMENT
+                  {t.footer.securePayment}
                 </p>
                 <p className="text-[0.65rem] text-[var(--text-muted)]">
-                  Your payment is 100% encrypted &amp; secure.
+                  {t.footer.securePaymentDesc}
                 </p>
               </div>
             </div>
@@ -149,7 +155,7 @@ export function Footer() {
             &copy; {new Date().getFullYear()} South Aero Performance. All rights reserved.
           </p>
           <p className="text-[0.65rem] text-[var(--text-muted)] font-heading tracking-widest uppercase">
-            DESIGNED &amp; ENGINEERED IN THAILAND
+            {t.footer.designedInThailand}
           </p>
         </div>
       </div>

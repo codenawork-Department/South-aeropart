@@ -971,7 +971,10 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
       .limit(1);
 
     if (!row) {
-      return MOCK_PRODUCTS.find((p) => p.slug === slug) || null;
+      if (process.env.NODE_ENV !== "production") {
+        return MOCK_PRODUCTS.find((p) => p.slug === slug) || null;
+      }
+      return null;
     }
 
     // Fetch images and compatibility
@@ -1122,6 +1125,9 @@ export async function getProductBySlug(slug: string): Promise<MockProduct | null
     };
   } catch (error) {
     console.error("[getProductBySlug] Error fetching product:", error);
-    return MOCK_PRODUCTS.find((p) => p.slug === slug) || null;
+    if (process.env.NODE_ENV !== "production") {
+      return MOCK_PRODUCTS.find((p) => p.slug === slug) || null;
+    }
+    return null;
   }
 }

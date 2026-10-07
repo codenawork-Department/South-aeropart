@@ -16,7 +16,27 @@ const envSchema = z.object({
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
 }).superRefine((data, ctx) => {
-  if (data.NODE_ENV === "production" && !["staging", "production"].includes(data.APP_ENV || "")) ctx.addIssue({code:z.ZodIssueCode.custom,path:["APP_ENV"],message:"Explicit deployment environment is required"});
+  if (data.NODE_ENV === "production") {
+    if (!["staging", "production"].includes(data.APP_ENV || "")) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["APP_ENV"], message: "Explicit deployment environment is required" });
+    }
+    if (data.APP_ENV === "production") {
+      if (!data.DATABASE_URL.includes("sslmode=require")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["DATABASE_URL"],
+          message: "DATABASE_URL must enforce sslmode=require in production",
+        });
+      }
+      if (!data.NEXT_PUBLIC_ADMIN_URL.startsWith("https://")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["NEXT_PUBLIC_ADMIN_URL"],
+          message: "HTTPS admin URL is required in production",
+        });
+      }
+    }
+  }
 });
 
 const result = envSchema.safeParse(process.env);

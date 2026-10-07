@@ -197,10 +197,10 @@ export function CartSidebar() {
             {/* 4 Trust Badges */}
             <div className="pt-3 sm:pt-4 border-t border-[#222222] grid grid-cols-2 gap-2 sm:gap-3">
               {[
-                { icon: Lock, title: "SECURE CHECKOUT", desc: "Your payment is 100% secure." },
-                { icon: Award, title: "PREMIUM QUALITY", desc: "Built for performance and style." },
-                { icon: RotateCcw, title: "EASY RETURNS", desc: "Hassle-free 30-day policy." },
-                { icon: Headphones, title: "DEDICATED SUPPORT", desc: "We're here to help you." },
+                { icon: Lock, title: t.cart.secureCheckout, desc: t.cart.secureCheckoutDesc },
+                { icon: Award, title: t.cart.premiumQuality, desc: t.cart.premiumQualityDesc },
+                { icon: RotateCcw, title: t.cart.easyReturns, desc: t.cart.easyReturnsDesc },
+                { icon: Headphones, title: t.cart.dedicatedSupport, desc: t.cart.dedicatedSupportDesc },
               ].map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="flex items-start gap-2 sm:gap-2.5">
                   <Icon size={13} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
