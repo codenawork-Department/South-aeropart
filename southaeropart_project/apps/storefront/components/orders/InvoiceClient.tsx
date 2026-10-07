@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "@/components/ui/image";
 import QRCode from "qrcode";
 import {
   Printer,
@@ -434,11 +435,12 @@ export function InvoiceClient({ order, items, guestToken }: InvoiceClientProps) 
             <div className="flex items-center gap-4 pt-1">
               {qrCodeUrl && (
                 <div className="border border-neutral-300 rounded p-1 bg-white flex-shrink-0">
-                  <img
+                  <Image
                     src={qrCodeUrl}
                     alt="Digital Order Verification QR"
                     width={80}
                     height={80}
+                    unoptimized
                     className="block"
                   />
                 </div>

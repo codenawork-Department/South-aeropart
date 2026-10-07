@@ -251,11 +251,12 @@ export function Navbar() {
                       aria-expanded={userMenuOpen}
                     >
                       {user?.imageUrl ? (
-                        <img
+                        <Image
                           src={user.imageUrl}
                           alt={user.fullName ?? "User avatar"}
                           width={28}
                           height={28}
+                          unoptimized
                           className="w-7 h-7 rounded-full object-cover border border-[var(--border-color)]"
                         />
                       ) : (

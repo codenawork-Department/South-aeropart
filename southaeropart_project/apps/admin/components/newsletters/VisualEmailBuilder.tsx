@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import NextImage from "next/image";
 import {
   Type,
   Image as ImageIcon,
@@ -1083,9 +1084,12 @@ export function VisualEmailBuilder({
 
                   {block.type === "image" && (
                     <div className="flex justify-center">
-                      <img
+                      <NextImage
                         src={p.imageUrl || "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80"}
                         alt={p.imageAlt || "South Aero Image"}
+                        width={800}
+                        height={380}
+                        unoptimized
                         className="w-full max-h-[380px] object-cover rounded border border-[#2B2B2B]"
                       />
                     </div>
@@ -1096,9 +1100,12 @@ export function VisualEmailBuilder({
                       className="rounded border border-[#2D2D2D] p-4 flex flex-col sm:flex-row items-center sm:items-start gap-4"
                       style={{ backgroundColor: p.backgroundColor || "#171717" }}
                     >
-                      <img
+                      <NextImage
                         src={p.productImageUrl || "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80"}
                         alt={p.productTitle || "Product"}
+                        width={176}
+                        height={128}
+                        unoptimized
                         className="w-full sm:w-44 h-32 object-cover rounded border border-[#333333] shrink-0"
                       />
                       <div className="flex-1 min-w-0">
