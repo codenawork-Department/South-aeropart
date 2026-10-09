@@ -113,7 +113,22 @@ export const paymentReconciliationJobs = pgTable("payment_reconciliation_jobs", 
   reason: text("reason").notNull(),
   state: text("state").notNull().default("pending_review"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  resolvedBy: uuid("resolved_by").references(() => adminUsers.id),
+  resolutionNote: text("resolution_note"),
+  stripeRefundId: text("stripe_refund_id"),
+  alertedAt: timestamp("alerted_at", { withTimezone: true }),
+}, (table) => ({
+  stateCreatedIdx: index("payment_reconciliation_jobs_state_created_idx").on(table.state, table.createdAt),
+  stateCheck: check(
+    "payment_reconciliation_jobs_state_check",
+    sql`state IN ('pending_review', 'refunded', 'fulfilled_manually', 'dismissed')`
+  ),
+  resolutionNoteCheck: check(
+    "payment_reconciliation_jobs_resolution_note_length",
+    sql`resolution_note IS NULL OR length(resolution_note) <= 2000`
+  ),
+}));
 
 /**
  * Order Item Bundle Parts: Snapshots of individual aero parts sold as part of a bundle.

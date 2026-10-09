@@ -34,7 +34,7 @@ export const shippingQuotes = pgTable("shipping_quotes", {
   parcels: jsonb("parcels").$type<QuoteParcel[]>().notNull().default([]),
   offerExpiresAt: timestamp("offer_expires_at", { withTimezone: true }),
   accessExpiresAt: timestamp("access_expires_at", { withTimezone: true }).notNull(),
-  orderId: uuid("order_id").references(() => orders.id),
+  orderId: uuid("order_id").references(() => orders.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, t => ({
@@ -42,6 +42,9 @@ export const shippingQuotes = pgTable("shipping_quotes", {
   statusIdx: index("shipping_quotes_status_idx").on(t.status, t.createdAt), requestUnique: uniqueIndex("shipping_quotes_request_unique").on(t.requestKey),
   orderUnique: uniqueIndex("shipping_quotes_order_unique").on(t.orderId),
   owner: check("shipping_quotes_owner", sql`(${t.userId} IS NOT NULL) <> (${t.guestHash} IS NOT NULL)`),
+  guestHashFormat: check("shipping_quotes_guest_hash_format", sql`${t.guestHash} IS NULL OR ${t.guestHash} ~ '^[a-f0-9]{64}$'`),
+  requestKeyFormat: check("shipping_quotes_request_key_format", sql`${t.requestKey} ~ '^[a-f0-9]{64}$'`),
+  fingerprintFormat: check("shipping_quotes_fingerprint_format", sql`${t.basketFingerprint} ~ '^[a-f0-9]{64}$'`),
   state: check("shipping_quotes_state", sql`${t.status} IN ('requested','offered','converted','declined','cancelled')`),
   offered: check("shipping_quotes_offer_complete", sql`${t.status} NOT IN ('offered','converted') OR (${t.fee} IS NOT NULL AND ${t.carrier} IS NOT NULL AND ${t.terms} IS NOT NULL AND ${t.offerExpiresAt} IS NOT NULL)`),
   converted: check("shipping_quotes_converted", sql`(${t.status} = 'converted') = (${t.orderId} IS NOT NULL)`),

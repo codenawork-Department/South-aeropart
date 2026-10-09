@@ -46,17 +46,18 @@
 
 - [x] **นำ Neon Credential literals ออกจาก Git:** โค้ดทั้งหมดอ่านค่าผ่าน `process.env.DATABASE_URL`
 - [x] **Rotate / Revoke รหัสผ่าน Neon Database เดิม:** เปลี่ยนรหัสผ่านใหม่บน Neon Console เรียบร้อย
-- [ ] **[CRITICAL] จัดทำ Snapshot / Backup ฐานข้อมูล Production:**
-  - สร้าง Full Snapshot ก่อนเริ่มการ deploy ใด ๆ บน Neon Console
-- [ ] **[CRITICAL] ดำเนินการทดสอบ Restore Drill:**
-  - ทดสอบกู้คืนข้อมูล Snapshot ไปยัง Database Branch ใหม่ เพื่อยืนยันว่าข้อมูลสามารถกู้คืนได้จริง
+- [x] **[CRITICAL] จัดทำ Snapshot / Backup ฐานข้อมูล Production:** (สร้าง Snapshot Point-in-time สำเร็จ)
+  - [x] สร้าง Full Snapshot / Point-in-Time Branch บน Neon Console
+- [x] **[CRITICAL] ดำเนินการทดสอบ Restore Drill:** (ซ้อมกู้คืนข้อมูลสำเร็จ 100%)
+  - [x] ทดสอบกู้คืนข้อมูลไปยัง Database Branch ใหม่ และรันคำสั่ง `pnpm db:drill-verify` ตรวจสอบความสมบูรณ์ของ 16 ตารางสำคัญ (Row Count Match 100%, RTO < 2 นาที ดูรายงานหลักฐานใน [restore_drill_report.md](file:///c:/Users/sirac/Downloads/southaeropart_project/southaeropart_project/audit/restore_drill_report.md))
 - [x] **[CRITICAL] ดำเนินการรัน Migration ที่ค้างอยู่บน Production Database:** (รันผ่าน `pnpm db:migrate` เรียบร้อยแล้ว)
   - [x] `0004_payment_webhook_evidence.sql` — บันทึก Ledger ป้องกัน Webhook Duplicate Fulfillment
   - [x] `0005_customer_order_note.sql` — เพิ่มฟิลด์ Order Note พร้อม byte-length constraint (2,048 UTF-8 bytes)
   - [x] `0006_shipping_quotes.sql` — สร้างตาราง `shipping_settings`, `product_shipping_policies`, `shipping_quotes` และคอลัมน์ `orders.shipping_details`
-- [ ] **[SECURITY] ตรวจสอบการตั้งค่าความปลอดภัยของ Connection String:**
+  - [x] `0007_reconciliation_resolution.sql` — เพิ่มฟิลด์การแก้ไขปัญหาใน `payment_reconciliation_jobs` (`resolved_at`, `resolved_by`, `resolution_note`, `stripe_refund_id`, `alerted_at`) พร้อม check constraints และ index
+- [x] **[SECURITY] ตรวจสอบการตั้งค่าความปลอดภัยของ Connection String:**
   - [x] บังคับใช้ `sslmode=require` ใน Connection String เสมอ (เพิ่ม Zod fail-closed validation ใน `lib/env.ts` ของ Storefront และ Admin เรียบร้อย)
-  - [ ] แยกบัญชี Database User สำหรับ Storefront และ Admin ให้มีสิทธิ์เท่าที่จำเป็น (Least Privilege)
+  - [x] แยกบัญชี Database User สำหรับ Storefront และ Admin ให้มีสิทธิ์เท่าที่จำเป็น (Least Privilege) (สร้างและกำหนดสิทธิ์ Role `southaero_storefront` และ `southaero_admin` บน Neon สำเร็จ พร้อมตรวจสอบผ่าน `pnpm db:roles-audit` ยืนยัน Zero Access บนตารางแอดมิน 100% และบล็อกการแก้ราคา/ชื่อสินค้า ดูรายงานหลักฐานใน [least_privilege_roles_report.md](file:///c:/Users/sirac/Downloads/southaeropart_project/southaeropart_project/audit/least_privilege_roles_report.md))
 
 ---
 
@@ -132,8 +133,12 @@
     - เคลียร์การจองสต็อกที่หมดอายุ (Expired Stock Reservations เกิน 15 นาที) คืนสินค้ากลับสู่คลัง
     - ยกเลิกออเดอร์ที่ค้างชำระนานเกินกำหนด
     - ดึงรายการอีเมลในคิวที่ส่งไม่ผ่านขึ้นมา Retry
-- [ ] **[HIGH] ตั้งระบบแจ้งเตือนตาราง `payment_reconciliation_jobs`:**
-  - ตั้ง Webhook Alert หรือการแจ้งเตือนแอดมินเมื่อพบ Record ในตารางนี้ (เกิดเมื่อลูกค้าตัดเงินสำเร็จ แต่สต็อกมีปัญหาหรือระบบ Fulfill ขัดข้อง) เพื่อให้เจ้าหน้าที่ตรวจสอบและจัดการคืนเงินหรือติดต่อลูกค้าได้ทันที
+- [x] **[HIGH] ตั้งระบบแจ้งเตือนตาราง `payment_reconciliation_jobs` และหน้าจัดการใน Admin:** (เสร็จสมบูรณ์ 100%)
+  - [x] ออกแบบและรัน Migration `0007_reconciliation_resolution.sql` รองรับ State Machine: `pending_review` ➔ `refunded` | `fulfilled_manually` | `dismissed`
+  - [x] สร้าง Server Actions (`apps/admin/actions/reconciliation.actions.ts`) จำกัดสิทธิ์เฉพาะ Admin/SuperAdmin, บังคับยืนยันรหัสผ่านแอดมินก่อน Refund ผ่าน Stripe API ด้วย Idempotency Key, คืนสต็อกสินค้า (INV-02 Guard) และบันทึก Audit Log ใน Transaction
+  - [x] สร้าง Dashboard UI (`/orders/reconciliation`) พร้อมตัวกรองสถานะ, ค้นหา, Modal ดำเนินการ และ Badge แจ้งเตือนแบบ Realtime ใน Sidebar
+  - [x] เชื่อมต่อระบบแจ้งเตือนอีเมลใน `/api/maintenance/orders` ส่งหา `ADMIN_ALERT_EMAIL` ทันทีที่ตรวจพบเคสใหม่ (Dedup ผ่านฟิลด์ `alerted_at`)
+  - [x] เขียน Unit Tests ครอบคลุม RBAC, Password Re-auth, Idempotent Refund และ Audit Event (`reconciliation.actions.test.ts` 11/11 tests ผ่าน)
 
 ---
 

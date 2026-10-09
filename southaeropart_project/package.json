@@ -10,7 +10,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "db:generate": "pnpm --filter @repo/db generate",
-    "db:migrate": "pnpm --filter @repo/db migrate",
+    "db:migrate": "pnpm --filter storefront exec tsx ../../scripts/migrate.ts",
     "db:push": "pnpm --filter @repo/db push",
     "db:studio": "pnpm --filter @repo/db studio",
     "tunnel:storefront": "cloudflared tunnel --url http://localhost:3000",
@@ -22,7 +22,9 @@
     "test:security": "pnpm --filter e2e test:security",
     "test:security:corpus": "pnpm --filter @repo/security-harness test",
     "validate:corpus": "pnpm --filter @repo/security-harness validate",
-    "generate:manifest": "pnpm --filter @repo/security-harness manifest"
+    "env:check": "pnpm --filter storefront exec tsx ../../scripts/env-preflight.ts",
+    "db:drill-verify": "pnpm --filter storefront exec tsx ../../scripts/restore-drill-verify.ts",
+    "db:roles-audit": "pnpm --filter storefront exec tsx ../../scripts/verify-least-privilege-roles.ts"
   },
   "devDependencies": {
     "ajv": "^8.20.0",

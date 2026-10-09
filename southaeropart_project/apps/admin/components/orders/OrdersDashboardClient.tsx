@@ -21,8 +21,10 @@ import {
   Eye,
   MapPin,
   User,
+  ShieldAlert,
 } from "lucide-react";
 import { RealtimeSyncWidget } from "@/components/ui/realtime-sync-widget";
+import { useRealtimeSync } from "@/components/providers/realtime-provider";
 
 interface OrderItemPreview {
   id: string;
@@ -104,6 +106,7 @@ export function OrdersDashboardClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { pendingReconciliationCount } = useRealtimeSync();
 
   const [search, setSearch] = useState(currentSearch);
   const [status, setStatus] = useState(currentStatus);
@@ -174,6 +177,31 @@ export function OrdersDashboardClient({
           <RealtimeSyncWidget />
         </div>
       </div>
+
+      {/* Reconciliation Queue Alert Banner */}
+      {pendingReconciliationCount > 0 && (
+        <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-200 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-rose-900/50 rounded-lg text-rose-400 shrink-0">
+              <ShieldAlert size={20} />
+            </div>
+            <div>
+              <div className="font-semibold text-sm text-white">
+                มี {pendingReconciliationCount} รายการใน Payment Reconciliation Queue ที่ต้องตรวจสอบ
+              </div>
+              <div className="text-xs text-rose-300/80">
+                พบการชำระเงินไม่สมบูรณ์ หรือเงินเข้าหลังหมดเวลาจองสต็อก ต้องการการตัดสินใจจากแอดมิน
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/orders/reconciliation"
+            className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold shrink-0 transition-colors shadow-sm inline-flex items-center gap-1.5"
+          >
+            ไปที่ Reconciliation Queue →
+          </Link>
+        </div>
+      )}
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

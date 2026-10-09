@@ -22,7 +22,8 @@
     "./money-arithmetic": "./src/money-arithmetic.ts",
     "./moderation": "./src/moderation/text-moderation.ts",
     "./carrier": "./src/carrier.ts",
-    "./image-validation": "./src/image-validation.ts"
+    "./image-validation": "./src/image-validation.ts",
+    "./env-schemas": "./src/env-schemas.ts"
   },
   "dependencies": {
     "cloudinary": "^2.11.0",

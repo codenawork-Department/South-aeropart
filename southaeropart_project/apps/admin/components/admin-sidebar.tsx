@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Mail,
+  ShieldAlert,
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
 import { RealtimeSyncWidget } from "@/components/ui/realtime-sync-widget";
@@ -40,7 +41,7 @@ export function AdminSidebar({
   const pathname = usePathname();
   const { pendingPathname } = useNavigation();
   const activePath = pendingPathname || pathname;
-  const { pendingQuotesCount } = useRealtimeSync();
+  const { pendingQuotesCount, pendingReconciliationCount } = useRealtimeSync();
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -109,6 +110,18 @@ export function AdminSidebar({
       icon: ShoppingCart,
       badge: null,
     },
+    ...(adminRole === "admin" || adminRole === "super_admin"
+      ? [
+          {
+            label: "Reconciliation",
+            sublabel: "ตรวจสอบการชำระเงิน",
+            href: "/orders/reconciliation",
+            icon: ShieldAlert,
+            badge: pendingReconciliationCount > 0 ? String(pendingReconciliationCount) : null,
+            badgeColor: "bg-rose-500/25 text-rose-300 border border-rose-500/40",
+          },
+        ]
+      : []),
     {
       label: "Reviews",
       href: "/reviews",

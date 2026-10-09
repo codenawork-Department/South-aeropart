@@ -4,6 +4,7 @@ import {
   db,
   orders,
   shippingQuotes,
+  paymentReconciliationJobs,
   sql,
   desc,
   eq,
@@ -36,6 +37,7 @@ export interface RealtimeHeartbeatData {
   latestQuoteTime: string | null;
   latestQuoteUpdated: string | null;
   recentPendingQuotes: RealtimeQuoteItem[];
+  pendingReconciliationCount: number;
   serverTimestamp: number;
 }
 
@@ -54,7 +56,7 @@ export async function getAdminRealtimeHeartbeatAction(): Promise<RealtimeHeartbe
       return { success: false, error: "Unauthorized" };
     }
 
-    const [orderStats, quoteStats] = await Promise.all([
+    const [orderStats, quoteStats, reconciliationStats] = await Promise.all([
       db
         .select({
           totalOrders: sql<number>`COALESCE(count(*), 0)::int`,
@@ -70,6 +72,12 @@ export async function getAdminRealtimeHeartbeatAction(): Promise<RealtimeHeartbe
           latestQuoteUpdated: sql<string | null>`max(${shippingQuotes.updatedAt})::text`,
         })
         .from(shippingQuotes)
+        .then((rows) => rows[0]),
+      db
+        .select({
+          pendingReconciliationCount: sql<number>`COALESCE(count(*) FILTER (WHERE ${paymentReconciliationJobs.state} = 'pending_review'), 0)::int`,
+        })
+        .from(paymentReconciliationJobs)
         .then((rows) => rows[0]),
     ]);
 
@@ -133,6 +141,7 @@ export async function getAdminRealtimeHeartbeatAction(): Promise<RealtimeHeartbe
         latestQuoteTime: quoteStats?.latestQuoteTime ?? null,
         latestQuoteUpdated: quoteStats?.latestQuoteUpdated ?? null,
         recentPendingQuotes,
+        pendingReconciliationCount: reconciliationStats?.pendingReconciliationCount ?? 0,
         serverTimestamp: Date.now(),
       },
     };

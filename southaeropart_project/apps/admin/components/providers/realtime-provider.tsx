@@ -44,6 +44,7 @@ interface RealtimeContextValue {
   dismissAllAlerts: () => void;
   totalOrders: number;
   pendingQuotesCount: number;
+  pendingReconciliationCount: number;
   newQuoteAlerts: NewQuoteAlert[];
   latestNewQuote: NewQuoteAlert | null;
   dismissQuoteAlert: (quoteId?: string) => void;
@@ -104,6 +105,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const [newOrderAlerts, setNewOrderAlerts] = useState<NewOrderAlert[]>([]);
   const [totalOrders, setTotalOrders] = useState<number>(0);
   const [pendingQuotesCount, setPendingQuotesCount] = useState<number>(0);
+  const [pendingReconciliationCount, setPendingReconciliationCount] = useState<number>(0);
   const [newQuoteAlerts, setNewQuoteAlerts] = useState<NewQuoteAlert[]>([]);
 
   // Tracking state refs to detect deltas without component re-binding
@@ -195,6 +197,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
         setTotalOrders(currentOrders);
         setPendingQuotesCount(currentPendingQuotes);
+        if (typeof res.data.pendingReconciliationCount === "number") {
+          setPendingReconciliationCount(res.data.pendingReconciliationCount);
+        }
 
         let shouldPlayChime = false;
         let shouldRefresh = false;
@@ -369,6 +374,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         dismissAllAlerts,
         totalOrders,
         pendingQuotesCount,
+        pendingReconciliationCount,
         newQuoteAlerts,
         latestNewQuote: newQuoteAlerts[0] || null,
         dismissQuoteAlert,
