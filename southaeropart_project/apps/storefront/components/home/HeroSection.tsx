@@ -56,7 +56,7 @@ export function HeroSection({ initialCards }: HeroSectionProps) {
         </div>
 
         {/* Hero Vehicle Showcase Lineup */}
-        <div className="relative max-w-5xl mx-auto">
+        <div className="relative max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto">
           {/* Main Hero Centerpiece: Interactive 3D Vehicle Showcase */}
           <CarModelViewer />
 

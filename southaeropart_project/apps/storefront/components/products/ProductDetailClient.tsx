@@ -58,6 +58,10 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [addedAnimation, setAddedAnimation] = useState(false);
 
+  // Touch Swipe Gesture State for Mobile Gallery
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+
   // Sync initial wishlist status when user is signed in
   useEffect(() => {
     if (isSignedIn && product?.id) {
@@ -97,6 +101,27 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
   const prevImage = () =>
     setCurrentImage((prev) => (prev - 1 + totalImages) % totalImages);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    const deltaY = e.changedTouches[0].clientY - touchStartY;
+    // Horizontal swipe threshold
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 35) {
+      if (deltaX < 0) {
+        nextImage();
+      } else {
+        prevImage();
+      }
+    }
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
   const compatibility = product.compatibility?.[0];
   const FEATURE_ICONS = [Wind, Shield, Zap, Layers];
 
@@ -110,7 +135,7 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
   };
 
   return (
-    <div className="bg-[#0A0A0A] min-h-screen">
+    <div className="bg-[#0A0A0A] min-h-screen pb-24 md:pb-0">
       {/* 1. Breadcrumb Navigation */}
       <nav
         className="container-main py-3.5 border-b border-[#1E1E1E]"
@@ -155,25 +180,29 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
           {/* Left Column: Interactive Image Gallery */}
           <div className="md:col-span-6 lg:col-span-7">
-            {/* Main Stage Image */}
-            <div className="relative aspect-[4/3] bg-[#121212] rounded-sm overflow-hidden border border-[#242424] shadow-2xl group">
+            {/* Main Stage Image with Touch Swipe Support */}
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="relative aspect-[4/3] bg-[#121212] rounded-sm overflow-hidden border border-[#242424] shadow-2xl group select-none touch-pan-y"
+            >
               <Image
                 src={product.images[currentImage] || "/images/FRONT.png"}
                 alt={`${product.name} - View ${currentImage + 1}`}
                 fill
                 priority
-                className="object-cover transition-all duration-500 ease-out"
+                className="object-cover transition-all duration-500 ease-out pointer-events-none"
                 sizes="(max-width: 1024px) 100vw, 700px"
               />
 
-              {/* Fullscreen Modal Toggle Button */}
+              {/* Fullscreen Modal Toggle Button (44x44px Touch Target) */}
               <button
                 onClick={() => setLightboxOpen(true)}
-                className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center bg-black/60 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm z-10"
+                className="absolute top-3 right-3 min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center bg-black/60 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm z-10"
                 aria-label="View fullscreen image"
                 title="Expand image"
               >
-                <Maximize2 size={16} />
+                <Maximize2 size={18} />
               </button>
 
               {/* Bottom Controls Bar (Counter & Navigation) */}
@@ -186,17 +215,17 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 <div className="flex gap-2 pointer-events-auto">
                   <button
                     onClick={prevImage}
-                    className="w-8 h-8 flex items-center justify-center bg-black/70 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm"
+                    className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center bg-black/70 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm"
                     aria-label="Previous image"
                   >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={18} />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="w-8 h-8 flex items-center justify-center bg-black/70 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm"
+                    className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center bg-black/70 text-white hover:bg-[var(--accent-red)] transition-colors backdrop-blur-sm rounded-sm"
                     aria-label="Next image"
                   >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
               </div>
@@ -293,7 +322,7 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 <select
                   value={selectedFinish}
                   onChange={(e) => setSelectedFinish(e.target.value)}
-                  className="select-dark w-auto min-w-[170px] bg-[#161616] text-xs font-semibold py-2"
+                  className="select-dark w-auto min-w-[170px] bg-[#161616] text-sm sm:text-xs font-semibold py-2.5 min-h-[44px]"
                   id="product-finish"
                 >
                   {(product.finishOptions || [product.finish]).map((opt) => (
@@ -304,7 +333,7 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 </select>
               </div>
 
-              {/* Quantity Stepper */}
+              {/* Quantity Stepper (44x44px Touch Targets) */}
               <div className="flex items-center justify-between py-2.5 border-b border-[#202020]">
                 <span className="font-heading text-xs font-bold tracking-wider uppercase text-[var(--text-secondary)]">
                   QUANTITY
@@ -312,20 +341,20 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 <div className="flex items-center border border-[#2E2E2E] rounded-sm bg-[#141414]">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="w-9 h-9 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors"
+                    className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors"
                     aria-label="Decrease quantity"
                   >
-                    <Minus size={13} />
+                    <Minus size={15} />
                   </button>
-                  <span className="w-10 h-9 flex items-center justify-center text-xs font-heading font-bold text-white border-x border-[#2E2E2E]">
+                  <span className="min-w-[40px] h-11 flex items-center justify-center text-xs font-heading font-bold text-white border-x border-[#2E2E2E] px-2">
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="w-9 h-9 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors"
+                    className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-colors"
                     aria-label="Increase quantity"
                   >
-                    <Plus size={13} />
+                    <Plus size={15} />
                   </button>
                 </div>
               </div>
@@ -606,6 +635,35 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
           </div>
         </div>
       )}
+
+      {/* 10. Sticky Mobile Action Bar (Docked at bottom on mobile screens) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0E0E0E]/95 backdrop-blur-md border-t border-[#222222] px-4 py-2.5 safe-area-bottom-bar md:hidden shadow-2xl flex items-center justify-between gap-3 animate-fade-in">
+        <div className="flex flex-col min-w-0">
+          <span className="text-[0.65rem] text-[var(--text-muted)] font-heading uppercase truncate">
+            {selectedFinish} &bull; x{quantity}
+          </span>
+          <span className="text-base font-heading font-black text-white leading-tight">
+            {formatPrice(Number(product.price || 0) * quantity)}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          className="btn-primary py-3 px-5 text-xs font-heading font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-sm shadow-lg shadow-red-950/40 min-h-[44px] flex-shrink-0 active:scale-95 transition-transform"
+          id="mobile-sticky-add-to-cart"
+        >
+          {addedAnimation ? (
+            <>
+              <Check size={16} /> <span>{lang === "en" ? "ADDED!" : "เพิ่มแล้ว!"}</span>
+            </>
+          ) : (
+            <>
+              <ShoppingCart size={16} /> <span>{t.product.addToCart}</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

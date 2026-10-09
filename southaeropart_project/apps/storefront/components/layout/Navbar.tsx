@@ -175,7 +175,7 @@ export function Navbar() {
             <button
               id="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2 text-white hover:text-[var(--accent-red)] transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-white hover:text-[var(--accent-red)] transition-colors rounded"
               aria-label="Open menu"
             >
               <Menu size={24} />
@@ -216,7 +216,7 @@ export function Navbar() {
           </nav>
 
           {/* Right: Search, User, Cart */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             {/* Desktop Language & Currency Switchers */}
             <div className="hidden sm:flex items-center gap-1.5">
               <CurrencySwitcher variant="navbar" />
@@ -227,7 +227,7 @@ export function Navbar() {
             <button
               id="search-toggle"
               onClick={() => setSearchOpen(!searchOpen)}
-              className={`p-2 transition-colors rounded ${
+              className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 transition-colors rounded ${
                 searchOpen
                   ? "text-[var(--accent-red)] bg-white/5"
                   : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
@@ -238,15 +238,15 @@ export function Navbar() {
               {searchOpen ? <X size={20} /> : <Search size={20} />}
             </button>
 
-            {/* User Account / Sign In */}
+            {/* User Account / Sign In - Available on both Mobile & Desktop */}
             {isLoaded && (
               <>
                 {isSignedIn ? (
-                  <div className="relative hidden sm:block" ref={userMenuRef}>
+                  <div className="relative" ref={userMenuRef}>
                     <button
                       id="user-menu-toggle"
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="flex items-center gap-1.5 p-1 rounded hover:bg-white/5 transition-colors"
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center gap-1 p-1 rounded hover:bg-white/5 transition-colors"
                       aria-label="User menu"
                       aria-expanded={userMenuOpen}
                     >
@@ -266,7 +266,7 @@ export function Navbar() {
                       )}
                       <ChevronDown
                         size={14}
-                        className={`text-[var(--text-muted)] transition-transform duration-200 ${
+                        className={`text-[var(--text-muted)] hidden sm:block transition-transform duration-200 ${
                           userMenuOpen ? "rotate-180" : ""
                         }`}
                       />
@@ -339,9 +339,11 @@ export function Navbar() {
                   <Link
                     href="/sign-in"
                     id="sign-in-link"
-                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white transition-colors"
+                    className="inline-flex min-w-[44px] min-h-[44px] items-center justify-center p-2 text-xs font-heading font-semibold tracking-wider uppercase text-[var(--text-secondary)] hover:text-white transition-colors rounded"
+                    aria-label="Sign in"
+                    title="Sign in"
                   >
-                    <UserIcon size={16} />
+                    <UserIcon size={20} />
                   </Link>
                 )}
               </>
@@ -351,16 +353,16 @@ export function Navbar() {
             <button
               id="cart-toggle"
               onClick={toggleCart}
-              className="relative p-2 text-white hover:text-[var(--accent-red)] transition-colors flex items-center"
+              className="relative min-w-[44px] min-h-[44px] p-2 text-white hover:text-[var(--accent-red)] transition-colors flex items-center justify-center rounded"
               aria-label="Shopping cart"
             >
               <ShoppingCart size={21} />
               {itemCount > 0 ? (
-                <span className="absolute -top-0.5 -right-0.5 badge-red">
+                <span className="absolute top-0.5 right-0.5 badge-red">
                   {itemCount}
                 </span>
               ) : (
-                <span className="absolute -top-0.5 -right-0.5 bg-[var(--border-color)] text-white text-[0.6rem] font-bold min-w-[1.1rem] h-[1.1rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 bg-[var(--border-color)] text-white text-[0.6rem] font-bold min-w-[1.1rem] h-[1.1rem] rounded-full flex items-center justify-center">
                   0
                 </span>
               )}

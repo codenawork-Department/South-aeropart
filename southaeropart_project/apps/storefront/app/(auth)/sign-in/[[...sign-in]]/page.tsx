@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useSignIn } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { recordLoginAction } from "@/actions/auth-audit.actions";
-import { Eye, EyeOff, AlertCircle, Loader2, ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Loader2, ArrowLeft, CheckCircle2, ShieldCheck, KeyRound } from "lucide-react";
 
-export default function SignInPage() {
+function SignInContent() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Validate redirect to prevent open redirect vulnerabilities
+  const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirectUrl");
+  const targetRedirect =
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/";
 
   // Sign-in Form State
   const [email, setEmail] = useState("");
@@ -30,6 +38,16 @@ export default function SignInPage() {
   const [verificationType, setVerificationType] = useState<"first_factor" | "second_factor">("second_factor");
   const [secondFactorStrategy, setSecondFactorStrategy] = useState<string>("email_code");
 
+  // Forgot Password State
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<"none" | "email" | "code">("none");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isResetLoading, setIsResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
+
   const handleGoogleSignIn = useCallback(async () => {
     if (!isLoaded || !signIn) return;
     setError("");
@@ -40,7 +58,7 @@ export default function SignInPage() {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sign-in/sso-callback",
-        redirectUrlComplete: "/",
+        redirectUrlComplete: targetRedirect,
       });
     } catch (err: unknown) {
       const clerkError = err as { errors?: { message: string }[] };
@@ -49,7 +67,7 @@ export default function SignInPage() {
       );
       setIsGoogleLoading(false);
     }
-  }, [isLoaded, signIn]);
+  }, [isLoaded, signIn, targetRedirect]);
 
   const handleEmailSignIn = useCallback(
     async (e: React.FormEvent) => {
@@ -77,7 +95,7 @@ export default function SignInPage() {
             loginMethod: "email_password",
           });
 
-          router.push("/");
+          router.push(targetRedirect);
         } else if (result.status === "needs_second_factor") {
           const supportedFactors = (result.supportedSecondFactors || []) as Array<{
             strategy: string;
@@ -255,7 +273,7 @@ export default function SignInPage() {
             loginMethod: "email_password",
           });
 
-          router.push("/");
+          router.push(targetRedirect);
         } else {
           setError("Verification incomplete. Please check the code and try again.");
         }
@@ -272,7 +290,7 @@ export default function SignInPage() {
         setIsVerifying(false);
       }
     },
-    [isLoaded, signIn, setActive, verificationType, secondFactorStrategy, verificationCode, email, router]
+    [isLoaded, signIn, setActive, verificationType, secondFactorStrategy, verificationCode, email, router, targetRedirect]
   );
 
   const handleResendCode = useCallback(async () => {
@@ -322,6 +340,78 @@ export default function SignInPage() {
       setIsResending(false);
     }
   }, [isLoaded, signIn, verificationType, secondFactorStrategy]);
+
+  const handleRequestResetCode = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!isLoaded || !signIn) return;
+      if (!resetEmail.trim()) {
+        setResetError("Please enter your email address.");
+        return;
+      }
+
+      setResetError("");
+      setIsResetLoading(true);
+
+      try {
+        await signIn.create({
+          strategy: "reset_password_email_code",
+          identifier: resetEmail.trim(),
+        });
+        setForgotPasswordStep("code");
+      } catch (err: unknown) {
+        const clerkError = err as { errors?: { message: string }[] };
+        setResetError(
+          clerkError.errors?.[0]?.message ??
+            "Failed to send reset code. Please verify your email and try again."
+        );
+      } finally {
+        setIsResetLoading(false);
+      }
+    },
+    [isLoaded, signIn, resetEmail]
+  );
+
+  const handleResetPasswordSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!isLoaded || !signIn) return;
+      if (!resetCode.trim() || !newPassword) {
+        setResetError("Please enter the verification code and new password.");
+        return;
+      }
+
+      setResetError("");
+      setIsResetLoading(true);
+
+      try {
+        const result = await signIn.attemptFirstFactor({
+          strategy: "reset_password_email_code",
+          code: resetCode.trim(),
+          password: newPassword,
+        });
+
+        if (result.status === "complete" && result.createdSessionId) {
+          await setActive({ session: result.createdSessionId });
+          setResetSuccess(true);
+          setTimeout(() => {
+            router.push(targetRedirect);
+          }, 600);
+        } else {
+          setResetError("Password reset incomplete. Please check the code and try again.");
+        }
+      } catch (err: unknown) {
+        const clerkError = err as { errors?: { message: string }[] };
+        setResetError(
+          clerkError.errors?.[0]?.message ??
+            "Failed to reset password. Please check your code and try again."
+        );
+      } finally {
+        setIsResetLoading(false);
+      }
+    },
+    [isLoaded, signIn, setActive, resetCode, newPassword, router, targetRedirect]
+  );
 
   if (!isLoaded) {
     return (
@@ -478,6 +568,199 @@ export default function SignInPage() {
                 </p>
               )}
             </>
+          ) : forgotPasswordStep === "email" ? (
+            /* ══════════════════════ FORGOT PASSWORD: REQUEST CODE ══════════════════════ */
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotPasswordStep("none");
+                  setResetError("");
+                }}
+                className="inline-flex items-center gap-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-4 group"
+              >
+                <ArrowLeft
+                  size={14}
+                  className="transition-transform group-hover:-translate-x-1"
+                />
+                Back to sign in
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent-red)]/10 text-[var(--accent-red)] mb-3">
+                  <KeyRound size={24} />
+                </div>
+                <h1 className="font-heading text-xl md:text-2xl font-bold tracking-wider uppercase">
+                  Reset Password
+                </h1>
+                <p className="text-sm text-[var(--text-secondary)] mt-1.5">
+                  Enter your registered email to receive a password reset code.
+                </p>
+              </div>
+
+              {resetError && (
+                <div
+                  className="flex items-start gap-2.5 p-3 mb-5 bg-[var(--error)]/10 border border-[var(--error)]/20 rounded-sm animate-fade-in"
+                  role="alert"
+                >
+                  <AlertCircle className="w-4 h-4 text-[var(--error)] flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-[var(--error)]">{resetError}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleRequestResetCode} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="reset-email"
+                    className="block text-xs font-heading tracking-wider uppercase text-[var(--text-secondary)] mb-1.5"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    id="reset-email"
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    autoComplete="email"
+                    className="input-dark w-full rounded-sm"
+                  />
+                </div>
+
+                <button
+                  id="reset-request-submit"
+                  type="submit"
+                  disabled={isResetLoading || !resetEmail.trim()}
+                  className="btn-primary w-full rounded-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
+                >
+                  {isResetLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending code...
+                    </span>
+                  ) : (
+                    "Send Reset Code"
+                  )}
+                </button>
+              </form>
+            </>
+          ) : forgotPasswordStep === "code" ? (
+            /* ══════════════════════ FORGOT PASSWORD: ENTER CODE & NEW PASSWORD ══════════════════════ */
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotPasswordStep("email");
+                  setResetError("");
+                }}
+                className="inline-flex items-center gap-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-4 group"
+              >
+                <ArrowLeft
+                  size={14}
+                  className="transition-transform group-hover:-translate-x-1"
+                />
+                Change email
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent-red)]/10 text-[var(--accent-red)] mb-3">
+                  <ShieldCheck size={24} />
+                </div>
+                <h1 className="font-heading text-xl md:text-2xl font-bold tracking-wider uppercase">
+                  New Password
+                </h1>
+                <p className="text-sm text-[var(--text-secondary)] mt-1.5">
+                  Enter the verification code sent to <span className="text-white font-medium">{resetEmail}</span> and your new password.
+                </p>
+              </div>
+
+              {resetError && (
+                <div
+                  className="flex items-start gap-2.5 p-3 mb-5 bg-[var(--error)]/10 border border-[var(--error)]/20 rounded-sm animate-fade-in"
+                  role="alert"
+                >
+                  <AlertCircle className="w-4 h-4 text-[var(--error)] flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-[var(--error)]">{resetError}</p>
+                </div>
+              )}
+
+              {resetSuccess && (
+                <div
+                  className="flex items-center gap-2.5 p-3 mb-5 bg-green-500/10 border border-green-500/20 rounded-sm text-green-400 text-sm animate-fade-in"
+                >
+                  <CheckCircle2 size={16} />
+                  <span>Password updated successfully! Logging you in...</span>
+                </div>
+              )}
+
+              <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="reset-code"
+                    className="block text-xs font-heading tracking-wider uppercase text-[var(--text-secondary)] mb-1.5"
+                  >
+                    Reset Code
+                  </label>
+                  <input
+                    id="reset-code"
+                    type="text"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    placeholder="Enter code"
+                    required
+                    autoComplete="one-time-code"
+                    className="input-dark w-full rounded-sm text-center text-lg tracking-[0.2em] font-heading uppercase"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="new-password"
+                    className="block text-xs font-heading tracking-wider uppercase text-[var(--text-secondary)] mb-1.5"
+                  >
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      className="input-dark w-full rounded-sm pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                      aria-label={showNewPassword ? "Hide password" : "Show password"}
+                    >
+                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  id="reset-password-submit"
+                  type="submit"
+                  disabled={isResetLoading || !resetCode.trim() || !newPassword}
+                  className="btn-primary w-full rounded-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
+                >
+                  {isResetLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Updating password...
+                    </span>
+                  ) : (
+                    "Reset & Sign In"
+                  )}
+                </button>
+              </form>
+            </>
           ) : (
             /* ══════════════════════ SIGN IN FORM ══════════════════════ */
             <>
@@ -546,9 +829,12 @@ export default function SignInPage() {
                     </label>
                     <button
                       type="button"
-                      className="text-[0.7rem] text-[var(--accent-red)] hover:text-[var(--accent-red-hover)] transition-colors"
+                      className="text-[0.7rem] text-[var(--accent-red)] hover:text-[var(--accent-red-hover)] transition-colors min-h-[30px] flex items-center"
                       onClick={() => {
-                        // TODO: Implement forgot password flow
+                        setResetEmail(email);
+                        setForgotPasswordStep("email");
+                        setError("");
+                        setResetError("");
                       }}
                     >
                       Forgot password?
@@ -598,17 +884,19 @@ export default function SignInPage() {
         </div>
 
         {/* Bottom link */}
-        <div className="px-6 md:px-8 py-4 bg-[var(--bg-elevated)] border-t border-[var(--border-subtle)] text-center">
-          <p className="text-sm text-[var(--text-secondary)]">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/sign-up"
-              className="text-[var(--accent-red)] hover:text-[var(--accent-red-hover)] font-semibold transition-colors"
-            >
-              Create Account
-            </Link>
-          </p>
-        </div>
+        {forgotPasswordStep === "none" && !pendingVerification && (
+          <div className="px-6 md:px-8 py-4 bg-[var(--bg-elevated)] border-t border-[var(--border-subtle)] text-center">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Don&apos;t have an account?{" "}
+              <Link
+                href={targetRedirect !== "/" ? `/sign-up?redirect_url=${encodeURIComponent(targetRedirect)}` : "/sign-up"}
+                className="text-[var(--accent-red)] hover:text-[var(--accent-red-hover)] font-semibold transition-colors"
+              >
+                Create Account
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Security note */}
@@ -630,5 +918,19 @@ export default function SignInPage() {
         </span>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="w-8 h-8 text-[var(--accent-red)] animate-spin" />
+        </div>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   );
 }
