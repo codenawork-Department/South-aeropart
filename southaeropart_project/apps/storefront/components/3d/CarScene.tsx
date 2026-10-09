@@ -177,6 +177,7 @@ function CameraController({
       minPolarAngle={0.15}
       maxPolarAngle={Math.PI / 2.05}
       autoRotateSpeed={0.8}
+      enablePan={false}
       makeDefault
     />
   );

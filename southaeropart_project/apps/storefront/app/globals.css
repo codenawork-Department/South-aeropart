@@ -507,3 +507,34 @@ body {
   outline-offset: 2px;
 }
 
+/* ═══════════════════════════════════════════
+   MOBILE UX: IOS SAFARI AUTO-ZOOM PREVENTION
+   Enforce 16px font-size on all mobile inputs
+   ═══════════════════════════════════════════ */
+@media screen and (max-width: 768px) {
+  .input-dark,
+  .select-dark,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SAFE AREA UTILITY CLASSES (Notches & Home Bar)
+   ═══════════════════════════════════════════ */
+.safe-area-pt {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.safe-area-pb {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.safe-area-bottom-bar {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+

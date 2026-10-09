@@ -89,6 +89,21 @@ export function CarModelViewer() {
   const [qualitySample, setQualitySample] =
     useState<AdaptiveQualitySample | null>(null);
 
+  // Mobile optimization: Defer heavy 80MB GLB model loading on mobile screens (<768px)
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [mobile3DActivated, setMobile3DActivated] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileDevice(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const shouldRender3D = !isMobileDevice || mobile3DActivated;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -141,277 +156,320 @@ export function CarModelViewer() {
   return (
     <div
       ref={containerRef}
-      className={`relative w-full rounded-sm overflow-hidden border border-[#222222] bg-[#0A0A0A] shadow-2xl shadow-black/90 transition-all duration-300 group ${isFullscreen
+      className={`relative w-full rounded-sm overflow-hidden border border-[#222222] bg-[#0A0A0A] shadow-2xl shadow-black/90 transition-all duration-300 group touch-pan-y ${isFullscreen
         ? "fixed inset-0 z-50 rounded-none border-none aspect-auto h-screen"
         : "aspect-[16/10] sm:aspect-[16/9] md:aspect-[2/1] lg:aspect-[2.2/1] min-h-[280px] sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
         }`}
       onPointerDown={() => setHasInteracted(true)}
     >
-      {/* 3D Scene with Post-Processing Filters */}
-      <DynamicCarScene
-        cameraPreset={cameraPreset}
-        autoRotate={autoRotate}
-        filterPreset={filterPreset}
-        renderingPreferences={renderingPreferences}
-        onProgress={handleProgress}
-        onLoaded={handleLoaded}
-        onQualityChange={setQualitySample}
-      />
+      {/* 3D Scene or Mobile Deferred Poster */}
+      {shouldRender3D ? (
+        <>
+          <DynamicCarScene
+            cameraPreset={cameraPreset}
+            autoRotate={autoRotate}
+            filterPreset={filterPreset}
+            renderingPreferences={renderingPreferences}
+            onProgress={handleProgress}
+            onLoaded={handleLoaded}
+            onQualityChange={setQualitySample}
+          />
+          {isLoading && <CarLoadingFallback progress={loadProgress} />}
+        </>
+      ) : (
+        /* Mobile High-Performance Showcase Poster with On-Demand Load */
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#141414] via-[#0E0E0E] to-[#0A0A0A] z-10 p-6 select-none">
+          {/* Background Ambient Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-32 bg-[radial-gradient(ellipse_at_center,rgba(229,29,36,0.25)_0%,transparent_70%)] blur-2xl pointer-events-none" />
 
-      {/* Loading Screen Overlay */}
-      {isLoading && <CarLoadingFallback progress={loadProgress} />}
+          {/* Hologram / Icon Graphic */}
+          <div className="relative mb-4 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center bg-black/60 shadow-inner">
+              <Rotate3d className="w-8 h-8 text-[var(--accent-red)] animate-pulse" />
+            </div>
+            <div className="absolute -inset-2 rounded-full border border-dashed border-[var(--accent-red)]/30 animate-[spin_10s_linear_infinite]" />
+          </div>
+
+          <div className="text-center space-y-1.5 max-w-xs z-10">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#181818] border border-[#2B2B2B] rounded-full text-[0.6rem] font-heading font-bold tracking-widest text-[var(--text-secondary)] uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] animate-ping" />
+              INTERACTIVE 3D PREVIEW
+            </div>
+            <h3 className="font-heading font-black text-sm text-white uppercase tracking-wider">
+              FERRARI 296 SPECIALE A
+            </h3>
+            <p className="text-[0.7rem] text-[var(--text-muted)] font-heading leading-tight">
+              ประหยัดเน็ตมือถือ &bull; โหลดโมเดล 3D แบบ Interactive เมื่อต้องการ
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMobile3DActivated(true)}
+            className="mt-4 px-5 py-2.5 bg-[var(--accent-red)] hover:bg-[var(--accent-red-hover)] text-white font-heading font-bold text-xs tracking-wider uppercase rounded-sm shadow-lg shadow-red-950/40 flex items-center gap-2 min-h-[44px] transition-transform active:scale-95 z-10"
+          >
+            <Rotate3d size={16} />
+            <span>เปิดดูโมเดล 3D (80MB)</span>
+          </button>
+        </div>
+      )}
 
       {/* Subtle Showroom Edge Vignette (pointer-events-none) */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/20 pointer-events-none" />
 
-      {/* TOP BAR OVERLAYS */}
-      <div className="absolute top-3 left-3 right-3 md:top-5 md:left-5 md:right-5 flex justify-between items-start gap-2 pointer-events-none z-20">
-        {/* Left Telemetry Badges */}
-        <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
-          <div className="telemetry-pill backdrop-blur-md bg-[#121212]/80 border-[#2A2A2A]">
-            <span className="text-[var(--accent-red)] font-bold hidden sm:flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] animate-pulse" />
-              3D LIVE AERO
-            </span>
-            <span className="text-white font-bold tracking-wider">
-              FERRARI 296 SPECIALE A
-            </span>
-          </div>
-
-          <div className="telemetry-pill hidden sm:inline-flex backdrop-blur-md bg-[#121212]/80 border-[#2A2A2A]">
-            <span className="text-[var(--success)] font-bold">+185 N</span>
-            <span className="text-[var(--text-secondary)]">
-              DOWNFORCE (200 KM/H)
-            </span>
-          </div>
-        </div>
-
-        {/* Right Action Icons (Post Filter Preset, Auto Rotate, Fullscreen) */}
-        <div className="flex items-center gap-1.5 pointer-events-auto">
-          <button
-            type="button"
-            aria-label="Open quality settings"
-            aria-controls="car-quality-settings"
-            aria-expanded={showQualitySettings}
-            onClick={() => {
-              setShowQualitySettings((previous) => !previous);
-              setShowFilterMenu(false);
-            }}
-            className="p-2 rounded-sm border border-[#444] bg-[#121212]/80 text-white/90 hover:bg-[#303238] backdrop-blur-md"
-            title="Quality: Auto / Manual"
-          >
-            <SlidersHorizontal size={14} />
-          </button>
-          {/* Post Filter Preset Dropdown */}
-          <div className="relative" ref={filterDropdownRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowFilterMenu((prev) => !prev);
-                setShowQualitySettings(false);
-                setHasInteracted(true);
-              }}
-              className={`p-2 sm:px-2.5 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${filterPreset !== "off"
-                ? "bg-amber-500/15 border-amber-500/60 text-amber-300 hover:bg-amber-500/25"
-                : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
-                }`}
-              title="Select Post-Processing Filter"
-            >
-              <Sparkles
-                size={13}
-                className={
-                  filterPreset !== "off"
-                    ? "text-amber-400 animate-pulse"
-                    : "text-white/40"
-                }
-              />
-              <span className="text-[0.65rem] tracking-wider uppercase font-bold hidden xs:inline sm:inline">
-                {currentFilter.label}
-              </span>
-              <ChevronDown
-                size={11}
-                className={`transition-transform duration-200 text-white/60 ${showFilterMenu ? "rotate-180" : ""
-                  }`}
-              />
-            </button>
-
-            {showFilterMenu && (
-              <div className="absolute right-0 top-full mt-1.5 w-64 sm:w-72 p-1.5 rounded-sm bg-[#101010]/95 border border-[#2E2E2E] shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-2 py-1 text-[0.6rem] font-heading font-bold text-white/40 uppercase tracking-wider border-b border-[#222] mb-1 flex items-center justify-between">
-                  <span>POST FILTER PRESETS</span>
-                  <span className="text-amber-400 font-mono text-[0.55rem]">
-                    REAL-TIME FX
-                  </span>
-                </div>
-                {FILTER_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => {
-                      setFilterPreset(opt.id);
-                      setShowFilterMenu(false);
-                      setHasInteracted(true);
-                    }}
-                    className={`w-full text-left p-2 rounded-sm transition-all flex items-start justify-between gap-2 group mb-0.5 ${filterPreset === opt.id
-                      ? "bg-[#1C1C1C] text-white border border-[#3E3E3E]"
-                      : "hover:bg-[#161616] text-white/70 hover:text-white border border-transparent"
-                      }`}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className={`text-xs font-heading font-bold transition-colors ${filterPreset === opt.id
-                            ? "text-amber-300"
-                            : "text-white group-hover:text-[var(--accent-red)]"
-                            }`}
-                        >
-                          {opt.label}
-                        </span>
-                        <span
-                          className={`text-[0.52rem] px-1 py-0.2 rounded font-mono font-semibold ${opt.id === "studio"
-                            ? "bg-amber-500/20 text-amber-300"
-                            : opt.id === "cinematic"
-                              ? "bg-red-500/20 text-red-300"
-                              : opt.id === "midnight"
-                                ? "bg-blue-500/20 text-blue-300"
-                                : "bg-white/10 text-white/50"
-                            }`}
-                        >
-                          {opt.badge}
-                        </span>
-                      </div>
-                      <p className="text-[0.62rem] text-white/50 mt-0.5 leading-snug">
-                        {opt.description}
-                      </p>
-                    </div>
-                    {filterPreset === opt.id && (
-                      <Check
-                        size={14}
-                        className="text-amber-400 shrink-0 mt-0.5"
-                      />
-                    )}
-                  </button>
-                ))}
+      {/* 3D ACTIVE CONTROLS & OVERLAYS (Only visible when 3D is active) */}
+      {shouldRender3D && (
+        <>
+          {/* TOP BAR OVERLAYS */}
+          <div className="absolute top-3 left-3 right-3 md:top-5 md:left-5 md:right-5 flex justify-between items-start gap-2 pointer-events-none z-20">
+            {/* Left Telemetry Badges */}
+            <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
+              <div className="telemetry-pill backdrop-blur-md bg-[#121212]/80 border-[#2A2A2A]">
+                <span className="text-[var(--accent-red)] font-bold hidden sm:flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] animate-pulse" />
+                  3D LIVE AERO
+                </span>
+                <span className="text-white font-bold tracking-wider">
+                  FERRARI 296 SPECIALE A
+                </span>
               </div>
-            )}
+
+              <div className="telemetry-pill hidden sm:inline-flex backdrop-blur-md bg-[#121212]/80 border-[#2A2A2A]">
+                <span className="text-[var(--success)] font-bold">+185 N</span>
+                <span className="text-[var(--text-secondary)]">
+                  DOWNFORCE (200 KM/H)
+                </span>
+              </div>
+            </div>
+
+            {/* Right Action Icons (Post Filter Preset, Auto Rotate, Fullscreen) */}
+            <div className="flex items-center gap-1.5 pointer-events-auto">
+              <button
+                type="button"
+                aria-label="Open quality settings"
+                aria-controls="car-quality-settings"
+                aria-expanded={showQualitySettings}
+                onClick={() => {
+                  setShowQualitySettings((previous) => !previous);
+                  setShowFilterMenu(false);
+                }}
+                className="p-2 rounded-sm border border-[#444] bg-[#121212]/80 text-white/90 hover:bg-[#303238] backdrop-blur-md"
+                title="Quality: Auto / Manual"
+              >
+                <SlidersHorizontal size={14} />
+              </button>
+              {/* Post Filter Preset Dropdown */}
+              <div className="relative" ref={filterDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowFilterMenu((prev) => !prev);
+                    setShowQualitySettings(false);
+                    setHasInteracted(true);
+                  }}
+                  className={`p-2 sm:px-2.5 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${filterPreset !== "off"
+                    ? "bg-amber-500/15 border-amber-500/60 text-amber-300 hover:bg-amber-500/25"
+                    : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
+                    }`}
+                  title="Select Post-Processing Filter"
+                >
+                  <Sparkles
+                    size={13}
+                    className={
+                      filterPreset !== "off"
+                        ? "text-amber-400 animate-pulse"
+                        : "text-white/40"
+                    }
+                  />
+                  <span className="text-[0.65rem] tracking-wider uppercase font-bold hidden xs:inline sm:inline">
+                    {currentFilter.label}
+                  </span>
+                  <ChevronDown
+                    size={11}
+                    className={`transition-transform duration-200 text-white/60 ${showFilterMenu ? "rotate-180" : ""
+                      }`}
+                  />
+                </button>
+
+                {showFilterMenu && (
+                  <div className="absolute right-0 top-full mt-1.5 w-64 sm:w-72 p-1.5 rounded-sm bg-[#101010]/95 border border-[#2E2E2E] shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-2 py-1 text-[0.6rem] font-heading font-bold text-white/40 uppercase tracking-wider border-b border-[#222] mb-1 flex items-center justify-between">
+                      <span>POST FILTER PRESETS</span>
+                      <span className="text-amber-400 font-mono text-[0.55rem]">
+                        REAL-TIME FX
+                      </span>
+                    </div>
+                    {FILTER_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setFilterPreset(opt.id);
+                          setShowFilterMenu(false);
+                          setHasInteracted(true);
+                        }}
+                        className={`w-full text-left p-2 rounded-sm transition-all flex items-start justify-between gap-2 group mb-0.5 ${filterPreset === opt.id
+                          ? "bg-[#1C1C1C] text-white border border-[#3E3E3E]"
+                          : "hover:bg-[#161616] text-white/70 hover:text-white border border-transparent"
+                          }`}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-xs font-heading font-bold transition-colors ${filterPreset === opt.id
+                                ? "text-amber-300"
+                                : "text-white group-hover:text-[var(--accent-red)]"
+                                }`}
+                            >
+                              {opt.label}
+                            </span>
+                            <span
+                              className={`text-[0.52rem] px-1 py-0.2 rounded font-mono font-semibold ${opt.id === "studio"
+                                ? "bg-amber-500/20 text-amber-300"
+                                : opt.id === "cinematic"
+                                  ? "bg-red-500/20 text-red-300"
+                                  : opt.id === "midnight"
+                                    ? "bg-blue-500/20 text-blue-300"
+                                    : "bg-white/10 text-white/50"
+                                }`}
+                            >
+                              {opt.badge}
+                            </span>
+                          </div>
+                          <p className="text-[0.62rem] text-white/50 mt-0.5 leading-snug">
+                            {opt.description}
+                          </p>
+                        </div>
+                        {filterPreset === opt.id && (
+                          <Check
+                            size={14}
+                            className="text-amber-400 shrink-0 mt-0.5"
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Auto Rotate Toggle */}
+              <button
+                type="button"
+                onClick={() => setAutoRotate((prev) => !prev)}
+                className={`p-2 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${autoRotate
+                  ? "bg-[var(--accent-red)]/15 border-[var(--accent-red)]/60 text-white"
+                  : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
+                  }`}
+                title="Toggle Auto 360° Rotation"
+              >
+                <Rotate3d
+                  size={14}
+                  className={
+                    autoRotate ? "animate-spin text-[var(--accent-red)]" : ""
+                  }
+                />
+                <span className="hidden md:inline text-[0.65rem]">AUTO SPIN</span>
+              </button>
+
+              {/* Fullscreen Expand */}
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="p-2 rounded-sm border border-[#2A2A2A] bg-[#121212]/80 hover:bg-[#1A1A1A] hover:border-[var(--accent-red)] text-white/80 hover:text-white transition-colors backdrop-blur-md shadow-md"
+                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen 3D Showcase"}
+              >
+                {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+              </button>
+            </div>
           </div>
 
-          {/* Auto Rotate Toggle */}
-          <button
-            type="button"
-            onClick={() => setAutoRotate((prev) => !prev)}
-            className={`p-2 rounded-sm border text-xs font-heading font-semibold transition-all backdrop-blur-md shadow-md flex items-center gap-1.5 ${autoRotate
-              ? "bg-[var(--accent-red)]/15 border-[var(--accent-red)]/60 text-white"
-              : "bg-[#121212]/80 border-[#2A2A2A] text-white/60 hover:text-white hover:border-[#3E3E3E]"
-              }`}
-            title="Toggle Auto 360° Rotation"
-          >
-            <Rotate3d
-              size={14}
-              className={
-                autoRotate ? "animate-spin text-[var(--accent-red)]" : ""
-              }
-            />
-            <span className="hidden md:inline text-[0.65rem]">AUTO SPIN</span>
-          </button>
-
-          {/* Fullscreen Expand */}
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="p-2 rounded-sm border border-[#2A2A2A] bg-[#121212]/80 hover:bg-[#1A1A1A] hover:border-[var(--accent-red)] text-white/80 hover:text-white transition-colors backdrop-blur-md shadow-md"
-            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen 3D Showcase"}
-          >
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          </button>
-        </div>
-      </div>
-
-      {/* INTERACTIVE INSTRUCTION HINT (Fades after interaction) */}
-      {!hasInteracted && !isLoading && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 animate-pulse">
-          <div className="px-4 py-2 rounded-full bg-black/80 border border-white/15 backdrop-blur-md text-[0.7rem] font-heading font-medium text-white/90 flex items-center gap-2 shadow-2xl">
-            <Compass
-              size={14}
-              className="text-[var(--accent-red)] animate-spin"
-            />
-            <span>DRAG TO ROTATE 360° &bull; SCROLL / PINCH TO ZOOM</span>
-          </div>
-        </div>
-      )}
-
-      {/* BOTTOM BAR OVERLAYS */}
-      <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-3 sm:right-3 md:bottom-5 md:left-5 md:right-5 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 sm:gap-3 pointer-events-none z-20">
-        {/* Bottom Left: Camera Angle Presets */}
-        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 p-0.5 sm:p-1 bg-[#101010]/90 backdrop-blur-md border border-[#262626] rounded-sm shadow-xl pointer-events-auto max-w-full overflow-x-auto">
-          <span className="text-[0.55rem] sm:text-[0.6rem] font-heading font-bold text-white/40 px-1 hidden sm:inline uppercase">
-            VIEW:
-          </span>
-          {(
-            [
-              { id: "hero", label: "HERO 3/4" },
-              { id: "front", label: "FRONT" },
-              { id: "side", label: "SIDE" },
-              { id: "rear", label: "GT WING" },
-              { id: "top", label: "TOP CFD" },
-            ] as { id: CameraPreset; label: string }[]
-          ).map((cam) => (
-            <button
-              key={cam.id}
-              type="button"
-              onClick={() => {
-                setCameraPreset(cam.id);
-                setHasInteracted(true);
-              }}
-              className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[0.58rem] sm:text-[0.62rem] md:text-[0.65rem] font-heading font-bold rounded-sm transition-all whitespace-nowrap ${cameraPreset === cam.id
-                ? "bg-[var(--accent-red)] text-white shadow-[0_0_10px_rgba(229,29,36,0.4)]"
-                : "text-white/70 hover:text-white hover:bg-[#1E1E1E]"
-                }`}
-            >
-              {cam.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Bottom Right: Direct CTA */}
-        <div className="pointer-events-auto w-full sm:w-auto flex flex-col items-end gap-1.5">
-          {!isLoading && qualitySample && (
-            <output
-              className="rounded-sm bg-[#101010]/85 px-2 py-1 text-[0.55rem] sm:text-[0.6rem] font-mono text-white/70 backdrop-blur-md"
-              title={
-                renderingPreferences.mode === "auto"
-                  ? "Visual quality adapts to measured frame rate. Target: 30 FPS or more."
-                  : "Manual quality settings stay fixed."
-              }
-              aria-label="Rendering quality"
-            >
-              {renderingPreferences.mode.toUpperCase()} ·{" "}
-              {renderingPreferences.mode === "manual" &&
-                isCustomQuality(renderingPreferences.manual)
-                ? "CUSTOM"
-                : QUALITY_PROFILES[
-                  renderingPreferences.mode === "manual"
-                    ? renderingPreferences.manual.level
-                    : qualitySample.level
-                ].label.toUpperCase()}{" "}
-              ·{" "}
-              {qualitySample.fps === null
-                ? "CALIBRATING"
-                : `${Math.round(qualitySample.fps)} FPS`}
-              {qualitySample.limited &&
-                (renderingPreferences.mode === "auto"
-                  ? " · DEVICE LIMIT"
-                  : " · BELOW 30 FPS")}
-            </output>
+          {/* INTERACTIVE INSTRUCTION HINT (Fades after interaction) */}
+          {!hasInteracted && !isLoading && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 animate-pulse">
+              <div className="px-4 py-2 rounded-full bg-black/80 border border-white/15 backdrop-blur-md text-[0.7rem] font-heading font-medium text-white/90 flex items-center gap-2 shadow-2xl">
+                <Compass
+                  size={14}
+                  className="text-[var(--accent-red)] animate-spin"
+                />
+                <span>DRAG TO ROTATE 360° &bull; SCROLL / PINCH TO ZOOM</span>
+              </div>
+            </div>
           )}
-          <Link
-            href="/products/ford-mustang-gt3-aero-package"
-            className="btn-primary py-1.5 sm:py-2 px-3 sm:px-4 text-[0.7rem] sm:text-xs gap-1.5 sm:gap-2 shadow-xl whitespace-nowrap w-full sm:w-auto justify-center"
-          >
-            CUSTOMIZE BUILD <ArrowRight size={13} />
-          </Link>
-        </div>
-      </div>
+
+          {/* BOTTOM BAR OVERLAYS */}
+          <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-3 sm:right-3 md:bottom-5 md:left-5 md:right-5 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 sm:gap-3 pointer-events-none z-20">
+            {/* Bottom Left: Camera Angle Presets */}
+            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 p-0.5 sm:p-1 bg-[#101010]/90 backdrop-blur-md border border-[#262626] rounded-sm shadow-xl pointer-events-auto max-w-full overflow-x-auto">
+              <span className="text-[0.55rem] sm:text-[0.6rem] font-heading font-bold text-white/40 px-1 hidden sm:inline uppercase">
+                VIEW:
+              </span>
+              {(
+                [
+                  { id: "hero", label: "HERO 3/4" },
+                  { id: "front", label: "FRONT" },
+                  { id: "side", label: "SIDE" },
+                  { id: "rear", label: "GT WING" },
+                  { id: "top", label: "TOP CFD" },
+                ] as { id: CameraPreset; label: string }[]
+              ).map((cam) => (
+                <button
+                  key={cam.id}
+                  type="button"
+                  onClick={() => {
+                    setCameraPreset(cam.id);
+                    setHasInteracted(true);
+                  }}
+                  className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[0.58rem] sm:text-[0.62rem] md:text-[0.65rem] font-heading font-bold rounded-sm transition-all whitespace-nowrap ${cameraPreset === cam.id
+                    ? "bg-[var(--accent-red)] text-white shadow-[0_0_10px_rgba(229,29,36,0.4)]"
+                    : "text-white/70 hover:text-white hover:bg-[#1E1E1E]"
+                    }`}
+                >
+                  {cam.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Bottom Right: Direct CTA */}
+            <div className="pointer-events-auto w-full sm:w-auto flex flex-col items-end gap-1.5">
+              {!isLoading && qualitySample && (
+                <output
+                  className="rounded-sm bg-[#101010]/85 px-2 py-1 text-[0.55rem] sm:text-[0.6rem] font-mono text-white/70 backdrop-blur-md"
+                  title={
+                    renderingPreferences.mode === "auto"
+                      ? "Visual quality adapts to measured frame rate. Target: 30 FPS or more."
+                      : "Manual quality settings stay fixed."
+                  }
+                  aria-label="Rendering quality"
+                >
+                  {renderingPreferences.mode.toUpperCase()} ·{" "}
+                  {renderingPreferences.mode === "manual" &&
+                    isCustomQuality(renderingPreferences.manual)
+                    ? "CUSTOM"
+                    : QUALITY_PROFILES[
+                      renderingPreferences.mode === "manual"
+                        ? renderingPreferences.manual.level
+                        : qualitySample.level
+                    ].label.toUpperCase()}{" "}
+                  ·{" "}
+                  {qualitySample.fps === null
+                    ? "CALIBRATING"
+                    : `${Math.round(qualitySample.fps)} FPS`}
+                  {qualitySample.limited &&
+                    (renderingPreferences.mode === "auto"
+                      ? " · DEVICE LIMIT"
+                      : " · BELOW 30 FPS")}
+                </output>
+              )}
+              <Link
+                href="/products/ford-mustang-gt3-aero-package"
+                className="btn-primary py-1.5 sm:py-2 px-3 sm:px-4 text-[0.7rem] sm:text-xs gap-1.5 sm:gap-2 shadow-xl whitespace-nowrap w-full sm:w-auto justify-center"
+              >
+                CUSTOMIZE BUILD <ArrowRight size={13} />
+              </Link>
+            </div>
+          </div>
+        </>
+      )}
       {showQualitySettings && (
         <QualitySettingsPanel
           preferences={renderingPreferences}

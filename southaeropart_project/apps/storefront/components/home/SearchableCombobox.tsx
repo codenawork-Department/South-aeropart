@@ -41,7 +41,7 @@ export function SearchableCombobox({
 
   // Close when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -49,9 +49,11 @@ export function SearchableCombobox({
 
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [isOpen]);
 
@@ -152,21 +154,21 @@ export function SearchableCombobox({
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={searchPlaceholder}
-              className="w-full bg-transparent text-xs text-white placeholder-zinc-500 py-1 px-1 focus:outline-none font-sans"
+              className="w-full bg-transparent text-sm md:text-xs text-white placeholder-zinc-500 py-1.5 px-1 focus:outline-none font-sans min-h-[38px] md:min-h-0"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="p-1 text-zinc-400 hover:text-white rounded-sm"
+                className="p-1.5 text-zinc-400 hover:text-white rounded-sm min-w-[32px] min-h-[32px] flex items-center justify-center"
               >
-                <X size={12} />
+                <X size={14} />
               </button>
             )}
           </div>
 
           {/* Options List */}
-          <div className="max-h-[200px] overflow-y-auto py-1 custom-scrollbar">
+          <div className="max-h-[220px] overflow-y-auto py-1 custom-scrollbar">
             {filteredOptions.length === 0 ? (
               <div className="px-3 py-4 text-center text-xs text-zinc-500 font-sans">
                 {emptyText}
@@ -179,7 +181,7 @@ export function SearchableCombobox({
                     key={opt.value}
                     type="button"
                     onClick={() => handleSelect(opt.value)}
-                    className={`w-full text-left px-3 py-2 text-xs font-heading flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                    className={`w-full text-left px-3.5 py-2.5 text-xs font-heading flex items-center justify-between gap-2 transition-colors cursor-pointer min-h-[40px] ${
                       isSelected
                         ? "bg-[var(--accent-red)]/15 text-white font-bold"
                         : "text-zinc-300 hover:bg-zinc-800/80 hover:text-white"

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useSignUp } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
@@ -11,10 +11,18 @@ import { subscribeNewsletterAction } from "@/actions/newsletter.actions";
 import { Eye, EyeOff, AlertCircle, Loader2, ArrowLeft, Mail } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
-export default function SignUpPage() {
+function SignUpContent() {
   const { lang } = useLanguage();
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Validate redirect URL to prevent open redirect vulnerabilities
+  const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirectUrl");
+  const targetRedirect =
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/";
 
   // Form state
   const [firstName, setFirstName] = useState("");
@@ -41,7 +49,7 @@ export default function SignUpPage() {
       await signUp.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sign-up/sso-callback",
-        redirectUrlComplete: "/",
+        redirectUrlComplete: targetRedirect,
       });
     } catch (err: unknown) {
       const clerkError = err as { errors?: { message: string }[] };
@@ -50,7 +58,7 @@ export default function SignUpPage() {
       );
       setIsGoogleLoading(false);
     }
-  }, [isLoaded, signUp]);
+  }, [isLoaded, signUp, targetRedirect]);
 
   const handleEmailSignUp = useCallback(
     async (e: React.FormEvent) => {
@@ -131,7 +139,7 @@ export default function SignUpPage() {
             }
           }
 
-          router.push("/");
+          router.push(targetRedirect);
         } else {
           setError("Verification incomplete. Please try again.");
         }
@@ -148,7 +156,7 @@ export default function SignUpPage() {
         setIsVerifying(false);
       }
     },
-    [isLoaded, signUp, setActive, verificationCode, router, email, firstName, lastName, subscribeNewsletter]
+    [isLoaded, signUp, setActive, verificationCode, router, email, firstName, lastName, subscribeNewsletter, targetRedirect]
   );
 
   if (!isLoaded) {
@@ -494,7 +502,7 @@ export default function SignUpPage() {
             <p className="text-sm text-[var(--text-secondary)]">
               Already have an account?{" "}
               <Link
-                href="/sign-in"
+                href={targetRedirect !== "/" ? `/sign-in?redirect_url=${encodeURIComponent(targetRedirect)}` : "/sign-in"}
                 className="text-[var(--accent-red)] hover:text-[var(--accent-red-hover)] font-semibold transition-colors"
               >
                 Sign In
@@ -523,5 +531,19 @@ export default function SignUpPage() {
         </span>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="w-8 h-8 text-[var(--accent-red)] animate-spin" />
+        </div>
+      }
+    >
+      <SignUpContent />
+    </Suspense>
   );
 }
