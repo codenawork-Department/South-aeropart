@@ -193,11 +193,10 @@ export function AddressModal({
               <button
                 type="button"
                 onClick={() => setType("shipping")}
-                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded text-sm font-medium border transition-all ${
-                  type === "shipping"
+                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded text-sm font-medium border transition-all ${type === "shipping"
                     ? "border-[var(--accent-red)] bg-[var(--accent-red)]/10 text-white"
                     : "border-[#262626] bg-[#1A1A1A] text-[var(--text-secondary)] hover:text-white"
-                }`}
+                  }`}
               >
                 <MapPin size={16} />
                 {t.addShipping}
@@ -205,11 +204,10 @@ export function AddressModal({
               <button
                 type="button"
                 onClick={() => setType("billing")}
-                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded text-sm font-medium border transition-all ${
-                  type === "billing"
+                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded text-sm font-medium border transition-all ${type === "billing"
                     ? "border-[var(--accent-red)] bg-[var(--accent-red)]/10 text-white"
                     : "border-[#262626] bg-[#1A1A1A] text-[var(--text-secondary)] hover:text-white"
-                }`}
+                  }`}
               >
                 <Building2 size={16} />
                 {t.addBilling}

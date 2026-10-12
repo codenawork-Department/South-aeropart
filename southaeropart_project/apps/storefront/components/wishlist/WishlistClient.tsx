@@ -133,32 +133,29 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
             <div className="flex items-center gap-2 mt-6 sm:mt-8 border-t border-[#1C1C1C] pt-4 overflow-x-auto scrollbar-none pb-1">
               <button
                 onClick={() => setFilterType("all")}
-                className={`px-3 py-1.5 text-xs font-heading tracking-wider uppercase rounded-sm transition-colors shrink-0 ${
-                  filterType === "all"
+                className={`px-3 py-1.5 text-xs font-heading tracking-wider uppercase rounded-sm transition-colors shrink-0 ${filterType === "all"
                     ? "bg-[var(--accent-red)] text-white font-bold"
                     : "bg-[#141414] text-[var(--text-secondary)] hover:text-white border border-[#242424]"
-                }`}
+                  }`}
               >
                 {t.wishlist.filterAll} ({items.length})
               </button>
               <button
                 onClick={() => setFilterType("bundle")}
-                className={`px-3 py-1.5 text-xs font-heading tracking-wider uppercase rounded-sm transition-colors flex items-center gap-1.5 ${
-                  filterType === "bundle"
+                className={`px-3 py-1.5 text-xs font-heading tracking-wider uppercase rounded-sm transition-colors flex items-center gap-1.5 ${filterType === "bundle"
                     ? "bg-[var(--accent-red)] text-white font-bold"
                     : "bg-[#141414] text-[var(--text-secondary)] hover:text-white border border-[#242424]"
-                }`}
+                  }`}
               >
                 <Boxes size={14} />
                 {t.wishlist.filterBundle} ({bundleCount})
               </button>
               <button
                 onClick={() => setFilterType("single")}
-                className={`px-3 py-1.5 text-xs font-heading tracking-wider uppercase rounded-sm transition-colors flex items-center gap-1.5 ${
-                  filterType === "single"
+                className={`px-3 py-1.5 text-xs font-heading tracking-wider uppercase rounded-sm transition-colors flex items-center gap-1.5 ${filterType === "single"
                     ? "bg-[var(--accent-red)] text-white font-bold"
                     : "bg-[#141414] text-[var(--text-secondary)] hover:text-white border border-[#242424]"
-                }`}
+                  }`}
               >
                 <Layers size={14} />
                 {t.wishlist.filterSingle} ({singleCount})
@@ -222,9 +219,8 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
               return (
                 <div
                   key={item.id}
-                  className={`card bg-[#121212] border border-[#222222] hover:border-[var(--accent-red)] transition-all duration-300 flex flex-col justify-between group overflow-hidden ${
-                    isRemoving ? "opacity-30 scale-95 pointer-events-none" : ""
-                  }`}
+                  className={`card bg-[#121212] border border-[#222222] hover:border-[var(--accent-red)] transition-all duration-300 flex flex-col justify-between group overflow-hidden ${isRemoving ? "opacity-30 scale-95 pointer-events-none" : ""
+                    }`}
                 >
                   {/* Top Image & Badges */}
                   <div>
@@ -342,11 +338,10 @@ export function WishlistClient({ initialItems }: WishlistClientProps) {
                       </div>
 
                       <span
-                        className={`text-[0.65rem] font-heading font-bold uppercase tracking-wider ${
-                          item.stockQuantity > 0
+                        className={`text-[0.65rem] font-heading font-bold uppercase tracking-wider ${item.stockQuantity > 0
                             ? "text-[var(--success)]"
                             : "text-[var(--text-muted)]"
-                        }`}
+                          }`}
                       >
                         {item.stockQuantity > 0 ? t.wishlist.inStock : t.wishlist.madeToOrder}
                       </span>

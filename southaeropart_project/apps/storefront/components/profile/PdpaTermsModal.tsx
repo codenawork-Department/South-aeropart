@@ -57,22 +57,20 @@ export function PdpaTermsModal({ isOpen, onClose, language = "en" }: PdpaTermsMo
               <button
                 type="button"
                 onClick={() => setModalLanguage("th")}
-                className={`px-2.5 py-1 rounded transition-all font-semibold ${
-                  modalLanguage === "th"
+                className={`px-2.5 py-1 rounded transition-all font-semibold ${modalLanguage === "th"
                     ? "bg-[var(--accent-red)] text-white"
                     : "text-[var(--text-muted)] hover:text-white"
-                }`}
+                  }`}
               >
                 ไทย (TH)
               </button>
               <button
                 type="button"
                 onClick={() => setModalLanguage("en")}
-                className={`px-2.5 py-1 rounded transition-all font-semibold ${
-                  modalLanguage === "en"
+                className={`px-2.5 py-1 rounded transition-all font-semibold ${modalLanguage === "en"
                     ? "bg-[var(--accent-red)] text-white"
                     : "text-[var(--text-muted)] hover:text-white"
-                }`}
+                  }`}
               >
                 EN
               </button>
@@ -91,11 +89,10 @@ export function PdpaTermsModal({ isOpen, onClose, language = "en" }: PdpaTermsMo
         <div className="flex items-center border-b border-[#222222] bg-[#141414] px-6 gap-2 sm:gap-4 overflow-x-auto text-xs">
           <button
             onClick={() => setActiveTab("privacy")}
-            className={`py-3 px-3 font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "privacy"
+            className={`py-3 px-3 font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === "privacy"
                 ? "border-[var(--accent-red)] text-white bg-[var(--accent-red)]/5"
                 : "border-transparent text-[var(--text-secondary)] hover:text-white"
-            }`}
+              }`}
           >
             <Shield size={14} className={activeTab === "privacy" ? "text-[var(--accent-red)]" : ""} />
             {modalLanguage === "th"
@@ -105,11 +102,10 @@ export function PdpaTermsModal({ isOpen, onClose, language = "en" }: PdpaTermsMo
 
           <button
             onClick={() => setActiveTab("data_matrix")}
-            className={`py-3 px-3 font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "data_matrix"
+            className={`py-3 px-3 font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === "data_matrix"
                 ? "border-[var(--accent-red)] text-white bg-[var(--accent-red)]/5"
                 : "border-transparent text-[var(--text-secondary)] hover:text-white"
-            }`}
+              }`}
           >
             <Database size={14} className={activeTab === "data_matrix" ? "text-[var(--accent-red)]" : ""} />
             {modalLanguage === "th"
@@ -119,11 +115,10 @@ export function PdpaTermsModal({ isOpen, onClose, language = "en" }: PdpaTermsMo
 
           <button
             onClick={() => setActiveTab("terms")}
-            className={`py-3 px-3 font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "terms"
+            className={`py-3 px-3 font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${activeTab === "terms"
                 ? "border-[var(--accent-red)] text-white bg-[var(--accent-red)]/5"
                 : "border-transparent text-[var(--text-secondary)] hover:text-white"
-            }`}
+              }`}
           >
             <ScrollText size={14} className={activeTab === "terms" ? "text-[var(--accent-red)]" : ""} />
             {modalLanguage === "th"

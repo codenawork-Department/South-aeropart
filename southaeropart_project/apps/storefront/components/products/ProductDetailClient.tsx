@@ -251,11 +251,10 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                   <button
                     key={i}
                     onClick={() => setCurrentImage(i)}
-                    className={`w-16 h-16 sm:w-20 sm:h-20 relative rounded-sm overflow-hidden border-2 transition-all flex-shrink-0 bg-[#141414] ${
-                      currentImage === i
+                    className={`w-16 h-16 sm:w-20 sm:h-20 relative rounded-sm overflow-hidden border-2 transition-all flex-shrink-0 bg-[#141414] ${currentImage === i
                         ? "border-[var(--accent-red)] opacity-100 shadow-md shadow-[var(--accent-red)]/30"
                         : "border-[#262626] opacity-60 hover:opacity-100"
-                    }`}
+                      }`}
                   >
                     <Image
                       src={img}
@@ -393,11 +392,10 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
                 <button
                   onClick={handleToggleWishlist}
                   disabled={wishlistLoading}
-                  className={`btn-outline w-full justify-center gap-2 py-3 text-xs transition-all ${
-                    isWishlisted
+                  className={`btn-outline w-full justify-center gap-2 py-3 text-xs transition-all ${isWishlisted
                       ? "border-[var(--accent-red)] text-[var(--accent-red)] bg-[var(--accent-red)]/10"
                       : "hover:border-white/30"
-                  }`}
+                    }`}
                   id="add-to-wishlist"
                 >
                   {wishlistLoading ? (

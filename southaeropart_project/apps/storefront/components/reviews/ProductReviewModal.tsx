@@ -236,11 +236,10 @@ export function ProductReviewModal({
           {/* Feedback Alerts */}
           {message && (
             <div
-              className={`p-3.5 rounded-xl border flex items-start gap-2.5 text-xs ${
-                message.type === "success"
+              className={`p-3.5 rounded-xl border flex items-start gap-2.5 text-xs ${message.type === "success"
                   ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-200"
                   : "bg-red-950/40 border-red-500/50 text-red-200"
-              }`}
+                }`}
             >
               {message.type === "success" ? (
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />

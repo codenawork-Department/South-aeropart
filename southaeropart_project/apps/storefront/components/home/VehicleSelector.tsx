@@ -249,11 +249,10 @@ export function VehicleSelector({
                     <button
                       type="button"
                       onClick={() => handleSelectGarageVehicle(v)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-xs font-heading font-semibold transition-all cursor-pointer shadow-sm ${
-                        isSelected
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-xs font-heading font-semibold transition-all cursor-pointer shadow-sm ${isSelected
                           ? "bg-[var(--accent-red)]/15 border-[var(--accent-red)]/60 text-white"
                           : "bg-zinc-900/90 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
-                      }`}
+                        }`}
                       title="เลือกรถจากโรงรถของคุณทันที"
                     >
                       <Car size={13} className="text-[var(--accent-red)]" />
@@ -281,11 +280,10 @@ export function VehicleSelector({
                   <button
                     type="button"
                     onClick={() => setIsGarageOpen((prev) => !prev)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-xs font-heading font-semibold transition-all cursor-pointer shadow-sm ${
-                      garageVehicles.some((v) => v.brandSlug === selectedMake && v.carModelSlug === selectedModel)
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-xs font-heading font-semibold transition-all cursor-pointer shadow-sm ${garageVehicles.some((v) => v.brandSlug === selectedMake && v.carModelSlug === selectedModel)
                         ? "bg-[var(--accent-red)]/15 border-[var(--accent-red)]/60 text-white"
                         : "bg-zinc-900/90 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
-                    }`}
+                      }`}
                   >
                     <Car size={13} className="text-[var(--accent-red)]" />
                     <span>{lang === "en" ? `Garage (${garageVehicles.length})` : `รถในโรงรถ (${garageVehicles.length} คัน)`}</span>
@@ -310,11 +308,10 @@ export function VehicleSelector({
                               key={v.id}
                               type="button"
                               onClick={() => handleSelectGarageVehicle(v)}
-                              className={`w-full text-left px-3 py-2 text-xs font-heading flex items-center justify-between gap-2 transition-colors cursor-pointer ${
-                                isCurrentSelected
+                              className={`w-full text-left px-3 py-2 text-xs font-heading flex items-center justify-between gap-2 transition-colors cursor-pointer ${isCurrentSelected
                                   ? "bg-[var(--accent-red)]/15 text-white font-bold"
                                   : "text-zinc-200 hover:bg-zinc-800 hover:text-white"
-                              }`}
+                                }`}
                             >
                               <div>
                                 <div className="flex items-center gap-1.5">
@@ -350,7 +347,7 @@ export function VehicleSelector({
            ========================================================================= */}
         <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
           {/* Make Combobox */}
-          <div className="flex-1 sm:max-w-[280px]">
+          <div className="flex-1 min-w-0 sm:max-w-[280px]">
             <SearchableCombobox
               id="vehicle-make"
               label="MAKE (แบรนด์)"
@@ -366,7 +363,7 @@ export function VehicleSelector({
           </div>
 
           {/* Model Combobox */}
-          <div className="flex-1 sm:max-w-[320px]">
+          <div className="flex-1 min-w-0 sm:max-w-[320px]">
             <SearchableCombobox
               id="vehicle-model"
               label="MODEL (รุ่นรถ)"
@@ -382,11 +379,11 @@ export function VehicleSelector({
           </div>
 
           {/* Solid Primary Button (Full-width on mobile, auto on desktop) */}
-          <div className="w-full sm:w-auto">
+          <div className="w-full sm:w-auto flex-shrink-0">
             <button
               onClick={handleSearch}
               disabled={isLoading || !selectedMake || isPending}
-              className="btn-primary w-full sm:w-auto py-2.5 px-6 text-xs font-heading font-bold uppercase tracking-wider gap-2 shadow-lg shadow-red-950/40 hover:shadow-red-600/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
+              className="btn-primary w-full sm:w-auto py-2.5 px-6 text-xs font-heading font-bold uppercase tracking-wider gap-2 shadow-lg shadow-red-950/40 hover:shadow-red-600/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center whitespace-nowrap flex-shrink-0"
               id="view-products-btn"
             >
               {isPending ? (

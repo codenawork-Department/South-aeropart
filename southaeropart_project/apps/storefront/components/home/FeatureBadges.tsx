@@ -44,7 +44,7 @@ export function FeatureBadges() {
   return (
     <section className="py-12 md:py-16 bg-[#080808] border-y border-[#1C1C1C]">
       <div className="container-main">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {features.map(({ icon: Icon, title, description }) => (
             <div key={title} className="flex flex-col items-center text-center group">
               <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full border border-[#262626] bg-[#121212] mb-4 group-hover:border-[var(--accent-red)] group-hover:bg-[var(--accent-red)]/10 transition-all duration-300">

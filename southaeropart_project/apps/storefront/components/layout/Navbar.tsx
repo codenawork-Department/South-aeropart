@@ -168,22 +168,19 @@ export function Navbar() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#1E1E1E]">
-        {/* Main Row: Hamburger (mobile) — Logo — Desktop Links — Actions */}
+        {/* Main Row: Hamburger (mobile/tablet) + Logo (left) — Desktop Links (lg+) — Actions (right) */}
         <div className="container-main flex items-center justify-between h-16 md:h-20">
-          {/* Left: Mobile Hamburger Toggle */}
-          <div className="flex items-center gap-4 md:hidden">
+          {/* Left: Mobile/Tablet Hamburger Toggle + Brand Logo */}
+          <div className="flex items-center gap-2.5 sm:gap-4">
             <button
               id="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(true)}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-white hover:text-[var(--accent-red)] transition-colors rounded"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-white hover:text-[var(--accent-red)] transition-colors rounded lg:hidden"
               aria-label="Open menu"
             >
               <Menu size={24} />
             </button>
-          </div>
 
-          {/* Center/Left: Brand Logo */}
-          <div className="flex items-center">
             <Link href="/" className="flex flex-col items-center group py-1" id="logo-link">
               <div className="flex items-center gap-1.5">
                 <span className="font-heading text-2xl md:text-3xl font-extrabold tracking-[0.2em] text-white group-hover:text-[var(--accent-red)] transition-colors">
@@ -197,17 +194,16 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Nav Links - Visible on Tablets (iPad Mini, Air, Gen) & Desktop */}
-          <nav className="hidden md:flex items-center gap-4 lg:gap-8" aria-label="Main navigation">
+          {/* Desktop Nav Links - Only Visible on Large Desktops (lg: >= 1024px) */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8" aria-label="Main navigation">
             {navLinks.map((link) => {
               const isActive = link.match(pathname);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`nav-link text-xs lg:text-sm font-heading font-semibold tracking-wider ${
-                    isActive ? "active text-white" : "text-[var(--text-secondary)]"
-                  }`}
+                  className={`nav-link text-xs lg:text-sm font-heading font-semibold tracking-wider ${isActive ? "active text-white" : "text-[var(--text-secondary)]"
+                    }`}
                 >
                   {link.label}
                 </Link>
@@ -215,9 +211,9 @@ export function Navbar() {
             })}
           </nav>
 
-          {/* Right: Search, User, Cart */}
-          <div className="flex items-center gap-1 sm:gap-3">
-            {/* Desktop Language & Currency Switchers */}
+          {/* Right: Currency, Language, Search, User, Cart */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-3 flex-shrink-0">
+            {/* Desktop / Tablet Language & Currency Switchers */}
             <div className="hidden sm:flex items-center gap-1.5">
               <CurrencySwitcher variant="navbar" />
               <LanguageSwitcher variant="navbar" />
@@ -227,11 +223,10 @@ export function Navbar() {
             <button
               id="search-toggle"
               onClick={() => setSearchOpen(!searchOpen)}
-              className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 transition-colors rounded ${
-                searchOpen
+              className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 transition-colors rounded ${searchOpen
                   ? "text-[var(--accent-red)] bg-white/5"
                   : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
-              }`}
+                }`}
               aria-label="Search"
               title="Search products (Ctrl+K)"
             >
@@ -266,9 +261,8 @@ export function Navbar() {
                       )}
                       <ChevronDown
                         size={14}
-                        className={`text-[var(--text-muted)] hidden sm:block transition-transform duration-200 ${
-                          userMenuOpen ? "rotate-180" : ""
-                        }`}
+                        className={`text-[var(--text-muted)] hidden sm:block transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""
+                          }`}
                       />
                     </button>
 
@@ -392,7 +386,7 @@ export function Navbar() {
                   className="input-dark pl-11 pr-28 sm:pr-32 w-full bg-[#161616] text-sm py-3 border-[#2A2A2A] focus:border-[var(--accent-red)]"
                   autoFocus
                 />
-                
+
                 <div className="absolute right-3 flex items-center gap-2">
                   {isSearching ? (
                     <Loader2 size={16} className="animate-spin text-[var(--accent-red)]" />

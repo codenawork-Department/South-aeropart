@@ -40,18 +40,18 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
   const slides =
     activeBundle.slides && activeBundle.slides.length > 0
       ? activeBundle.slides.map((s, idx) => ({
-          ...s,
-          viewLabel: defaultViews[idx % defaultViews.length] || `VIEW 0${idx + 1}`,
-        }))
+        ...s,
+        viewLabel: defaultViews[idx % defaultViews.length] || `VIEW 0${idx + 1}`,
+      }))
       : [
-          {
-            id: `${activeBundle.id}-1`,
-            title: `${activeBundle.name} — Front 3/4 stance`,
-            image: activeBundle.primaryImage || "/images/FRONT.png",
-            caption: activeBundle.tagline || "Sculpted front splitter and aerodynamically balanced profile.",
-            viewLabel: "FRONT 3/4",
-          },
-        ];
+        {
+          id: `${activeBundle.id}-1`,
+          title: `${activeBundle.name} — Front 3/4 stance`,
+          image: activeBundle.primaryImage || "/images/FRONT.png",
+          caption: activeBundle.tagline || "Sculpted front splitter and aerodynamically balanced profile.",
+          viewLabel: "FRONT 3/4",
+        },
+      ];
 
   const safeSlideIdx = currentSlideIdx < slides.length ? currentSlideIdx : 0;
   const activeSlide = slides[safeSlideIdx];
@@ -95,11 +95,11 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
   return (
     <section className="bg-[#0A0A0A] text-white py-12 md:py-16 lg:py-20 border-y border-[#181818] relative overflow-hidden">
       <div className="container-main">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
+
           {/* ================= LEFT COLUMN ================= */}
-          <div className="order-2 md:order-1 md:col-span-6 lg:col-span-5 flex flex-col justify-between space-y-6">
-            
+          <div className="order-2 lg:order-1 lg:col-span-5 flex flex-col justify-between space-y-6">
+
             {/* 1. Header & Title */}
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#1A0E0E] border border-[#3A1818] rounded text-[0.65rem] font-heading font-bold tracking-widest text-[#FF3333] uppercase mb-4">
@@ -191,7 +191,7 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
               <Link
                 href={activeBundle.link || `/products/${activeBundle.slug}`}
-                className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-[#E5252A] hover:bg-[#c91e23] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all shadow-lg shadow-[#E5252A]/20"
+                className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-[#E5252A] hover:bg-[#c91e23] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all shadow-lg shadow-[#E5252A]/20 whitespace-nowrap flex-shrink-0"
                 id="explore-bodykit"
               >
                 {t.home.exploreBuild} <ArrowRight size={15} />
@@ -199,7 +199,7 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
 
               <Link
                 href={activeBundle.link || `/products/${activeBundle.slug}`}
-                className="inline-flex items-center justify-center px-4 sm:px-5 py-2.5 sm:py-3 bg-[#141414] hover:bg-[#1C1C1C] border border-[#2A2A2A] hover:border-[#444] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all"
+                className="inline-flex items-center justify-center px-4 sm:px-5 py-2.5 sm:py-3 bg-[#141414] hover:bg-[#1C1C1C] border border-[#2A2A2A] hover:border-[#444] text-white text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap flex-shrink-0"
               >
                 {t.home.viewAllParts.replace("{count}", String(partsCount))}
               </Link>
@@ -245,11 +245,11 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
           </div>
 
           {/* ================= RIGHT COLUMN (STAGE & THUMBNAILS) ================= */}
-          <div className="order-1 md:order-2 md:col-span-6 lg:col-span-7 flex flex-col space-y-4">
-            
+          <div className="order-1 lg:order-2 lg:col-span-7 flex flex-col space-y-4">
+
             {/* Main Stage Frame */}
             <div className="bg-[#0E0E0E] border border-[#222222] rounded-lg p-4 sm:p-5 relative shadow-2xl">
-              
+
               {/* Stage Top Bar */}
               <div className="flex items-center justify-between pb-3 text-xs font-heading font-bold uppercase tracking-wider">
                 <span className="text-gray-400 tracking-widest text-[11px]">SOUTH</span>
@@ -313,11 +313,10 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
                   <button
                     key={s.id || idx}
                     onClick={() => setCurrentSlideIdx(idx)}
-                    className={`relative rounded-md overflow-hidden p-1.5 transition-all text-left group bg-[#111111] border ${
-                      isActive
+                    className={`relative rounded-md overflow-hidden p-1.5 transition-all text-left group bg-[#111111] border ${isActive
                         ? "border-[#FF2B2B] ring-1 ring-[#FF2B2B] shadow-md shadow-[#FF2B2B]/20"
                         : "border-[#222222] hover:border-[#444444]"
-                    }`}
+                      }`}
                   >
                     {/* Thumbnail Image */}
                     <div className="relative aspect-[16/10] w-full rounded-sm overflow-hidden bg-[#0A0A0A]">
@@ -332,9 +331,8 @@ export function FeaturedSlider({ initialBundles = [] }: FeaturedSliderProps) {
                     {/* View Label below thumbnail */}
                     <div className="pt-1.5">
                       <span
-                        className={`text-[9px] sm:text-[10px] font-heading font-bold uppercase tracking-wider block truncate ${
-                          isActive ? "text-[#FF3333]" : "text-gray-400 group-hover:text-white"
-                        }`}
+                        className={`text-[9px] sm:text-[10px] font-heading font-bold uppercase tracking-wider block truncate ${isActive ? "text-[#FF3333]" : "text-gray-400 group-hover:text-white"
+                          }`}
                       >
                         {viewTitle}
                       </span>

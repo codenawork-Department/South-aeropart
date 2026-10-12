@@ -52,9 +52,9 @@ export function Footer() {
     <footer className="bg-[#080808] border-t border-[#1F1F1F]">
       {/* Main Footer Links */}
       <div className="container-main py-12 md:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 md:gap-6 lg:gap-8">
           {/* Brand Column */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-2 md:col-span-3 lg:col-span-1">
             <Link href="/" className="inline-flex flex-col group">
               <div className="flex items-center gap-1">
                 <span className="font-heading text-2xl font-black tracking-[0.2em] text-white group-hover:text-[var(--accent-red)] transition-colors">
@@ -132,7 +132,7 @@ export function Footer() {
                 stripe
               </div>
             </div>
-            
+
             <div className="flex items-start gap-2 mt-4">
               <ShieldCheck size={16} className="text-[var(--accent-red)] flex-shrink-0 mt-0.5" />
               <div>

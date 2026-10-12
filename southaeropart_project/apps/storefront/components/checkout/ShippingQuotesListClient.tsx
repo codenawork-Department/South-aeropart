@@ -235,11 +235,10 @@ export function ShippingQuotesListClient({
         <button
           type="button"
           onClick={() => setFilter("all")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            filter === "all"
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${filter === "all"
               ? "bg-amber-500 text-neutral-950 shadow-sm shadow-amber-500/20"
               : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white"
-          }`}
+            }`}
         >
           {th ? "ทั้งหมด" : "All"} ({initialQuotes.length})
         </button>
@@ -247,11 +246,10 @@ export function ShippingQuotesListClient({
         <button
           type="button"
           onClick={() => setFilter("offered")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-            filter === "offered"
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filter === "offered"
               ? "bg-amber-500 text-neutral-950 shadow-sm shadow-amber-500/20"
               : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white"
-          }`}
+            }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
           {th ? "พร้อมชำระเงิน" : "Ready to Pay"}
@@ -265,11 +263,10 @@ export function ShippingQuotesListClient({
         <button
           type="button"
           onClick={() => setFilter("requested")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-            filter === "requested"
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filter === "requested"
               ? "bg-amber-500 text-neutral-950 shadow-sm shadow-amber-500/20"
               : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white"
-          }`}
+            }`}
         >
           <Clock className="w-3.5 h-3.5" />
           {th ? "รอประเมิน" : "Awaiting Quote"}
@@ -283,11 +280,10 @@ export function ShippingQuotesListClient({
         <button
           type="button"
           onClick={() => setFilter("converted")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-            filter === "converted"
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filter === "converted"
               ? "bg-amber-500 text-neutral-950 shadow-sm shadow-amber-500/20"
               : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white"
-          }`}
+            }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
           {th ? "สั่งซื้อสำเร็จแล้ว" : "Converted"}
@@ -326,11 +322,10 @@ export function ShippingQuotesListClient({
             return (
               <div
                 key={quote.id}
-                className={`rounded-2xl border transition-all duration-200 overflow-hidden shadow-xl ${
-                  isOffered && !isExpired
+                className={`rounded-2xl border transition-all duration-200 overflow-hidden shadow-xl ${isOffered && !isExpired
                     ? "bg-gradient-to-r from-neutral-900 via-neutral-900 to-amber-950/20 border-amber-500/40 shadow-amber-500/5 ring-1 ring-amber-500/20"
                     : "bg-neutral-900/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900/80"
-                }`}
+                  }`}
               >
                 <div className="p-5 sm:p-6 space-y-4">
                   {/* Card Header */}

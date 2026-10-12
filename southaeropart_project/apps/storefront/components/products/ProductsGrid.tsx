@@ -226,11 +226,10 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-nowrap scrollbar-none max-w-full">
               <button
                 onClick={() => handleCategoryChange("all")}
-                className={`px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap shrink-0 ${
-                  selectedCategory === "all"
+                className={`px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap shrink-0 ${selectedCategory === "all"
                     ? "bg-[var(--accent-red)] text-white shadow-md shadow-[var(--accent-red)]/30"
                     : "bg-[#141414] border border-[#262626] text-[var(--text-secondary)] hover:text-white hover:border-[#3A3A3A]"
-                }`}
+                  }`}
                 id="filter-all"
               >
                 {lang === "en" ? "ALL PARTS" : "สินค้าทั้งหมด"}
@@ -239,11 +238,10 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryChange(cat.slug)}
-                  className={`px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap shrink-0 ${
-                    selectedCategory === cat.slug
+                  className={`px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider rounded-sm transition-all whitespace-nowrap shrink-0 ${selectedCategory === cat.slug
                       ? "bg-[var(--accent-red)] text-white shadow-md shadow-[var(--accent-red)]/30"
                       : "bg-[#141414] border border-[#262626] text-[var(--text-secondary)] hover:text-white hover:border-[#3A3A3A]"
-                  }`}
+                    }`}
                   id={`filter-${cat.slug}`}
                 >
                   {lang === "en" && cat.nameEn ? cat.nameEn : cat.name}
@@ -348,11 +346,10 @@ export function ProductsGrid({ initialData, categories }: ProductsGridProps) {
                     <button
                       key={pg}
                       onClick={() => handlePageChange(pg as number)}
-                      className={`w-9 h-9 flex items-center justify-center rounded-sm text-xs font-heading font-bold transition-all ${
-                        pg === data.page
+                      className={`w-9 h-9 flex items-center justify-center rounded-sm text-xs font-heading font-bold transition-all ${pg === data.page
                           ? "bg-[var(--accent-red)] text-white shadow-md shadow-[var(--accent-red)]/30"
                           : "border border-[#262626] bg-[#141414] text-[var(--text-secondary)] hover:text-white hover:border-[#3A3A3A]"
-                      }`}
+                        }`}
                     >
                       {pg}
                     </button>

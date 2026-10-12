@@ -36,7 +36,7 @@ export function MobileMenu({ isOpen, onClose, links, onOpenSearch }: MobileMenuP
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] md:hidden">
+    <div className="fixed inset-0 z-[80] lg:hidden">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -168,11 +168,10 @@ export function MobileMenu({ isOpen, onClose, links, onOpenSearch }: MobileMenuP
                 key={link.href}
                 href={link.href}
                 onClick={onClose}
-                className={`flex items-center justify-between py-3 px-4 font-heading text-sm font-bold tracking-[0.1em] uppercase transition-all rounded-sm min-h-[44px] ${
-                  isActive
+                className={`flex items-center justify-between py-3 px-4 font-heading text-sm font-bold tracking-[0.1em] uppercase transition-all rounded-sm min-h-[44px] ${isActive
                     ? "text-white bg-[#1A1A1A] border-l-2 border-[var(--accent-red)]"
                     : "text-[var(--text-secondary)] hover:text-white hover:bg-[#161616]"
-                }`}
+                  }`}
               >
                 <span>{link.label}</span>
                 {isActive && <ArrowRight size={14} className="text-[var(--accent-red)]" />}

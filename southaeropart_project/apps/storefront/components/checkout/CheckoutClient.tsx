@@ -600,19 +600,17 @@ export function CheckoutClient() {
               {/* PromptPay QR Code (Primary & Mockup) */}
               <label
                 onClick={() => setPaymentMethod("promptpay")}
-                className={`flex items-start justify-between p-4 border rounded-lg cursor-pointer transition-all ${
-                  paymentMethod === "promptpay"
+                className={`flex items-start justify-between p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "promptpay"
                     ? "border-[var(--accent-red)] bg-[#1A1112]"
                     : "border-[#222222] bg-[#161616] hover:border-[#333333]"
-                }`}
+                  }`}
               >
                 <div className="flex items-start gap-3.5">
                   <div
-                    className={`w-4 h-4 rounded-full border mt-1 flex items-center justify-center ${
-                      paymentMethod === "promptpay"
+                    className={`w-4 h-4 rounded-full border mt-1 flex items-center justify-center ${paymentMethod === "promptpay"
                         ? "border-[var(--accent-red)] bg-[var(--accent-red)]"
                         : "border-[#444444]"
-                    }`}
+                      }`}
                   >
                     {paymentMethod === "promptpay" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
@@ -634,19 +632,17 @@ export function CheckoutClient() {
               {/* Credit Card Mockup */}
               <label
                 onClick={() => setPaymentMethod("credit_card")}
-                className={`flex items-start justify-between p-4 border rounded-lg cursor-pointer transition-all ${
-                  paymentMethod === "credit_card"
+                className={`flex items-start justify-between p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "credit_card"
                     ? "border-[var(--accent-red)] bg-[#1A1112]"
                     : "border-[#222222] bg-[#161616] hover:border-[#333333]"
-                }`}
+                  }`}
               >
                 <div className="flex items-start gap-3.5">
                   <div
-                    className={`w-4 h-4 rounded-full border mt-1 flex items-center justify-center ${
-                      paymentMethod === "credit_card"
+                    className={`w-4 h-4 rounded-full border mt-1 flex items-center justify-center ${paymentMethod === "credit_card"
                         ? "border-[var(--accent-red)] bg-[var(--accent-red)]"
                         : "border-[#444444]"
-                    }`}
+                      }`}
                   >
                     {paymentMethod === "credit_card" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
