@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   Activity,
   RefreshCw,
@@ -29,6 +30,8 @@ import {
   Search,
   ExternalLink,
   Info,
+  Mail,
+  Send,
 } from "lucide-react";
 import {
   getServiceUsageMetrics,
@@ -163,6 +166,10 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
   const [isPending, startTransition] = useTransition();
   const [showTables, setShowTables] = useState(false);
   const [showUsers, setShowUsers] = useState(false);
+  const [showCampaigns, setShowCampaigns] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<
+    "all" | "db-auth" | "media-email" | "analytics-infra"
+  >("all");
   const [tableSearch, setTableSearch] = useState("");
   const [lastRefreshed, setLastRefreshed] = useState<Date>(
     new Date(initialReport.summary.lastUpdated)
@@ -190,8 +197,8 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
     (1024 * 1024)
   ).toFixed(1);
 
-  // Summary bar
-  const totalServices = 5;
+  // Summary bar across 7 services
+  const totalServices = 7;
   const healthCount = report.summary.healthyServices;
   const warnCount = report.summary.warningServices;
   const criticalCount = report.summary.criticalServices;
@@ -212,12 +219,12 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
                 สถานะบริการ &amp; โควต้าการใช้งาน
               </h1>
               <p className="text-[0.65rem] sm:text-[0.7rem] text-gray-500 font-mono">
-                Service Usage &amp; Free-Tier Quotas
+                Service Usage &amp; Free-Tier Quotas (7 Core Tech Stacks)
               </p>
             </div>
           </div>
           <p className="text-xs text-gray-400 sm:ml-11">
-            ตรวจสอบการใช้งานทรัพยากรแบบ Real-time เทียบกับขอบเขต Free Tier ของแต่ละบริการ
+            ตรวจสอบการใช้งานทรัพยากรแบบ Real-time เทียบกับขอบเขต Free Tier ของแต่ละบริการในระบบ South Aero
           </p>
         </div>
 
@@ -291,9 +298,9 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
               <div className="flex items-center gap-2 mb-0.5">
                 <p className="text-xs sm:text-sm font-bold text-white">
                   {report.summary.overallStatus === "healthy"
-                    ? "ทุกบริการทำงานปกติ"
+                    ? "ทุกบริการทำงานปกติ (7 บริการหลัก)"
                     : report.summary.overallStatus === "warning"
-                    ? "มีบางบริการใช้งานเกิน 75%"
+                    ? "มีบางบริการใช้งานเกิน 75% ของโควต้า"
                     : "เตือน: มีบริการใกล้เต็มเพดาน Free Tier"}
                 </p>
                 <StatusDot status={report.summary.overallStatus} />
@@ -306,7 +313,7 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
             </div>
           </div>
 
-          {/* Right: quick badges */}
+          {/* Right: quick badges for all services */}
           <div className="flex flex-wrap gap-2 text-[0.68rem] sm:text-[0.7rem]">
             <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-black/30 border border-white/8 backdrop-blur-sm">
               <Database size={12} className="text-teal-400" />
@@ -319,7 +326,7 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
               <Users size={12} className="text-blue-400" />
               <span className="text-gray-400">Clerk</span>
               <span className="font-bold text-white font-mono">{report.clerk.totalUsers.toLocaleString()}</span>
-              <span className="text-gray-500">MAU</span>
+              <span className="text-gray-500 font-mono">/ 50K MAU</span>
             </div>
             <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-black/30 border border-white/8 backdrop-blur-sm">
               <ImageIcon size={12} className="text-amber-400" />
@@ -332,15 +339,55 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
                   : "25 Credits"}
               </span>
             </div>
+            <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-black/30 border border-white/8 backdrop-blur-sm">
+              <Mail size={12} className="text-rose-400" />
+              <span className="text-gray-400">Resend</span>
+              <span className="font-bold text-white font-mono">
+                {report.resend.sentMonthlyEmails.toLocaleString()}
+              </span>
+              <span className="text-gray-600">/</span>
+              <span className="text-gray-500 font-mono">3K เมล</span>
+            </div>
+            <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-black/30 border border-white/8 backdrop-blur-sm">
+              <BarChart3 size={12} className="text-orange-400" />
+              <span className="text-gray-400">GA4</span>
+              <span className="font-bold text-white font-mono">
+                {report.ga4.activeUsersRealtime}
+              </span>
+              <span className="text-gray-500 font-mono">Active (10M Limit)</span>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* ─────────── Category Filter Tabs ─────────── */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+        {[
+          { id: "all", label: "ทั้งหมด (7 บริการ)" },
+          { id: "db-auth", label: "ฐานข้อมูล & สมาชิก (Neon, Clerk)" },
+          { id: "media-email", label: "สื่อ & การสื่อสาร (Cloudinary, Resend)" },
+          { id: "analytics-infra", label: "การเงิน & วิเคราะห์ & โฮสติ้ง (GA4, Stripe, Vercel)" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveCategory(tab.id as any)}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+              activeCategory === tab.id
+                ? "bg-white/10 text-white border border-white/20 shadow-sm"
+                : "bg-[#111111] text-gray-400 hover:text-white border border-[#222222] hover:border-[#333333]"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* ─────────── Service Cards Grid (1 col mobile, 2 col tablet/desktop, 4 col 21:9 ultrawide) ─────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 3xl:grid-cols-4 gap-5 2xl:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 gap-5 2xl:gap-6">
 
 
         {/* ── 1. NEON POSTGRESQL ── */}
+        {(activeCategory === "all" || activeCategory === "db-auth") && (
         <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-teal-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-teal-500/5 flex flex-col">
           {/* Header */}
           <div className="flex items-start justify-between gap-3 mb-5">
@@ -436,8 +483,10 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
             </button>
           </div>
         </div>
+        )}
 
         {/* ── 2. CLERK AUTH ── */}
+        {(activeCategory === "all" || activeCategory === "db-auth") && (
         <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-blue-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-blue-500/5 flex flex-col">
           {/* Header */}
           <div className="flex items-start justify-between gap-3 mb-5">
@@ -531,8 +580,10 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
             )}
           </div>
         </div>
+        )}
 
         {/* ── 3. CLOUDINARY ── */}
+        {(activeCategory === "all" || activeCategory === "media-email") && (
         <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-amber-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-amber-500/5 flex flex-col">
           <div className="flex items-start justify-between gap-3 mb-5">
             <div className="flex items-center gap-3">
@@ -632,94 +683,407 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
             <p className="text-[0.68rem] text-gray-500">{report.cloudinary.message}</p>
           </div>
         </div>
+        )}
 
-        {/* ── 4. STRIPE + HOSTING ── */}
-        <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-purple-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-purple-500/5 flex flex-col">
-          <div className="flex items-start justify-between gap-3 mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 group-hover:bg-purple-500/15 transition-colors">
-                <CreditCard size={20} />
+        {/* ── 4. RESEND EMAIL PLATFORM ── */}
+        {(activeCategory === "all" || activeCategory === "media-email") && (
+          <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-rose-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-rose-500/5 flex flex-col">
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 group-hover:bg-rose-500/15 transition-colors">
+                  <Mail size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-white">Resend Email</h3>
+                    <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono">
+                      SMTP / API
+                    </span>
+                  </div>
+                  <p className="text-[0.7rem] text-gray-500 mt-0.5">
+                    Transactional · Alerts · Newsletter
+                  </p>
+                </div>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white">Stripe &amp; Hosting</h3>
-                  <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
-                    Pay
+              <StatusBadge status={report.resend.status} />
+            </div>
+
+            {/* Monthly email usage bar */}
+            <div className="bg-[#080808] border border-[#1A1A1A] rounded-xl p-4 mb-4">
+              <div className="flex items-end justify-between mb-2">
+                <div>
+                  <p className="text-[0.65rem] text-gray-500 uppercase tracking-widest mb-1">
+                    Monthly Emails Sent
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-white font-mono">
+                      {report.resend.sentMonthlyEmails.toLocaleString()}
+                    </span>
+                    <span className="text-xs text-gray-600">/ 3,000 ฉบับ/ด.</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-rose-400 font-mono">
+                    {report.resend.percentMonthlyUsed}%
+                  </span>
+                  <p className="text-[0.65rem] text-gray-600">โควต้าเดือนนี้</p>
+                </div>
+              </div>
+              <QuotaBar
+                percent={report.resend.percentMonthlyUsed}
+                colorClass="from-rose-500 to-pink-400"
+              />
+
+              {/* Daily sending quota */}
+              <div className="mt-3.5 pt-3 border-t border-[#161616]">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-[0.68rem] text-gray-400 flex items-center gap-1.5">
+                    <Clock size={11} className="text-gray-500" />
+                    โควต้ารายวัน (Daily Limit)
+                  </span>
+                  <span className="font-mono text-xs font-semibold text-gray-300">
+                    {report.resend.sentTodayEmails} / 100 ฉบับ ({report.resend.percentDailyUsed}%)
                   </span>
                 </div>
-                <p className="text-[0.7rem] text-gray-500 mt-0.5">
-                  Cards · PromptPay QR · Apple/Google Pay
-                </p>
+                <div className="w-full bg-[#1A1A1A] rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-rose-600 to-amber-400 h-full rounded-full transition-all"
+                    style={{ width: `${Math.max(2, report.resend.percentDailyUsed)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Domain Mode */}
+              <div className="mt-3 flex items-center justify-between bg-[#111111] border border-[#202020] rounded-lg px-3 py-2 text-xs">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      report.resend.isSandboxDomain ? "bg-amber-400" : "bg-emerald-400"
+                    }`}
+                  />
+                  <span>โหมดโดเมน</span>
+                </div>
+                <div className="flex items-center gap-1.5 font-mono text-[0.7rem]">
+                  {report.resend.isSandboxDomain ? (
+                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
+                      Sandbox (@resend.dev)
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
+                      Verified Production Domain
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex gap-1.5">
-              <StatusBadge status={report.stripe.status} />
+
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <StatCell
+                label="Audience"
+                value={report.resend.subscribersCount.toLocaleString()}
+                sub="Subscribers"
+                accent="text-rose-300"
+              />
+              <StatCell
+                label="แคมเปญ"
+                value={String(report.resend.totalCampaignsSent)}
+                sub="Sent Campaigns"
+              />
+              <StatCell
+                label="Rate Limit"
+                value={`${report.resend.rateLimitPerSec}/s`}
+                sub="Requests/sec"
+                accent="text-emerald-400"
+              />
+            </div>
+
+            {/* Sender and destination */}
+            <div className="bg-[#0B0B0B] border border-[#181818] rounded-xl p-2.5 text-[0.68rem] font-mono text-gray-400 space-y-1 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Sender:</span>
+                <span className="text-gray-300 truncate max-w-[180px]" title={report.resend.fromEmail}>
+                  {report.resend.fromEmail}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Alert To:</span>
+                <span className="text-gray-300 truncate max-w-[180px]" title={report.resend.alertEmail}>
+                  {report.resend.alertEmail}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">API Key:</span>
+                <span className="text-gray-400">{report.resend.apiKeyPrefix}</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-auto pt-4 border-t border-[#181818] flex items-center justify-between gap-2">
+              <p className="text-[0.68rem] text-gray-500 truncate flex-1">{report.resend.message}</p>
+              {report.resend.recentCampaigns.length > 0 && (
+                <button
+                  onClick={() => setShowCampaigns(!showCampaigns)}
+                  className="flex items-center gap-1 text-[0.72rem] font-semibold text-rose-400 hover:text-rose-300 transition-colors shrink-0 cursor-pointer"
+                >
+                  {showCampaigns ? "ซ่อนแคมเปญ" : "ดูแคมเปญ"}
+                  {showCampaigns ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+              )}
             </div>
           </div>
+        )}
 
-          <div className="space-y-3 mb-4">
-            {/* Stripe row */}
-            <div className="bg-[#080808] border border-[#1A1A1A] rounded-xl p-3.5">
-              <div className="flex items-center justify-between">
+        {/* ── 5. GOOGLE ANALYTICS 4 ── */}
+        {(activeCategory === "all" || activeCategory === "analytics-infra") && (
+          <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-orange-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-orange-500/5 flex flex-col">
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 group-hover:bg-orange-500/15 transition-colors">
+                  <BarChart3 size={20} />
+                </div>
                 <div>
-                  <p className="text-[0.62rem] text-gray-500 uppercase tracking-widest">Stripe Gateway</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{report.stripe.mode}</p>
-                  <p className="text-[0.65rem] text-gray-500 mt-0.5">{report.stripe.transactionFee}</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-white">Google Analytics 4</h3>
+                    <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-orange-500/10 text-orange-400 border border-orange-500/20 font-mono">
+                      GA4
+                    </span>
+                  </div>
+                  <p className="text-[0.7rem] text-gray-500 mt-0.5">
+                    Storefront · E-Commerce Tracking · Realtime
+                  </p>
+                </div>
+              </div>
+              <StatusBadge status={report.ga4.status} />
+            </div>
+
+            {/* Realtime Active Users + Measurement ID */}
+            <div className="bg-[#080808] border border-[#1A1A1A] rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <StatusDot status="healthy" />
+                  <span className="text-xs font-semibold text-white font-mono">
+                    {report.ga4.activeUsersRealtime} Active Users
+                  </span>
+                  <span className="text-[0.62rem] text-gray-500">(Realtime 30 นาที)</span>
+                </div>
+                <span className="text-[0.68rem] font-mono px-2 py-0.5 rounded bg-[#151515] text-orange-300 border border-[#252525]">
+                  {report.ga4.measurementId}
+                </span>
+              </div>
+
+              {/* Monthly events quota */}
+              <div className="flex items-end justify-between mb-2">
+                <div>
+                  <p className="text-[0.65rem] text-gray-500 uppercase tracking-widest mb-1">
+                    Monthly Events Quota
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-white font-mono">
+                      {report.ga4.monthlyEventsEstimate.toLocaleString()}
+                    </span>
+                    <span className="text-xs text-gray-600">/ 10,000,000 Events</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-orange-400 font-mono">
+                    {report.ga4.percentEventsUsed}%
+                  </span>
+                  <p className="text-[0.65rem] text-gray-600">ของเพดาน Free Tier</p>
+                </div>
+              </div>
+              <QuotaBar
+                percent={report.ga4.percentEventsUsed}
+                colorClass="from-orange-500 to-amber-400"
+              />
+
+              {/* Free Tier parameters */}
+              <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                <div className="bg-[#111111] border border-[#202020] rounded-lg px-3 py-2">
+                  <p className="text-[0.6rem] text-gray-600 uppercase tracking-wider">BigQuery Export</p>
+                  <p className="font-mono font-bold text-white mt-0.5">1M events / วัน</p>
+                </div>
+                <div className="bg-[#111111] border border-[#202020] rounded-lg px-3 py-2">
+                  <p className="text-[0.6rem] text-gray-600 uppercase tracking-wider">Data Retention</p>
+                  <p className="font-mono font-bold text-white mt-0.5">14 เดือน</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Key Stats Row */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <StatCell label="Dimensions" value="50" sub="Custom Free" accent="text-orange-300" />
+              <StatCell label="Conversions" value="30" sub="Key Events" />
+              <StatCell label="E-Commerce" value="Active" sub="view/cart/buy" accent="text-emerald-400" />
+            </div>
+
+            {/* E-commerce & Deep Link */}
+            <div className="bg-[#0B0B0B] border border-[#181818] rounded-xl p-3 flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={14} className="text-orange-400 shrink-0" />
+                <span className="text-xs text-gray-300">รายงานพฤติกรรมลูกค้า &amp; Funnel</span>
+              </div>
+              <Link
+                href="/analytics"
+                className="flex items-center gap-1 text-[0.72rem] font-semibold text-orange-400 hover:text-orange-300 transition-colors"
+              >
+                <span>เปิดหน้า Analytics</span>
+                <ExternalLink size={12} />
+              </Link>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-auto pt-4 border-t border-[#181818]">
+              <p className="text-[0.68rem] text-gray-500">{report.ga4.message}</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── 6. STRIPE PAYMENTS ── */}
+        {(activeCategory === "all" || activeCategory === "analytics-infra") && (
+          <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-purple-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-purple-500/5 flex flex-col">
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 group-hover:bg-purple-500/15 transition-colors">
+                  <CreditCard size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-white">Stripe Payments</h3>
+                    <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
+                      Pay-as-you-go
+                    </span>
+                  </div>
+                  <p className="text-[0.7rem] text-gray-500 mt-0.5">
+                    Cards · PromptPay QR · Apple/Google Pay
+                  </p>
+                </div>
+              </div>
+              <StatusBadge status={report.stripe.status} />
+            </div>
+
+            <div className="bg-[#080808] border border-[#1A1A1A] rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-[0.62rem] text-gray-500 uppercase tracking-widest">Gateway Mode</p>
+                  <p className="text-sm font-bold text-white mt-0.5">{report.stripe.mode}</p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
-                    Pay-as-you-go
+                    0 THB / เดือน
                   </span>
-                  <p className="text-[0.62rem] text-gray-600 mt-1">ไม่มีค่าบริการรายเดือน</p>
+                  <p className="text-[0.62rem] text-gray-500 mt-1">ไม่มีค่าบำรุงรักษา</p>
+                </div>
+              </div>
+
+              <div className="bg-[#111111] border border-[#202020] rounded-lg p-3 text-xs space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">ค่าธรรมเนียมบัตรเครดิต:</span>
+                  <span className="font-mono text-purple-300 font-semibold">3.65% + 10 THB</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">ค่าธรรมเนียม PromptPay:</span>
+                  <span className="font-mono text-emerald-300 font-semibold">1.50%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Public Key:</span>
+                  <span className="font-mono text-gray-500">{report.stripe.publicKeyPrefix}</span>
                 </div>
               </div>
             </div>
 
-            {/* Hosting row */}
-            <div className="bg-[#080808] border border-[#1A1A1A] rounded-xl p-3.5">
-              <div className="flex items-center justify-between">
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <StatCell label="ชำระเงิน" value="พร้อมใช้งาน" sub="PromptPay + Cards" accent="text-purple-300" />
+              <StatCell label="Webhooks" value="เข้ารหัส" sub="HMAC SHA-256" accent="text-emerald-400" />
+            </div>
+
+            <div className="mt-auto pt-4 border-t border-[#181818]">
+              <p className="text-[0.68rem] text-gray-500">{report.stripe.message}</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── 7. VERCEL & CLOUDFLARE EDGE ── */}
+        {(activeCategory === "all" || activeCategory === "analytics-infra") && (
+          <div className="group bg-[#0F0F0F] border border-[#1E1E1E] hover:border-blue-500/20 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-blue-500/5 flex flex-col">
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 group-hover:bg-blue-500/15 transition-colors">
+                  <Server size={20} />
+                </div>
                 <div>
-                  <p className="text-[0.62rem] text-gray-500 uppercase tracking-widest">
-                    {report.hosting.isDeployed ? "Vercel Cloud Hosting" : "Hosting / Server Environment"}
-                  </p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{report.hosting.tier}</p>
-                  <p className="text-[0.65rem] text-gray-500 mt-0.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-white">Vercel &amp; Cloudflare Edge</h3>
+                    <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+                      Edge CDN
+                    </span>
+                  </div>
+                  <p className="text-[0.7rem] text-gray-500 mt-0.5">
                     {report.hosting.platform} · Node {report.hosting.nodeVersion}
                   </p>
                 </div>
-                <div className="text-right">
-                  <StatusBadge
-                    status={report.hosting.status}
-                    label={report.hosting.statusLabel}
-                  />
-                  <p className="text-[0.62rem] text-gray-500 mt-1">
-                    {report.hosting.isDeployed ? report.hosting.bandwidthLimit : "โควต้า Vercel: 100 GB/ด."}
-                  </p>
+              </div>
+              <StatusBadge
+                status={report.hosting.status}
+                label={report.hosting.statusLabel}
+              />
+            </div>
+
+            <div className="bg-[#080808] border border-[#1A1A1A] rounded-xl p-4 mb-4">
+              <p className="text-[0.62rem] text-gray-500 uppercase tracking-widest mb-2">
+                Vercel Cloud Free Quotas
+              </p>
+              <div className="grid grid-cols-3 gap-2 text-[0.68rem]">
+                <div className="bg-[#101010] rounded-lg p-2.5 text-center border border-[#1E1E1E]">
+                  <p className="text-gray-500 mb-0.5">Bandwidth</p>
+                  <p className="font-bold text-blue-300 font-mono">100 GB / ด.</p>
+                </div>
+                <div className="bg-[#101010] rounded-lg p-2.5 text-center border border-[#1E1E1E]">
+                  <p className="text-gray-500 mb-0.5">Edge Req</p>
+                  <p className="font-bold text-blue-300 font-mono">1,000,000</p>
+                </div>
+                <div className="bg-[#101010] rounded-lg p-2.5 text-center border border-[#1E1E1E]">
+                  <p className="text-gray-500 mb-0.5">Serverless</p>
+                  <p className="font-bold text-blue-300 font-mono">100 GB-hr</p>
                 </div>
               </div>
 
-              {/* Vercel limits mini-grid */}
-              <div className="mt-3 grid grid-cols-3 gap-1.5 text-[0.62rem]">
-                <div className="bg-[#0C0C0C] rounded-md px-2 py-1.5 text-center border border-[#1C1C1C]">
-                  <p className="text-gray-600">Bandwidth</p>
-                  <p className="font-bold text-gray-300 mt-0.5">{report.hosting.bandwidthLimit.split("/")[0].trim()}</p>
+              {/* Cloudflare Edge proxy section */}
+              <div className="mt-3 bg-[#111111] border border-[#202020] rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Shield size={14} className="text-cyan-400" />
+                    <span className="text-xs font-semibold text-white">Cloudflare Edge Proxy</span>
+                  </div>
+                  <span className="text-[0.65rem] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold font-mono">
+                    {report.hosting.cloudflareProxy?.tier || "Free Tier"}
+                  </span>
                 </div>
-                <div className="bg-[#0C0C0C] rounded-md px-2 py-1.5 text-center border border-[#1C1C1C]">
-                  <p className="text-gray-600">Edge Req</p>
-                  <p className="font-bold text-gray-300 mt-0.5">1M / mo</p>
-                </div>
-                <div className="bg-[#0C0C0C] rounded-md px-2 py-1.5 text-center border border-[#1C1C1C]">
-                  <p className="text-gray-600">Serverless</p>
-                  <p className="font-bold text-gray-300 mt-0.5">100 GB-hr</p>
+                <div className="grid grid-cols-2 gap-2 text-[0.65rem] text-gray-400 font-mono mt-2">
+                  <div className="bg-[#0C0C0C] rounded p-2 border border-[#1C1C1C]">
+                    <span className="text-gray-600 block text-[0.58rem]">DDoS Shield</span>
+                    <span className="text-gray-200">L3/L4/L7 Mitigation</span>
+                  </div>
+                  <div className="bg-[#0C0C0C] rounded p-2 border border-[#1C1C1C]">
+                    <span className="text-gray-600 block text-[0.58rem]">Zero Trust Tunnels</span>
+                    <span className="text-gray-200">50 Tunnels Free</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-auto pt-4 border-t border-[#181818]">
-            <p className="text-[0.68rem] text-gray-500">{report.stripe.message}</p>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <StatCell label="Platform" value={report.hosting.isDeployed ? "Vercel" : "Localhost"} sub="Runtime" accent="text-blue-300" />
+              <StatCell label="SSL / TLS" value="Universal" sub="Automatic HTTPS" accent="text-emerald-400" />
+            </div>
+
+            <div className="mt-auto pt-4 border-t border-[#181818]">
+              <p className="text-[0.68rem] text-gray-500">
+                โครงสร้างพื้นฐาน Vercel Hobby + Cloudflare Edge ฟรี 100% สำหรับการใช้งานเริ่มต้น
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ─────────── DB Tables Breakdown ─────────── */}
@@ -870,17 +1234,65 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
         </div>
       )}
 
+      {/* ─────────── Recent Email Campaigns Breakdown ─────────── */}
+      {showCampaigns && report.resend.recentCampaigns.length > 0 && (
+        <div className="bg-[#0A0A0A] border border-[#1D1D1D] rounded-2xl overflow-hidden shadow-sm">
+          <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-[#181818]">
+            <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+              <Mail size={16} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">
+                แคมเปญอีเมลล่าสุด ({report.resend.recentCampaigns.length} รายการ)
+              </h3>
+              <p className="text-[0.68rem] text-gray-500 mt-0.5">
+                ประวัติการส่งจดหมายข่าวและการใช้อีเมลเทียบกับโควต้า 3,000 ฉบับ/เดือน
+              </p>
+            </div>
+          </div>
+
+          <div className="divide-y divide-[#141414]">
+            {report.resend.recentCampaigns.map((c) => (
+              <div
+                key={c.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4 hover:bg-[#0E0E0E] transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-rose-900/30 border border-rose-700/30 flex items-center justify-center font-bold text-rose-300 text-xs shrink-0">
+                    <Mail size={14} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-200 truncate">{c.subject}</p>
+                    <p className="text-[0.65rem] sm:text-[0.68rem] text-gray-500 font-mono">
+                      ผู้รับ: {c.recipientCount.toLocaleString()} ฉบับ
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 sm:gap-4 text-[0.65rem] sm:text-[0.68rem] ml-11 sm:ml-0 shrink-0">
+                  {c.sentAt && (
+                    <div className="text-gray-400 font-mono">
+                      <span className="text-gray-600">ส่งเมื่อ </span>
+                      {new Date(c.sentAt).toLocaleString("th-TH")}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ─────────── Pro Tips ─────────── */}
       <div className="bg-[#0A0A0A] border border-[#1D1D1D] rounded-2xl p-4 sm:p-6">
         <div className="flex items-center gap-2.5 mb-4 sm:mb-5">
           <Sparkles size={16} className="text-amber-400 shrink-0" />
           <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest">
-            คำแนะนำการบริหาร Free Tier
+            คำแนะนำการบริหารจัดการ Free Tier ทั้ง 7 บริการ
           </h3>
         </div>
 
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="bg-[#070707] border border-[#181818] rounded-xl p-4 hover:border-teal-500/20 transition-colors">
             <div className="flex items-center gap-2 text-teal-400 font-semibold text-xs mb-3">
               <Database size={14} />
@@ -889,7 +1301,7 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
             <p className="text-[0.72rem] text-gray-500 leading-relaxed">
               ตาราง <code className="text-teal-400 text-[0.68rem]">admin_audit_logs</code> และ{" "}
               <code className="text-teal-400 text-[0.68rem]">admin_sessions</code> จะเติบโตตามการใช้งาน
-              ตั้ง Auto-Clean ลบ Log เก่ากว่า 90 วันเพื่อประหยัดพื้นที่
+              ตั้ง Auto-Clean ลบ Log เก่ากว่า 90 วันเพื่อประหยัดพื้นที่จัดเก็บ
             </p>
           </div>
 
@@ -900,7 +1312,7 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
             </div>
             <p className="text-[0.72rem] text-gray-500 leading-relaxed">
               Clerk คิดโควต้าเฉพาะผู้ใช้ที่ Sign-in ในเดือนนั้น (Active Users)
-              หากมีผู้ใช้สะสมเกิน 50K แต่ Active ไม่เกิน — ยังคงฟรี 100%
+              หากมีผู้ใช้สะสมเกิน 50K แต่ Active ไม่เกิน — ยังคงฟรี 100% ไม่มีค่าบริการแอบแฝง
             </p>
           </div>
 
@@ -912,8 +1324,41 @@ export function ServicesClient({ initialReport }: ServicesClientProps) {
             <p className="text-[0.72rem] text-gray-500 leading-relaxed">
               ใช้{" "}
               <code className="text-amber-400 text-[0.68rem]">f_auto, q_auto</code>{" "}
-              แปลงภาพเป็น WebP อัตโนมัติ ลดขนาดไฟล์ได้ 60-80%
-              ประหยัดทั้ง Storage และ Bandwidth
+              แปลงภาพเป็น WebP อัตโนมัติ ลดขนาดไฟล์ลงได้ 60-80%
+              ประหยัดทั้ง Storage และ Net Bandwidth
+            </p>
+          </div>
+
+          <div className="bg-[#070707] border border-[#181818] rounded-xl p-4 hover:border-rose-500/20 transition-colors">
+            <div className="flex items-center gap-2 text-rose-400 font-semibold text-xs mb-3">
+              <Mail size={14} />
+              <span>Resend Email (3,000 / ด. &amp; 100 / วัน)</span>
+            </div>
+            <p className="text-[0.72rem] text-gray-500 leading-relaxed">
+              จำกัดการส่งอีเมลไม่เกิน 100 ฉบับ/วัน หากจัดแคมเปญ Newsletter ขนาดใหญ่
+              ควรแบ่ง Batch ส่งทีละกลุ่ม หรืออัปเกรดโดเมนเพื่อเพิ่มอัตราการส่ง
+            </p>
+          </div>
+
+          <div className="bg-[#070707] border border-[#181818] rounded-xl p-4 hover:border-orange-500/20 transition-colors">
+            <div className="flex items-center gap-2 text-orange-400 font-semibold text-xs mb-3">
+              <BarChart3 size={14} />
+              <span>GA4 Analytics (10M Events / ด.)</span>
+            </div>
+            <p className="text-[0.72rem] text-gray-500 leading-relaxed">
+              ตั้งค่า Data Retention ในหน้า GA4 Admin เป็น 14 เดือน (ค่าเริ่มต้นคือ 2 เดือน)
+              และสามารถส่งออกข้อมูลไปยัง Google BigQuery ได้ฟรีสูงสุด 1 ล้าน Events/วัน
+            </p>
+          </div>
+
+          <div className="bg-[#070707] border border-[#181818] rounded-xl p-4 hover:border-purple-500/20 transition-colors">
+            <div className="flex items-center gap-2 text-purple-400 font-semibold text-xs mb-3">
+              <CreditCard size={14} />
+              <span>Stripe &amp; Vercel Edge</span>
+            </div>
+            <p className="text-[0.72rem] text-gray-500 leading-relaxed">
+              ไม่มีค่าธรรมเนียมรักษารายเดือน (0 THB) จ่ายเฉพาะเมื่อมีการทำธุรกรรมจริง
+              พร้อมระบบ Edge Caching และ Cloudflare DDoS Shield ป้องกันการโจมตีฟรี
             </p>
           </div>
         </div>

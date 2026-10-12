@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import type { CartableProduct } from "@/components/products/AddToCartButton";
+import { trackAddToCart, trackRemoveFromCart } from "@/lib/analytics";
 
 export type CartItem = {
   id: string;
@@ -119,11 +120,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
         },
       ];
     });
+    trackAddToCart(
+      {
+        id: normalizedProduct.id,
+        name: normalizedProduct.name,
+        price: normalizedProduct.price,
+        variant,
+        brand: normalizedProduct.brandName || normalizedProduct.brand || "South Aero",
+      },
+      1,
+    );
     setIsOpen(true);
   }, []);
 
   const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (target) {
+        trackRemoveFromCart(
+          {
+            id: target.product.id,
+            name: target.product.name,
+            price: target.product.price,
+            variant: target.variant,
+            brand: target.product.brandName || target.product.brand || "South Aero",
+          },
+          target.quantity,
+        );
+      }
+      return prev.filter((item) => item.id !== id);
+    });
   }, []);
 
   const updateQuantity = useCallback((id: string, quantity: number) => {

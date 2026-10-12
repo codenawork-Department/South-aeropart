@@ -33,6 +33,7 @@ export const storefrontBaseSchema = z.object({
   TRUSTED_PROXY: z.string().optional(),
   NEXT_PUBLIC_STOREFRONT_URL: z.string().default("http://localhost:3000"),
   ADMIN_ALERT_EMAIL: z.string().email().optional(),
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
 });
 
 export const storefrontEnvSchema = storefrontBaseSchema.superRefine((data, ctx) => {
@@ -130,6 +131,10 @@ export const adminBaseSchema = z.object({
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   TRUSTED_PROXY: z.string().optional(),
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
+  GA_PROPERTY_ID: z.string().optional(),
+  GA_CLIENT_EMAIL: z.string().optional(),
+  GA_PRIVATE_KEY: z.string().optional(),
 });
 
 export const adminEnvSchema = adminBaseSchema.superRefine((data, ctx) => {

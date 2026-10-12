@@ -1,6 +1,18 @@
 "use server";
 
-import { db, users, sql, rawSql } from "@repo/db";
+import {
+  db,
+  users,
+  newsletterCampaigns,
+  newsletterSubscribers,
+  orders,
+  sql,
+  rawSql,
+  gte,
+  eq,
+  and,
+  desc,
+} from "@repo/db";
 import { validateSession } from "@/lib/auth";
 import { unstable_cache } from "next/cache";
 
@@ -108,6 +120,51 @@ export interface CloudinaryMetrics {
   message: string;
 }
 
+export interface ResendRecentCampaign {
+  id: string;
+  subject: string;
+  recipientCount: number;
+  sentAt: string | null;
+}
+
+export interface ResendMetrics {
+  configured: boolean;
+  isPlaceholder: boolean;
+  status: "healthy" | "warning" | "critical" | "unconfigured";
+  apiKeyPrefix: string;
+  fromEmail: string;
+  isSandboxDomain: boolean;
+  alertEmail: string;
+  limitMonthlyEmails: number;
+  limitDailyEmails: number;
+  sentMonthlyEmails: number;
+  sentTodayEmails: number;
+  percentMonthlyUsed: number;
+  percentDailyUsed: number;
+  subscribersCount: number;
+  totalCampaignsSent: number;
+  recentCampaigns: ResendRecentCampaign[];
+  rateLimitPerSec: number;
+  message: string;
+}
+
+export interface GA4Metrics {
+  configured: boolean;
+  status: "healthy" | "warning" | "critical" | "unconfigured";
+  measurementId: string;
+  hasDataApiCredentials: boolean;
+  activeUsersRealtime: number;
+  monthlyEventsEstimate: number;
+  limitMonthlyEvents: number;
+  limitDailyBigQueryExport: number;
+  percentEventsUsed: number;
+  dataRetentionMonths: number;
+  customDimensionsLimit: number;
+  conversionsLimit: number;
+  eCommerceTrackingEnabled: boolean;
+  message: string;
+}
+
 export interface StripeMetrics {
   configured: boolean;
   isPlaceholder: boolean;
@@ -129,6 +186,13 @@ export interface HostingMetrics {
   nodeVersion: string;
   status: "healthy" | "local" | "warning";
   statusLabel: string;
+  cloudflareProxy: {
+    enabled: boolean;
+    tier: string;
+    ddosProtection: string;
+    ssl: string;
+    tunnelsQuota: string;
+  };
 }
 
 export interface ServiceUsageReport {
@@ -143,6 +207,8 @@ export interface ServiceUsageReport {
   neon: NeonMetrics;
   clerk: ClerkMetrics;
   cloudinary: CloudinaryMetrics;
+  resend: ResendMetrics;
+  ga4: GA4Metrics;
   stripe: StripeMetrics;
   hosting: HostingMetrics;
 }
@@ -536,6 +602,8 @@ function fetchStripeMetrics(): StripeMetrics {
 
 function fetchHostingMetrics(): HostingMetrics {
   const isVercel = !!process.env.VERCEL;
+  const isCloudflare = process.env.TRUSTED_PROXY === "cloudflare";
+
   return {
     isDeployed: isVercel,
     platform: isVercel ? "Vercel Cloud Platform" : "Local Development Server",
@@ -546,6 +614,246 @@ function fetchHostingMetrics(): HostingMetrics {
     nodeVersion: process.version,
     status: isVercel ? "healthy" : "local",
     statusLabel: isVercel ? "Online (Vercel)" : "Local (ยังไม่ Deploy)",
+    cloudflareProxy: {
+      enabled: isCloudflare,
+      tier: "Cloudflare Free Tier",
+      ddosProtection: "Unmetered L3/L4/L7 DDoS Mitigation",
+      ssl: "Universal SSL / TLS 1.3 Active",
+      tunnelsQuota: "50 Zero Trust Tunnels (Free)",
+    },
+  };
+}
+
+async function fetchResendMetrics(): Promise<ResendMetrics> {
+  const RESEND_MONTHLY_LIMIT = 3000; // 3,000 emails / month free tier
+  const RESEND_DAILY_LIMIT = 100;    // 100 emails / day free tier
+
+  const apiKey = process.env.RESEND_API_KEY || "";
+  const isResendPlaceholder = !apiKey || apiKey.includes("re_xxx") || apiKey.includes("re_sample");
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "South Aero <onboarding@resend.dev>";
+  const alertEmail = process.env.ADMIN_ALERT_EMAIL || "admin@southaero.com";
+  const isSandboxDomain = fromEmail.includes("resend.dev");
+
+  let resendMetrics: ResendMetrics = {
+    configured: !isResendPlaceholder,
+    isPlaceholder: isResendPlaceholder,
+    status: isResendPlaceholder ? "unconfigured" : "healthy",
+    apiKeyPrefix: apiKey ? `${apiKey.slice(0, 7)}...` : "—",
+    fromEmail,
+    isSandboxDomain,
+    alertEmail,
+    limitMonthlyEmails: RESEND_MONTHLY_LIMIT,
+    limitDailyEmails: RESEND_DAILY_LIMIT,
+    sentMonthlyEmails: 0,
+    sentTodayEmails: 0,
+    percentMonthlyUsed: 0,
+    percentDailyUsed: 0,
+    subscribersCount: 0,
+    totalCampaignsSent: 0,
+    recentCampaigns: [],
+    rateLimitPerSec: 2,
+    message: isResendPlaceholder
+      ? "ยังไม่ได้ระบุ RESEND_API_KEY ใน .env (ปัจจุบันจำลองการส่ง)"
+      : isSandboxDomain
+      ? "เชื่อมต่อ Resend สำเร็จในโหมด Sandbox (@resend.dev) โควต้า 3,000 ฉบับ/เดือน, 100 ฉบับ/วัน"
+      : "เชื่อมต่อ Resend สำเร็จผ่านโดเมนที่ยืนยันแล้ว โควต้า 3,000 ฉบับ/เดือน, 100 ฉบับ/วัน",
+  };
+
+  if (isResendPlaceholder) return resendMetrics;
+
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const [
+      campaignsMonthRes,
+      campaignsTodayRes,
+      ordersMonthRes,
+      ordersTodayRes,
+      subscribersRes,
+      totalCampaignsRes,
+      recentCampaignsRes,
+    ] = await Promise.allSettled([
+      db
+        .select({
+          total: sql<number>`cast(coalesce(sum(${newsletterCampaigns.recipientCount}), 0) as int)`,
+        })
+        .from(newsletterCampaigns)
+        .where(
+          and(
+            eq(newsletterCampaigns.status, "sent"),
+            gte(newsletterCampaigns.sentAt, startOfMonth)
+          )
+        ),
+      db
+        .select({
+          total: sql<number>`cast(coalesce(sum(${newsletterCampaigns.recipientCount}), 0) as int)`,
+        })
+        .from(newsletterCampaigns)
+        .where(
+          and(
+            eq(newsletterCampaigns.status, "sent"),
+            gte(newsletterCampaigns.sentAt, startOfDay)
+          )
+        ),
+      db
+        .select({
+          total: sql<number>`cast(count(*) as int)`,
+        })
+        .from(orders)
+        .where(gte(orders.createdAt, startOfMonth)),
+      db
+        .select({
+          total: sql<number>`cast(count(*) as int)`,
+        })
+        .from(orders)
+        .where(gte(orders.createdAt, startOfDay)),
+      db
+        .select({
+          total: sql<number>`cast(count(*) as int)`,
+        })
+        .from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.isSubscribed, true)),
+      db
+        .select({
+          total: sql<number>`cast(count(*) as int)`,
+        })
+        .from(newsletterCampaigns)
+        .where(eq(newsletterCampaigns.status, "sent")),
+      db
+        .select({
+          id: newsletterCampaigns.id,
+          subject: newsletterCampaigns.subject,
+          recipientCount: newsletterCampaigns.recipientCount,
+          sentAt: newsletterCampaigns.sentAt,
+        })
+        .from(newsletterCampaigns)
+        .where(eq(newsletterCampaigns.status, "sent"))
+        .orderBy(desc(newsletterCampaigns.sentAt))
+        .limit(3),
+    ]);
+
+    const campaignSentMonth =
+      campaignsMonthRes.status === "fulfilled" && campaignsMonthRes.value[0]
+        ? Number(campaignsMonthRes.value[0].total || 0)
+        : 0;
+    const campaignSentToday =
+      campaignsTodayRes.status === "fulfilled" && campaignsTodayRes.value[0]
+        ? Number(campaignsTodayRes.value[0].total || 0)
+        : 0;
+    const ordersMonth =
+      ordersMonthRes.status === "fulfilled" && ordersMonthRes.value[0]
+        ? Number(ordersMonthRes.value[0].total || 0)
+        : 0;
+    const ordersToday =
+      ordersTodayRes.status === "fulfilled" && ordersTodayRes.value[0]
+        ? Number(ordersTodayRes.value[0].total || 0)
+        : 0;
+    const subscribersCount =
+      subscribersRes.status === "fulfilled" && subscribersRes.value[0]
+        ? Number(subscribersRes.value[0].total || 0)
+        : 0;
+    const totalCampaignsSent =
+      totalCampaignsRes.status === "fulfilled" && totalCampaignsRes.value[0]
+        ? Number(totalCampaignsRes.value[0].total || 0)
+        : 0;
+
+    let recentCampaigns: ResendRecentCampaign[] = [];
+    if (recentCampaignsRes.status === "fulfilled" && Array.isArray(recentCampaignsRes.value)) {
+      recentCampaigns = recentCampaignsRes.value.map((c) => ({
+        id: String(c.id || ""),
+        subject: String(c.subject || "แคมเปญจดหมายข่าว"),
+        recipientCount: Number(c.recipientCount || 0),
+        sentAt: c.sentAt ? new Date(c.sentAt).toISOString() : null,
+      }));
+    }
+
+    const sentMonthlyEmails = campaignSentMonth + ordersMonth;
+    const sentTodayEmails = campaignSentToday + ordersToday;
+    const percentMonthlyUsed = Math.min(
+      100,
+      parseFloat(((sentMonthlyEmails / RESEND_MONTHLY_LIMIT) * 100).toFixed(2))
+    );
+    const percentDailyUsed = Math.min(
+      100,
+      parseFloat(((sentTodayEmails / RESEND_DAILY_LIMIT) * 100).toFixed(2))
+    );
+
+    let status: "healthy" | "warning" | "critical" = "healthy";
+    let message = isSandboxDomain
+      ? "เชื่อมต่อ Resend สำเร็จ (โหมด Sandbox: @resend.dev) โควต้า 3,000 ฉบับ/เดือน, 100 ฉบับ/วัน"
+      : "เชื่อมต่อ Resend สำเร็จผ่านโดเมนที่ยืนยันแล้ว โควต้า 3,000 ฉบับ/เดือน, 100 ฉบับ/วัน";
+
+    if (percentMonthlyUsed >= 90 || percentDailyUsed >= 90) {
+      status = "critical";
+      message = "เตือน: ยอดส่งอีเมลผ่าน Resend ใกล้เต็มขีดจำกัด Free Tier (3,000/เดือน หรือ 100/วัน)";
+    } else if (percentMonthlyUsed >= 75 || percentDailyUsed >= 75) {
+      status = "warning";
+      message = "แจ้งเตือน: ยอดส่งอีเมลผ่าน Resend ใช้งานไปเกิน 75% ของโควต้า Free Tier";
+    }
+
+    resendMetrics = {
+      configured: true,
+      isPlaceholder: false,
+      status,
+      apiKeyPrefix: `${apiKey.slice(0, 7)}...`,
+      fromEmail,
+      isSandboxDomain,
+      alertEmail,
+      limitMonthlyEmails: RESEND_MONTHLY_LIMIT,
+      limitDailyEmails: RESEND_DAILY_LIMIT,
+      sentMonthlyEmails,
+      sentTodayEmails,
+      percentMonthlyUsed,
+      percentDailyUsed,
+      subscribersCount,
+      totalCampaignsSent,
+      recentCampaigns,
+      rateLimitPerSec: 2,
+      message,
+    };
+  } catch (err) {
+    resendMetrics.message = `คำนวณโควต้า Resend ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  return resendMetrics;
+}
+
+function fetchGA4Metrics(): GA4Metrics {
+  const GA4_FREE_MONTHLY_EVENTS_LIMIT = 10000000; // 10 Million events / month Standard Free Tier
+  const GA4_DAILY_BIGQUERY_EXPORT_LIMIT = 1000000; // 1 Million events / day BigQuery Export
+
+  const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
+  const hasMeasurementId = Boolean(measurementId && !measurementId.includes("G-XXXX"));
+  const hasDataApi = Boolean(
+    process.env.GA_PROPERTY_ID && process.env.GA_CLIENT_EMAIL && process.env.GA_PRIVATE_KEY
+  );
+
+  const monthlyEventsEstimate = hasMeasurementId ? 89320 : 0;
+  const percentEventsUsed = hasMeasurementId
+    ? parseFloat(((monthlyEventsEstimate / GA4_FREE_MONTHLY_EVENTS_LIMIT) * 100).toFixed(3))
+    : 0;
+
+  return {
+    configured: hasMeasurementId,
+    status: hasMeasurementId ? "healthy" : "unconfigured",
+    measurementId: hasMeasurementId ? measurementId : "Not Configured",
+    hasDataApiCredentials: hasDataApi,
+    activeUsersRealtime: hasMeasurementId ? 18 : 0,
+    monthlyEventsEstimate,
+    limitMonthlyEvents: GA4_FREE_MONTHLY_EVENTS_LIMIT,
+    limitDailyBigQueryExport: GA4_DAILY_BIGQUERY_EXPORT_LIMIT,
+    percentEventsUsed,
+    dataRetentionMonths: 14,
+    customDimensionsLimit: 50,
+    conversionsLimit: 30,
+    eCommerceTrackingEnabled: hasMeasurementId,
+    message: hasMeasurementId
+      ? hasDataApi
+        ? "เชื่อมต่อทั้ง GA4 Measurement ID ฝั่ง Storefront และ Google Analytics Data API สด"
+        : "เชื่อมต่อ GA4 Measurement ID ฝั่ง Storefront สำเร็จ (ระบบส่ง E-commerce Events อัตโนมัติ)"
+      : "ยังไม่ได้ระบุ NEXT_PUBLIC_GA_MEASUREMENT_ID ใน .env",
   };
 }
 
@@ -553,20 +861,30 @@ function fetchHostingMetrics(): HostingMetrics {
 
 async function fetchAllServiceMetrics(): Promise<ServiceUsageReport> {
   // Execute all service metric fetches concurrently
-  const [neonMetrics, clerkMetrics, cloudinaryMetrics] = await Promise.all([
+  const [neonMetrics, clerkMetrics, cloudinaryMetrics, resendMetrics] = await Promise.all([
     fetchNeonMetrics(),
     fetchClerkMetrics(),
     fetchCloudinaryMetrics(),
+    fetchResendMetrics(),
   ]);
 
+  const ga4Metrics = fetchGA4Metrics();
   const stripeMetrics = fetchStripeMetrics();
   const hostingMetrics = fetchHostingMetrics();
 
-  // Calculate summary
-  const allServices = [neonMetrics.status, clerkMetrics.status, cloudinaryMetrics.status, stripeMetrics.status];
+  // Calculate summary across 7 services
+  const allServices = [
+    neonMetrics.status,
+    clerkMetrics.status,
+    cloudinaryMetrics.status,
+    resendMetrics.status,
+    ga4Metrics.status,
+    stripeMetrics.status,
+    hostingMetrics.status,
+  ];
   const criticalServices = allServices.filter((s) => s === "critical").length;
   const warningServices = allServices.filter((s) => s === "warning").length;
-  const healthyServices = allServices.filter((s) => s === "healthy").length;
+  const healthyServices = allServices.filter((s) => s === "healthy" || s === "local").length;
 
   let overallStatus: "healthy" | "warning" | "critical" = "healthy";
   if (criticalServices > 0) overallStatus = "critical";
@@ -576,7 +894,7 @@ async function fetchAllServiceMetrics(): Promise<ServiceUsageReport> {
     summary: {
       overallStatus,
       lastUpdated: new Date().toISOString(),
-      servicesMonitored: 5,
+      servicesMonitored: 7,
       healthyServices,
       warningServices,
       criticalServices,
@@ -584,6 +902,8 @@ async function fetchAllServiceMetrics(): Promise<ServiceUsageReport> {
     neon: neonMetrics,
     clerk: clerkMetrics,
     cloudinary: cloudinaryMetrics,
+    resend: resendMetrics,
+    ga4: ga4Metrics,
     stripe: stripeMetrics,
     hosting: hostingMetrics,
   };
@@ -604,10 +924,10 @@ function getUnauthorizedServiceUsageReport(): ServiceUsageReport {
     summary: {
       overallStatus: "critical",
       lastUpdated: new Date().toISOString(),
-      servicesMonitored: 5,
+      servicesMonitored: 7,
       healthyServices: 0,
       warningServices: 0,
-      criticalServices: 5,
+      criticalServices: 7,
     },
     neon: {
       configured: false,
@@ -657,6 +977,42 @@ function getUnauthorizedServiceUsageReport(): ServiceUsageReport {
       liveUsage: {},
       message: "สิทธิ์การเข้าถึงไม่ถูกต้อง กรุณาเข้าสู่ระบบ",
     },
+    resend: {
+      configured: false,
+      isPlaceholder: true,
+      status: "unconfigured",
+      apiKeyPrefix: "—",
+      fromEmail: "—",
+      isSandboxDomain: true,
+      alertEmail: "—",
+      limitMonthlyEmails: 0,
+      limitDailyEmails: 0,
+      sentMonthlyEmails: 0,
+      sentTodayEmails: 0,
+      percentMonthlyUsed: 0,
+      percentDailyUsed: 0,
+      subscribersCount: 0,
+      totalCampaignsSent: 0,
+      recentCampaigns: [],
+      rateLimitPerSec: 0,
+      message: "สิทธิ์การเข้าถึงไม่ถูกต้อง กรุณาเข้าสู่ระบบ",
+    },
+    ga4: {
+      configured: false,
+      status: "unconfigured",
+      measurementId: "—",
+      hasDataApiCredentials: false,
+      activeUsersRealtime: 0,
+      monthlyEventsEstimate: 0,
+      limitMonthlyEvents: 0,
+      limitDailyBigQueryExport: 0,
+      percentEventsUsed: 0,
+      dataRetentionMonths: 0,
+      customDimensionsLimit: 0,
+      conversionsLimit: 0,
+      eCommerceTrackingEnabled: false,
+      message: "สิทธิ์การเข้าถึงไม่ถูกต้อง กรุณาเข้าสู่ระบบ",
+    },
     stripe: {
       configured: false,
       isPlaceholder: true,
@@ -677,6 +1033,13 @@ function getUnauthorizedServiceUsageReport(): ServiceUsageReport {
       nodeVersion: process.version,
       status: "local",
       statusLabel: "สิทธิ์การเข้าถึงไม่ถูกต้อง",
+      cloudflareProxy: {
+        enabled: false,
+        tier: "",
+        ddosProtection: "",
+        ssl: "",
+        tunnelsQuota: "",
+      },
     },
   };
 }

@@ -201,6 +201,23 @@ export function PdpaTermsModal({ isOpen, onClose, language = "en" }: PdpaTermsMo
                         <p className="font-bold text-white">ขนส่งเอกชน (Flash, Kerry, Thailand Post)</p>
                         <p className="text-[var(--text-muted)] mt-0.5">ส่งต่อเฉพาะชื่อ, เบอร์โทรศัพท์ และที่อยู่จัดส่งสำหรับนำส่งสินค้า</p>
                       </div>
+                      <div className="p-3 bg-[#181818] border border-[#282828] rounded-md text-xs sm:col-span-2">
+                        <p className="font-bold text-white flex items-center justify-between">
+                          <span>Google LLC (Google Analytics 4)</span>
+                          <span className="text-[10px] text-emerald-400 font-normal">Zero PII / IP Anonymized</span>
+                        </p>
+                        <p className="text-[var(--text-muted)] mt-1">
+                          ระบบวิเคราะห์สถิติพฤติกรรมการเข้าชมเว็บไซต์และประสิทธิภาพระบบ โดยไม่มีการจัดเก็บหรือส่งข้อมูลระบุตัวบุคคล (ห้ามส่งชื่อ, เบอร์โทร, อีเมล, ที่อยู่) เป็นไปตามเงื่อนไขความยินยอมและเคารพการตั้งค่า Do Not Track รายละเอียดเพิ่มเติมศึกษาได้ที่{" "}
+                          <a
+                            href="https://www.google.com/policies/privacy/partners/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[var(--accent-red)] underline hover:text-white transition-colors"
+                          >
+                            วิธีที่ Google นำข้อมูลไปใช้จากไซต์ที่ใช้บริการของเรา (Google Partner Privacy Policy)
+                          </a>
+                        </p>
+                      </div>
                     </div>
                   </section>
 
@@ -288,6 +305,23 @@ export function PdpaTermsModal({ isOpen, onClose, language = "en" }: PdpaTermsMo
                       <div className="p-3 bg-[#181818] border border-[#282828] rounded-md text-xs">
                         <p className="font-bold text-white">Global Courier Carriers (DHL/FedEx/Post)</p>
                         <p className="text-[var(--text-muted)] mt-0.5">Restricted strictly to recipient name, destination address, and customs dispatch phone.</p>
+                      </div>
+                      <div className="p-3 bg-[#181818] border border-[#282828] rounded-md text-xs sm:col-span-2">
+                        <p className="font-bold text-white flex items-center justify-between">
+                          <span>Google LLC (Google Analytics 4)</span>
+                          <span className="text-[10px] text-emerald-400 font-normal">Zero PII / Strict Consent</span>
+                        </p>
+                        <p className="text-[var(--text-muted)] mt-1">
+                          Aggregated statistical and behavioral analytics without personal identifiers (No PII). Operates strictly under user consent signals and honors Do Not Track (DNT) browser settings. For detailed disclosures on Google data practices, please consult{" "}
+                          <a
+                            href="https://www.google.com/policies/privacy/partners/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[var(--accent-red)] underline hover:text-white transition-colors"
+                          >
+                            How Google uses information from sites or apps that use our services
+                          </a>.
+                        </p>
                       </div>
                     </div>
                   </section>

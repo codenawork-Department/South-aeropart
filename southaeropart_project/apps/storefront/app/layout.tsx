@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AuthSessionTracker } from "@/components/auth/AuthSessionTracker";
 import { RealtimeLiveProvider } from "@/components/providers/RealtimeLiveProvider";
@@ -9,6 +9,8 @@ import { getUserLanguagePreference, getUserCurrencyPreference } from "@/actions/
 import { Language, DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME, sanitizeLanguage } from "@/i18n/config";
 import { Currency, DEFAULT_CURRENCY, CURRENCY_COOKIE_NAME, sanitizeCurrency } from "@/lib/currency";
 import { CustomerShipmentAlertToast } from "@/components/orders/CustomerShipmentAlertToast";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { CookieConsentBanner } from "@/components/analytics/CookieConsentBanner";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -40,6 +42,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
+  const headerList = await headers();
+  const nonce = headerList.get("x-nonce") || undefined;
   const cookieRawLang = cookieStore.get(LANGUAGE_COOKIE_NAME)?.value;
   const cookieRawCurr = cookieStore.get(CURRENCY_COOKIE_NAME)?.value;
 
@@ -76,12 +80,14 @@ export default async function RootLayout({
     >
       <html lang={initialLang}>
         <body className="min-h-screen flex flex-col font-sans">
+          <GoogleAnalytics nonce={nonce} />
           <AuthSessionTracker />
           <LanguageProvider initialLang={initialLang}>
             <CurrencyProvider initialCurrency={initialCurrency}>
               <RealtimeLiveProvider>
                 <CustomerShipmentAlertToast />
                 {children}
+                <CookieConsentBanner />
               </RealtimeLiveProvider>
             </CurrencyProvider>
           </LanguageProvider>

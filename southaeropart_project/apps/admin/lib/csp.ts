@@ -9,7 +9,7 @@ export function securedNextResponse(request: NextRequest) {
     "img-src 'self' blob: data: https://res.cloudinary.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "connect-src 'self' https://api.cloudinary.com https://res.cloudinary.com",
-    "frame-src 'self' https://upload-widget.cloudinary.com",
+    "frame-src 'self' https://upload-widget.cloudinary.com https://lookerstudio.google.com https://datastudio.google.com",
     "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",
   ].join("; ");
   const requestHeaders = new Headers(request.headers);

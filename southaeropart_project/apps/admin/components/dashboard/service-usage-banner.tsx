@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Activity, ArrowRight, Database, Users, HardDrive } from "lucide-react";
+import { Activity, ArrowRight, Database, Users, HardDrive, Mail, BarChart3 } from "lucide-react";
 import { getCachedServiceUsageMetrics } from "@/actions/service-usage.actions";
 
 export async function ServiceUsageBanner() {
@@ -13,16 +13,20 @@ export async function ServiceUsageBanner() {
     cloudinaryCreditsPretty: "0.12",
     cloudinaryPercent: 0.48,
     cloudinaryStorage: "120 MB",
-    cloudinaryFiles: 2,
+    resendSent: 0,
+    resendPercent: 0,
+    ga4Active: 18,
+    ga4Percent: 0.89,
     overallHealthy: true,
   };
 
   try {
     const report = await getCachedServiceUsageMetrics();
     const creditsUsed = report.cloudinary.liveUsage?.creditsUsed ?? 0;
-    const creditsUsedPretty = report.cloudinary.liveUsage?.creditsUsedPretty ?? (creditsUsed > 0 && creditsUsed < 0.01 ? "< 0.01" : String(creditsUsed));
+    const creditsUsedPretty =
+      report.cloudinary.liveUsage?.creditsUsedPretty ??
+      (creditsUsed > 0 && creditsUsed < 0.01 ? "< 0.01" : String(creditsUsed));
     const creditsPercent = parseFloat(((creditsUsed / 25) * 100).toFixed(2));
-    const resourcesCount = report.cloudinary.liveUsage?.resourcesCount ?? 0;
 
     serviceStatus = {
       neonUsed: report.neon.usedPretty,
@@ -33,7 +37,10 @@ export async function ServiceUsageBanner() {
       cloudinaryCreditsPretty: creditsUsedPretty,
       cloudinaryPercent: creditsPercent,
       cloudinaryStorage: report.cloudinary.liveUsage?.storagePretty ?? "0 KB",
-      cloudinaryFiles: resourcesCount,
+      resendSent: report.resend.sentMonthlyEmails,
+      resendPercent: report.resend.percentMonthlyUsed,
+      ga4Active: report.ga4.activeUsersRealtime,
+      ga4Percent: report.ga4.percentEventsUsed,
       overallHealthy: report.summary.overallStatus === "healthy",
     };
   } catch {
@@ -57,7 +64,7 @@ export async function ServiceUsageBanner() {
               </span>
             </div>
             <p className="text-xs text-zinc-400 mt-1">
-              ติดตามการใช้ทรัพยากร Neon Postgres, Clerk Auth (50K MAU), Cloudinary และโครงสร้างพื้นฐาน
+              ติดตามทรัพยากร Neon (512MB), Clerk (50K MAU), Cloudinary (25 Credits), Resend (3K เมล) และ GA4 (10M Events)
             </p>
           </div>
         </div>
@@ -71,74 +78,120 @@ export async function ServiceUsageBanner() {
         </Link>
       </div>
 
-      {/* Quick Service Quota Mini-Bars */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-5">
+      {/* Quick Service Quota Mini-Bars (5 Services) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5 pt-5">
         {/* Neon DB Mini */}
-        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-4">
+        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-xs font-medium text-gray-300">
-              <Database size={14} className="text-teal-400" />
-              <span>Neon Database</span>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
+              <Database size={13} className="text-teal-400" />
+              <span>Neon Postgres</span>
             </div>
             <span className="text-[0.68rem] text-emerald-400 font-semibold font-mono">
               {serviceStatus.neonPercent}%
             </span>
           </div>
-          <div className="w-full bg-[#1F1F1F] rounded-full h-2 overflow-hidden mb-2">
+          <div className="w-full bg-[#1F1F1F] rounded-full h-1.5 overflow-hidden mb-2">
             <div
               className="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full transition-all"
               style={{ width: `${Math.max(2, serviceStatus.neonPercent)}%` }}
             />
           </div>
-          <div className="flex justify-between text-[0.68rem] text-zinc-400 font-mono">
-            <span>ใช้ไป: {serviceStatus.neonUsed}</span>
-            <span>จำกัด: 512 MB Free</span>
+          <div className="flex justify-between text-[0.65rem] text-zinc-400 font-mono">
+            <span>ใช้: {serviceStatus.neonUsed}</span>
+            <span>เพดาน: 512 MB</span>
           </div>
         </div>
 
         {/* Clerk Auth Mini */}
-        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-4">
+        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-xs font-medium text-gray-300">
-              <Users size={14} className="text-blue-400" />
-              <span>Clerk Auth Users</span>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
+              <Users size={13} className="text-blue-400" />
+              <span>Clerk Auth</span>
             </div>
             <span className="text-[0.68rem] text-emerald-400 font-semibold font-mono">
               {serviceStatus.clerkPercent}%
             </span>
           </div>
-          <div className="w-full bg-[#1F1F1F] rounded-full h-2 overflow-hidden mb-2">
+          <div className="w-full bg-[#1F1F1F] rounded-full h-1.5 overflow-hidden mb-2">
             <div
               className="bg-gradient-to-r from-blue-500 to-indigo-400 h-full rounded-full transition-all"
               style={{ width: `${Math.max(2, serviceStatus.clerkPercent)}%` }}
             />
           </div>
-          <div className="flex justify-between text-[0.68rem] text-zinc-400 font-mono">
-            <span>ใช้ไป: {serviceStatus.clerkUsers} Users</span>
-            <span>จำกัด: 50,000 MAU Free</span>
+          <div className="flex justify-between text-[0.65rem] text-zinc-400 font-mono">
+            <span>ใช้: {serviceStatus.clerkUsers} MAU</span>
+            <span>เพดาน: 50K</span>
           </div>
         </div>
 
         {/* Cloudinary Mini */}
-        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-4 sm:col-span-2 lg:col-span-1">
+        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-xs font-medium text-gray-300">
-              <HardDrive size={14} className="text-amber-400" />
-              <span>Cloudinary Storage</span>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
+              <HardDrive size={13} className="text-amber-400" />
+              <span>Cloudinary</span>
             </div>
             <span className="text-[0.68rem] text-emerald-400 font-semibold font-mono">
-              {serviceStatus.cloudinaryCreditsPretty || serviceStatus.cloudinaryCreditsUsed} / 25 Credits
+              {serviceStatus.cloudinaryCreditsPretty} / 25
             </span>
           </div>
-          <div className="w-full bg-[#1F1F1F] rounded-full h-2 overflow-hidden mb-2">
+          <div className="w-full bg-[#1F1F1F] rounded-full h-1.5 overflow-hidden mb-2">
             <div
               className="bg-gradient-to-r from-amber-500 to-orange-400 h-full rounded-full transition-all"
               style={{ width: `${Math.max(2, serviceStatus.cloudinaryPercent)}%` }}
             />
           </div>
-          <div className="flex justify-between text-[0.68rem] text-zinc-400 font-mono">
-            <span>ใช้ไป: {serviceStatus.cloudinaryCreditsPretty} Credits ({serviceStatus.cloudinaryStorage})</span>
-            <span>จำกัด: 25 Credits Free</span>
+          <div className="flex justify-between text-[0.65rem] text-zinc-400 font-mono">
+            <span>ใช้: {serviceStatus.cloudinaryCreditsPretty} Crd</span>
+            <span>เพดาน: 25 Crd</span>
+          </div>
+        </div>
+
+        {/* Resend Email Mini */}
+        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-3.5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
+              <Mail size={13} className="text-rose-400" />
+              <span>Resend Email</span>
+            </div>
+            <span className="text-[0.68rem] text-emerald-400 font-semibold font-mono">
+              {serviceStatus.resendPercent}%
+            </span>
+          </div>
+          <div className="w-full bg-[#1F1F1F] rounded-full h-1.5 overflow-hidden mb-2">
+            <div
+              className="bg-gradient-to-r from-rose-500 to-pink-400 h-full rounded-full transition-all"
+              style={{ width: `${Math.max(2, serviceStatus.resendPercent)}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[0.65rem] text-zinc-400 font-mono">
+            <span>ส่ง: {serviceStatus.resendSent} ฉบับ</span>
+            <span>เพดาน: 3,000</span>
+          </div>
+        </div>
+
+        {/* GA4 Mini */}
+        <div className="bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-3.5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
+              <BarChart3 size={13} className="text-orange-400" />
+              <span>GA4 Analytics</span>
+            </div>
+            <span className="text-[0.68rem] text-emerald-400 font-semibold font-mono">
+              {serviceStatus.ga4Active} Realtime
+            </span>
+          </div>
+          <div className="w-full bg-[#1F1F1F] rounded-full h-1.5 overflow-hidden mb-2">
+            <div
+              className="bg-gradient-to-r from-orange-500 to-amber-400 h-full rounded-full transition-all"
+              style={{ width: `${Math.max(2, serviceStatus.ga4Percent)}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[0.65rem] text-zinc-400 font-mono">
+            <span>Active: {serviceStatus.ga4Active} คน</span>
+            <span>เพดาน: 10M Ev</span>
           </div>
         </div>
       </div>

@@ -34,6 +34,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { getLocalizedOrderItemName } from "@/lib/i18n-helpers";
 import { ProductReviewModal } from "@/components/reviews/ProductReviewModal";
 import { getUserProductReviewsAction } from "@/actions/review.actions";
+import { trackPurchase } from "@/lib/analytics";
 
 interface OrderDetailClientProps {
   order: Order;
@@ -58,6 +59,30 @@ export function OrderDetailClient({ order, items, history, guestToken }: OrderDe
   const [isPending, startTransition] = useTransition();
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [isCopied, setIsCopied] = useState(false);
+
+  // Track GA4 purchase event with sessionStorage deduplication
+  useEffect(() => {
+    if (isJustPaid && order?.id) {
+      const trackedKey = `ga_purchase_tracked_${order.id}`;
+      if (sessionStorage.getItem(trackedKey)) return;
+      sessionStorage.setItem(trackedKey, "true");
+
+      trackPurchase({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        total: order.total,
+        currency: order.currency || "THB",
+        tax: order.taxAmount || 0,
+        shipping: order.shippingFee || 0,
+        items: items.map((it) => ({
+          id: it.productId,
+          name: getLocalizedOrderItemName(it.productNameSnapshot, it.productNameEn, lang) || it.productNameSnapshot,
+          price: it.unitPrice,
+          quantity: it.quantity,
+        })),
+      });
+    }
+  }, [isJustPaid, order?.id, order?.orderNumber, order?.total, order?.currency, order?.taxAmount, order?.shippingFee, items, lang]);
 
   // Review states
   const [userReviews, setUserReviews] = useState<Record<string, any>>({});

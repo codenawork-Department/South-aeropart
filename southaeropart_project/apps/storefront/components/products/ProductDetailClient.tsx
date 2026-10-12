@@ -35,6 +35,7 @@ import { FeatureBadges } from "@/components/home/FeatureBadges";
 import { KitIncludedParts } from "@/components/products/KitIncludedParts";
 import { ProductReviewsSection } from "@/components/products/ProductReviewsSection";
 import { toggleWishlist, checkIsWishlisted } from "@/actions/wishlist.actions";
+import { trackViewItem } from "@/lib/analytics";
 
 export function ProductDetailClient({ product }: { product: MockProduct }) {
   const { isSignedIn } = useUser();
@@ -71,6 +72,18 @@ export function ProductDetailClient({ product }: { product: MockProduct }) {
     }
   }, [isSignedIn, product?.id]);
 
+  // Track GA4 view_item event
+  useEffect(() => {
+    if (product?.id) {
+      trackViewItem({
+        id: product.id,
+        name: localizedName,
+        price: product.price,
+        category: product.categoryName || product.categorySlug,
+        brand: product.brand,
+      });
+    }
+  }, [product?.id, localizedName, product?.price, product?.categoryName, product?.categorySlug, product?.brand]);
 
   const handleToggleWishlist = async () => {
     if (!isSignedIn) {

@@ -46,6 +46,7 @@ import { GarageModal } from "./GarageModal";
 import { PdpaTermsModal } from "./PdpaTermsModal";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileLanguage, PROFILE_TRANSLATIONS } from "./profile-i18n";
+import { setStoredConsent } from "@/components/analytics/GoogleAnalytics";
 
 interface ProfileTabsProps {
   user: SanitizedUserProfile;
@@ -198,6 +199,7 @@ export function ProfileTabs({
 
     setIsUpdatingConsents(false);
     if (res.success) {
+      setStoredConsent({ analytics, marketing: Boolean(marketingEmail || marketingSms) });
       setConsentFeedback({
         type: "success",
         message: t.privacyTab.consentsUpdated,

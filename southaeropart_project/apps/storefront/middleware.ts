@@ -105,6 +105,8 @@ export default clerkMiddleware(
           "https://images.clerk.dev",
           "https://lh3.googleusercontent.com",
           "https://avatars.githubusercontent.com",
+          "https://*.google-analytics.com",
+          "https://*.googletagmanager.com",
         ],
         "connect-src": [
           "'self'",
@@ -113,6 +115,9 @@ export default clerkMiddleware(
           "https://api.stripe.com",
           "https://*.protect.clerk.com:*",
           "https://open.er-api.com",
+          "https://*.google-analytics.com",
+          "https://*.analytics.google.com",
+          "https://*.googletagmanager.com",
         ],
         "frame-src": [
           "https://upload-widget.cloudinary.com",
@@ -124,6 +129,7 @@ export default clerkMiddleware(
           "'self'",
           "https://js.stripe.com",
           "https://*.protect.clerk.com",
+          "https://www.googletagmanager.com",
         ],
         "style-src": [
           "'self'",

@@ -13,6 +13,7 @@ import { previewShipping, requestShippingQuote } from "@/actions/shipping.action
 import { SHIPPING_COUNTRIES, shippingAddressSchema, moneySatang } from "@repo/lib/shipping";
 import { formatSatang } from "@repo/lib/money-arithmetic";
 import { MAX_ORDER_NOTE_BYTES, orderNoteByteLength, orderNoteSchema } from "@repo/lib/order-note";
+import { trackBeginCheckout } from "@/lib/analytics";
 import { QrCode, CreditCard, AlertCircle, ArrowRight, ShoppingCart, MapPin, Lock } from "lucide-react";
 import type { UserAddress } from "@repo/db";
 import { CheckoutPageSkeleton } from "@/components/ui/skeleton";
@@ -80,6 +81,23 @@ export function CheckoutClient() {
     return () => { active = false; clearTimeout(timer); };
   }, [previewScope, retryPreview]);
   useEffect(() => { setQuoteRequestId(null); }, [previewScope, recipientName, phone, email, line1, line2, subDistrict, district, province, postalCode, customerNote]);
+
+  // Track GA4 begin_checkout event
+  useEffect(() => {
+    if (isHydrated && items.length > 0) {
+      trackBeginCheckout(
+        items.map((i) => ({
+          id: i.product.id,
+          name: i.product.name,
+          price: i.product.price,
+          quantity: i.quantity,
+          variant: i.variant,
+        })),
+        subtotal,
+        currency,
+      );
+    }
+  }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pre-load saved addresses & user details if logged in
   useEffect(() => {

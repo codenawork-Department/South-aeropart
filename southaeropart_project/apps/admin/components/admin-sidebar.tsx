@@ -20,6 +20,7 @@ import {
   X,
   Mail,
   ShieldAlert,
+  BarChart3,
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
 import { RealtimeSyncWidget } from "@/components/ui/realtime-sync-widget";
@@ -154,6 +155,14 @@ export function AdminSidebar({
       icon: Activity,
       badge: "LIVE",
       badgeColor: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+    },
+    {
+      label: "GA4 Analytics",
+      sublabel: "สถิติผู้เข้าชม & E-commerce",
+      href: "/analytics",
+      icon: BarChart3,
+      badge: "GA4",
+      badgeColor: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
     },
   ];
 
