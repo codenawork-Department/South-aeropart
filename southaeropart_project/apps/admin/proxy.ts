@@ -8,9 +8,9 @@ import {
 } from "@repo/lib/action-ingress";
 
 /**
- * Admin middleware — protects all routes except /login.
+ * Admin proxy — protects all routes except /login.
  *
- * Because Edge Middleware cannot access the database directly,
+ * Because Edge Proxy cannot access the database directly,
  * we only verify the JWT signature & expiry here. Full session
  * validation (DB lookup, active check) happens in `validateSession()`
  * inside server components / server actions.
@@ -49,7 +49,7 @@ function getSessionSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Only trust this header when Cloudflare is the sole permitted ingress.
   const ip =
     process.env.TRUSTED_PROXY === "cloudflare"
@@ -125,6 +125,9 @@ export async function middleware(request: NextRequest) {
   }
 }
 
+export default proxy;
+
 export const config = {
   matcher: ["/((?!_next|.*\\..*).*)", "/(api|trpc)(.*)"],
 };
+

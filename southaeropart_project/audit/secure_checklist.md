@@ -30,9 +30,8 @@
 - [x] **TypeScript Strict Typecheck:** รัน `pnpm typecheck` ผ่านครบ 100% ทั้ง 8 packages ใน Monorepo
 - [x] **Vitest Unit/Integration Tests:** ผ่านครบ 264/264 ข้อ (Storefront 163 tests, Admin 101 tests)
 - [x] **Adversarial Security Harness:** ผ่านครบ 477/477 adversarial test cases (Run ID: `security_test_88f9013e9fdf487da10381de05ce2697`)
-- [ ] **[TODO-LOW] ปรับปรุง Next.js 16 Middleware Convention (`middleware.ts` ➔ `proxy.ts`):**
-  - *สถานะปัจจุบัน:* ทำงานได้ปกติและ Build ผ่าน แต่มีคำเตือน deprecation จาก Turbopack
-  - *สิ่งที่ต้องทำ:* เมื่อแพ็กเกจ `@clerk/nextjs` ประกาศรองรับ `proxy.ts` อย่างเป็นทางการ ให้ทดสอบเปลี่ยนชื่อไฟล์จาก `apps/storefront/middleware.ts` เป็น `proxy.ts`
+- [x] **[TODO-LOW] ปรับปรุง Next.js 16 Middleware Convention (`middleware.ts` ➔ `proxy.ts`):** (แก้ไขเรียบร้อยแล้ว)
+  - *สถานะ:* ดำเนินการย้ายเป็น `apps/admin/proxy.ts` และ `apps/storefront/proxy.ts` พร้อม export ทั้ง default และ proxy function เพื่อเคลียร์ deprecation warning สำหรับ Next.js 16 เรียบร้อยแล้ว
 - [x] **[TODO-LOW] ปรับแก้คำเตือนรูปภาพ `<img>` สู่ `<Image />` (`next/image`):** (แก้ไขเรียบร้อยแล้ว Typecheck & ESLint ผ่าน 100%)
   - *ตำแหน่งที่ได้รับการปรับปรุง:*
     - `apps/admin/components/newsletters/VisualEmailBuilder.tsx` (บรรทัด 1086, 1099)

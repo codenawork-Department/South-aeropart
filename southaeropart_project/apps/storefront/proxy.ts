@@ -11,7 +11,7 @@ import {
 } from "@/lib/rate-limiter";
 
 /**
- * Clerk middleware with integrated Anti-DoS Rate Limiting for Storefront (CLAUDE.md §5.1).
+ * Clerk proxy with integrated Anti-DoS Rate Limiting for Storefront (CLAUDE.md §5.1).
  *
  * 1. Enforces tiered rate limits (60 reqs/min for API, 180 reqs/min for pages).
  * 2. Exempts cryptographically verified webhooks (Stripe & Clerk).
@@ -26,7 +26,7 @@ const isProtectedRoute = createRouteMatcher([
   "/shipping-quotes(.*)",
 ]);
 
-export default clerkMiddleware(
+const handler = clerkMiddleware(
   async (auth, req) => {
     const { pathname } = req.nextUrl;
     if (
@@ -147,6 +147,10 @@ export default clerkMiddleware(
   },
 );
 
+export default handler;
+export const proxy = handler;
+
 export const config = {
   matcher: ["/((?!_next|.*\\..*).*)", "/(api|trpc)(.*)"],
 };
+
